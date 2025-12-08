@@ -1,4 +1,4 @@
-# Alberta Workforce Workspace
+# WorkspaceAlberta
 
 This repository is where we build a **workspace** tailored to your business.
 
