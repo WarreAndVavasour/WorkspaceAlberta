@@ -1,0 +1,1163 @@
+[
+  {
+    "id": "google_drive",
+    "display_name": "Google Drive",
+    "category": "Storage / Productivity",
+    "description": "Files, Docs, Sheets, Slides",
+    "integration_status": "native",
+    "mcp": {
+      "server_name": "google-drive",
+      "type": "node",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-google-drive"
+      ],
+      "env_vars": [
+        {
+          "name": "GOOGLE_DRIVE_CREDENTIALS_JSON",
+          "description": "Service account or OAuth credentials JSON"
+        },
+        {
+          "name": "GOOGLE_DRIVE_TOKEN_JSON",
+          "description": "OAuth token JSON for your user"
+        }
+      ]
+    }
+  },
+  {
+    "id": "microsoft_365_onedrive",
+    "display_name": "Microsoft 365 / OneDrive",
+    "category": "Storage / Productivity",
+    "description": "Files and collaboration via Microsoft Graph",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "microsoft-365",
+      "type": "http_openapi",
+      "openapi_url": "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml",
+      "env_vars": [
+        {
+          "name": "MSFT_TENANT_ID",
+          "description": "Directory tenant ID"
+        },
+        {
+          "name": "MSFT_CLIENT_ID",
+          "description": "App registration client ID"
+        },
+        {
+          "name": "MSFT_CLIENT_SECRET",
+          "description": "App registration client secret"
+        },
+        {
+          "name": "MSFT_REFRESH_TOKEN",
+          "description": "Offline refresh token for delegated calls"
+        }
+      ]
+    }
+  },
+  {
+    "id": "dropbox",
+    "display_name": "Dropbox",
+    "category": "Storage / Productivity",
+    "description": "File sync and sharing",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "dropbox",
+      "type": "http_openapi",
+      "openapi_url_env": "DROPBOX_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "DROPBOX_APP_KEY"
+        },
+        {
+          "name": "DROPBOX_APP_SECRET"
+        },
+        {
+          "name": "DROPBOX_REFRESH_TOKEN"
+        },
+        {
+          "name": "DROPBOX_OPENAPI_URL",
+          "description": "OpenAPI spec URL if using a generic wrapper"
+        }
+      ]
+    }
+  },
+  {
+    "id": "box",
+    "display_name": "Box",
+    "category": "Storage / Productivity",
+    "description": "Enterprise file storage",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "box",
+      "type": "http_openapi",
+      "openapi_url": "https://raw.githubusercontent.com/box/box-openapi/main/openapi.json",
+      "env_vars": [
+        {
+          "name": "BOX_CLIENT_ID"
+        },
+        {
+          "name": "BOX_CLIENT_SECRET"
+        },
+        {
+          "name": "BOX_DEVELOPER_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "notion",
+    "display_name": "Notion",
+    "category": "Storage / Productivity",
+    "description": "Docs, wiki, and database workspace",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "notion",
+      "type": "http_openapi",
+      "openapi_url_env": "NOTION_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "NOTION_API_KEY"
+        },
+        {
+          "name": "NOTION_OPENAPI_URL",
+          "description": "OpenAPI spec URL for your Notion proxy wrapper"
+        }
+      ]
+    }
+  },
+  {
+    "id": "evernote",
+    "display_name": "Evernote",
+    "category": "Storage / Productivity",
+    "description": "Notes and personal knowledge base",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "evernote",
+      "type": "http_openapi",
+      "openapi_url_env": "EVERNOTE_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "EVERNOTE_PERSONAL_TOKEN"
+        },
+        {
+          "name": "EVERNOTE_OPENAPI_URL",
+          "description": "OpenAPI spec URL for your Evernote wrapper"
+        }
+      ]
+    }
+  },
+  {
+    "id": "slack",
+    "display_name": "Slack",
+    "category": "Storage / Productivity",
+    "description": "Channels, messages, and DMs",
+    "integration_status": "native",
+    "mcp": {
+      "server_name": "slack",
+      "type": "node",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-slack-server"
+      ],
+      "env_vars": [
+        {
+          "name": "SLACK_BOT_TOKEN"
+        },
+        {
+          "name": "SLACK_APP_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "zoom",
+    "display_name": "Zoom",
+    "category": "Storage / Productivity",
+    "description": "Meetings and recordings",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "zoom",
+      "type": "http_openapi",
+      "openapi_url": "https://marketplace.zoom.us/docs/api-reference/zoom-api/zoom-api.oas2.json",
+      "env_vars": [
+        {
+          "name": "ZOOM_ACCOUNT_ID"
+        },
+        {
+          "name": "ZOOM_CLIENT_ID"
+        },
+        {
+          "name": "ZOOM_CLIENT_SECRET"
+        },
+        {
+          "name": "ZOOM_REFRESH_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "github",
+    "display_name": "GitHub",
+    "category": "Dev / Collaboration / Project",
+    "description": "Source control and pull requests",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "github",
+      "type": "http_openapi",
+      "openapi_url": "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json",
+      "env_vars": [
+        {
+          "name": "GITHUB_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "gitlab",
+    "display_name": "GitLab",
+    "category": "Dev / Collaboration / Project",
+    "description": "Source control and CI/CD",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "gitlab",
+      "type": "http_openapi",
+      "openapi_url": "https://gitlab.com/gitlab-org/api-schemas/-/raw/main/openapi/public.json",
+      "env_vars": [
+        {
+          "name": "GITLAB_TOKEN"
+        },
+        {
+          "name": "GITLAB_BASE_URL",
+          "description": "Optional: self-managed GitLab base URL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "bitbucket",
+    "display_name": "Bitbucket",
+    "category": "Dev / Collaboration / Project",
+    "description": "Source control (Atlassian)",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "bitbucket",
+      "type": "http_openapi",
+      "openapi_url": "https://developer.atlassian.com/cloud/bitbucket/swagger.json",
+      "env_vars": [
+        {
+          "name": "BITBUCKET_USERNAME"
+        },
+        {
+          "name": "BITBUCKET_APP_PASSWORD"
+        }
+      ]
+    }
+  },
+  {
+    "id": "linear",
+    "display_name": "Linear",
+    "category": "Dev / Collaboration / Project",
+    "description": "Issue tracking (GraphQL)",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "linear",
+      "type": "http_openapi",
+      "openapi_url_env": "LINEAR_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "LINEAR_API_KEY"
+        },
+        {
+          "name": "LINEAR_OPENAPI_URL",
+          "description": "GraphQL-to-OpenAPI bridge URL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "jira",
+    "display_name": "Jira",
+    "category": "Dev / Collaboration / Project",
+    "description": "Atlassian issue tracking",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "jira",
+      "type": "http_openapi",
+      "openapi_url": "https://developer.atlassian.com/cloud/jira/platform/swagger-v3.v3.json",
+      "env_vars": [
+        {
+          "name": "ATLASSIAN_SITE",
+          "description": "e.g., https://your-domain.atlassian.net"
+        },
+        {
+          "name": "ATLASSIAN_EMAIL"
+        },
+        {
+          "name": "ATLASSIAN_API_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "confluence",
+    "display_name": "Confluence",
+    "category": "Dev / Collaboration / Project",
+    "description": "Atlassian docs and wiki",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "confluence",
+      "type": "http_openapi",
+      "openapi_url": "https://developer.atlassian.com/cloud/confluence/swagger.v3.json",
+      "env_vars": [
+        {
+          "name": "ATLASSIAN_SITE",
+          "description": "e.g., https://your-domain.atlassian.net"
+        },
+        {
+          "name": "ATLASSIAN_EMAIL"
+        },
+        {
+          "name": "ATLASSIAN_API_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "asana",
+    "display_name": "Asana",
+    "category": "Dev / Collaboration / Project",
+    "description": "Project and task management",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "asana",
+      "type": "http_openapi",
+      "openapi_url": "https://raw.githubusercontent.com/Asana/developer-docs/master/defs/asana_oas.yaml",
+      "env_vars": [
+        {
+          "name": "ASANA_ACCESS_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "trello",
+    "display_name": "Trello",
+    "category": "Dev / Collaboration / Project",
+    "description": "Kanban boards",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "trello",
+      "type": "http_openapi",
+      "openapi_url_env": "TRELLO_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "TRELLO_KEY"
+        },
+        {
+          "name": "TRELLO_TOKEN"
+        },
+        {
+          "name": "TRELLO_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Trello proxy"
+        }
+      ]
+    }
+  },
+  {
+    "id": "monday",
+    "display_name": "Monday.com",
+    "category": "Dev / Collaboration / Project",
+    "description": "Project and workflow boards",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "monday",
+      "type": "http_openapi",
+      "openapi_url_env": "MONDAY_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "MONDAY_API_TOKEN"
+        },
+        {
+          "name": "MONDAY_OPENAPI_URL",
+          "description": "GraphQL wrapper spec URL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "clickup",
+    "display_name": "ClickUp",
+    "category": "Dev / Collaboration / Project",
+    "description": "Tasks and docs",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "clickup",
+      "type": "http_openapi",
+      "openapi_url_env": "CLICKUP_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "CLICKUP_API_TOKEN"
+        },
+        {
+          "name": "CLICKUP_OPENAPI_URL",
+          "description": "OpenAPI spec URL for ClickUp"
+        }
+      ]
+    }
+  },
+  {
+    "id": "figma",
+    "display_name": "Figma",
+    "category": "Dev / Collaboration / Project",
+    "description": "Design and file access",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "figma",
+      "type": "http_openapi",
+      "openapi_url_env": "FIGMA_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "FIGMA_PERSONAL_ACCESS_TOKEN"
+        },
+        {
+          "name": "FIGMA_TEAM_ID",
+          "description": "Optional team or file scope"
+        },
+        {
+          "name": "FIGMA_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Figma"
+        }
+      ]
+    }
+  },
+  {
+    "id": "sentry",
+    "display_name": "Sentry",
+    "category": "Dev / Collaboration / Project",
+    "description": "Error monitoring and alerts",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "sentry",
+      "type": "http_openapi",
+      "openapi_url": "https://raw.githubusercontent.com/getsentry/sentry-api-schema/main/openapi-derefed.json",
+      "env_vars": [
+        {
+          "name": "SENTRY_AUTH_TOKEN"
+        },
+        {
+          "name": "SENTRY_ORG"
+        },
+        {
+          "name": "SENTRY_PROJECT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "hubspot",
+    "display_name": "HubSpot",
+    "category": "CRM / Sales / Support",
+    "description": "CRM, marketing, and deals",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "hubspot",
+      "type": "http_openapi",
+      "openapi_url": "https://api.hubspot.com/api/openapi.json",
+      "env_vars": [
+        {
+          "name": "HUBSPOT_API_KEY"
+        }
+      ]
+    }
+  },
+  {
+    "id": "salesforce",
+    "display_name": "Salesforce",
+    "category": "CRM / Sales / Support",
+    "description": "CRM and sales automation",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "salesforce",
+      "type": "http_openapi",
+      "openapi_url_env": "SALESFORCE_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "SALESFORCE_CLIENT_ID"
+        },
+        {
+          "name": "SALESFORCE_CLIENT_SECRET"
+        },
+        {
+          "name": "SALESFORCE_USERNAME"
+        },
+        {
+          "name": "SALESFORCE_PASSWORD"
+        },
+        {
+          "name": "SALESFORCE_SECURITY_TOKEN"
+        },
+        {
+          "name": "SALESFORCE_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Salesforce proxy"
+        }
+      ]
+    }
+  },
+  {
+    "id": "pipedrive",
+    "display_name": "Pipedrive",
+    "category": "CRM / Sales / Support",
+    "description": "Pipeline and CRM",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "pipedrive",
+      "type": "http_openapi",
+      "openapi_url": "https://developers.pipedrive.com/docs/api/v1/openapi.yaml",
+      "env_vars": [
+        {
+          "name": "PIPEDRIVE_API_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "close",
+    "display_name": "Close",
+    "category": "CRM / Sales / Support",
+    "description": "Sales engagement",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "close",
+      "type": "http_openapi",
+      "openapi_url_env": "CLOSE_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "CLOSE_API_KEY"
+        },
+        {
+          "name": "CLOSE_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Close"
+        }
+      ]
+    }
+  },
+  {
+    "id": "zendesk",
+    "display_name": "Zendesk",
+    "category": "CRM / Sales / Support",
+    "description": "Support tickets and help desk",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "zendesk",
+      "type": "http_openapi",
+      "openapi_url_env": "ZENDESK_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "ZENDESK_SUBDOMAIN"
+        },
+        {
+          "name": "ZENDESK_EMAIL"
+        },
+        {
+          "name": "ZENDESK_API_TOKEN"
+        },
+        {
+          "name": "ZENDESK_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Zendesk"
+        }
+      ]
+    }
+  },
+  {
+    "id": "intercom",
+    "display_name": "Intercom",
+    "category": "CRM / Sales / Support",
+    "description": "Chat and product support",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "intercom",
+      "type": "http_openapi",
+      "openapi_url_env": "INTERCOM_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "INTERCOM_ACCESS_TOKEN"
+        },
+        {
+          "name": "INTERCOM_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Intercom"
+        }
+      ]
+    }
+  },
+  {
+    "id": "freshdesk",
+    "display_name": "Freshdesk",
+    "category": "CRM / Sales / Support",
+    "description": "Help desk and ticketing",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "freshdesk",
+      "type": "http_openapi",
+      "openapi_url_env": "FRESHDESK_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "FRESHDESK_DOMAIN",
+          "description": "e.g., yourcompany.freshdesk.com"
+        },
+        {
+          "name": "FRESHDESK_API_KEY"
+        },
+        {
+          "name": "FRESHDESK_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Freshdesk"
+        }
+      ]
+    }
+  },
+  {
+    "id": "stripe",
+    "display_name": "Stripe",
+    "category": "CRM / Sales / Support",
+    "description": "Payments, invoices, and customers",
+    "integration_status": "hosted",
+    "mcp": {
+      "server_name": "stripe",
+      "type": "http",
+      "url": "https://mcp.stripe.com",
+      "env_vars": [
+        {
+          "name": "STRIPE_SECRET_KEY"
+        }
+      ]
+    }
+  },
+  {
+    "id": "paypal",
+    "display_name": "PayPal",
+    "category": "CRM / Sales / Support",
+    "description": "Payments and payouts",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "paypal",
+      "type": "http_openapi",
+      "openapi_url_env": "PAYPAL_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "PAYPAL_CLIENT_ID"
+        },
+        {
+          "name": "PAYPAL_CLIENT_SECRET"
+        },
+        {
+          "name": "PAYPAL_ENV",
+          "description": "sandbox or live"
+        },
+        {
+          "name": "PAYPAL_OPENAPI_URL",
+          "description": "OpenAPI spec URL for PayPal"
+        }
+      ]
+    }
+  },
+  {
+    "id": "shopify",
+    "display_name": "Shopify",
+    "category": "CRM / Sales / Support",
+    "description": "E-commerce storefront and orders",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "shopify",
+      "type": "http_openapi",
+      "openapi_url_env": "SHOPIFY_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "SHOPIFY_STORE_DOMAIN",
+          "description": "e.g., myshop.myshopify.com"
+        },
+        {
+          "name": "SHOPIFY_ADMIN_TOKEN"
+        },
+        {
+          "name": "SHOPIFY_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Shopify"
+        }
+      ]
+    }
+  },
+  {
+    "id": "mailchimp",
+    "display_name": "Mailchimp",
+    "category": "Marketing / Content / Web",
+    "description": "Email marketing",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "mailchimp",
+      "type": "http_openapi",
+      "openapi_url_env": "MAILCHIMP_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "MAILCHIMP_API_KEY"
+        },
+        {
+          "name": "MAILCHIMP_SERVER_PREFIX",
+          "description": "e.g., us21"
+        },
+        {
+          "name": "MAILCHIMP_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Mailchimp"
+        }
+      ]
+    }
+  },
+  {
+    "id": "sendgrid",
+    "display_name": "SendGrid",
+    "category": "Marketing / Content / Web",
+    "description": "Transactional email",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "sendgrid",
+      "type": "http_openapi",
+      "openapi_url_env": "SENDGRID_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "SENDGRID_API_KEY"
+        },
+        {
+          "name": "SENDGRID_OPENAPI_URL",
+          "description": "OpenAPI spec URL for SendGrid"
+        }
+      ]
+    }
+  },
+  {
+    "id": "klaviyo",
+    "display_name": "Klaviyo",
+    "category": "Marketing / Content / Web",
+    "description": "Lifecycle marketing",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "klaviyo",
+      "type": "http_openapi",
+      "openapi_url_env": "KLAVIYO_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "KLAVIYO_PRIVATE_KEY"
+        },
+        {
+          "name": "KLAVIYO_PUBLIC_KEY",
+          "description": "Optional public token for client-side endpoints"
+        },
+        {
+          "name": "KLAVIYO_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Klaviyo"
+        }
+      ]
+    }
+  },
+  {
+    "id": "hootsuite",
+    "display_name": "Hootsuite",
+    "category": "Marketing / Content / Web",
+    "description": "Social media scheduling",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "hootsuite",
+      "type": "http_openapi",
+      "openapi_url_env": "HOOTSUITE_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "HOOTSUITE_CLIENT_ID"
+        },
+        {
+          "name": "HOOTSUITE_CLIENT_SECRET"
+        },
+        {
+          "name": "HOOTSUITE_REFRESH_TOKEN"
+        },
+        {
+          "name": "HOOTSUITE_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Hootsuite"
+        }
+      ]
+    }
+  },
+  {
+    "id": "buffer",
+    "display_name": "Buffer",
+    "category": "Marketing / Content / Web",
+    "description": "Social posting",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "buffer",
+      "type": "http_openapi",
+      "openapi_url_env": "BUFFER_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "BUFFER_ACCESS_TOKEN"
+        },
+        {
+          "name": "BUFFER_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Buffer"
+        }
+      ]
+    }
+  },
+  {
+    "id": "google_analytics",
+    "display_name": "Google Analytics",
+    "category": "Marketing / Content / Web",
+    "description": "Web and product analytics",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "google-analytics",
+      "type": "http_openapi",
+      "openapi_url_env": "GA_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "GA_PROPERTY_ID"
+        },
+        {
+          "name": "GA_CLIENT_EMAIL",
+          "description": "Service account email"
+        },
+        {
+          "name": "GA_PRIVATE_KEY",
+          "description": "Service account private key"
+        },
+        {
+          "name": "GA_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Analytics wrapper"
+        }
+      ]
+    }
+  },
+  {
+    "id": "wordpress_com",
+    "display_name": "WordPress.com",
+    "category": "Marketing / Content / Web",
+    "description": "Hosted WordPress sites",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "wordpress",
+      "type": "http_openapi",
+      "openapi_url_env": "WORDPRESS_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "WORDPRESS_CLIENT_ID"
+        },
+        {
+          "name": "WORDPRESS_CLIENT_SECRET"
+        },
+        {
+          "name": "WORDPRESS_TOKEN"
+        },
+        {
+          "name": "WORDPRESS_OPENAPI_URL",
+          "description": "OpenAPI spec URL for WordPress"
+        }
+      ]
+    }
+  },
+  {
+    "id": "squarespace",
+    "display_name": "Squarespace",
+    "category": "Marketing / Content / Web",
+    "description": "Site builder and commerce",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "squarespace",
+      "type": "http_openapi",
+      "openapi_url_env": "SQUARESPACE_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "SQUARESPACE_API_KEY"
+        },
+        {
+          "name": "SQUARESPACE_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Squarespace"
+        }
+      ]
+    }
+  },
+  {
+    "id": "wix",
+    "display_name": "Wix",
+    "category": "Marketing / Content / Web",
+    "description": "Site builder and bookings",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "wix",
+      "type": "http_openapi",
+      "openapi_url_env": "WIX_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "WIX_APP_ID"
+        },
+        {
+          "name": "WIX_APP_SECRET"
+        },
+        {
+          "name": "WIX_REFRESH_TOKEN"
+        },
+        {
+          "name": "WIX_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Wix"
+        }
+      ]
+    }
+  },
+  {
+    "id": "calendly",
+    "display_name": "Calendly",
+    "category": "Marketing / Content / Web",
+    "description": "Scheduling links and bookings",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "calendly",
+      "type": "http_openapi",
+      "openapi_url": "https://developer.calendly.com/api-docs/openapi.json",
+      "env_vars": [
+        {
+          "name": "CALENDLY_PERSONAL_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "quickbooks_online",
+    "display_name": "QuickBooks Online",
+    "category": "Finance / Ops / Data",
+    "description": "Accounting and invoicing",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "quickbooks",
+      "type": "http_openapi",
+      "openapi_url_env": "QBO_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "QBO_CLIENT_ID"
+        },
+        {
+          "name": "QBO_CLIENT_SECRET"
+        },
+        {
+          "name": "QBO_REFRESH_TOKEN"
+        },
+        {
+          "name": "QBO_REALM_ID"
+        },
+        {
+          "name": "QBO_OPENAPI_URL",
+          "description": "OpenAPI spec URL for QuickBooks"
+        }
+      ]
+    }
+  },
+  {
+    "id": "xero",
+    "display_name": "Xero",
+    "category": "Finance / Ops / Data",
+    "description": "Accounting and payroll",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "xero",
+      "type": "http_openapi",
+      "openapi_url": "https://raw.githubusercontent.com/XeroAPI/Xero-OpenAPI/master/xero_accounting.yaml",
+      "env_vars": [
+        {
+          "name": "XERO_CLIENT_ID"
+        },
+        {
+          "name": "XERO_CLIENT_SECRET"
+        },
+        {
+          "name": "XERO_TENANT_ID"
+        },
+        {
+          "name": "XERO_REFRESH_TOKEN"
+        }
+      ]
+    }
+  },
+  {
+    "id": "gusto",
+    "display_name": "Gusto",
+    "category": "Finance / Ops / Data",
+    "description": "Payroll and HR",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "gusto",
+      "type": "http_openapi",
+      "openapi_url_env": "GUSTO_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "GUSTO_API_TOKEN"
+        },
+        {
+          "name": "GUSTO_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Gusto"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rippling",
+    "display_name": "Rippling",
+    "category": "Finance / Ops / Data",
+    "description": "HR and payroll",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "rippling",
+      "type": "http_openapi",
+      "openapi_url_env": "RIPPLING_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "RIPPLING_API_TOKEN"
+        },
+        {
+          "name": "RIPPLING_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Rippling"
+        }
+      ]
+    }
+  },
+  {
+    "id": "airtable",
+    "display_name": "Airtable",
+    "category": "Finance / Ops / Data",
+    "description": "Lightweight database and ops tools",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "airtable",
+      "type": "http_openapi",
+      "openapi_url_env": "AIRTABLE_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "AIRTABLE_API_KEY",
+          "description": "Personal access token"
+        },
+        {
+          "name": "AIRTABLE_BASE_ID",
+          "description": "Optional: default base ID"
+        },
+        {
+          "name": "AIRTABLE_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Airtable"
+        }
+      ]
+    }
+  },
+  {
+    "id": "smartsheet",
+    "display_name": "Smartsheet",
+    "category": "Finance / Ops / Data",
+    "description": "Sheets and automation",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "smartsheet",
+      "type": "http_openapi",
+      "openapi_url_env": "SMARTSHEET_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "SMARTSHEET_ACCESS_TOKEN"
+        },
+        {
+          "name": "SMARTSHEET_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Smartsheet"
+        }
+      ]
+    }
+  },
+  {
+    "id": "google_sheets",
+    "display_name": "Google Sheets",
+    "category": "Finance / Ops / Data",
+    "description": "Spreadsheet automation via Drive",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "google-sheets",
+      "type": "http_openapi",
+      "openapi_url_env": "GOOGLE_SHEETS_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "GOOGLE_SHEETS_CREDENTIALS_JSON",
+          "description": "Service account credentials JSON"
+        },
+        {
+          "name": "GOOGLE_SHEETS_TOKEN_JSON",
+          "description": "OAuth token JSON if using user auth"
+        },
+        {
+          "name": "GOOGLE_SHEETS_OPENAPI_URL",
+          "description": "OpenAPI spec URL for Sheets wrapper"
+        }
+      ]
+    }
+  },
+  {
+    "id": "docusign",
+    "display_name": "DocuSign",
+    "category": "Finance / Ops / Data",
+    "description": "E-signature workflows",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "docusign",
+      "type": "http_openapi",
+      "openapi_url": "https://raw.githubusercontent.com/docusign/postman-collections/master/DocuSign%20eSignature%20REST%20API%20Specification/DSEPAI.yaml",
+      "env_vars": [
+        {
+          "name": "DOCUSIGN_INTEGRATOR_KEY"
+        },
+        {
+          "name": "DOCUSIGN_USER_ID"
+        },
+        {
+          "name": "DOCUSIGN_PRIVATE_KEY",
+          "description": "PEM formatted private key"
+        }
+      ]
+    }
+  },
+  {
+    "id": "pandadoc",
+    "display_name": "PandaDoc",
+    "category": "Finance / Ops / Data",
+    "description": "Docs and e-sign",
+    "integration_status": "openapi",
+    "mcp": {
+      "server_name": "pandadoc",
+      "type": "http_openapi",
+      "openapi_url": "https://developers.pandadoc.com/openapi.json",
+      "env_vars": [
+        {
+          "name": "PANDADOC_API_KEY"
+        }
+      ]
+    }
+  },
+  {
+    "id": "custom_http_api",
+    "display_name": "Custom HTTP API",
+    "category": "Finance / Ops / Data",
+    "description": "Your niche or internal tool",
+    "integration_status": "proxy",
+    "mcp": {
+      "server_name": "custom-http-api",
+      "type": "http_openapi",
+      "openapi_url_env": "CUSTOM_API_OPENAPI_URL",
+      "env_vars": [
+        {
+          "name": "CUSTOM_API_KEY",
+          "description": "API key or token used by your wrapper"
+        },
+        {
+          "name": "CUSTOM_API_OPENAPI_URL",
+          "description": "OpenAPI spec URL for the custom API"
+        }
+      ]
+    }
+  }
+]
