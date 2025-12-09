@@ -1,0 +1,352 @@
+[
+  {
+    "id": "google_drive",
+    "display_name": "Google Drive",
+    "category": "Storage / Productivity",
+    "description": "Files, Docs, Sheets, Slides",
+    "integration_status": "native"
+  },
+  {
+    "id": "microsoft_365_onedrive",
+    "display_name": "Microsoft 365 / OneDrive",
+    "category": "Storage / Productivity",
+    "description": "Files and collaboration via Microsoft Graph",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "dropbox",
+    "display_name": "Dropbox",
+    "category": "Storage / Productivity",
+    "description": "File sync and sharing",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "box",
+    "display_name": "Box",
+    "category": "Storage / Productivity",
+    "description": "Enterprise file storage",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "notion",
+    "display_name": "Notion",
+    "category": "Storage / Productivity",
+    "description": "Docs, wiki, and database workspace",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "evernote",
+    "display_name": "Evernote",
+    "category": "Storage / Productivity",
+    "description": "Notes and personal knowledge base",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "slack",
+    "display_name": "Slack",
+    "category": "Storage / Productivity",
+    "description": "Channels, messages, and DMs",
+    "integration_status": "native"
+  },
+  {
+    "id": "zoom",
+    "display_name": "Zoom",
+    "category": "Storage / Productivity",
+    "description": "Meetings and recordings",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "github",
+    "display_name": "GitHub",
+    "category": "Dev / Collaboration / Project",
+    "description": "Source control and pull requests",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "gitlab",
+    "display_name": "GitLab",
+    "category": "Dev / Collaboration / Project",
+    "description": "Source control and CI/CD",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "bitbucket",
+    "display_name": "Bitbucket",
+    "category": "Dev / Collaboration / Project",
+    "description": "Source control (Atlassian)",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "linear",
+    "display_name": "Linear",
+    "category": "Dev / Collaboration / Project",
+    "description": "Issue tracking (GraphQL)",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "jira",
+    "display_name": "Jira",
+    "category": "Dev / Collaboration / Project",
+    "description": "Atlassian issue tracking",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "confluence",
+    "display_name": "Confluence",
+    "category": "Dev / Collaboration / Project",
+    "description": "Atlassian docs and wiki",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "asana",
+    "display_name": "Asana",
+    "category": "Dev / Collaboration / Project",
+    "description": "Project and task management",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "trello",
+    "display_name": "Trello",
+    "category": "Dev / Collaboration / Project",
+    "description": "Kanban boards",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "monday",
+    "display_name": "Monday.com",
+    "category": "Dev / Collaboration / Project",
+    "description": "Project and workflow boards",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "clickup",
+    "display_name": "ClickUp",
+    "category": "Dev / Collaboration / Project",
+    "description": "Tasks and docs",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "figma",
+    "display_name": "Figma",
+    "category": "Dev / Collaboration / Project",
+    "description": "Design and file access",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "sentry",
+    "display_name": "Sentry",
+    "category": "Dev / Collaboration / Project",
+    "description": "Error monitoring and alerts",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "hubspot",
+    "display_name": "HubSpot",
+    "category": "CRM / Sales / Support",
+    "description": "CRM, marketing, and deals",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "salesforce",
+    "display_name": "Salesforce",
+    "category": "CRM / Sales / Support",
+    "description": "CRM and sales automation",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "pipedrive",
+    "display_name": "Pipedrive",
+    "category": "CRM / Sales / Support",
+    "description": "Pipeline and CRM",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "close",
+    "display_name": "Close",
+    "category": "CRM / Sales / Support",
+    "description": "Sales engagement",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "zendesk",
+    "display_name": "Zendesk",
+    "category": "CRM / Sales / Support",
+    "description": "Support tickets and help desk",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "intercom",
+    "display_name": "Intercom",
+    "category": "CRM / Sales / Support",
+    "description": "Chat and product support",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "freshdesk",
+    "display_name": "Freshdesk",
+    "category": "CRM / Sales / Support",
+    "description": "Help desk and ticketing",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "stripe",
+    "display_name": "Stripe",
+    "category": "CRM / Sales / Support",
+    "description": "Payments, invoices, and customers",
+    "integration_status": "hosted"
+  },
+  {
+    "id": "paypal",
+    "display_name": "PayPal",
+    "category": "CRM / Sales / Support",
+    "description": "Payments and payouts",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "shopify",
+    "display_name": "Shopify",
+    "category": "CRM / Sales / Support",
+    "description": "E-commerce storefront and orders",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "mailchimp",
+    "display_name": "Mailchimp",
+    "category": "Marketing / Content / Web",
+    "description": "Email marketing",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "sendgrid",
+    "display_name": "SendGrid",
+    "category": "Marketing / Content / Web",
+    "description": "Transactional email",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "klaviyo",
+    "display_name": "Klaviyo",
+    "category": "Marketing / Content / Web",
+    "description": "Lifecycle marketing",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "hootsuite",
+    "display_name": "Hootsuite",
+    "category": "Marketing / Content / Web",
+    "description": "Social media scheduling",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "buffer",
+    "display_name": "Buffer",
+    "category": "Marketing / Content / Web",
+    "description": "Social posting",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "google_analytics",
+    "display_name": "Google Analytics",
+    "category": "Marketing / Content / Web",
+    "description": "Web and product analytics",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "wordpress_com",
+    "display_name": "WordPress.com",
+    "category": "Marketing / Content / Web",
+    "description": "Hosted WordPress sites",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "squarespace",
+    "display_name": "Squarespace",
+    "category": "Marketing / Content / Web",
+    "description": "Site builder and commerce",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "wix",
+    "display_name": "Wix",
+    "category": "Marketing / Content / Web",
+    "description": "Site builder and bookings",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "calendly",
+    "display_name": "Calendly",
+    "category": "Marketing / Content / Web",
+    "description": "Scheduling links and bookings",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "quickbooks_online",
+    "display_name": "QuickBooks Online",
+    "category": "Finance / Ops / Data",
+    "description": "Accounting and invoicing",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "xero",
+    "display_name": "Xero",
+    "category": "Finance / Ops / Data",
+    "description": "Accounting and payroll",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "gusto",
+    "display_name": "Gusto",
+    "category": "Finance / Ops / Data",
+    "description": "Payroll and HR",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "rippling",
+    "display_name": "Rippling",
+    "category": "Finance / Ops / Data",
+    "description": "HR and payroll",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "airtable",
+    "display_name": "Airtable",
+    "category": "Finance / Ops / Data",
+    "description": "Lightweight database and ops tools",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "smartsheet",
+    "display_name": "Smartsheet",
+    "category": "Finance / Ops / Data",
+    "description": "Sheets and automation",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "google_sheets",
+    "display_name": "Google Sheets",
+    "category": "Finance / Ops / Data",
+    "description": "Spreadsheet automation via Drive",
+    "integration_status": "proxy"
+  },
+  {
+    "id": "docusign",
+    "display_name": "DocuSign",
+    "category": "Finance / Ops / Data",
+    "description": "E-signature workflows",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "pandadoc",
+    "display_name": "PandaDoc",
+    "category": "Finance / Ops / Data",
+    "description": "Docs and e-sign",
+    "integration_status": "openapi"
+  },
+  {
+    "id": "custom_http_api",
+    "display_name": "Custom HTTP API",
+    "category": "Finance / Ops / Data",
+    "description": "Your niche or internal tool",
+    "integration_status": "proxy"
+  }
+]

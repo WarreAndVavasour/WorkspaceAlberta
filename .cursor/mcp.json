@@ -1,0 +1,38 @@
+{
+  "servers": {
+    "hootsuite": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "your-openapi-mcp-wrapper"
+      ],
+      "env": {
+        "OPENAPI_SPEC_URL": "${env:HOOTSUITE_OPENAPI_URL}",
+        "HOOTSUITE_CLIENT_ID": "${env:HOOTSUITE_CLIENT_ID}",
+        "HOOTSUITE_CLIENT_SECRET": "${env:HOOTSUITE_CLIENT_SECRET}",
+        "HOOTSUITE_REFRESH_TOKEN": "${env:HOOTSUITE_REFRESH_TOKEN}",
+        "HOOTSUITE_OPENAPI_URL": "${env:HOOTSUITE_OPENAPI_URL}"
+      }
+    },
+    "shopify": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "your-openapi-mcp-wrapper"
+      ],
+      "env": {
+        "OPENAPI_SPEC_URL": "${env:SHOPIFY_OPENAPI_URL}",
+        "SHOPIFY_STORE_DOMAIN": "${env:SHOPIFY_STORE_DOMAIN}",
+        "SHOPIFY_ADMIN_TOKEN": "${env:SHOPIFY_ADMIN_TOKEN}",
+        "SHOPIFY_OPENAPI_URL": "${env:SHOPIFY_OPENAPI_URL}"
+      }
+    },
+    "stripe": {
+      "type": "http",
+      "url": "https://mcp.stripe.com",
+      "env": {
+        "STRIPE_SECRET_KEY": "${env:STRIPE_SECRET_KEY}"
+      }
+    }
+  }
+}
