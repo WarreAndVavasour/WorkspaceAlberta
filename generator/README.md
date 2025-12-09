@@ -44,3 +44,72 @@ Use `writeWorkspaceFiles(root, selection, options)` to emit the three files to d
 - Wire the OpenAPI MCP wrapper you plan to ship (replace `your-openapi-mcp-wrapper` in `generator.ts`).
 - Decide default endpoints for `proxy` tools (e.g., local gateway vs. cloud host) and set the `*_OPENAPI_URL` values accordingly.
 - Add UI copy that maps the catalog `description` + `category` into the selection list.
+
+---
+
+## Codespace Generator (NEW)
+
+The `codespace-generator.ts` extends the original generator to create complete GitHub Codespace configurations that business owners can launch with one click.
+
+### What it generates
+
+```
+output-directory/
+├── .devcontainer/
+│   ├── devcontainer.json    # Full Codespace configuration
+│   └── setup.sh             # Post-create setup script
+├── .vscode/
+│   └── mcp.json             # MCP server definitions for VS Code
+├── docs/
+│   └── WELCOME.md           # Personalized welcome guide
+├── problems/
+│   └── business-problem.md  # Business problem documentation
+└── README.md                # Quick start with Codespaces badge
+```
+
+### Usage
+
+```bash
+# Generate a complete Codespace-ready workspace
+BUSINESS_PROBLEM="I want to track customer payments and send follow-up emails automatically" \
+npx ts-node generator/codespace-generator.ts ./output "My Business Workspace" "John Doe" stripe google_calendar github
+```
+
+### Programmatic Usage
+
+```ts
+import { writeCodespaceFiles, CodespaceConfig } from "./codespace-generator";
+import { loadCatalog, selectTools } from "./generator";
+
+const catalog = loadCatalog();
+const tools = selectTools(catalog, ["stripe", "google_calendar", "github"]);
+
+const config: CodespaceConfig = {
+  workspaceName: "My Business Workspace",
+  businessProblem: "I want to track customer payments and send follow-up emails",
+  ownerName: "John Doe",
+  tools,
+};
+
+writeCodespaceFiles("./output", config, "myorg/my-workspace-repo");
+```
+
+### Features
+
+- **Pre-configured devcontainer.json** - Includes Node.js, Python, GitHub CLI, and recommended VS Code extensions
+- **MCP servers auto-configured** - Based on selected tools from the catalog
+- **Secrets management** - Lists required secrets with descriptions; prompts users in Codespaces
+- **Welcome documentation** - Auto-opens when Codespace launches
+- **One-click launch** - README includes Codespaces badge for instant access
+
+### Integration with GitHub API
+
+To create repositories programmatically with this configuration:
+
+1. Generate the Codespace config files
+2. Use GitHub API to create repo from template (or new repo)
+3. Push generated files to the repository
+4. Set repository/organization secrets via API
+5. Share the Codespaces URL with the business owner
+
+See `docs/codespaces-as-a-service-research.md` for the full architecture documentation.
