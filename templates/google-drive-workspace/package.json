@@ -1,0 +1,15 @@
+{
+  "name": "google-drive-workspace",
+  "version": "1.0.0",
+  "description": "Pre-configured workspace for Google Drive MCP integration",
+  "scripts": {
+    "setup": "node scripts/oauth-setup.js",
+    "test-drive": "node scripts/test-connection.js",
+    "check-secrets": "node scripts/check-secrets.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "googleapis": "^128.0.0",
+    "open": "^9.1.0"
+  }
+}
