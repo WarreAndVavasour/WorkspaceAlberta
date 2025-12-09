@@ -1,0 +1,28 @@
+
+\begin{tikzpicture}[node distance=1.5cm and 2cm]
+    % Web App
+    \node[primarybox, minimum width=3cm, minimum height=1.5cm] (webapp) {Your Web App\\(Tool Selection)};
+    
+    % Generator
+    \node[primarybox, minimum width=3cm, minimum height=1.5cm, right=2cm of webapp] (generator) {Generator\\(This Repo)};
+    
+    % GitHub API
+    \node[secondarybox, minimum width=3cm, minimum height=1.5cm, right=2cm of generator] (api) {GitHub API};
+    
+    % User's Repo
+    \node[successbox, minimum width=3cm, minimum height=1.5cm, below=2cm of api] (repo) {User's Repo\\(In their account)};
+    
+    % Codespace
+    \node[successbox, minimum width=3cm, minimum height=1.5cm, below=1.5cm of repo] (codespace) {Codespace\\(Pre-configured)};
+    
+    % Arrows
+    \draw[arrow] (webapp) -- node[label, above] {config} (generator);
+    \draw[arrow] (generator) -- node[label, above] {create repo} (api);
+    \draw[arrow] (api) -- node[label, right] {in user's\\account} (repo);
+    \draw[arrow] (repo) -- node[label, right] {launch} (codespace);
+    
+    % User flow
+    \node[box, below=2cm of webapp] (user) {Business Owner};
+    \draw[arrow] (user) -- node[label, left] {selects tools} (webapp);
+    \draw[dashedarrow, bend right=30] (user.east) to node[label, below] {opens workspace} (codespace.west);
+\end{tikzpicture}

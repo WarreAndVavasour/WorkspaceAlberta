@@ -1,0 +1,16 @@
+
+\begin{tikzpicture}[node distance=2cm]
+    % Nodes
+    \node[primarybox, minimum width=3.5cm] (you) {WorkspaceAlberta\\(Template Owner)};
+    \node[secondarybox, minimum width=3.5cm, right=3cm of you] (github) {GitHub Codespaces\\(Backend Host)};
+    \node[successbox, minimum width=3.5cm, below=2.5cm of $(you)!0.5!(github)$] (users) {Business Users\\(Each with own setup)};
+    
+    % Arrows
+    \draw[arrow] (you) -- node[label, above] {Template configs} (github);
+    \draw[arrow] (github) -- node[label, right, align=left] {Auth \& hosting} (users);
+    \draw[dashedarrow] (you) -- node[label, left, align=right] {You control\\setup process} (users);
+    
+    % Labels
+    \node[label, above=0.3cm of you] {YOU CONTROL};
+    \node[label, above=0.3cm of github] {GITHUB HOSTS};
+\end{tikzpicture}

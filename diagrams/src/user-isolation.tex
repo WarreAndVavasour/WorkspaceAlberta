@@ -1,0 +1,22 @@
+
+\begin{tikzpicture}[node distance=1.5cm]
+    % Template
+    \node[primarybox, minimum width=4cm] (template) {Your Template Repo};
+    
+    % Users
+    \node[successbox, below left=2cm and 0.5cm of template] (user1) {User A's Repo\\+ Codespace};
+    \node[successbox, below=2cm of template] (user2) {User B's Repo\\+ Codespace};
+    \node[successbox, below right=2cm and 0.5cm of template] (user3) {User C's Repo\\+ Codespace};
+    
+    % Arrows
+    \draw[arrow] (template) -- node[label, left] {copy} (user1);
+    \draw[arrow] (template) -- node[label, right] {copy} (user2);
+    \draw[arrow] (template) -- node[label, right] {copy} (user3);
+    
+    % Isolation boxes
+    \begin{scope}[on background layer]
+        \node[draw=success, dashed, rounded corners, fit=(user1), inner sep=8pt, label=below:{\scriptsize Their account}] {};
+        \node[draw=success, dashed, rounded corners, fit=(user2), inner sep=8pt, label=below:{\scriptsize Their account}] {};
+        \node[draw=success, dashed, rounded corners, fit=(user3), inner sep=8pt, label=below:{\scriptsize Their account}] {};
+    \end{scope}
+\end{tikzpicture}
