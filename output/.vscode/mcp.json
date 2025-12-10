@@ -1,0 +1,36 @@
+{
+  "$schema": "https://code.visualstudio.com/schemas/mcp.json",
+  "servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ],
+      "env": {}
+    },
+    "google-drive": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-google-drive"
+      ],
+      "env": {
+        "GOOGLE_DRIVE_CREDENTIALS_JSON": "${env:GOOGLE_DRIVE_CREDENTIALS_JSON}",
+        "GOOGLE_DRIVE_TOKEN_JSON": "${env:GOOGLE_DRIVE_TOKEN_JSON}"
+      }
+    },
+    "slack": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-slack-server"
+      ],
+      "env": {
+        "SLACK_BOT_TOKEN": "${env:SLACK_BOT_TOKEN}",
+        "SLACK_APP_TOKEN": "${env:SLACK_APP_TOKEN}"
+      }
+    }
+  }
+}

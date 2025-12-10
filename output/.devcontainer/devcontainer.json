@@ -1,0 +1,123 @@
+{
+  "name": "WorkspaceAlberta - Marketing Content Assistant",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "chat.mcp.discovery.enabled": true,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 1000
+      }
+    },
+    "codespaces": {
+      "openFiles": [
+        "docs/WELCOME.md",
+        "problems/business-problem.md"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "echo 'Workspace ready! Open docs/WELCOME.md to get started.'",
+  "secrets": {
+    "recommended": [
+      {
+        "name": "GOOGLE_DRIVE_CREDENTIALS_JSON",
+        "description": "Service account or OAuth credentials JSON"
+      },
+      {
+        "name": "GOOGLE_DRIVE_TOKEN_JSON",
+        "description": "OAuth token JSON for your user"
+      },
+      {
+        "name": "SLACK_BOT_TOKEN",
+        "description": "API key for Slack"
+      },
+      {
+        "name": "SLACK_APP_TOKEN",
+        "description": "API key for Slack"
+      },
+      {
+        "name": "BUFFER_ACCESS_TOKEN",
+        "description": "API key for Buffer"
+      },
+      {
+        "name": "BUFFER_OPENAPI_URL",
+        "description": "OpenAPI spec URL for Buffer"
+      },
+      {
+        "name": "MAILCHIMP_API_KEY",
+        "description": "API key for Mailchimp"
+      },
+      {
+        "name": "MAILCHIMP_SERVER_PREFIX",
+        "description": "e.g., us21"
+      },
+      {
+        "name": "MAILCHIMP_OPENAPI_URL",
+        "description": "OpenAPI spec URL for Mailchimp"
+      },
+      {
+        "name": "GA_PROPERTY_ID",
+        "description": "API key for Google Analytics"
+      },
+      {
+        "name": "GA_CLIENT_EMAIL",
+        "description": "Service account email"
+      },
+      {
+        "name": "GA_PRIVATE_KEY",
+        "description": "Service account private key"
+      },
+      {
+        "name": "GA_OPENAPI_URL",
+        "description": "OpenAPI spec URL for Analytics wrapper"
+      },
+      {
+        "name": "CALENDLY_PERSONAL_TOKEN",
+        "description": "API key for Calendly"
+      },
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "description": "Your Anthropic API key for Claude (get from console.anthropic.com)"
+      }
+    ]
+  },
+  "forwardPorts": [
+    3000,
+    8080,
+    5000
+  ],
+  "containerEnv": {
+    "WORKSPACE_TYPE": "small-business",
+    "WORKSPACE_NAME": "Marketing Content Assistant",
+    "NODE_ENV": "development"
+  },
+  "remoteEnv": {
+    "GITHUB_USER": "${localEnv:GITHUB_USER}"
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "32gb"
+  }
+}
