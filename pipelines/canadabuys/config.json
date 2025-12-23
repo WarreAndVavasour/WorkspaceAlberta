@@ -1,0 +1,116 @@
+{
+  "sources": {
+    "ckan_package_show": "https://open.canada.ca/data/api/action/package_show?id=6abd20d4-7a1c-4b38-baa2-9525d0bb2fd2",
+    "open_tenders_csv": "https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv",
+    "new_tenders_csv": "https://canadabuys.canada.ca/opendata/pub/newTenderNotice-nouvelAvisAppelOffres.csv",
+    "awards_package_show": "https://open.canada.ca/data/api/action/package_show?id=a1acb126-9ce8-40a9-b889-5da2b1dd20cb",
+    "contract_history_package_show": "https://open.canada.ca/data/api/action/package_show?id=4fe645a1-ffcd-40c1-9385-2c771be956a4",
+    "data_dictionary_xml": "https://donnees-data.tpsgc-pwgsc.gc.ca/ba2/ac-cb/achatscanada-canadabuys-dd.xml"
+  },
+  "filters": {
+    "regions": [
+      "Alberta"
+    ]
+  },
+  "industries": {
+    "steel": {
+      "macro_unspsc": [
+        "11101760"
+      ],
+      "commodity_unspsc": [
+        "11101600",
+        "30101700",
+        "11101601",
+        "11101603"
+      ],
+      "feeders": {
+        "upstream": [
+          "11101500"
+        ],
+        "midstream": [
+          "23240000"
+        ],
+        "downstream": [
+          "25100000",
+          "22100000",
+          "30100000"
+        ]
+      },
+      "keywords": [
+        "steel",
+        "stainless",
+        "carbon steel",
+        "structural steel"
+      ]
+    },
+    "lumber": {
+      "macro_unspsc": [
+        "11120000"
+      ],
+      "commodity_unspsc": [
+        "30103600",
+        "11121600",
+        "30161500"
+      ],
+      "feeders": {
+        "upstream": [
+          "11121500",
+          "70110000"
+        ],
+        "midstream": [
+          "23101500"
+        ],
+        "downstream": [
+          "30100000",
+          "31000000"
+        ]
+      },
+      "keywords": [
+        "lumber",
+        "wood",
+        "timber",
+        "log",
+        "sawmill",
+        "planing"
+      ]
+    },
+    "aluminum": {
+      "macro_unspsc": [
+        "11110000"
+      ],
+      "commodity_unspsc": [
+        "11111605",
+        "30102400",
+        "11101600"
+      ],
+      "feeders": {
+        "upstream": [
+          "11101600"
+        ],
+        "midstream": [
+          "23241600"
+        ],
+        "downstream": [
+          "25130000",
+          "24120000"
+        ]
+      },
+      "keywords": [
+        "aluminum",
+        "aluminium",
+        "bauxite"
+      ]
+    }
+  },
+  "segments": {
+    "materials": [
+      "11"
+    ],
+    "machinery": [
+      "23"
+    ],
+    "construction": [
+      "30"
+    ]
+  }
+}

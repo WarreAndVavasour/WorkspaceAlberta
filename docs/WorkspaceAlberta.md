@@ -90,3 +90,9 @@ WorkspaceAlberta/
 - Task T-2025-12-001 created
 - GitHub repo created: https://github.com/HarleyCoops/WorkspaceAlberta
 - Initial files pushed: README, .env.example, .gitignore, small-business.mdc rules, docs, mcp-config template
+
+### 2025-12-23
+- Built CanadaBuys MVP pipeline (CKAN + CanadaBuys CSV feeds)
+- Added Alberta + Steel/Lumber/Aluminum UNSPSC filtering and keyword matching
+- Generated per-tender markdown summaries with supporting document links
+- Added attachment checks and download sampling for public documents
