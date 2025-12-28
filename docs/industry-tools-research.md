@@ -44,14 +44,6 @@ Research compiled for building MCP tool integrations for custom IDEs.
 | **Opti-Sawmill** | Production planning & yield | `proxy` | Calculates optimal log diameter sorting |
 | **ROMI-RIP (USDA)** | Lumber cut-up simulation | `proxy` | Research-grade optimizer |
 
-### Pricing & Market Data
-
-| Tool | Description | Integration Status | Notes |
-|------|-------------|-------------------|-------|
-| **Commodities-API (Lumber)** | Real-time lumber futures | `openapi` | REST API available |
-| **Random Lengths (Fastmarkets)** | Industry-standard lumber pricing | `proxy` | 1,600+ price items, subscription required |
-| **ResourceWise** | Forest products commodity pricing | `proxy` | Stumpage 360 database |
-
 ### Certification & Chain of Custody
 
 | Tool | Description | Integration Status | Notes |
@@ -129,16 +121,6 @@ Research compiled for building MCP tool integrations for custom IDEs.
 
 ## Cross-Industry Tools
 
-### Metal Pricing APIs
-
-| Tool | Description | Integration Status | Notes |
-|------|-------------|-------------------|-------|
-| **Metals-API** | LME pricing data | `openapi` | **REST API**, gold/silver/base metals |
-| **LME Direct** | Official LME data | `proxy` | Real-time and historical |
-| **LSEG (Refinitiv)** | LME data feed | `proxy` | Low-latency trading data |
-| **Fastmarkets Dashboard** | LME/CME/SHFE pricing | `proxy` | Physical and exchange prices |
-| **Commodities-API** | Multiple commodities | `openapi` | **REST API**, 60-second updates |
-
 ### Industrial Weighing & Scale Integration
 
 | Tool | Description | Integration Status | Notes |
@@ -157,36 +139,6 @@ Research compiled for building MCP tool integrations for custom IDEs.
 
 ```json
 [
-  {
-    "id": "metals_api",
-    "display_name": "Metals-API (LME)",
-    "category": "Industrial / Metals",
-    "description": "LME base metals and precious metals pricing",
-    "integration_status": "openapi",
-    "mcp": {
-      "server_name": "metals-api",
-      "type": "http_openapi",
-      "openapi_url": "https://metals-api.com/documentation",
-      "env_vars": [
-        { "name": "METALS_API_KEY", "description": "API access key" }
-      ]
-    }
-  },
-  {
-    "id": "commodities_api_lumber",
-    "display_name": "Commodities-API (Lumber)",
-    "category": "Industrial / Lumber",
-    "description": "Real-time lumber futures and commodity pricing",
-    "integration_status": "openapi",
-    "mcp": {
-      "server_name": "commodities-api",
-      "type": "http_openapi",
-      "openapi_url": "https://commodities-api.com/documentation",
-      "env_vars": [
-        { "name": "COMMODITIES_API_KEY", "description": "API access key" }
-      ]
-    }
-  },
   {
     "id": "psdata_steel_api",
     "display_name": "PSData Steel API",
@@ -437,17 +389,15 @@ Research compiled for building MCP tool integrations for custom IDEs.
 
 ### APIs with Best Integration Potential
 
-1. **Metals-API / Commodities-API** - Public REST APIs with documentation
-2. **PSData Steel API** - Explicitly designed for integration
-3. **mScales / Arlyn AxChange** - Modern REST APIs for scale integration
-4. **AutoBarSizer** - XML interface for embedding in applications
+1. **PSData Steel API** - Explicitly designed for integration
+2. **mScales / Arlyn AxChange** - Modern REST APIs for scale integration
+3. **AutoBarSizer** - XML interface for embedding in applications
 
 ### Integration Challenges
 
 1. **Most ERP systems** require custom OpenAPI wrappers
-2. **Pricing data** (Random Lengths, LME) often subscription-based
-3. **Legacy systems** may only support file-based or EDI integration
-4. **On-premise software** may need local proxy servers
+2. **Legacy systems** may only support file-based or EDI integration
+3. **On-premise software** may need local proxy servers
 
 ### Industry Trends (2025)
 
@@ -469,8 +419,6 @@ Research compiled for building MCP tool integrations for custom IDEs.
 - [Tally-I/O](https://tally-io.com/)
 - [CutLog](https://www.cutlog.com/)
 - [Trimble Forestry](https://forestry.trimble.com/)
-- [Commodities-API Lumber](https://commodities-api.com/symbols/LUMBER)
-- [Fastmarkets Random Lengths](https://www.fastmarkets.com/forest-products/random-lengths-weekly-report/)
 
 ### Aluminum Industry
 - [Lighthouse ERP](https://www.lighthouseindia.com/Aluminum-Extrusion-Profiles-erp.html)
@@ -489,11 +437,6 @@ Research compiled for building MCP tool integrations for custom IDEs.
 - [MetalTrace MTR](https://www.traceapps.com/)
 - [Fast-Square CCO](https://www.fast-square.net/)
 - [AutoBarSizer](https://www.scapos.com/products/nesting-packing/autobarsizer-cutting-optimization-software.html)
-
-### Metal Pricing
-- [Metals-API](https://metals-api.com)
-- [LME Market Data](https://www.lme.com/Market-data)
-- [LSEG LME Data](https://www.lseg.com/en/data-analytics/financial-data/commodities-data/lme-data)
 
 ### Weighing Systems
 - [mScales API](https://www.mscales.com/documents/mscales-api-connection)
