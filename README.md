@@ -1,139 +1,55 @@
-# WorkspaceAlberta
+# WorkspaceAlberta: Specialized Workspace Generator for Primary Industries
 
-This repository is where we build a **workspace** tailored to your business.
+WorkspaceAlberta is a specialized **workspace generator** that automates the creation of high-context, intelligent environments. It is specifically engineered to support businesses in Alberta's **federal priority industries** (Steel, Lumber, and Aluminum) by providing an assistant (primarily **Claude**) that is pre-configured to reason across both internal business tools and the **CanadaBuys** federal contract data pipeline.
 
-A workspace is a place where we connect the tools you already use to an intelligent assistant so we can create a real solution to a real problem.
+This is a **generative environment factory** that uses the **Model Context Protocol (MCP)** to bridge the gap between advanced knowledge systems and industry-specific data.
 
-Before we build anything, we start with only two things:
+## Core Capabilities
 
-1. **A list of the tools and systems your business uses**
-2. **A clear description of one problem you wish you could finally solve**
+### 1. Automated Workspace Generation
+The system programmatically constructs personalized environments (local Cursor workspaces or GitHub Codespaces) pre-loaded with:
+*   **Intelligent Assistants**: Optimized for **Claude** (via the `anthropic.claude-code` extension) and Claude Code.
+*   **Model Context Protocol (MCP)**: Pre-configured servers that allow your assistant to securely interact with your specific business stack.
+*   **Industry Context**: Pre-defined rules and documentation tailored to Alberta's primary industrial sectors.
 
-You do **not** need to know anything technical.
-You do **not** need to describe steps or workflows.
-You do **not** need to tell us how you currently do the work.
+### 2. CanadaBuys Federal Data Integration
+The generator includes built-in pipelines for the **CanadaBuys** federal program. This provides your assistant with direct access to:
+*   **Live Tender Feeds**: Real-time government contract opportunities in Alberta.
+*   **Industry Matching**: Automatic filtering for Steel, Lumber, and Aluminum UNSPSC codes and keywords.
+*   **Expert Reasoning**: The ability for the assistant to analyze tender requirements against your company's actual capabilities and tools.
 
-This is about the *problem*, not the process.
-
----
-
-## 1. List every tool or system you use
-
-Create or edit the file:
-
-**`owner-tools-list.md`**
-
-Write down the names of:
-
-- Any software you use daily or monthly
-- Any system you log into
-- Any internal or custom tool
-- Any place where information lives
-- Any tool connected to a recurring business issue
-
-Examples:
-
-```
-Google Drive
-Gmail
-Slack
-QuickBooks Online
-Stripe
-Shopify
-Notion
-Monday.com
-A custom scheduling portal
-Excel sheets stored on a server
-```
-
-A simple list is perfect.
-The goal is to create a complete picture of the systems that might relate to your problem.
+### 3. MCP-Powered Tool Connectivity
+We leverage the **Model Context Protocol (MCP)** to grant your assistant secure access to your business tools. This allows the system to:
+*   **Read/Write**: Interact with spreadsheets, calendars, and documentation.
+*   **Integrate**: Connect disparate systems like QuickBooks, HubSpot, and Stripe.
+*   **Automate**: Perform complex workflows directly within the workspace based on natural language instructions.
 
 ---
 
-## 2. Describe one specific problem you wish you could solve
+## For Business Owners: How It Works
 
-Create or edit the file:
+WorkspaceAlberta removes the technical barrier to using advanced intelligent systems. We build the environment for you based on your unique business context.
 
-**`monthly-pain-point.md`**
+### Step 1: Define Your Stack
+Edit **`owner-tools-list.md`** and list every tool your business uses (e.g., Slack, Google Drive, QuickBooks, or custom internal systems). Our generator uses this to select the correct MCP servers for your workspace.
 
-Here, describe **a single business problem**, in plain language, as if speaking to someone helping you.
+### Step 2: Identify the Pain Point
+Edit **`monthly-pain-point.md`** and describe a specific business problem in plain language. 
+*   *Example: "I need to analyze CanadaBuys steel tenders and compare them to our current inventory and pricing in Excel."*
 
-### Important:
-You are **not** describing:
-
-- The steps you follow today
-- Your current workflow
-- The tasks involved
-- Any technical details
-- How things "should" work
-
-### Instead, describe **the problem itself** - the thing you wish you could finally solve.
-
-Use prompts like:
-
-- "I wish I could finally solve..."
-- "I wish AI could take care of..."
-- "The problem that keeps coming up is..."
-- "Every month we struggle with..."
-
-### Examples:
-
-```markdown
-I wish I could finally solve the problem of keeping customer follow-ups consistent.
-People fall through the cracks and I never have a clear view of who needs attention.
-
-I wish AI could help me solve the problem of always being behind on cash flow visibility.
-
-I wish we could solve the issue of job statuses being scattered across multiple systems
-and never up to date.
-
-I wish I could solve the problem of supplier invoices not matching what ends up
-recorded in our payment system.
-```
-
-**Tools involved (if you know them):**
-- Shopify
-- QuickBooks
-- Slack
-- Google Drive
-
-That's all we need.
-
-One problem. Stated clearly. No steps. No explanation of what you do today.
+### Step 3: Launch Your Workspace
+The generator produces a tailored configuration. When you open this in Cursor or GitHub Codespaces, you have a **pre-configured assistant** that already knows your tools, your industry, and the specific federal data related to your goal.
 
 ---
 
-## 3. What happens next
+## Technical Architecture
 
-Once you've added:
-
-- `owner-tools-list.md`
-- `monthly-pain-point.md`
-
-We will:
-
-1. **Build a personalized workspace** based on the tools you listed
-2. **Connect only the systems that matter** to your problem
-3. **Use this workspace, together**, to design and build the actual solution
-
-You don't need to architect anything.
-
-Your job is simply to:
-
-1. List your tools
-2. Identify one business problem you wish you could finally solve
-
-Everything else - design, integration, automation, and intelligence - happens here in the workspace.
-
----
-
-## Workspace generator (for maintainers)
-- See `generator/` for the 50-tool catalog and TypeScript helpers that produce `.cursor/mcp.json`, `env/.env.example`, and `docs/INTEGRATIONS.md` for any selected tool set.
-- Open `generator/README.md` for usage; the catalog lives in `generator/catalog.json`.
+*   **Generator (`generator/`)**: The core engine that loads the 50-tool `catalog.json` and emits `.cursor/mcp.json`, `.env` templates, and `INTEGRATIONS.md`.
+*   **Codespace Factory (`generator/codespace_generator.py`)**: Automates the creation of `devcontainer.json` and `.vscode/mcp.json` for one-click cloud environments.
+*   **Federal Pipeline (`pipelines/canadabuys/`)**: A CKAN-integrated Python engine that fetches and filters federal tender notices for Alberta priority sectors.
+*   **MCP SDK**: Every generated workspace includes the `@modelcontextprotocol/sdk` to facilitate tool-to-assistant communication.
 
 ---
 
 ## License
-
 MIT
