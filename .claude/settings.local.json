@@ -6,7 +6,12 @@
       "Bash(git branch:*)",
       "Bash(rm:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebSearch",
+      "WebFetch(domain:cme-mec.ca)",
+      "WebFetch(domain:www.jobbank.gc.ca)",
+      "WebFetch(domain:ised-isde.canada.ca)",
+      "WebFetch(domain:albertaforestproducts.ca)"
     ]
   }
 }
