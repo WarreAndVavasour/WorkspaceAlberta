@@ -1,4 +1,4 @@
-# AlbertaWorkspace
+# WorkspaceAlberta
 
 **No new subscription. No new password. No new system to learn.**
 
