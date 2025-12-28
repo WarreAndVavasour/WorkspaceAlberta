@@ -19,13 +19,13 @@ The core workflow:
 ### Generator (CLI)
 
 ```bash
-npx ts-node generator/generator.ts <tool_id> [tool_id...]
+python generator/generator.py <tool_id> [tool_id...]
 ```
 
 Example:
 
 ```bash
-npx ts-node generator/generator.ts google_drive slack github stripe
+python generator/generator.py google_drive slack github stripe
 ```
 
 This generates three files:
@@ -64,14 +64,14 @@ The frontend is a Next.js 14 app (TypeScript + React) intended as a web UI for t
 - `proxy` - Requires custom OpenAPI wrapper; expects `*_OPENAPI_URL` env var pointing to your wrapper
 - `hosted` - Remote MCP endpoint (e.g., Stripe's hosted server at `https://mcp.stripe.com`)
 
-**Generator Utilities ([generator/generator.ts](generator/generator.ts)):**
+**Generator Utilities ([generator/generator.py](generator/generator.py)):**
 
-- `loadCatalog()` - Loads and parses catalog.json
-- `selectTools(catalog, selectedIds)` - Validates and filters tools by ID
-- `buildMcpJson(selectedTools, options)` - Constructs Cursor's `.cursor/mcp.json` format
-- `buildEnvExample(selectedTools)` - Generates `.env.example` with all required vars (deduplicated)
-- `buildIntegrationsMd(selectedTools)` - Creates markdown documentation table
-- `writeWorkspaceFiles(root, selectedTools, options)` - Writes all three files to disk
+- `load_catalog()` - Loads and parses catalog.json
+- `select_tools(catalog, selected_ids)` - Validates and filters tools by ID
+- `build_mcp_json(selected_tools)` - Constructs Cursor's `.cursor/mcp.json` format
+- `build_env_example(selected_tools)` - Generates `.env.example` with all required vars (deduplicated)
+- `build_integrations_md(selected_tools)` - Creates markdown documentation table
+- `write_workspace_files(root, selected_tools)` - Writes all three files to disk
 
 **MCP Server Types:**
 
@@ -138,8 +138,8 @@ These are relative to the `root` parameter passed to `writeWorkspaceFiles()` (de
 The default OpenAPI wrapper command (`your-openapi-mcp-wrapper`) is a placeholder. Before production use:
 
 1. Implement or select an actual OpenAPI-to-MCP wrapper server
-2. Update `DEFAULT_OPENAPI_WRAPPER_COMMAND` and `DEFAULT_OPENAPI_WRAPPER_ARGS` in [generator/generator.ts](generator/generator.ts)
-3. Or pass custom values via `BuildOptions` when calling `buildMcpJson()`
+2. Update `DEFAULT_OPENAPI_WRAPPER_COMMAND` and `DEFAULT_OPENAPI_WRAPPER_ARGS` in [generator/generator.py](generator/generator.py)
+3. Or pass custom values when calling `build_mcp_json()`
 
 ## File Structure
 
@@ -164,7 +164,8 @@ WorkspaceAlberta/
 │   └── next.config.js              # Next.js config
 ├── generator/
 │   ├── catalog.json                # 50-tool catalog (single source of truth)
-│   ├── generator.ts                # Core generation utilities
+│   ├── generator.py                # Core generation utilities
+│   ├── codespace_generator.py      # GitHub Codespace configuration generator
 │   └── README.md                   # Generator documentation
 ├── .env.example                    # Static example env file
 ├── mcp-config.template.json        # Example MCP configuration
