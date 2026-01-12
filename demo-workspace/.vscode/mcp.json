@@ -1,0 +1,21 @@
+{
+  "$schema": "https://code.visualstudio.com/schemas/mcp.json",
+  "servers": {
+    "canadabuys": {
+      "command": "python",
+      "args": ["${workspaceFolder}/../mcp-servers/canadabuys/server.py"],
+      "env": {}
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"],
+      "env": {}
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {}
+    }
+  },
+  "inputs": []
+}

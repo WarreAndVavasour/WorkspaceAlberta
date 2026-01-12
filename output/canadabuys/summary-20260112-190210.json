@@ -1,0 +1,27 @@
+{
+  "attachment_download_attempted": 0,
+  "attachment_downloaded": 0,
+  "attachment_urls_checked": 0,
+  "attachment_urls_missing": 0,
+  "attachment_urls_ok": 0,
+  "attachment_urls_other": 0,
+  "attachment_urls_total": 117,
+  "generated_at_utc": "2026-01-12T19:02:10Z",
+  "industry_counts": {
+    "lumber": 16,
+    "steel": 7
+  },
+  "markdown_count": 20,
+  "markdown_dir": "C:\\Users\\chris\\WorkspaceAlberta\\output\\canadabuys\\projects",
+  "match_sources": {
+    "keyword": 15,
+    "unspsc": 7
+  },
+  "matched_total": 20,
+  "output_rows": 20,
+  "processed_total": 863,
+  "regions": [
+    "Alberta"
+  ],
+  "source": "https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv"
+}

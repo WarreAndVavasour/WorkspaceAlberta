@@ -1,10 +1,48 @@
 # WorkspaceAlberta
 
-**No new subscription. No new password. No new system to learn.**
+## The Last Mile of Work
+
+AI promised 5X productivity. Most small businesses got a chatbot that writes mediocre marketing copy.
+
+The model isn't the bottleneck. The connection is.
+
+Wiring up your QuickBooks to your calendar to your AI costs $150/hour. You need a developer. Most small businesses will never do this. That's the gap. That's where the 5X productivity is hiding.
+
+**WorkspaceAlberta solves the last mile**—pre-configured workspaces that already speak to the tools your industry uses.
+
+---
+
+## "Wouldn't It Be Great If..."
+
+This is how you use it. You describe a problem:
+
+> *"Wouldn't it be great if I could see all government contracts for steel fabrication in Alberta, filtered by ones we could actually bid on?"*
+
+> *"Wouldn't it be great if I could find which customers are both overdue AND have meetings scheduled this week?"*
+
+> *"Wouldn't it be great if I could pull our inventory spreadsheet and compare it to the materials list on that new RFP?"*
+
+The AI already has permission to look. It pulls the data. Builds the report. Asks you when it gets stuck—not some support ticket black hole. Done.
+
+---
+
+## Why This Matters
+
+Get 50% of the population 10% better. Every year. That's generational growth.
+
+Not 10 developers 500% better. That's happening. But it doesn't scale to the economy.
+
+*"How do I save 5 hours a week?" "How do I save $700 a month?"*
+
+Those are the real questions. This is how you answer them.
+
+---
+
+## No New Subscription. No New Password. No New System to Learn.
 
 Business owners don't need another app, another login, or another workflow builder that might write an OK-ish blog post. They need to solve actual problems.
 
-AlbertaWorkspace is like Word, but for solving problems.
+WorkspaceAlberta is like Word, but for solving problems.
 
 It's a program you open almost every day to work on one specific *"wouldn't it be great if..."* problem—the kind that's unique to your trade, your shop, your contracts.
 
@@ -35,7 +73,7 @@ More contracts won. More jobs kept. More skill developed. More value staying her
 
 ## What This Actually Does
 
-AlbertaWorkspace removes the barrier between your business and an intelligent assistant that already understands your tools, your industry, and the federal contracts relevant to your work.
+WorkspaceAlberta removes the barrier between your business and an intelligent assistant that already understands your tools, your industry, and the federal contracts relevant to your work.
 
 ### Step 1: List Your Tools
 Edit **`owner-tools-list.md`** with the software you actually use—QuickBooks, Slack, Google Drive, your ERP, whatever. No technical knowledge required.
@@ -91,11 +129,15 @@ Full technical documentation: [`CLAUDE.md`](CLAUDE.md)
 
 ---
 
-## The Goal
+## The Last Mile
 
-Every efficiency gained by an Alberta fabricator, mill, or contractor ripples outward. Faster quotes mean more bids submitted. Better inventory tracking means less waste. Automated compliance checks mean fewer missed opportunities.
+Every efficiency gained by an Alberta fabricator, mill, or contractor ripples outward.
 
-This isn't about replacing workers with AI. It's about giving every small business owner the same operational leverage that large corporations take for granted.
+Faster quotes = more bids submitted. Better inventory = less waste. Automated compliance = fewer missed opportunities.
+
+This isn't replacing workers with AI. It's operational leverage for the people doing the actual work.
+
+The last mile is where the real work lives. We're building the wiring.
 
 **Canada is going to work.**
 

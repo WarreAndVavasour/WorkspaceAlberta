@@ -1,0 +1,45 @@
+{
+  "name": "WorkspaceAlberta Demo",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-python.python"
+      ],
+      "settings": {
+        "chat.mcp.enabled": true,
+        "github.copilot.chat.localeOverride": "en"
+      },
+      "mcp": {
+        "servers": {
+          "canadabuys": {
+            "command": "python",
+            "args": ["/workspaces/WorkspaceAlberta/mcp-servers/canadabuys/server.py"]
+          },
+          "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspaces/WorkspaceAlberta"]
+          },
+          "memory": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-memory"]
+          }
+        }
+      }
+    }
+  },
+
+  "postCreateCommand": "pip install mcp && python pipelines/canadabuys/pipeline.py --source open --max-rows 100",
+
+  "remoteUser": "vscode"
+}

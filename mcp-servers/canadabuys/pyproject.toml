@@ -1,0 +1,15 @@
+[project]
+name = "canadabuys-mcp"
+version = "0.1.0"
+description = "CanadaBuys MCP Server - Federal contract intelligence for Alberta industries"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+]
+
+[project.scripts]
+canadabuys-mcp = "server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
