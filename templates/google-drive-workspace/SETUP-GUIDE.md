@@ -87,7 +87,7 @@ After restart, run the setup wizard:
 
 ```bash
 # In the terminal, run:
-npm run setup
+python scripts/oauth_setup.py
 ```
 
 This will:
@@ -104,7 +104,7 @@ Test that everything is connected:
 
 ```bash
 # List your Google Drive files
-npm run test-drive
+python scripts/test_connection.py
 ```
 
 You should see a list of files from your Google Drive!

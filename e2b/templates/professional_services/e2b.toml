@@ -1,0 +1,13 @@
+# E2B template configuration for workspace-alberta-professional_services
+
+[template]
+name = "workspace-alberta-professional_services"
+description = "Professional services (consultants, accountants)"
+
+[build]
+dockerfile = "Dockerfile"
+
+[runtime]
+# Allocate resources for agent workloads
+cpu_count = 2
+memory_mb = 4096

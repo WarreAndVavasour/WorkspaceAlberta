@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <div class="toolSelector">
+    <div class="header">
+      <div class="container">
+        <h2 class="title animate-fadeInUp">Which tools do you use?</h2>
+        <p class="subtitle animate-fadeInUp stagger-1">
+          Select the business tools you already have. We'll connect them to your AI workspace.
+        </p>
+
+        <form class="controls animate-fadeInUp stagger-2" method="get">
+          <input
+            type="text"
+            name="q"
+            placeholder="Search tools..."
+            value="{{ search_query }}"
+            class="searchInput"
+          />
+
+          <select name="category" class="categorySelect">
+            {% for category in categories %}
+              <option value="{{ category }}" {% if category == filter_category %}selected{% endif %}>
+                {{ "All Categories" if category == "all" else category }}
+              </option>
+            {% endfor %}
+          </select>
+
+          <button class="btn-outline" type="submit">Apply Filters</button>
+        </form>
+
+        <div class="selectedCount animate-fadeInUp stagger-3">
+          <span class="countNumber">{{ selected|length }}</span>
+          <span class="countLabel">tools selected</span>
+        </div>
+      </div>
+    </div>
+
+    <form method="post">
+      <div class="toolGrid container">
+        {% for tool in tools %}
+          {% set is_selected = tool.id in selected %}
+          <label class="toolCard {% if is_selected %}selected{% endif %} animate-fadeInUp">
+            <input
+              type="checkbox"
+              name="tools"
+              value="{{ tool.id }}"
+              class="toolCheckbox"
+              {% if is_selected %}checked{% endif %}
+            />
+            <div class="cardHeader">
+              <h3 class="toolName">{{ tool.display_name }}</h3>
+              <span class="statusBadge {{ tool.integration_status }}">
+                {{ status_badges.get(tool.integration_status, tool.integration_status) }}
+              </span>
+            </div>
+            <p class="toolDescription">{{ tool.description }}</p>
+            <div class="toolCategory">{{ tool.category }}</div>
+
+            {% if is_selected %}
+              <div class="checkmark">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M20 6L9 17L4 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            {% endif %}
+          </label>
+        {% endfor %}
+      </div>
+
+      <div class="footer">
+        <button
+          type="submit"
+          class="btn-accent continueButton"
+          {% if selected|length == 0 %}disabled{% endif %}
+        >
+          Continue with {{ selected|length }} tool{% if selected|length != 1 %}s{% endif %}
+          <span class="arrow">-&gt;</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

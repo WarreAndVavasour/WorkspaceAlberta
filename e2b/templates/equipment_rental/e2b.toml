@@ -1,0 +1,13 @@
+# E2B template configuration for workspace-alberta-equipment_rental
+
+[template]
+name = "workspace-alberta-equipment_rental"
+description = "Equipment rental and sales businesses"
+
+[build]
+dockerfile = "Dockerfile"
+
+[runtime]
+# Allocate resources for agent workloads
+cpu_count = 2
+memory_mb = 4096

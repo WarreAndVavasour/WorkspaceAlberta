@@ -1,0 +1,76 @@
+{
+  "servers": {
+    "filesystem": {
+      "env": {
+        "WORKSPACE_PATH": "${env:WORKSPACE_PATH}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${WORKSPACE_PATH}"
+      ]
+    },
+    "google-drive": {
+      "env": {
+        "GOOGLE_DRIVE_CREDENTIALS_JSON": "${env:GOOGLE_DRIVE_CREDENTIALS_JSON}",
+        "GOOGLE_DRIVE_TOKEN_JSON": "${env:GOOGLE_DRIVE_TOKEN_JSON}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-google-drive"
+      ]
+    },
+    "gmail": {
+      "env": {
+        "GOOGLE_CREDENTIALS_JSON": "${env:GOOGLE_CREDENTIALS_JSON}",
+        "GOOGLE_TOKEN_JSON": "${env:GOOGLE_TOKEN_JSON}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-server-gmail"
+      ]
+    },
+    "google-calendar": {
+      "env": {
+        "GOOGLE_CREDENTIALS_JSON": "${env:GOOGLE_CREDENTIALS_JSON}",
+        "GOOGLE_TOKEN_JSON": "${env:GOOGLE_TOKEN_JSON}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-server-google-calendar"
+      ]
+    },
+    "claude-code": {
+      "env": {
+        "ANTHROPIC_API_KEY": "${env:ANTHROPIC_API_KEY}"
+      },
+      "command": "claude",
+      "args": [
+        "--mcp"
+      ]
+    },
+    "e2b": {
+      "env": {
+        "E2B_API_KEY": "${env:E2B_API_KEY}"
+      },
+      "command": "uvx",
+      "args": [
+        "e2b-mcp-server"
+      ]
+    },
+    "brave-search": {
+      "env": {
+        "BRAVE_API_KEY": "${env:BRAVE_API_KEY}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-server-brave-search"
+      ]
+    }
+  }
+}

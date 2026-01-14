@@ -1,0 +1,13 @@
+# E2B template configuration for workspace-alberta-trades_contractor
+
+[template]
+name = "workspace-alberta-trades_contractor"
+description = "Trades contractors (electricians, plumbers, HVAC)"
+
+[build]
+dockerfile = "Dockerfile"
+
+[runtime]
+# Allocate resources for agent workloads
+cpu_count = 2
+memory_mb = 4096

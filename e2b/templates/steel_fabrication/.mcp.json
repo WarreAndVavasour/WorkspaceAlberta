@@ -1,0 +1,127 @@
+{
+  "servers": {
+    "filesystem": {
+      "env": {
+        "WORKSPACE_PATH": "${env:WORKSPACE_PATH}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${WORKSPACE_PATH}"
+      ]
+    },
+    "google-drive": {
+      "env": {
+        "GOOGLE_DRIVE_CREDENTIALS_JSON": "${env:GOOGLE_DRIVE_CREDENTIALS_JSON}",
+        "GOOGLE_DRIVE_TOKEN_JSON": "${env:GOOGLE_DRIVE_TOKEN_JSON}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-server-google-drive"
+      ]
+    },
+    "gmail": {
+      "env": {
+        "GOOGLE_CREDENTIALS_JSON": "${env:GOOGLE_CREDENTIALS_JSON}",
+        "GOOGLE_TOKEN_JSON": "${env:GOOGLE_TOKEN_JSON}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-server-gmail"
+      ]
+    },
+    "google-calendar": {
+      "env": {
+        "GOOGLE_CREDENTIALS_JSON": "${env:GOOGLE_CREDENTIALS_JSON}",
+        "GOOGLE_TOKEN_JSON": "${env:GOOGLE_TOKEN_JSON}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-server-google-calendar"
+      ]
+    },
+    "claude-code": {
+      "env": {
+        "ANTHROPIC_API_KEY": "${env:ANTHROPIC_API_KEY}"
+      },
+      "command": "claude",
+      "args": [
+        "--mcp"
+      ]
+    },
+    "e2b": {
+      "env": {
+        "E2B_API_KEY": "${env:E2B_API_KEY}"
+      },
+      "command": "uvx",
+      "args": [
+        "e2b-mcp-server"
+      ]
+    },
+    "brave-search": {
+      "env": {
+        "BRAVE_API_KEY": "${env:BRAVE_API_KEY}"
+      },
+      "command": "npx",
+      "args": [
+        "-y",
+        "@anthropic/mcp-server-brave-search"
+      ]
+    },
+    "canadabuys": {
+      "env": {},
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_servers.canadabuys.server"
+      ]
+    },
+    "alberta-procurement": {
+      "env": {},
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_servers.alberta_procurement.server"
+      ]
+    },
+    "local-contacts": {
+      "env": {
+        "CONTACTS_FOLDER": "${env:CONTACTS_FOLDER}"
+      },
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_servers.local_contacts.server"
+      ]
+    },
+    "bid-calculator": {
+      "env": {
+        "PRICING_SHEET_PATH": "${env:PRICING_SHEET_PATH}"
+      },
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_servers.bid_calculator.server"
+      ]
+    },
+    "quickbooks": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "your-openapi-mcp-wrapper"
+      ],
+      "env": {
+        "OPENAPI_SPEC_URL": "${env:QBO_OPENAPI_URL}",
+        "QBO_CLIENT_ID": "${env:QBO_CLIENT_ID}",
+        "QBO_CLIENT_SECRET": "${env:QBO_CLIENT_SECRET}",
+        "QBO_REFRESH_TOKEN": "${env:QBO_REFRESH_TOKEN}",
+        "QBO_REALM_ID": "${env:QBO_REALM_ID}",
+        "QBO_OPENAPI_URL": "${env:QBO_OPENAPI_URL}"
+      }
+    }
+  }
+}

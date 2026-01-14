@@ -1,0 +1,53 @@
+{
+  "templates": {
+    "foundation": {
+      "templateId": "pending-foundation",
+      "profileName": "foundation",
+      "description": "Core tools for any small business",
+      "createdAt": "2026-01-14T14:31:27.093566Z"
+    },
+    "steel_fabrication": {
+      "templateId": "pending-steel_fabrication",
+      "profileName": "steel_fabrication",
+      "description": "Steel fabrication shops bidding on government contracts",
+      "createdAt": "2026-01-14T14:31:27.104333Z"
+    },
+    "lumber_mill": {
+      "templateId": "pending-lumber_mill",
+      "profileName": "lumber_mill",
+      "description": "Lumber mills and wood product manufacturers",
+      "createdAt": "2026-01-14T14:31:27.113514Z"
+    },
+    "trades_contractor": {
+      "templateId": "pending-trades_contractor",
+      "profileName": "trades_contractor",
+      "description": "Trades contractors (electricians, plumbers, HVAC)",
+      "createdAt": "2026-01-14T14:31:27.122018Z"
+    },
+    "general_contractor": {
+      "templateId": "pending-general_contractor",
+      "profileName": "general_contractor",
+      "description": "General contractors managing construction projects",
+      "createdAt": "2026-01-14T14:31:27.133478Z"
+    },
+    "metal_fabrication": {
+      "templateId": "pending-metal_fabrication",
+      "profileName": "metal_fabrication",
+      "description": "Metal fabrication and machining shops",
+      "createdAt": "2026-01-14T14:31:27.142086Z"
+    },
+    "equipment_rental": {
+      "templateId": "pending-equipment_rental",
+      "profileName": "equipment_rental",
+      "description": "Equipment rental and sales businesses",
+      "createdAt": "2026-01-14T14:31:27.154208Z"
+    },
+    "professional_services": {
+      "templateId": "pending-professional_services",
+      "profileName": "professional_services",
+      "description": "Professional services (consultants, accountants)",
+      "createdAt": "2026-01-14T14:31:27.163333Z"
+    }
+  },
+  "lastUpdated": "2026-01-14T14:31:27.163333Z"
+}

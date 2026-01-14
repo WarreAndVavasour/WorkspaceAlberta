@@ -44,7 +44,7 @@ Google Drive
 ## Generator Command
 
 ```bash
-npx ts-node generator/generator.ts shopify zendesk stripe slack google_drive
+python -m generator.generator shopify zendesk stripe slack google_drive
 ```
 
 ---

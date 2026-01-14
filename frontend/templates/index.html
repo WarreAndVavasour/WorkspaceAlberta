@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <div class="hero topo-background">
+    <div class="heroContent">
+      <div class="badge animate-fadeIn stagger-1">
+        <span class="badgeIcon">*</span>
+        <span>Built for Alberta</span>
+      </div>
+
+      <h1 class="title animate-fadeInUp stagger-2">
+        Your Business Tools,
+        <br />
+        <span class="titleAccent">One Smart Workspace</span>
+      </h1>
+
+      <p class="subtitle animate-fadeInUp stagger-3">
+        Connect the tools you already use to an AI assistant that understands your business.
+        <br />
+        No technical knowledge required. Just two simple questions to get started.
+      </p>
+
+      <div class="stats animate-fadeInUp stagger-4">
+        <div class="stat">
+          <div class="statNumber">50+</div>
+          <div class="statLabel">Business Tools</div>
+        </div>
+        <div class="stat">
+          <div class="statNumber">2</div>
+          <div class="statLabel">Questions</div>
+        </div>
+        <div class="stat">
+          <div class="statNumber">5min</div>
+          <div class="statLabel">Setup Time</div>
+        </div>
+      </div>
+
+      <a href="{{ url_for('tools') }}" class="btn-accent ctaButton button-link animate-fadeInUp stagger-5">
+        Build Your Workspace
+        <span class="arrow">-&gt;</span>
+      </a>
+
+      <div class="trustBadge animate-fadeIn stagger-5">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M8 0L10.163 5.837L16 8L10.163 10.163L8 16L5.837 10.163L0 8L5.837 5.837L8 0Z"
+            fill="currentColor"
+          />
+        </svg>
+        <span>No credit card | No API keys stored | Open source</span>
+      </div>
+    </div>
+
+    <div class="heroVisual">
+      <div class="mountainLayer1"></div>
+      <div class="mountainLayer2"></div>
+      <div class="mountainLayer3"></div>
+    </div>
+  </div>
+</main>
+{% endblock %}

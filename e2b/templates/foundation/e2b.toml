@@ -1,0 +1,13 @@
+# E2B template configuration for workspace-alberta-foundation
+
+[template]
+name = "workspace-alberta-foundation"
+description = "Core tools for any small business"
+
+[build]
+dockerfile = "Dockerfile"
+
+[runtime]
+# Allocate resources for agent workloads
+cpu_count = 2
+memory_mb = 4096

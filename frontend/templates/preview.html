@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <div class="configPreview">
+    <div class="header">
+      <div class="container">
+        <div class="successIcon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="32" fill="currentColor" opacity="0.1" />
+            <path
+              d="M44 24L28 40L20 32"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        <h2 class="title animate-fadeInUp stagger-1">Your Workspace is Ready!</h2>
+        <p class="subtitle animate-fadeInUp stagger-2">
+          We've configured your AI workspace with {{ selected_ids|length }} tools to solve your business problem.
+        </p>
+      </div>
+    </div>
+
+    <div class="content container">
+      <div class="mainColumn">
+        <section class="section animate-fadeInUp stagger-3">
+          <h3 class="sectionTitle">Your Problem</h3>
+          <div class="problemBox">
+            <p>{{ description }}</p>
+          </div>
+        </section>
+
+        <section class="section animate-fadeInUp stagger-4">
+          <h3 class="sectionTitle">Selected Tools ({{ selected_ids|length }})</h3>
+          <div class="toolsList">
+            {% for tool in selected_tools %}
+              <div class="toolItem">
+                <div class="toolHeader">
+                  <h4 class="toolName">{{ tool.display_name }}</h4>
+                  <span class="badge {{ tool.integration_status }}">{{ tool.integration_status }}</span>
+                </div>
+                <p class="toolCategory">{{ tool.category }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="section animate-fadeInUp stagger-5">
+          <h3 class="sectionTitle">Generator Command</h3>
+          <div class="codeBlock">
+            <code>{{ command_string }}</code>
+          </div>
+        </section>
+      </div>
+
+      <div class="sidebar">
+        <div class="sidebarCard animate-fadeInUp stagger-6">
+          <h3 class="sidebarTitle">Next Steps</h3>
+          <ol class="stepsList">
+            <li>
+              <strong>Clone the repository</strong>
+              <p>Get the WorkspaceAlberta code from GitHub</p>
+            </li>
+            <li>
+              <strong>Run the generator</strong>
+              <p>Use the command above to generate your configuration files</p>
+            </li>
+            <li>
+              <strong>Add your API keys</strong>
+              <p>Fill in the generated .env file with your credentials</p>
+            </li>
+            <li>
+              <strong>Open in Cursor</strong>
+              <p>Launch Cursor IDE and start using your AI workspace</p>
+            </li>
+          </ol>
+
+          <a href="{{ url_for('download') }}" class="btn-primary downloadButton button-link">
+            Download Configuration
+          </a>
+
+          <div class="actions">
+            <a href="{{ url_for('problem') }}" class="btn-outline actionButton button-link">Edit Problem</a>
+            <a href="{{ url_for('reset') }}" class="btn-outline actionButton button-link">Start Over</a>
+          </div>
+        </div>
+
+        <div class="sidebarCard helpCard animate-fadeInUp stagger-7">
+          <h3 class="sidebarTitle">Need Help?</h3>
+          <p class="helpText">
+            Check out the WorkspaceAlberta documentation on GitHub for detailed setup instructions
+            and troubleshooting guides.
+          </p>
+          <a
+            href="https://github.com/yourusername/WorkspaceAlberta"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="helpLink"
+          >
+            View Documentation
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
