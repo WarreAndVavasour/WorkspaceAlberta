@@ -45,7 +45,7 @@ Notion
 ## Generator Command
 
 ```bash
-npx ts-node generator/generator.ts gusto docusign google_drive slack calendly notion
+python -m generator.generator gusto docusign google_drive slack calendly notion
 ```
 
 ---

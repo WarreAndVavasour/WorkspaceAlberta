@@ -57,9 +57,9 @@ The `devcontainer.json` file supports everything needed for pre-configuration:
 #### Lifecycle Commands
 ```json
 {
-  "onCreateCommand": "npm install",           // Runs during container build (cached)
+  "onCreateCommand": "pip install -r requirements.txt",           // Runs during container build (cached)
   "postCreateCommand": "bash setup-mcp.sh",   // Runs after creation (has access to secrets)
-  "postStartCommand": "npm run dev"           // Runs every time container starts
+  "postStartCommand": "python app.py"           // Runs every time container starts
 }
 ```
 
@@ -256,7 +256,7 @@ workspace-{business-id}/
 ```json
 {
   "name": "WorkspaceAlberta - Small Business AI Workspace",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
   
   "features": {
     "ghcr.io/devcontainers/features/python:1": {

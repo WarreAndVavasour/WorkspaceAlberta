@@ -42,7 +42,7 @@ Calendly
 ## Generator Command
 
 ```bash
-npx ts-node generator/generator.ts google_drive slack buffer mailchimp google_analytics calendly
+python -m generator.generator google_drive slack buffer mailchimp google_analytics calendly
 ```
 
 ---

@@ -4,7 +4,7 @@ This folder holds the catalog and helpers for generating per-business Cursor wor
 
 ## Files
 - `catalog.json` - single source of truth for 50 SMB tools with categories, MCP wiring, and env vars.
-- `generator.ts` - utilities to load the catalog, select tools, and emit `.cursor/mcp.json`, `env/.env.example`, and `docs/INTEGRATIONS.md`.
+- `generator.py` - utilities to load the catalog, select tools, and emit `.cursor/mcp.json`, `env/.env.example`, and `docs/INTEGRATIONS.md`.
 
 ## Catalog conventions
 - `integration_status`: `native` (known MCP server), `openapi` (uses published OpenAPI), `proxy` (expects your OpenAPI wrapper URL via `*_OPENAPI_URL`), `hosted` (remote MCP endpoint like Stripe).
@@ -14,34 +14,41 @@ This folder holds the catalog and helpers for generating per-business Cursor wor
 ## Generate a workspace config
 ```bash
 # Example: generate configs for Google Drive, Slack, GitHub, Stripe
-npx ts-node generator/generator.ts google_drive slack github stripe
+python -m generator.generator google_drive slack github stripe
 ```
 - Outputs into the current working directory: `.cursor/mcp.json`, `env/.env.example`, `docs/INTEGRATIONS.md`.
 - Override the OpenAPI wrapper command/args in code (see `DEFAULT_OPENAPI_WRAPPER_*`) or pass `BuildOptions` if you import the helpers.
 - For `proxy` tools, fill the `*_OPENAPI_URL` values in your `.env` to point at your wrapper/gateway specs.
 
 ## Using the helpers programmatically
-```ts
-import { loadCatalog, selectTools, buildMcpJson, buildEnvExample, buildIntegrationsMd } from "./generator";
+```python
+from generator.generator import (
+    build_env_example,
+    build_integrations_md,
+    build_mcp_json,
+    load_catalog,
+    select_tools,
+)
 
-const catalog = loadCatalog();
-const selection = selectTools(catalog, ["google_drive", "slack", "github", "stripe"]);
+catalog = load_catalog()
+selection = select_tools(catalog, ["google_drive", "slack", "github", "stripe"])
 
-const mcpJson = buildMcpJson(selection);
-const envExample = buildEnvExample(selection);
-const integrationsMd = buildIntegrationsMd(selection);
+mcp_json = build_mcp_json(selection)
+env_example = build_env_example(selection)
+integrations_md = build_integrations_md(selection)
 ```
-Use `writeWorkspaceFiles(root, selection, options)` to emit the three files to disk.
+
+Use `write_workspace_files(root, selection, options)` to emit the three files to disk.
 
 ## GitHub automation sketch
 1. Collect `githubUsername`, `repoName`, and `selectedIds` from the UI.
-2. `const tools = selectTools(loadCatalog(), selectedIds);`
+2. `tools = select_tools(load_catalog(), selected_ids)`
 3. Build content: `mcp.json`, `.env.example`, `INTEGRATIONS.md`, `README.md` stub.
 4. Create repo from template (Octokit), add files in one commit, push, invite collaborator.
 5. User clones, fills `env/.env`, and opens in Cursor.
 
 ## Next actions
-- Wire the OpenAPI MCP wrapper you plan to ship (replace `your-openapi-mcp-wrapper` in `generator.ts`).
+- Wire the OpenAPI MCP wrapper you plan to ship (replace `your-openapi-mcp-wrapper` in `generator.py`).
 - Decide default endpoints for `proxy` tools (e.g., local gateway vs. cloud host) and set the `*_OPENAPI_URL` values accordingly.
 - Add UI copy that maps the catalog `description` + `category` into the selection list.
 
@@ -49,50 +56,51 @@ Use `writeWorkspaceFiles(root, selection, options)` to emit the three files to d
 
 ## Codespace Generator (NEW)
 
-The `codespace-generator.ts` extends the original generator to create complete GitHub Codespace configurations that business owners can launch with one click.
+The `codespace_generator.py` extends the original generator to create complete GitHub Codespace configurations that business owners can launch with one click.
 
 ### What it generates
 
 ```
 output-directory/
-├── .devcontainer/
-│   ├── devcontainer.json    # Full Codespace configuration
-│   └── setup.sh             # Post-create setup script
-├── .vscode/
-│   └── mcp.json             # MCP server definitions for VS Code
-├── docs/
-│   └── WELCOME.md           # Personalized welcome guide
-├── problems/
-│   └── business-problem.md  # Business problem documentation
-└── README.md                # Quick start with Codespaces badge
+  .devcontainer/
+    devcontainer.json    # Full Codespace configuration
+    setup.sh             # Post-create setup script
+  .vscode/
+    mcp.json             # MCP server definitions for VS Code
+  docs/
+    WELCOME.md           # Personalized welcome guide
+  problems/
+    business-problem.md  # Business problem documentation
+  README.md              # Quick start with Codespaces badge
 ```
 
 ### Usage
 
 ```bash
 # Generate a complete Codespace-ready workspace
-BUSINESS_PROBLEM="I want to track customer payments and send follow-up emails automatically" \
-npx ts-node generator/codespace-generator.ts ./output "My Business Workspace" "John Doe" stripe google_calendar github
+$env:BUSINESS_PROBLEM="I want to track customer payments and send follow-up emails automatically"; `
+python -m generator.codespace_generator ./output "My Business Workspace" "John Doe" stripe google_calendar github
 ```
 
 ### Programmatic Usage
 
-```ts
-import { writeCodespaceFiles, CodespaceConfig } from "./codespace-generator";
-import { loadCatalog, selectTools } from "./generator";
+```python
+from generator.codespace_generator import CodespaceConfig, write_codespace_files
+from generator.generator import load_catalog, select_tools
 
-const catalog = loadCatalog();
-const tools = selectTools(catalog, ["stripe", "google_calendar", "github"]);
+catalog = load_catalog()
+tools = select_tools(catalog, ["stripe", "google_calendar", "github"])
 
-const config: CodespaceConfig = {
-  workspaceName: "My Business Workspace",
-  businessProblem: "I want to track customer payments and send follow-up emails",
-  ownerName: "John Doe",
-  tools,
-};
+config = CodespaceConfig(
+    workspace_name="My Business Workspace",
+    business_problem="I want to track customer payments and send follow-up emails",
+    owner_name="John Doe",
+    tools=tools,
+)
 
-writeCodespaceFiles("./output", config, "myorg/my-workspace-repo");
+write_codespace_files("./output", config, "myorg/my-workspace-repo")
 ```
+
 
 ### Features
 

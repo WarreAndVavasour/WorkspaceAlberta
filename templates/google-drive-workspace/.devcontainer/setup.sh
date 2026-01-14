@@ -4,7 +4,9 @@
 echo "Setting up Google Drive workspace..."
 
 # Install dependencies
-npm install
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt
+fi
 
 # Create credentials directory
 mkdir -p .credentials
@@ -28,7 +30,7 @@ else
     echo ""
     echo "[OK] Google credentials found!"
     echo ""
-    echo "Run 'npm run setup' to complete Google Drive authorization."
+    echo "Run 'python scripts/oauth_setup.py' to complete Google Drive authorization."
     echo ""
 fi
 

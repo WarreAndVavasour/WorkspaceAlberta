@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <div class="problemForm">
+    <div class="header">
+      <div class="container">
+        <a href="{{ url_for('tools') }}" class="backButton">Back to tools</a>
+        <h2 class="title animate-fadeInUp">What problem do you want to solve?</h2>
+        <p class="subtitle animate-fadeInUp stagger-1">
+          Describe one specific challenge your business faces. The more specific you are,
+          the better we can configure your workspace.
+        </p>
+      </div>
+    </div>
+
+    <div class="content container">
+      <form method="post" class="form animate-fadeInUp stagger-2">
+        {% if error_message %}
+          <div class="formError">{{ error_message }}</div>
+        {% endif %}
+        <div class="textareaWrapper">
+          <textarea
+            name="description"
+            class="textarea"
+            rows="8"
+            placeholder="Example: I need to automatically sync customer support tickets from Zendesk with our CRM in HubSpot, so our sales team knows when customers are having issues..."
+          >{{ description }}</textarea>
+          <div class="wordCount">
+            <span class="{% if word_count >= 10 %}valid{% else %}invalid{% endif %}">
+              {{ word_count }} words
+            </span>
+            {% if word_count < 10 %}
+              <span class="hint">(at least 10 words needed)</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="helpText">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM10 15C9.45 15 9 14.55 9 14C9 13.45 9.45 13 10 13C10.55 13 11 13.45 11 14C11 14.55 10.55 15 10 15ZM11 11H9V5H11V11Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+            Focus on the outcome you want, not the technical details.
+            Mention which tools are involved if relevant.
+          </span>
+        </div>
+
+        <button type="submit" class="btn-accent submitButton" {% if word_count < 10 %}disabled{% endif %}>
+          Generate My Workspace
+          <span class="arrow">-&gt;</span>
+        </button>
+      </form>
+
+      <div class="examples animate-fadeInUp stagger-3">
+        <h3 class="examplesTitle">Need inspiration?</h3>
+        <p class="examplesSubtitle">
+          Here are some common problems Alberta business owners solve:
+        </p>
+
+        <div class="exampleGrid">
+          {% for example in examples %}
+            <a
+              href="{{ url_for('problem', example=loop.index0) }}"
+              class="exampleCard {% if selected_example == loop.index0|string %}selected{% endif %}"
+            >
+              <h4 class="exampleTitle">{{ example.title }}</h4>
+              <p class="exampleDescription">{{ example.description }}</p>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

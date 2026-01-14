@@ -15,7 +15,7 @@ This workspace sets up everything you need to:
 
 1. **Click the badge above** to create your workspace
 2. **Follow SETUP-GUIDE.md** (opens automatically)
-3. **Run `npm run setup`** to authorize Google Drive
+3. **Run `python scripts/oauth_setup.py`** to authorize Google Drive
 4. **Start chatting** with the AI about your files!
 
 ## Example Conversations

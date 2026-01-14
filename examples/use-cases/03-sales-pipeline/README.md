@@ -41,7 +41,7 @@ Stripe
 ## Generator Command
 
 ```bash
-npx ts-node generator/generator.ts hubspot google_drive google_sheets slack calendly stripe
+python -m generator.generator hubspot google_drive google_sheets slack calendly stripe
 ```
 
 ---

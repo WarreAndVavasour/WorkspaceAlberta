@@ -1,0 +1,13 @@
+# E2B template configuration for workspace-alberta-general_contractor
+
+[template]
+name = "workspace-alberta-general_contractor"
+description = "General contractors managing construction projects"
+
+[build]
+dockerfile = "Dockerfile"
+
+[runtime]
+# Allocate resources for agent workloads
+cpu_count = 2
+memory_mb = 4096

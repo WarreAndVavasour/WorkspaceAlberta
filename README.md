@@ -129,7 +129,7 @@ Everything else - design, integration, automation, and intelligence - happens he
 ---
 
 ## Workspace generator (for maintainers)
-- See `generator/` for the 50-tool catalog and TypeScript helpers that produce `.cursor/mcp.json`, `env/.env.example`, and `docs/INTEGRATIONS.md` for any selected tool set.
+- See `generator/` for the 50-tool catalog and Python helpers that produce `.cursor/mcp.json`, `env/.env.example`, and `docs/INTEGRATIONS.md` for any selected tool set.
 - Open `generator/README.md` for usage; the catalog lives in `generator/catalog.json`.
 
 ---

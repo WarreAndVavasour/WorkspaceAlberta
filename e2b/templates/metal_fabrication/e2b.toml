@@ -1,0 +1,13 @@
+# E2B template configuration for workspace-alberta-metal_fabrication
+
+[template]
+name = "workspace-alberta-metal_fabrication"
+description = "Metal fabrication and machining shops"
+
+[build]
+dockerfile = "Dockerfile"
+
+[runtime]
+# Allocate resources for agent workloads
+cpu_count = 2
+memory_mb = 4096

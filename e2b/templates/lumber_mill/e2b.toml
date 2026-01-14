@@ -1,0 +1,13 @@
+# E2B template configuration for workspace-alberta-lumber_mill
+
+[template]
+name = "workspace-alberta-lumber_mill"
+description = "Lumber mills and wood product manufacturers"
+
+[build]
+dockerfile = "Dockerfile"
+
+[runtime]
+# Allocate resources for agent workloads
+cpu_count = 2
+memory_mb = 4096

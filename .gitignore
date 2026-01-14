@@ -27,3 +27,4 @@ venv/
 # Logs
 *.log
 logs/
+output/canadabuys/attachments/
