@@ -1,15 +1,14 @@
 # WorkspaceAlberta
+
 ## The Last Mile of Work
 
 AI promised 5X productivity. Most small businesses got a chatbot that writes mediocre marketing copy.
 
 The model isn't the bottleneck. The connection is.
 
-Telecom companies spent billions on backbone infrastructure. But the value capture happened in the last mile—the wire to your house. Same pattern here. OpenAI, Anthropic, Google—they built the backbone. But the economic value is trapped in the connection between the model and the QuickBooks instance on a steel fabricator's laptop.
+Wiring up your QuickBooks to your calendar to your AI costs $150/hour. You need a developer. Most small businesses will never do this. That's the gap. That's where the 5X productivity is hiding.
 
-Wiring up your tools to AI costs $150/hour. You need a developer. Most small businesses will never do this. That's the gap. That's where the 5X productivity is hiding.
-
-**WorkspaceAlberta solves the last mile**—pre-configured workspaces that already speak to the tools your industry uses. A steel fabricator and a lumber mill need different tool bundles. Generic AI assistants force them to do the integration work themselves. We don't.
+**WorkspaceAlberta solves the last mile**—pre-configured workspaces that already speak to the tools your industry uses.
 
 ---
 
@@ -27,13 +26,11 @@ The AI already has permission to look. It pulls the data. Builds the report. Ask
 
 ---
 
-## Why This Matters: The Math on Broad vs. Deep
+## Why This Matters
 
 Get 50% of the population 10% better. Every year. That's generational growth.
 
 Not 10 developers 500% better. That's happening. But it doesn't scale to the economy.
-
-A 10% productivity gain across 2,500 Alberta metal and lumber businesses is worth more to the provincial economy than a 500% gain for 50 tech companies. The multiplier effects are different—fabricators hire locally, buy locally, pay taxes locally. The velocity of money stays in the region.
 
 *"How do I save 5 hours a week?" "How do I save $700 a month?"*
 
