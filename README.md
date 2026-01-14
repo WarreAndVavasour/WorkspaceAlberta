@@ -1,139 +1,152 @@
 # WorkspaceAlberta
 
-This repository is where we build a **workspace** tailored to your business.
+## The Last Mile of Work
 
-A workspace is a place where we connect the tools you already use to an intelligent assistant so we can create a real solution to a real problem.
+AI promised 5X productivity. Most small businesses got a chatbot that writes mediocre marketing copy.
 
-Before we build anything, we start with only two things:
+The model isn't the bottleneck. The connection is.
 
-1. **A list of the tools and systems your business uses**
-2. **A clear description of one problem you wish you could finally solve**
+Wiring up your QuickBooks to your calendar to your AI costs $150/hour. You need a developer. Most small businesses will never do this. That's the gap. That's where the 5X productivity is hiding.
 
-You do **not** need to know anything technical.
-You do **not** need to describe steps or workflows.
-You do **not** need to tell us how you currently do the work.
-
-This is about the *problem*, not the process.
+**WorkspaceAlberta solves the last mile**—pre-configured workspaces that already speak to the tools your industry uses.
 
 ---
 
-## 1. List every tool or system you use
+## "Wouldn't It Be Great If..."
 
-Create or edit the file:
+This is how you use it. You describe a problem:
 
-**`owner-tools-list.md`**
+> *"Wouldn't it be great if I could see all government contracts for steel fabrication in Alberta, filtered by ones we could actually bid on?"*
 
-Write down the names of:
+> *"Wouldn't it be great if I could find which customers are both overdue AND have meetings scheduled this week?"*
 
-- Any software you use daily or monthly
-- Any system you log into
-- Any internal or custom tool
-- Any place where information lives
-- Any tool connected to a recurring business issue
+> *"Wouldn't it be great if I could pull our inventory spreadsheet and compare it to the materials list on that new RFP?"*
 
-Examples:
+The AI already has permission to look. It pulls the data. Builds the report. Asks you when it gets stuck—not some support ticket black hole. Done.
 
+---
+
+## Why This Matters
+
+Get 50% of the population 10% better. Every year. That's generational growth.
+
+Not 10 developers 500% better. That's happening. But it doesn't scale to the economy.
+
+*"How do I save 5 hours a week?" "How do I save $700 a month?"*
+
+Those are the real questions. This is how you answer them.
+
+---
+
+## No New Subscription. No New Password. No New System to Learn.
+
+Business owners don't need another app, another login, or another workflow builder that might write an OK-ish blog post. They need to solve actual problems.
+
+WorkspaceAlberta is like Word, but for solving problems.
+
+It's a program you open almost every day to work on one specific *"wouldn't it be great if..."* problem—the kind that's unique to your trade, your shop, your contracts.
+
+---
+
+## The Opportunity
+
+Alberta's **Steel, Lumber, and Metals** industries represent over **2,500 companies** with a combined economic impact exceeding **$37 billion annually**.
+
+| Sector | Companies | Economic Impact | Jobs Supported |
+|--------|-----------|-----------------|----------------|
+| Forestry & Wood Products | 676+ businesses, 40 major mills | $14 billion | 41,400 |
+| Fabricated Metal Products | 1,871 establishments | $23.4B (mfg sector) | 16,600 |
+| Primary & Machinery Manufacturing | 200+ facilities | Included above | 12,000+ |
+
+Behind every one of these companies are dozens of systems that need to talk to each other just to get anything done: quoting software, inventory spreadsheets, accounting packages, project trackers, supplier portals, government tender databases.
+
+Any tool that helps a fabricator **create demand**, a mill **manufacture more efficiently**, or a contractor **cut costs** has multiplier effects across the entire province:
+
+- **$4 billion** in forest product exports alone—shipped to the US, China, Japan, and South Korea
+- **$1.6 billion** in annual wages paid to forestry workers
+- **70 communities** across Alberta that depend directly on these industries
+- **$988 million** in tax revenue flowing back to the province
+
+More contracts won. More jobs kept. More skill developed. More value staying here at home.
+
+---
+
+## What This Actually Does
+
+WorkspaceAlberta removes the barrier between your business and an intelligent assistant that already understands your tools, your industry, and the federal contracts relevant to your work.
+
+### Step 1: List Your Tools
+Edit **`owner-tools-list.md`** with the software you actually use—QuickBooks, Slack, Google Drive, your ERP, whatever. No technical knowledge required.
+
+### Step 2: Describe the Problem
+Edit **`monthly-pain-point.md`** with one specific problem:
+> *"I spend 6 hours every week manually checking CanadaBuys for steel contracts and comparing them to our inventory spreadsheet."*
+
+### Step 3: Open and Work
+Launch the workspace. Your assistant already knows your tools and has access to live federal tender data filtered for your industry. Ask it questions. Give it tasks. Solve the problem.
+
+---
+
+## Federal Contract Intelligence
+
+The workspace includes direct integration with **CanadaBuys**, the federal government's procurement database. Your assistant can:
+
+- Pull live tender notices for Steel, Lumber, and Aluminum across Alberta
+- Filter opportunities by UNSPSC codes and industry keywords
+- Analyze contract requirements against your actual capabilities
+- Flag deadlines and compliance requirements before you miss them
+
+---
+
+## Built for Trades, Not Tech
+
+This isn't another SaaS dashboard. There's no monthly fee, no login portal, no "upgrade to Pro" nonsense.
+
+You download it. You open it. You work.
+
+The workspace runs locally on your machine or in a cloud development environment. Your data stays yours. The AI reads your tools through secure, permissioned connections—it can see what you authorize and nothing else.
+
+---
+
+## Technical Details
+
+For developers and IT teams who want to understand what's under the hood:
+
+- **Generator Engine**: Reads your tool list and produces MCP (Model Context Protocol) configurations
+- **MCP Servers**: Secure bridges that let the AI interact with business software (read spreadsheets, check calendars, query databases)
+- **CanadaBuys Pipeline**: Python-based ETL that fetches, filters, and summarizes federal procurement data
+- **Cursor/Codespaces**: Works in Cursor IDE locally or GitHub Codespaces in the cloud
+
+```bash
+# Generate workspace configuration
+python generator/generator.py google_drive slack quickbooks stripe
+
+# Run federal contract pipeline
+python pipelines/canadabuys/pipeline.py --source open
 ```
-Google Drive
-Gmail
-Slack
-QuickBooks Online
-Stripe
-Shopify
-Notion
-Monday.com
-A custom scheduling portal
-Excel sheets stored on a server
-```
 
-A simple list is perfect.
-The goal is to create a complete picture of the systems that might relate to your problem.
+Full technical documentation: [`CLAUDE.md`](CLAUDE.md)
 
 ---
 
-## 2. Describe one specific problem you wish you could solve
+## The Last Mile
 
-Create or edit the file:
+Every efficiency gained by an Alberta fabricator, mill, or contractor ripples outward.
 
-**`monthly-pain-point.md`**
+Faster quotes = more bids submitted. Better inventory = less waste. Automated compliance = fewer missed opportunities.
 
-Here, describe **a single business problem**, in plain language, as if speaking to someone helping you.
+This isn't replacing workers with AI. It's operational leverage for the people doing the actual work.
 
-### Important:
-You are **not** describing:
+The last mile is where the real work lives. We're building the wiring.
 
-- The steps you follow today
-- Your current workflow
-- The tasks involved
-- Any technical details
-- How things "should" work
-
-### Instead, describe **the problem itself** - the thing you wish you could finally solve.
-
-Use prompts like:
-
-- "I wish I could finally solve..."
-- "I wish AI could take care of..."
-- "The problem that keeps coming up is..."
-- "Every month we struggle with..."
-
-### Examples:
-
-```markdown
-I wish I could finally solve the problem of keeping customer follow-ups consistent.
-People fall through the cracks and I never have a clear view of who needs attention.
-
-I wish AI could help me solve the problem of always being behind on cash flow visibility.
-
-I wish we could solve the issue of job statuses being scattered across multiple systems
-and never up to date.
-
-I wish I could solve the problem of supplier invoices not matching what ends up
-recorded in our payment system.
-```
-
-**Tools involved (if you know them):**
-- Shopify
-- QuickBooks
-- Slack
-- Google Drive
-
-That's all we need.
-
-One problem. Stated clearly. No steps. No explanation of what you do today.
-
----
-
-## 3. What happens next
-
-Once you've added:
-
-- `owner-tools-list.md`
-- `monthly-pain-point.md`
-
-We will:
-
-1. **Build a personalized workspace** based on the tools you listed
-2. **Connect only the systems that matter** to your problem
-3. **Use this workspace, together**, to design and build the actual solution
-
-You don't need to architect anything.
-
-Your job is simply to:
-
-1. List your tools
-2. Identify one business problem you wish you could finally solve
-
-Everything else - design, integration, automation, and intelligence - happens here in the workspace.
-
----
-
-## Workspace generator (for maintainers)
-- See `generator/` for the 50-tool catalog and Python helpers that produce `.cursor/mcp.json`, `env/.env.example`, and `docs/INTEGRATIONS.md` for any selected tool set.
-- Open `generator/README.md` for usage; the catalog lives in `generator/catalog.json`.
+**Canada is going to work. Let's get busy.**
 
 ---
 
 ## License
 
 MIT
+
+---
+
+*Data sources: [Statistics Canada](https://www150.statcan.gc.ca), [Innovation Canada](https://ised-isde.canada.ca), [Alberta Forest Products Association](https://albertaforestproducts.ca), [Job Bank Canada](https://www.jobbank.gc.ca)*
