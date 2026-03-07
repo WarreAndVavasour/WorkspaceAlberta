@@ -1662,3 +1662,269 @@ button:active {
     flex-direction: column;
   }
 }
+
+/* Problem Blueprint Pages */
+.problemBlueprintPage,
+.successPage {
+  min-height: 100vh;
+}
+
+.blueprintHero,
+.successHero {
+  background: var(--spruce-dark);
+  color: white;
+  padding: 80px 0 60px;
+  text-align: center;
+}
+
+.blueprintKicker,
+.successKicker {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.8;
+  margin-bottom: 24px;
+}
+
+.blueprintHeadline,
+.successHeadline {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 24px;
+}
+
+.blueprintSubhead,
+.successSubhead {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.blueprintForm {
+  padding: 60px 0;
+}
+
+.blueprintFormInner {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.formSection {
+  margin-bottom: 48px;
+}
+
+.formSection h2 {
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+  color: var(--spruce-dark);
+  border-bottom: 2px solid var(--saw-dust);
+  padding-bottom: 12px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.formField {
+  margin-bottom: 24px;
+}
+
+.formField label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--forest-mist);
+}
+
+.formField input,
+.formField textarea,
+.formField select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--saw-dust);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.formField input:focus,
+.formField textarea:focus,
+.formField select:focus {
+  outline: none;
+  border-color: var(--terracotta);
+}
+
+.fieldHint {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 8px;
+}
+
+.formCTA {
+  text-align: center;
+  padding-top: 24px;
+}
+
+.btnPrimary {
+  display: inline-block;
+  background: var(--terracotta);
+  color: white;
+  padding: 20px 48px;
+  border-radius: 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btnPrimary:hover {
+  background: #c4533d;
+}
+
+.btnSub {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 400;
+  margin-top: 8px;
+  opacity: 0.9;
+}
+
+.blueprintWhy {
+  background: var(--saw-dust);
+  padding: 60px 0;
+}
+
+.whyGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 40px;
+}
+
+.whyCard {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.whyNumber {
+  width: 48px;
+  height: 48px;
+  background: var(--terracotta);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 auto 16px;
+}
+
+.whyCard h3 {
+  margin-bottom: 12px;
+  color: var(--spruce-dark);
+}
+
+/* Success Page */
+.successIcon {
+  width: 80px;
+  height: 80px;
+  background: var(--terracotta);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  margin: 0 auto 24px;
+}
+
+.successNext {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.nextLead {
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+}
+
+.emailBox {
+  background: var(--saw-dust);
+  padding: 16px 32px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 32px;
+}
+
+.emailLink {
+  font-size: 1  color: var(--terracotta);
+  font-weight: 700.5rem;
+;
+}
+
+.nextDetail {
+  margin-bottom: 24px;
+}
+
+.benefitsList {
+  list-style: none;
+  padding: 0;
+  display: inline-block;
+  text-align: left;
+}
+
+.benefitsList li {
+  padding: 8px 0;
+  padding-left: 32px;
+  position: relative;
+}
+
+.benefitsList li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--terracotta);
+  font-weight: 700;
+}
+
+.successCTA {
+  padding: 40px 0 80px;
+  text-align: center;
+}
+
+.btnSecondary {
+  display: inline-block;
+  background: var(--spruce-dark);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btnSecondary:hover {
+  background: #2a4a45;
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .whyGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .blueprintHeadline {
+    font-size: 2.5rem;
+  }
+}

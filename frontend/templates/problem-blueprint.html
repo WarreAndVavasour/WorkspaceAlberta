@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="problemBlueprintPage">
+  <section class="blueprintHero">
+    <div class="container">
+      <p class="blueprintKicker">Wouldn't It Be Great If...</p>
+      <h1 class="blueprintHeadline">
+        <span class="headlineLine">Tell us about a problem</span>
+        <span class="headlineLine">you want solved.</span>
+      </h1>
+      <p class="blueprintSubhead">
+        Describe your challenge in detail. We'll generate a custom automation blueprint—just email it back to us.
+      </p>
+    </div>
+  </section>
+
+  <section class="blueprintForm">
+    <div class="container">
+      <form method="POST" action="/problem-blueprint" class="blueprintFormInner">
+        
+        <div class="formSection">
+          <h2>About You</h2>
+          <div class="formRow">
+            <div class="formField">
+              <label for="name">Your Name *</label>
+              <input type="text" id="name" name="name" required />
+            </div>
+            <div class="formField">
+              <label for="email">Email *</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+          </div>
+          <div class="formField">
+            <label for="company">Company Name *</label>
+            <input type="text" id="company" name="company" required />
+          </div>
+        </div>
+
+        <div class="formSection">
+          <h2>The Problem</h2>
+          <div class="formField">
+            <label for="description">Describe your problem in detail (minimum 1000 characters) *</label>
+            <textarea id="description" name="description" rows="8" minlength="1000" required placeholder="What are you trying to accomplish? What's frustrating you about your current process? What have you tried before?"></textarea>
+            <p class="fieldHint">Be specific. The more detail, the better your blueprint.</p>
+          </div>
+        </div>
+
+        <div class="formSection">
+          <h2>Current Setup</h2>
+          <div class="formField">
+            <label for="current_software">Software/tools you currently use (comma-separated)</label>
+            <input type="text" id="current_software" name="current_software" placeholder="QuickBooks, Excel, Google Sheets, Slack, Zapier..." />
+          </div>
+          <div class="formField">
+            <label for="desired_outcome">What result do you want?</label>
+            <textarea id="desired_outcome" name="desired_outcome" rows="4" placeholder="I want to automatically send invoice reminders when they're 7 days overdue..."></textarea>
+          </div>
+        </div>
+
+        <div class="formSection">
+          <h2>Timeline & Budget</h2>
+          <div class="formRow">
+            <div class="formField">
+              <label for="budget_range">Budget range</label>
+              <select id="budget_range" name="budget_range">
+                <option value="">Select a range</option>
+                <option value="under-5k">Under $5,000</option>
+                <option value="5k-15k">$5,000 - $15,000</option>
+                <option value="15k-50k">$15,000 - $50,000</option>
+                <option value="50k+">$50,000+</option>
+              </select>
+            </div>
+            <div class="formField">
+              <label for="timeline">Timeline</label>
+              <select id="timeline" name="timeline">
+                <option value="">Select timeline</option>
+                <option value="asap">ASAP</option>
+                <option value="1-3months">1-3 months</option>
+                <option value="3-6months">3-6 months</option>
+                <option value="exploring">Just exploring</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="formSection">
+          <div class="formField">
+            <label for="tools_needed">Any specific tools you think you need? (comma-separated)</label>
+            <input type="text" id="tools_needed" name="tools_needed" placeholder="AI, API integrations, custom database..." />
+          </div>
+        </div>
+
+        <div class="formCTA">
+          <button type="submit" class="btnPrimary">
+            Download Problem Blueprint
+            <span class="btnSub">You'll get a JSON file. Email it back to us for your free analysis.</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </section>
+
+  <section class="blueprintWhy">
+    <div class="container">
+      <h2>How This Works</h2>
+      <div class="whyGrid">
+        <div class="whyCard">
+          <div class="whyNumber">1</div>
+          <h3>Describe Your Problem</h3>
+          <p>Tell us what you're trying to solve in detail.</p>
+        </div>
+        <div class="whyCard">
+          <div class="whyNumber">2</div>
+          <h3>Get Your Blueprint</h3>
+          <p>Download your problem JSON file.</p>
+        </div>
+        <div class="whyCard">
+          <div class="whyNumber">3</div>
+          <h3>Email It Back</h3>
+          <p>Send it to us and we'll generate your custom automation plan.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+{% endblock %}

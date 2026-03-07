@@ -231,5 +231,47 @@ def reset() -> Response:
     return redirect(url_for("index"))
 
 
+# Problem Blueprint Funnel Routes
+
+@app.route("/problem-blueprint", methods=["GET", "POST"])
+def problem_blueprint():
+    """Lead capture funnel - get problem description, generate JSON"""
+    if request.method == "POST":
+        data = {
+            "contact": {
+                "name": request.form.get("name", ""),
+                "email": request.form.get("email", ""),
+                "company": request.form.get("company", ""),
+            },
+            "problem": {
+                "description": request.form.get("description", ""),
+                "current_software": [s.strip() for s in request.form.get("current_software", "").split(",") if s.strip()],
+                "desired_outcome": request.form.get("desired_outcome", ""),
+                "budget_range": request.form.get("budget_range", ""),
+                "timeline": request.form.get("timeline", ""),
+            },
+            "tools_needed": [t.strip() for t in request.form.get("tools_needed", "").split(",") if t.strip()],
+            "submitted_at": "2026-03-06",
+        }
+        
+        # Return as downloadable JSON
+        json_str = json.dumps(data, indent=2)
+        return Response(
+            json_str,
+            headers={
+                "Content-Disposition": "attachment; filename=problem-blueprint.json",
+                "Content-Type": "application/json",
+            },
+        )
+    
+    return render_template("problem-blueprint.html")
+
+
+@app.route("/blueprint-success")
+def blueprint_success():
+    """Thank you page after downloading"""
+    return render_template("blueprint-success.html")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
