@@ -14,7 +14,10 @@
       "WebFetch(domain:albertaforestproducts.ca)",
       "Bash(pip install:*)",
       "Bash(python -c:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "WebFetch(domain:e2b.dev)"
     ]
   }
 }

@@ -13,14 +13,14 @@
 - Regions (delivery): *New Brunswick
 *National Capital Region (NCR)
 *Saskatchewan
-*Manitoba
 *Northwest Territories
+*Manitoba
 *Yukon
 *Alberta
 *Prince Edward Island
-*Nunavut Territory
 *Nova Scotia
 *British Columbia
+*Nunavut Territory
 *Quebec (except NCR)
 *Ontario (except NCR)
 *Newfoundland and Labrador

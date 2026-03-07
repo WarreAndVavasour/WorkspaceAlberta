@@ -73,6 +73,7 @@ print(result["result"])
 
 | Profile | Description | Key Tools |
 |---------|-------------|-----------|
+| `canadabuys_showcase` | **Ready to deploy** - Federal contract search | CanadaBuys, Filesystem |
 | `foundation` | Core tools for any SMB | Filesystem, Gmail, Calendar, Web Search |
 | `steel_fabrication` | Steel shops bidding on government contracts | CanadaBuys, Bid Calculator, QuickBooks |
 | `lumber_mill` | Lumber and wood products | CanadaBuys, Inventory Tracker |

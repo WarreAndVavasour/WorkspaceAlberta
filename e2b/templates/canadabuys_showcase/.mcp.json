@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "canadabuys": {
+      "command": "python",
+      "args": ["/opt/mcp-servers/canadabuys/server.py"],
+      "env": {
+        "CANADABUYS_DATA_DIR": "/root/.canadabuys"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/workspace"
+      ],
+      "env": {}
+    }
+  }
+}

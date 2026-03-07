@@ -10,19 +10,19 @@
 - Procurement category: *GD
 - Contracting entity: Public Works and Government Services Canada
 - Regions (opportunity): 
-- Regions (delivery): *Northwest Territories
-*British Columbia
+- Regions (delivery): *British Columbia
 *Saskatchewan
-*Ontario (except NCR)
-*National Capital Region (NCR)
 *Manitoba
+*Ontario (except NCR)
 *Nunavut Territory
+*National Capital Region (NCR)
+*Northwest Territories
 *Newfoundland and Labrador
 *Prince Edward Island
 *Alberta
+*New Brunswick
 *Quebec (except NCR)
 *Nova Scotia
-*New Brunswick
 *Yukon
 
 ## Matching

@@ -20,6 +20,7 @@ else:
     _IMPORT_ERROR = None
 
 TEMPLATE_IDS: Dict[str, str] = {
+  "canadabuys_showcase": "pending-canadabuys_showcase",
   "foundation": "pending-foundation",
   "steel_fabrication": "pending-steel_fabrication",
   "lumber_mill": "pending-lumber_mill",
