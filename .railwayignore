@@ -1,0 +1,6 @@
+node_modules
+.playwright-mcp
+__pycache__
+*.pyc
+.env
+railway.json

@@ -1,62 +1,158 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main>
-  <div class="hero topo-background">
-    <div class="heroContent">
-      <div class="badge animate-fadeIn stagger-1">
-        <span class="badgeIcon">*</span>
-        <span>Built for Alberta</span>
-      </div>
+<main class="manifestoPage">
+  <section class="manifestoHero">
+    <div class="container manifestoHeroInner">
+      <p class="manifestoKicker">wouldntitbegreatif.com</p>
 
-      <h1 class="title animate-fadeInUp stagger-2">
-        Your Business Tools,
-        <br />
-        <span class="titleAccent">One Smart Workspace</span>
+      <h1 class="manifestoHeadline">
+        <span class="headlineLine">
+          You might have heard the world is going to
+          <span class="wordWar">WAR.</span>
+        </span>
+        <br>
+        <span class="headlineLine headlineLineStrong">
+          Well, Canada is going to
+          <span class="wordWork">WORK.</span>
+        </span>
       </h1>
 
-      <p class="subtitle animate-fadeInUp stagger-3">
-        Connect the tools you already use to an AI assistant that understands your business.
-        <br />
-        No technical knowledge required. Just two simple questions to get started.
+      <p class="manifestoLead">
+        Workspace Alberta is built for how Alberta businesses actually work:
+        real tools, real workflows, and measurable productivity in the places
+        where value gets created.
       </p>
 
-      <div class="stats animate-fadeInUp stagger-4">
-        <div class="stat">
-          <div class="statNumber">50+</div>
-          <div class="statLabel">Business Tools</div>
-        </div>
-        <div class="stat">
-          <div class="statNumber">2</div>
-          <div class="statLabel">Questions</div>
-        </div>
-        <div class="stat">
-          <div class="statNumber">5min</div>
-          <div class="statLabel">Setup Time</div>
-        </div>
+      <div class="manifestoActions">
+        <a href="{{ url_for('tools') }}" class="manifestoButton manifestoButtonPrimary">
+          Build Your Workspace
+        </a>
+        <a href="#examples" class="manifestoButton manifestoButtonGhost">
+          See Example Prompts
+        </a>
       </div>
 
-      <a href="{{ url_for('tools') }}" class="btn-accent ctaButton button-link animate-fadeInUp stagger-5">
-        Build Your Workspace
-        <span class="arrow">-&gt;</span>
-      </a>
+      <ul class="manifestoPrinciples">
+        <li>No new subscription</li>
+        <li>No new password</li>
+        <li>No new system to learn</li>
+      </ul>
+    </div>
+  </section>
 
-      <div class="trustBadge animate-fadeIn stagger-5">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path
-            d="M8 0L10.163 5.837L16 8L10.163 10.163L8 16L5.837 10.163L0 8L5.837 5.837L8 0Z"
-            fill="currentColor"
-          />
-        </svg>
-        <span>No credit card | No API keys stored | Open source</span>
+  <section class="manifestoSection manifestoExamples" id="examples">
+    <div class="container">
+      <p class="manifestoSectionTag">The Starting Point</p>
+      <h2 class="manifestoSectionTitle">Begin with one real problem</h2>
+      <p class="manifestoSectionLead">
+        Every workspace starts with a plain-language sentence:
+        &quot;Wouldn&apos;t it be great if...&quot;
+      </p>
+
+      <div class="manifestoExampleGrid">
+        <article class="manifestoExampleCard">
+          <p class="manifestoExamplePrompt">Wouldn&apos;t it be great if...</p>
+          <p class="manifestoExampleText">
+            we could see all government steel opportunities in Alberta and filter to the
+            ones we can actually bid on this month?
+          </p>
+        </article>
+
+        <article class="manifestoExampleCard">
+          <p class="manifestoExamplePrompt">Wouldn&apos;t it be great if...</p>
+          <p class="manifestoExampleText">
+            we could connect overdue invoices to this week&apos;s customer meetings and prioritize
+            collections before payroll runs?
+          </p>
+        </article>
+
+        <article class="manifestoExampleCard">
+          <p class="manifestoExamplePrompt">Wouldn&apos;t it be great if...</p>
+          <p class="manifestoExampleText">
+            we could compare inventory to a new RFP in minutes and decide whether to bid
+            before our competitors even react?
+          </p>
+        </article>
       </div>
     </div>
+  </section>
 
-    <div class="heroVisual">
-      <div class="mountainLayer1"></div>
-      <div class="mountainLayer2"></div>
-      <div class="mountainLayer3"></div>
+  <section class="manifestoSection manifestoSystem">
+    <div class="container">
+      <p class="manifestoSectionTag">How Workspace Alberta Works</p>
+      <h2 class="manifestoSectionTitle">Built around productivity, not software demos</h2>
+      <div class="manifestoSystemGrid">
+        <article class="manifestoSystemCard">
+          <p class="manifestoStep">01</p>
+          <h3>List your real tools</h3>
+          <p>
+            Select the systems you already use: accounting, contracts, calendars,
+            spreadsheets, and messaging.
+          </p>
+        </article>
+
+        <article class="manifestoSystemCard">
+          <p class="manifestoStep">02</p>
+          <h3>Describe one bottleneck</h3>
+          <p>
+            Define the exact work slowdown that costs time or money. Keep it concrete.
+          </p>
+        </article>
+
+        <article class="manifestoSystemCard">
+          <p class="manifestoStep">03</p>
+          <h3>Open and execute</h3>
+          <p>
+            The workspace is wired to your context so the assistant can pull data,
+            produce output, and move work forward.
+          </p>
+        </article>
+      </div>
     </div>
-  </div>
+  </section>
+
+  <section class="manifestoSection manifestoProof">
+    <div class="container">
+      <p class="manifestoSectionTag">Why This Matters</p>
+      <h2 class="manifestoSectionTitle">Productivity is provincial infrastructure</h2>
+      <div class="manifestoProofGrid">
+        <article class="manifestoProofCard">
+          <p class="manifestoProofValue">2,500+</p>
+          <p class="manifestoProofLabel">Companies in steel, lumber, and metals</p>
+        </article>
+        <article class="manifestoProofCard">
+          <p class="manifestoProofValue">$37B</p>
+          <p class="manifestoProofLabel">Combined annual economic impact</p>
+        </article>
+        <article class="manifestoProofCard">
+          <p class="manifestoProofValue">70</p>
+          <p class="manifestoProofLabel">Alberta communities supported</p>
+        </article>
+        <article class="manifestoProofCard">
+          <p class="manifestoProofValue">50% + 10%</p>
+          <p class="manifestoProofLabel">Population lift model for annual growth</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="manifestoSection manifestoClosing">
+    <div class="container">
+      <div class="manifestoClosingPanel">
+        <p class="manifestoSectionTag">The Ethos</p>
+        <h2 class="manifestoSectionTitle">
+          Workspace Alberta is designed for how Alberta businesses build and work.
+        </h2>
+        <p class="manifestoSectionLead">
+          Better wiring means faster decisions, fewer missed opportunities, and more output
+          from the people already doing the work.
+        </p>
+        <a href="{{ url_for('tools') }}" class="manifestoButton manifestoButtonPrimary">
+          Start Building Now
+        </a>
+      </div>
+    </div>
+  </section>
 </main>
 {% endblock %}

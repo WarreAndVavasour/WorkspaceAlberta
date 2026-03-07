@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;600;700;900&family=Instrument+Sans:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* Alberta Color Palette */
@@ -32,6 +32,14 @@
   /* Typography */
   --font-display: 'Crimson Pro', serif;
   --font-body: 'Outfit', sans-serif;
+  --font-manifesto-display: 'Bebas Neue', 'Crimson Pro', serif;
+  --font-manifesto-body: 'Instrument Sans', 'Outfit', sans-serif;
+
+  /* Landing colors */
+  --signal-red: #b9382d;
+  --signal-amber: #d5a149;
+  --signal-charcoal: #101620;
+  --signal-cream: #f3eee2;
 
   /* Spacing */
   --spacing-xs: 0.5rem;
@@ -280,272 +288,409 @@ button:active {
 .mb-lg { margin-bottom: var(--spacing-lg); }
 .mb-xl { margin-bottom: var(--spacing-xl); }
 
-/* Hero styles */
-.hero {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Manifesto landing page */
+.manifestoPage {
+  background:
+    radial-gradient(circle at 95% -10%, rgba(213, 161, 73, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 5% 10%, rgba(74, 111, 165, 0.18) 0%, transparent 45%),
+    var(--signal-cream);
+  color: var(--signal-charcoal);
+}
+
+.manifestoHero {
   position: relative;
-  padding: var(--spacing-lg);
-  color: white;
+  overflow: hidden;
+  padding: clamp(3rem, 8vw, 7rem) 0 clamp(2.5rem, 6vw, 5rem);
+  border-bottom: 1px solid rgba(16, 22, 32, 0.12);
 }
 
-.heroContent {
-  max-width: 900px;
-  text-align: center;
-  position: relative;
-  z-index: 10;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: 100px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: var(--spacing-md);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.badgeIcon {
-  font-size: 1.25rem;
-}
-
-.title {
-  color: white;
-  margin-bottom: var(--spacing-md);
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.titleAccent {
-  background: linear-gradient(
-    135deg,
-    var(--wheat-gold) 0%,
-    var(--harvest-amber) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 2px 8px rgba(212, 165, 116, 0.3));
-}
-
-.subtitle {
-  font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: var(--spacing-xl);
-  line-height: 1.7;
-  font-weight: 300;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.stats {
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg) 0;
-}
-
-.stat {
-  text-align: center;
-}
-
-.statNumber {
-  font-family: var(--font-display);
-  font-size: 3rem;
-  font-weight: 900;
-  line-height: 1;
-  background: linear-gradient(
-    135deg,
-    white 0%,
-    var(--wheat-gold) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: var(--spacing-xs);
-}
-
-.statLabel {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 500;
-}
-
-.ctaButton {
-  font-size: 1.125rem;
-  padding: var(--spacing-md) var(--spacing-lg);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-lg);
-  box-shadow: 0 8px 32px rgba(212, 165, 116, 0.3);
-}
-
-.ctaButton:hover .arrow {
-  transform: translateX(5px);
-}
-
-.arrow {
-  font-size: 1.5rem;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.trustBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem;
-  font-weight: 400;
-}
-
-.trustBadge svg {
-  opacity: 0.6;
-}
-
-.heroVisual {
+.manifestoHero::before {
+  content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40%;
+  inset: 0;
+  background:
+    linear-gradient(
+      118deg,
+      rgba(16, 22, 32, 0.08) 0%,
+      rgba(16, 22, 32, 0.04) 38%,
+      rgba(16, 22, 32, 0) 100%
+    );
   pointer-events: none;
-  z-index: 2;
 }
 
-.mountainLayer1,
-.mountainLayer2,
-.mountainLayer3 {
+.manifestoHero::after {
+  content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-}
-
-.mountainLayer1 {
+  left: -8%;
+  right: -8%;
+  bottom: -170px;
+  height: 260px;
   background: linear-gradient(
-    to top,
-    rgba(30, 58, 46, 0.6) 0%,
-    transparent 100%
+    90deg,
+    rgba(185, 56, 45, 0.08) 0%,
+    rgba(213, 161, 73, 0.15) 100%
   );
-  clip-path: polygon(
-    0 100%,
-    0 60%,
-    15% 70%,
-    30% 50%,
-    45% 65%,
-    60% 45%,
-    75% 60%,
-    90% 55%,
-    100% 65%,
-    100% 100%
-  );
-  animation: parallax1 20s ease-in-out infinite;
+  transform: rotate(-4deg);
+  pointer-events: none;
 }
 
-.mountainLayer2 {
-  background: linear-gradient(
-    to top,
-    rgba(45, 90, 71, 0.5) 0%,
-    transparent 100%
-  );
-  clip-path: polygon(
-    0 100%,
-    0 70%,
-    20% 65%,
-    35% 75%,
-    50% 60%,
-    65% 70%,
-    80% 65%,
-    100% 75%,
-    100% 100%
-  );
-  animation: parallax2 25s ease-in-out infinite;
+.manifestoHeroInner {
+  position: relative;
+  z-index: 1;
+  max-width: 1040px;
+  animation: manifestoRise 850ms cubic-bezier(0.21, 1, 0.24, 1) both;
 }
 
-.mountainLayer3 {
-  background: linear-gradient(
-    to top,
-    rgba(74, 124, 89, 0.4) 0%,
-    transparent 100%
-  );
-  clip-path: polygon(
-    0 100%,
-    0 80%,
-    25% 75%,
-    40% 85%,
-    55% 75%,
-    70% 80%,
-    85% 78%,
-    100% 85%,
-    100% 100%
-  );
-  animation: parallax3 30s ease-in-out infinite;
+.manifestoKicker {
+  margin: 0 0 var(--spacing-md) 0;
+  font-family: var(--font-manifesto-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(16, 22, 32, 0.65);
 }
 
-@keyframes parallax1 {
-  0%, 100% {
-    transform: translateX(0);
+.manifestoHeadline {
+  margin: 0 0 var(--spacing-md) 0;
+  font-family: var(--font-manifesto-display);
+  font-size: clamp(3.1rem, 9vw, 8.2rem);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.headlineLine {
+  display: block;
+}
+
+.headlineLineStrong {
+  margin-top: 0.45em;
+}
+
+.wordWar {
+  color: var(--signal-red);
+  text-shadow: 0 10px 22px rgba(185, 56, 45, 0.24);
+}
+
+.wordWork {
+  position: relative;
+  display: inline-block;
+  color: #f8f2e2;
+  padding: 0.08em 0.35em 0.12em;
+}
+
+.wordWork::before {
+  content: '';
+  position: absolute;
+  inset: -0.08em -0.05em -0.12em -0.05em;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--signal-charcoal) 0%, #2d4263 100%);
+  z-index: -1;
+}
+
+.manifestoLead {
+  margin: 0;
+  max-width: 760px;
+  font-family: var(--font-manifesto-body);
+  font-size: clamp(1.06rem, 2.4vw, 1.34rem);
+  line-height: 1.55;
+  color: rgba(16, 22, 32, 0.9);
+}
+
+.manifestoActions {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.manifestoButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.82rem 1.4rem;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  font-family: var(--font-manifesto-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.manifestoButton:hover {
+  transform: translateY(-2px);
+}
+
+.manifestoButtonPrimary {
+  background: var(--signal-charcoal);
+  border-color: var(--signal-charcoal);
+  color: #f8f2e2;
+  box-shadow: 0 8px 20px rgba(16, 22, 32, 0.22);
+}
+
+.manifestoButtonPrimary:hover {
+  color: #f8f2e2;
+  box-shadow: 0 12px 26px rgba(16, 22, 32, 0.28);
+}
+
+.manifestoButtonGhost {
+  border-color: rgba(16, 22, 32, 0.32);
+  color: var(--signal-charcoal);
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.manifestoButtonGhost:hover {
+  color: var(--signal-charcoal);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.manifestoPrinciples {
+  margin: var(--spacing-lg) 0 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.manifestoPrinciples li {
+  border: 1px solid rgba(16, 22, 32, 0.16);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-manifesto-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.manifestoSection {
+  padding: clamp(2.2rem, 6vw, 4.8rem) 0;
+}
+
+.manifestoSectionTag {
+  margin: 0 0 0.45rem 0;
+  font-family: var(--font-manifesto-body);
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(16, 22, 32, 0.56);
+}
+
+.manifestoSectionTitle {
+  margin: 0;
+  font-family: var(--font-manifesto-display);
+  font-size: clamp(2rem, 5.5vw, 4.4rem);
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--signal-charcoal);
+}
+
+.manifestoSectionLead {
+  margin: var(--spacing-sm) 0 0 0;
+  max-width: 760px;
+  font-family: var(--font-manifesto-body);
+  font-size: 1.04rem;
+  line-height: 1.6;
+  color: rgba(16, 22, 32, 0.82);
+}
+
+.manifestoExampleGrid {
+  margin-top: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.manifestoExampleCard {
+  background: #fff;
+  border: 1px solid rgba(16, 22, 32, 0.16);
+  border-radius: var(--radius-md);
+  padding: 1.1rem;
+  box-shadow: 0 6px 16px rgba(16, 22, 32, 0.08);
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.manifestoExampleCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(16, 22, 32, 0.12);
+}
+
+.manifestoExamplePrompt {
+  margin: 0 0 0.55rem 0;
+  color: var(--signal-red);
+  font-family: var(--font-manifesto-body);
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.manifestoExampleText {
+  margin: 0;
+  font-family: var(--font-manifesto-body);
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.manifestoSystem {
+  background: rgba(255, 255, 255, 0.62);
+  border-top: 1px solid rgba(16, 22, 32, 0.08);
+  border-bottom: 1px solid rgba(16, 22, 32, 0.08);
+}
+
+.manifestoSystemGrid {
+  margin-top: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.manifestoSystemCard {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(16, 22, 32, 0.16);
+  background: #f9f6ed;
+  padding: 1.1rem;
+}
+
+.manifestoStep {
+  margin: 0 0 0.5rem 0;
+  font-family: var(--font-manifesto-display);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--signal-red);
+}
+
+.manifestoSystemCard h3 {
+  margin: 0 0 0.45rem 0;
+  font-family: var(--font-manifesto-body);
+  font-size: 1.06rem;
+  font-weight: 700;
+  color: var(--signal-charcoal);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.manifestoSystemCard p {
+  margin: 0;
+  font-family: var(--font-manifesto-body);
+  font-size: 0.98rem;
+  line-height: 1.54;
+  color: rgba(16, 22, 32, 0.85);
+}
+
+.manifestoProof {
+  background: linear-gradient(135deg, #0f1724 0%, #1a2942 48%, #2d4263 100%);
+  color: #efe8da;
+}
+
+.manifestoProof .manifestoSectionTag {
+  color: rgba(239, 232, 218, 0.72);
+}
+
+.manifestoProof .manifestoSectionTitle {
+  color: #f8f2e2;
+}
+
+.manifestoProofGrid {
+  margin-top: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.manifestoProofCard {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(248, 242, 226, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1.1rem;
+}
+
+.manifestoProofValue {
+  margin: 0 0 0.5rem 0;
+  font-family: var(--font-manifesto-display);
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  line-height: 0.92;
+  color: #ffd68f;
+}
+
+.manifestoProofLabel {
+  margin: 0;
+  font-family: var(--font-manifesto-body);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(248, 242, 226, 0.86);
+}
+
+.manifestoClosing {
+  padding-top: clamp(2.4rem, 6vw, 5.2rem);
+}
+
+.manifestoClosingPanel {
+  border: 1px solid rgba(16, 22, 32, 0.15);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  padding: clamp(1.25rem, 4vw, 2.4rem);
+  box-shadow: 0 14px 28px rgba(16, 22, 32, 0.1);
+}
+
+.manifestoClosingPanel .manifestoButton {
+  margin-top: var(--spacing-md);
+}
+
+@keyframes manifestoRise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
   }
-  50% {
-    transform: translateX(-10px);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes parallax2 {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(10px);
-  }
-}
-
-@keyframes parallax3 {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(-5px);
+@media (max-width: 1024px) {
+  .manifestoPrinciples,
+  .manifestoExampleGrid,
+  .manifestoSystemGrid,
+  .manifestoProofGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .hero {
-    padding: var(--spacing-md);
+  .manifestoHero {
+    padding-top: 2.3rem;
   }
 
-  .title {
-    font-size: 2.5rem;
+  .manifestoHeadline {
+    line-height: 0.95;
   }
 
-  .subtitle {
-    font-size: 1rem;
-  }
-
-  .stats {
+  .manifestoActions {
     flex-direction: column;
-    gap: var(--spacing-md);
   }
 
-  .statNumber {
-    font-size: 2.5rem;
+  .manifestoButton {
+    width: 100%;
   }
 
-  .heroVisual {
-    height: 30%;
+  .manifestoPrinciples,
+  .manifestoExampleGrid,
+  .manifestoSystemGrid,
+  .manifestoProofGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .manifestoSectionLead,
+  .manifestoExampleText,
+  .manifestoSystemCard p,
+  .manifestoProofLabel {
+    font-size: 0.98rem;
   }
 }
 
