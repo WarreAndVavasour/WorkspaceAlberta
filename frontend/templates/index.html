@@ -1,161 +1,727 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wouldn't It Be Great If — Canada Is Going To WORK</title>
+<meta name="description" content="The world is going to war. Canada is going to work. Steel. Lumber. Aluminum. Join the movement.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-{% block content %}
-<main class="manifestoPage">
-  <section class="manifestoHero">
-    <div class="container manifestoHeroInner">
-      <p class="manifestoKicker">wouldntitbegreatif.com</p>
+  :root {
+    --black: #0a0a0a;
+    --dark: #111111;
+    --steel: #1a1a1a;
+    --grey: #2a2a2a;
+    --light-grey: #888;
+    --war-red: #c41e1e;
+    --war-red-dim: #4a0e0e;
+    --work-white: #f0ece4;
+    --spark: #e8a829;
+    --spark-glow: #f5c542;
+    --maple: #e63030;
+    --anton: 'Anton', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
 
-      <h1 class="manifestoHeadline">
-        <span class="headlineLine">
-          You might have heard the world is going to
-          <span class="wordWar">WAR.</span>
-        </span>
-        <br>
-        <span class="headlineLine headlineLineStrong">
-          Well, Canada is going to
-          <span class="wordWork">WORK.</span>
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--black);
+    color: var(--work-white);
+    font-family: var(--mono);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ══════════════════════════════════════
+     NOISE TEXTURE OVERLAY
+  ══════════════════════════════════════ */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.035;
+    z-index: 1000;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
+  /* ══════════════════════════════════════
+     HERO SECTION
+  ══════════════════════════════════════ */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    overflow: hidden;
+  }
+
+  /* Diagonal steel plate lines */
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 80px,
+        rgba(255,255,255,0.008) 80px,
+        rgba(255,255,255,0.008) 81px
+      );
+    z-index: 1;
+  }
+
+  /* Radial vignette */
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, var(--black) 80%);
+    z-index: 2;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 1200px;
+  }
+
+  /* ══════════════════════════════════════
+     TOP BAR — site identity
+  ══════════════════════════════════════ */
+  .top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2.5rem;
+    opacity: 0;
+    animation: fadeDown 0.8s ease 3.8s forwards;
+  }
+
+  .top-bar .site-name {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--light-grey);
+  }
+
+  .top-bar .maple-mark {
+    width: 20px;
+    height: 20px;
+    position: relative;
+  }
+
+  .top-bar .maple-mark::before {
+    content: '🍁';
+    font-size: 16px;
+    filter: grayscale(0.3);
+  }
+
+  /* ══════════════════════════════════════
+     LINE 1: "You might have heard"
+  ══════════════════════════════════════ */
+  .line-preamble {
+    font-family: var(--mono);
+    font-size: clamp(0.75rem, 1.5vw, 1.1rem);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--light-grey);
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.3s forwards;
+  }
+
+  /* ══════════════════════════════════════
+     LINE 2: "the world is going to WAR"
+  ══════════════════════════════════════ */
+  .line-war {
+    font-family: var(--anton);
+    font-size: clamp(2.5rem, 8vw, 7rem);
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: var(--war-red-dim);
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    animation: warReveal 1.2s ease 1s forwards;
+    position: relative;
+  }
+
+  .line-war .word-war {
+    color: var(--war-red);
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Glitch flicker on WAR */
+  .line-war .word-war::after {
+    content: 'WAR';
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: var(--war-red);
+    opacity: 0;
+    animation: glitch 3s ease-in-out 2.5s infinite;
+  }
+
+  /* Strikethrough that slashes through WAR */
+  .war-strike {
+    position: absolute;
+    top: 50%;
+    left: -5%;
+    width: 110%;
+    height: 4px;
+    background: var(--war-red);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: strikeThrough 0.4s ease 2.8s forwards;
+    opacity: 0.6;
+  }
+
+  /* ══════════════════════════════════════
+     DIVIDER — "Well,"
+  ══════════════════════════════════════ */
+  .line-pivot {
+    font-family: var(--mono);
+    font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--light-grey);
+    margin: 0.75rem 0;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 2.2s forwards;
+  }
+
+  .line-pivot::before,
+  .line-pivot::after {
+    content: '——';
+    margin: 0 1rem;
+    color: var(--grey);
+  }
+
+  /* ══════════════════════════════════════
+     LINE 3: "Canada is going to WORK"
+  ══════════════════════════════════════ */
+  .line-work {
+    font-family: var(--anton);
+    font-size: clamp(2.5rem, 8vw, 7rem);
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: var(--work-white);
+    opacity: 0;
+    animation: workSlam 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.8s forwards;
+    text-align: right;
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  /* Corner brackets for visual square effect */
+  .line-work::before,
+  .line-work::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-color: var(--spark);
+    border-style: solid;
+    opacity: 0.6;
+  }
+
+  .line-work::before {
+    top: -10px;
+    left: -40px;
+    border-width: 2px 0 0 2px;
+  }
+
+  .line-work::after {
+    bottom: -10px;
+    right: -40px;
+    border-width: 0 2px 2px 0;
+  }
+
+  .line-work .word-work {
+    color: var(--spark);
+    position: relative;
+    display: inline-block;
+    text-shadow: 0 0 40px rgba(232, 168, 41, 0.3);
+  }
+
+  /* Spark flash on WORK landing */
+  .line-work .word-work::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(245, 197, 66, 0.15) 0%, transparent 70%);
+    opacity: 0;
+    animation: sparkFlash 1s ease 2.8s forwards;
+    pointer-events: none;
+  }
+
+  /* ══════════════════════════════════════
+     INDUSTRIES BAR
+  ══════════════════════════════════════ */
+  .industries {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 3.4s forwards;
+  }
+
+  .industry-tag {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--light-grey);
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--grey);
+    position: relative;
+  }
+
+  .industry-tag::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--spark);
+    animation: lineGrow 0.6s ease var(--delay) forwards;
+  }
+
+  /* ══════════════════════════════════════
+     CTA BUTTON
+  ══════════════════════════════════════ */
+  .cta-container {
+    margin-top: 4rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 3.8s forwards;
+  }
+
+  .cta {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--black);
+    background: var(--spark);
+    padding: 1.1rem 3rem;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+  }
+
+  .cta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .cta:hover {
+    background: var(--spark-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232, 168, 41, 0.25);
+  }
+
+  .cta:hover::before {
+    left: 100%;
+  }
+
+  /* ══════════════════════════════════════
+     BOTTOM BORDER — red accent line
+  ══════════════════════════════════════ */
+  .hero-bottom-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 10%, var(--maple) 50%, transparent 90%);
+    opacity: 0;
+    animation: fadeIn 1s ease 4s forwards;
+    z-index: 10;
+  }
+
+  /* ══════════════════════════════════════
+     SCROLL INDICATOR
+  ══════════════════════════════════════ */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    opacity: 0;
+    animation: fadeIn 1s ease 4.2s forwards;
+  }
+
+  .scroll-hint span {
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--light-grey), transparent);
+    margin: 0 auto;
+    animation: pulse 2s ease infinite;
+  }
+
+  /* ══════════════════════════════════════
+     BELOW THE FOLD — statement section
+  ══════════════════════════════════════ */
+  .statement {
+    position: relative;
+    padding: 8rem 2rem;
+    background: var(--dark);
+    text-align: center;
+    border-top: 1px solid var(--grey);
+  }
+
+  .statement-inner {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .statement p {
+    font-family: var(--mono);
+    font-size: clamp(0.85rem, 1.2vw, 1rem);
+    line-height: 2;
+    color: var(--light-grey);
+    margin-bottom: 2rem;
+  }
+
+  .statement p strong {
+    color: var(--work-white);
+    font-weight: 700;
+  }
+
+  .statement p em {
+    color: var(--spark);
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .statement-divider {
+    width: 40px;
+    height: 1px;
+    background: var(--spark);
+    margin: 3rem auto;
+  }
+
+  .statement .closer {
+    font-family: var(--anton);
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    text-transform: uppercase;
+    color: var(--work-white);
+    letter-spacing: 0.05em;
+  }
+
+  /* ══════════════════════════════════════
+     FOOTER
+  ══════════════════════════════════════ */
+  footer {
+    padding: 2rem;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--grey);
+    background: var(--black);
+    border-top: 1px solid rgba(255,255,255,0.03);
+  }
+
+  /* ══════════════════════════════════════
+     ANIMATIONS
+  ══════════════════════════════════════ */
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 0.8;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes warReveal {
+    0% {
+      opacity: 0;
+      transform: scale(1.05);
+      filter: blur(4px);
+    }
+    60% {
+      opacity: 0.7;
+      transform: scale(1);
+      filter: blur(0);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes workSlam {
+    0% {
+      opacity: 0;
+      transform: translateY(-30px) scale(1.1);
+      filter: brightness(3);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(2px) scale(1);
+      filter: brightness(1.5);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: brightness(1);
+    }
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% { opacity: 0; }
+    92% { opacity: 0.3; transform: translateX(-3px); }
+    94% { opacity: 0; }
+    96% { opacity: 0.2; transform: translateX(2px) translateY(1px); }
+    98% { opacity: 0; }
+  }
+
+  @keyframes strikeThrough {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  @keyframes sparkFlash {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes lineGrow {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(1); }
+    50% { opacity: 0.8; transform: scaleY(1.1); }
+  }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    .top-bar {
+      padding: 1rem 1.5rem;
+    }
+
+    .industries {
+      flex-direction: column;
+      gap: 0.8rem;
+      align-items: center;
+    }
+
+    .line-pivot::before,
+    .line-pivot::after {
+      content: '—';
+      margin: 0 0.5rem;
+    }
+
+    .cta {
+      padding: 1rem 2.5rem;
+      font-size: 0.7rem;
+    }
+
+    .statement {
+      padding: 5rem 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero {
+      padding: 1.5rem 1rem;
+    }
+
+    .line-preamble {
+      letter-spacing: 0.1em;
+    }
+
+    .industries {
+      gap: 0.5rem;
+    }
+
+    .industry-tag {
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ═══ TOP BAR ═══ -->
+  <div class="top-bar">
+    <div class="site-name">wouldntitbegreatif.com</div>
+    <div class="maple-mark"></div>
+  </div>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="hero">
+
+    <div class="hero-content">
+
+      <p class="line-preamble">You might have heard</p>
+
+      <h1 class="line-war">
+        The world is going to
+        <span class="word-war">
+          WAR
+          <span class="war-strike"></span>
         </span>
       </h1>
 
-      <p class="manifestoLead">
-        Workspace Alberta is built for how Alberta businesses actually work:
-        real tools, real workflows, and measurable productivity in the places
-        where value gets created.
+      <p class="line-pivot">Well</p>
+
+      <h2 class="line-work">
+        Canada is going to
+        <span class="word-work">WORK</span>
+      </h2>
+
+      <div class="industries">
+        <span class="industry-tag" style="--delay: 3.5s">Steel</span>
+        <span class="industry-tag" style="--delay: 3.7s">Lumber</span>
+        <span class="industry-tag" style="--delay: 3.9s">Aluminum</span>
+      </div>
+
+      <div class="cta-container">
+        <a href="#statement" class="cta">Join the Movement</a>
+      </div>
+
+    </div>
+
+    <div class="scroll-hint">
+      <span></span>
+    </div>
+
+    <div class="hero-bottom-line"></div>
+
+  </section>
+
+  <!-- ═══ STATEMENT ═══ -->
+  <section class="statement" id="statement">
+    <div class="statement-inner">
+
+      <p>
+        While the world talks about conflict, <strong>Canada builds</strong>.
+        Our steel holds up bridges. Our lumber frames homes.
+        Our aluminum shapes the future.
       </p>
 
-      <div class="manifestoActions">
-        <a href="{{ url_for('tools') }}" class="manifestoButton manifestoButtonPrimary">
-          Build Your Workspace
-        </a>
-        <a href="{{ url_for('problem_blueprint') }}" class="manifestoButton manifestoButtonGhost">
-          Describe Your Problem
-        </a>
-        <a href="#examples" class="manifestoButton manifestoButtonGhost">
-          See Example Prompts
-        </a>
-      </div>
-
-      <ul class="manifestoPrinciples">
-        <li>No new subscription</li>
-        <li>No new password</li>
-        <li>No new system to learn</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="manifestoSection manifestoExamples" id="examples">
-    <div class="container">
-      <p class="manifestoSectionTag">The Starting Point</p>
-      <h2 class="manifestoSectionTitle">Begin with one real problem</h2>
-      <p class="manifestoSectionLead">
-        Every workspace starts with a plain-language sentence:
-        &quot;Wouldn&apos;t it be great if...&quot;
+      <p>
+        Three industries. Three pillars of strength.
+        <em>Made in Canada. Built to last.</em>
       </p>
 
-      <div class="manifestoExampleGrid">
-        <article class="manifestoExampleCard">
-          <p class="manifestoExamplePrompt">Wouldn&apos;t it be great if...</p>
-          <p class="manifestoExampleText">
-            we could see all government steel opportunities in Alberta and filter to the
-            ones we can actually bid on this month?
-          </p>
-        </article>
+      <div class="statement-divider"></div>
 
-        <article class="manifestoExampleCard">
-          <p class="manifestoExamplePrompt">Wouldn&apos;t it be great if...</p>
-          <p class="manifestoExampleText">
-            we could connect overdue invoices to this week&apos;s customer meetings and prioritize
-            collections before payroll runs?
-          </p>
-        </article>
+      <p class="closer">Wouldn't it be great if<br>we just got to work?</p>
 
-        <article class="manifestoExampleCard">
-          <p class="manifestoExamplePrompt">Wouldn&apos;t it be great if...</p>
-          <p class="manifestoExampleText">
-            we could compare inventory to a new RFP in minutes and decide whether to bid
-            before our competitors even react?
-          </p>
-        </article>
-      </div>
     </div>
   </section>
 
-  <section class="manifestoSection manifestoSystem">
-    <div class="container">
-      <p class="manifestoSectionTag">How Workspace Alberta Works</p>
-      <h2 class="manifestoSectionTitle">Built around productivity, not software demos</h2>
-      <div class="manifestoSystemGrid">
-        <article class="manifestoSystemCard">
-          <p class="manifestoStep">01</p>
-          <h3>List your real tools</h3>
-          <p>
-            Select the systems you already use: accounting, contracts, calendars,
-            spreadsheets, and messaging.
-          </p>
-        </article>
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <p>Steel &middot; Lumber &middot; Aluminum &mdash; Alberta, Canada</p>
+  </footer>
 
-        <article class="manifestoSystemCard">
-          <p class="manifestoStep">02</p>
-          <h3>Describe one bottleneck</h3>
-          <p>
-            Define the exact work slowdown that costs time or money. Keep it concrete.
-          </p>
-        </article>
+  <!-- ═══ SCROLL REVEAL ═══ -->
+  <script>
+    // Intersection Observer for statement section
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.2 });
 
-        <article class="manifestoSystemCard">
-          <p class="manifestoStep">03</p>
-          <h3>Open and execute</h3>
-          <p>
-            The workspace is wired to your context so the assistant can pull data,
-            produce output, and move work forward.
-          </p>
-        </article>
-      </div>
-    </div>
-  </section>
+    document.querySelectorAll('.statement p, .statement .closer, .statement-divider').forEach((el, i) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = `opacity 0.8s ease ${i * 0.15}s, transform 0.8s ease ${i * 0.15}s`;
+      observer.observe(el);
+    });
+  </script>
 
-  <section class="manifestoSection manifestoProof">
-    <div class="container">
-      <p class="manifestoSectionTag">Why This Matters</p>
-      <h2 class="manifestoSectionTitle">Productivity is provincial infrastructure</h2>
-      <div class="manifestoProofGrid">
-        <article class="manifestoProofCard">
-          <p class="manifestoProofValue">2,500+</p>
-          <p class="manifestoProofLabel">Companies in steel, lumber, and metals</p>
-        </article>
-        <article class="manifestoProofCard">
-          <p class="manifestoProofValue">$37B</p>
-          <p class="manifestoProofLabel">Combined annual economic impact</p>
-        </article>
-        <article class="manifestoProofCard">
-          <p class="manifestoProofValue">70</p>
-          <p class="manifestoProofLabel">Alberta communities supported</p>
-        </article>
-        <article class="manifestoProofCard">
-          <p class="manifestoProofValue">50% + 10%</p>
-          <p class="manifestoProofLabel">Population lift model for annual growth</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="manifestoSection manifestoClosing">
-    <div class="container">
-      <div class="manifestoClosingPanel">
-        <p class="manifestoSectionTag">The Ethos</p>
-        <h2 class="manifestoSectionTitle">
-          Workspace Alberta is designed for how Alberta businesses build and work.
-        </h2>
-        <p class="manifestoSectionLead">
-          Better wiring means faster decisions, fewer missed opportunities, and more output
-          from the people already doing the work.
-        </p>
-        <a href="{{ url_for('tools') }}" class="manifestoButton manifestoButtonPrimary">
-          Start Building Now
-        </a>
-      </div>
-    </div>
-  </section>
-</main>
-{% endblock %}
+</body>
+</html>

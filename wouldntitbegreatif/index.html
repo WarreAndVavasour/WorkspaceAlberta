@@ -219,7 +219,7 @@
     letter-spacing: 0.3em;
     text-transform: uppercase;
     color: var(--light-grey);
-    margin: 1.5rem 0;
+    margin: 0.75rem 0;
     opacity: 0;
     animation: fadeUp 0.6s ease 2.2s forwards;
   }
@@ -242,6 +242,36 @@
     color: var(--work-white);
     opacity: 0;
     animation: workSlam 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.8s forwards;
+    text-align: right;
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  /* Corner brackets for visual square effect */
+  .line-work::before,
+  .line-work::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-color: var(--spark);
+    border-style: solid;
+    opacity: 0.6;
+  }
+
+  .line-work::before {
+    top: -10px;
+    left: -40px;
+    border-width: 2px 0 0 2px;
+  }
+
+  .line-work::after {
+    bottom: -10px;
+    right: -40px;
+    border-width: 0 2px 2px 0;
   }
 
   .line-work .word-work {
