@@ -141,50 +141,6 @@ The last mile is where the real work lives. We're building the wiring.
 
 **Canada is going to work.**
 
----
 
-## The Problem Blueprint Funnel
-
-### Phase 1: Lead Qualification
-When prospects visit, we capture them through a structured problem description:
-
-1. **Landing Page CTA**: "Describe your problem in 1000+ words"
-2. **Required fields**:
-   - Current software/tools they use
-   - Desired outcome
-   - Budget range
-   - Timeline
-3. **Output**: Auto-generated JSON file downloads
-
-### Phase 2: Email Engagement
-- Prospect emails the JSON back to us
-- We generate a custom PDF with:
-  - Problem analysis
-  - Suggested technical architecture
-  - Estimated timeline
-  - "Next steps: 1-hour on-site assessment"
-
-### Phase 3: On-Site Discovery
-- Real discovery sessions with qualified leads
-- Custom implementation proposals
-- Long-term retained services
-
-**The hook**: "Email us your problem blueprint and we'll generate your free custom automation blueprint."
-
----
-
-## Technology Stack
-
-- **E2B Sandboxes**: Secure isolated code execution ($20k credits available)
-- **Cloudflare Workers AI**: Fast edge inference
-- **OpenClaw**: Automation orchestration
-
----
-
-## License
-
-MIT
-
----
 
 *Data sources: [Statistics Canada](https://www150.statcan.gc.ca), [Innovation Canada](https://ised-isde.canada.ca), [Alberta Forest Products Association](https://albertaforestproducts.ca), [Job Bank Canada](https://www.jobbank.gc.ca)*
