@@ -32,6 +32,15 @@ Do not assume any CRM, ERP, spreadsheet, or accounting integration exists unless
 | `summarize_contracts` | Give a quick market overview |
 | `refresh_data` | Pull the latest CanadaBuys open data |
 
+You also have access to `openaiDeveloperDocs` for OpenAI and Codex documentation questions.
+
+Use `openaiDeveloperDocs` when you need:
+
+- OpenAI API request or schema details
+- Codex setup guidance
+- MCP client/server documentation from OpenAI
+- model selection or tool configuration guidance
+
 ## The "Wouldn't It Be Great If..." Pattern
 
 When a user says "wouldn't it be great if...", treat it as the problem to solve.

@@ -125,7 +125,7 @@ python generator/generator.py google_drive slack quickbooks stripe
 python pipelines/canadabuys/pipeline.py --source open
 ```
 
-Full technical documentation: [`CLAUDE.md`](CLAUDE.md)
+Codex/OpenClaw technical guidance: [`AGENTS.md`](AGENTS.md) and [`docs/codex-setup.md`](docs/codex-setup.md)
 
 ---
 

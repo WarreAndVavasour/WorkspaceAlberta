@@ -1,10 +1,54 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "enabled_providers": ["openai"],
+  "instructions": ["AGENTS.md", ".cursor/rules/*.mdc"],
+  "default_agent": "procurement",
   "mcp": {
     "buildcanada": {
       "type": "local",
       "command": ["python", "mcp-servers/canadabuys/server.py"],
+      "enabled": true,
       "timeout": 15000
+    },
+    "openaiDeveloperDocs": {
+      "type": "remote",
+      "url": "https://developers.openai.com/mcp",
+      "enabled": true,
+      "timeout": 15000
+    }
+  },
+  "agent": {
+    "procurement": {
+      "description": "Primary agent for Build Canada procurement work, MCP maintenance, and Codex/OpenAI integration tasks in this repo.",
+      "mode": "primary",
+      "prompt": "{file:.opencode/agents/procurement.md}",
+      "permission": {
+        "edit": "ask",
+        "bash": "ask",
+        "webfetch": "allow"
+      }
+    },
+    "review": {
+      "description": "Read-only review agent for procurement logic, MCP behavior, and documentation drift.",
+      "mode": "subagent",
+      "prompt": "{file:.opencode/agents/review.md}",
+      "permission": {
+        "edit": "deny",
+        "webfetch": "allow",
+        "bash": {
+          "*": "ask",
+          "git diff*": "allow",
+          "git log*": "allow",
+          "python -m unittest*": "allow"
+        }
+      }
+    }
+  },
+  "command": {
+    "smoke": {
+      "description": "Run the CanadaBuys MCP smoke test and summarize the result.",
+      "template": "Run `python -m unittest tests.test_canadabuys_mcp_smoke` and summarize the result. If it fails, diagnose the problem before proposing changes.",
+      "agent": "procurement"
     }
   }
 }

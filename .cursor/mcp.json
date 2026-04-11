@@ -4,6 +4,9 @@
       "command": "python",
       "args": ["${workspaceFolder}/mcp-servers/canadabuys/server.py"],
       "env": {}
+    },
+    "openaiDeveloperDocs": {
+      "url": "https://developers.openai.com/mcp"
     }
   }
 }
