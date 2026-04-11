@@ -1,14 +1,14 @@
 [project]
 name = "canadabuys-mcp"
 version = "0.1.0"
-description = "MCP Server for Canadian federal government contracts - Steel, Lumber, Aluminum industries in Alberta"
+description = "MCP server for CanadaBuys procurement search and bid triage"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
     { name = "WorkspaceAlberta" }
 ]
-keywords = ["mcp", "canada", "government", "contracts", "procurement", "alberta", "steel", "lumber", "aluminum"]
+keywords = ["mcp", "canadabuys", "canada", "procurement", "contracts", "bids"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

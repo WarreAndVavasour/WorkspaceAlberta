@@ -1,1 +1,1 @@
--r frontend/requirements.txt
+mcp>=1.0.0

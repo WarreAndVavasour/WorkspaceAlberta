@@ -1,81 +1,47 @@
 # CanadaBuys MCP Server
 
-Search Canadian federal government contracts via AI assistant.
+This server powers the root Cursor and OpenCode configs in this repository.
 
-## What This Does
+It exposes CanadaBuys procurement data over MCP so an assistant can help a business search opportunities, review details, and triage what to pursue.
 
-Connects your AI to [CanadaBuys](https://canadabuys.canada.ca/) - the Canadian federal government's procurement database. 863+ active tender opportunities.
+## Run Directly
 
-## Installation
+From the repo root:
 
-### Cursor
-
-Add to `.cursor/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "canadabuys": {
-      "command": "python",
-      "args": ["path/to/server.py"]
-    }
-  }
-}
+```bash
+python mcp-servers/canadabuys/server.py
 ```
 
-### Claude Desktop
+## Available Tools
 
-Add to Claude config:
-
-```json
-{
-  "mcpServers": {
-    "canadabuys": {
-      "command": "python",
-      "args": ["path/to/server.py"]
-    }
-  }
-}
-```
-
-## Tools
-
-| Tool | Description |
-|------|-------------|
-| `search_contracts` | Search by keywords, province |
-| `get_contract_details` | Full details by reference number |
-| `list_upcoming_deadlines` | Contracts closing soon |
-| `summarize_contracts` | Overview of available contracts |
-| `refresh_data` | Pull latest from CanadaBuys |
-
-## Example Queries
-
-Ask your AI:
-
-- "Search for construction contracts"
-- "Find IT contracts in Ontario"
-- "What's closing in the next 7 days?"
-- "Get details on contract PW-24-00912345"
-- "Refresh the contract data"
+- `set_business_profile`
+- `find_opportunities`
+- `get_my_profile`
+- `search_contracts`
+- `get_contract_details`
+- `list_upcoming_deadlines`
+- `summarize_contracts`
+- `refresh_data`
 
 ## Configuration
 
+No environment variables are required for local use.
+
+Optional:
+
+- `CANADABUYS_DATA_DIR`: override the default cache directory
+
+By default the server caches under `~/.canadabuys`.
+
+## Smoke Test
+
+From the repo root:
+
 ```bash
-# Custom data directory (default: ~/.canadabuys/)
-export CANADABUYS_DATA_DIR=/path/to/data
+python -m unittest tests.test_canadabuys_mcp_smoke
 ```
 
 ## Data Source
 
-- **URL:** `https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv`
-- **Updated:** Daily by Government of Canada
-- **Format:** CSV with 40+ fields per contract
-
-## Requirements
-
-- Python 3.10+
-- `mcp` package (`pip install mcp`)
-
-## License
-
-MIT
+- CanadaBuys open tender notices
+- `https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv`
