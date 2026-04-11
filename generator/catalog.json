@@ -1325,18 +1325,35 @@
   },
   {
     "id": "canadabuys",
-    "display_name": "CanadaBuys",
+    "display_name": "Build Canada (CanadaBuys)",
     "category": "Custom / Alberta",
-    "description": "Search federal government procurement opportunities matching your industry",
+    "description": "Federal procurement search via Workspace Alberta Build Canada MCP (live CanadaBuys open data)",
     "integration_status": "native",
     "mcp": {
-      "server_name": "canadabuys",
+      "server_name": "buildcanada",
       "type": "python",
       "command": "python",
       "args": [
-        "-m",
-        "mcp_servers.canadabuys.server"
+        "${workspaceFolder}/mcp-servers/canadabuys/server.py"
       ],
+      "env_vars": [
+        {
+          "name": "CANADABUYS_DATA_DIR",
+          "description": "Optional cache directory (default ~/.canadabuys). Use workspaceFolder/.data/canadabuys for project-local cache."
+        }
+      ]
+    }
+  },
+  {
+    "id": "buildcanada_mcp_remote",
+    "display_name": "Build Canada MCP (managed host)",
+    "category": "Custom / Alberta",
+    "description": "HTTP MCP endpoint for Workspace Alberta hardware bundles (OpenClaw, Hermes, or hosted SSE)",
+    "integration_status": "hosted",
+    "mcp": {
+      "server_name": "buildcanada-managed",
+      "type": "http",
+      "url_env": "BUILD_CANADA_MCP_URL",
       "env_vars": []
     }
   },

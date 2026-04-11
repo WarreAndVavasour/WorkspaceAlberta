@@ -5,7 +5,7 @@ import sys
 from dataclasses import dataclass
 from typing import Literal
 
-from .generator import BuildOptions, Tool, build_mcp_json, load_catalog, select_tools
+from .generator import build_mcp_json, load_catalog, select_tools
 
 
 FOUNDATION_TOOLS = [
@@ -82,9 +82,7 @@ def get_profile_tool_ids(profile: str) -> list[str]:
     return list(dict.fromkeys(foundation + overlay))
 
 
-def build_profile_mcp_json(
-    profile: str, options: BuildOptions | None = None
-) -> dict[str, object]:
+def build_profile_mcp_json(profile: str) -> dict[str, object]:
     catalog = load_catalog()
     tool_ids = get_profile_tool_ids(profile)
     available_ids = {tool["id"] for tool in catalog}
@@ -96,7 +94,7 @@ def build_profile_mcp_json(
         print(f"Warning: Missing tools in catalog: {', '.join(missing_ids)}", file=sys.stderr)
 
     tools = select_tools(catalog, valid_ids)
-    return build_mcp_json(tools, options)
+    return build_mcp_json(tools)
 
 
 def get_profile_info(profile: str) -> dict[str, object]:
@@ -124,13 +122,11 @@ def list_profiles() -> list[str]:
     return ["foundation", *INDUSTRY_OVERLAYS.keys()]
 
 
-def generate_all_profiles(
-    options: BuildOptions | None = None,
-) -> dict[str, dict[str, object]]:
+def generate_all_profiles() -> dict[str, dict[str, object]]:
     profiles: dict[str, dict[str, object]] = {}
     for profile in list_profiles():
         try:
-            profiles[profile] = build_profile_mcp_json(profile, options)
+            profiles[profile] = build_profile_mcp_json(profile)
         except ValueError as exc:
             print(f"Error generating profile {profile}: {exc}", file=sys.stderr)
 

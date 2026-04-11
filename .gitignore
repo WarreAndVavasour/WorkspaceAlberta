@@ -28,3 +28,6 @@ venv/
 *.log
 logs/
 output/canadabuys/attachments/
+
+# Optional project-local Build Canada cache if you set CANADABUYS_DATA_DIR under the repo
+.data/

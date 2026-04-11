@@ -66,11 +66,22 @@ def build_mcp_json(
                 "env": env_vars_to_map(m.get("env_vars", []))
             }
         elif mcp_type == "http":
-            servers[m["server_name"]] = {
+            url = m.get("url")
+            url_env = m.get("url_env")
+            if url_env:
+                url = f"${{env:{url_env}}}"
+            if not url:
+                raise ValueError(
+                    f"Tool {tool['id']} is http but missing url or url_env"
+                )
+            entry: dict = {
                 "type": "http",
-                "url": m.get("url"),
-                "env": env_vars_to_map(m.get("env_vars", []))
+                "url": url,
             }
+            env_map = env_vars_to_map(m.get("env_vars", []))
+            if env_map:
+                entry["env"] = env_map
+            servers[m["server_name"]] = entry
         elif mcp_type == "http_openapi":
             openapi_url = m.get("openapi_url")
             openapi_url_env = m.get("openapi_url_env")
@@ -93,7 +104,7 @@ def build_mcp_json(
                 }
             }
 
-    return {"servers": servers}
+    return {"mcpServers": servers}
 
 
 def build_env_example(selected_tools: list[dict]) -> str:

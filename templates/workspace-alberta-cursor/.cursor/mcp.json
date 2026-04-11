@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "buildcanada": {
+      "command": "python",
+      "args": ["${workspaceFolder}/mcp-servers/canadabuys/server.py"],
+      "env": {}
+    }
+  },
+  "_comment": [
+    "Workspace Alberta — Build Canada MCP. Requires: pip install -r mcp-servers/canadabuys/requirements.txt",
+    "Managed host: run python generator/generator.py buildcanada_mcp_remote and set BUILD_CANADA_MCP_URL."
+  ]
+}

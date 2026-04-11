@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "canadabuys": {
+    "buildcanada": {
       "command": "python",
-      "args": ["mcp-servers/canadabuys/server.py"],
+      "args": ["${workspaceFolder}/mcp-servers/canadabuys/server.py"],
       "env": {}
     }
   }
