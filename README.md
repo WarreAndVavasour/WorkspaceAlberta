@@ -7,15 +7,6 @@
 
 <p align="center"><em>Canadian industrial war production, via Library and Archives Canada.</em></p>
 
-## Canada Is Going to Work
-
-You might have heard the world is going to **WAR**.
-
-Well, Canada is going to **WORK**.
-
-Workspace Alberta is built for how Canadian businesses actually work: real tools, real workflows, and measurable productivity in the places where value gets created.
-
----
 
 ## The Last Mile of Work
 
