@@ -1,5 +1,22 @@
 # WorkspaceAlberta
 
+<p align="center">
+  <img src="docs/assets/women-workers-small-arms.jpg" alt="Women workers at Small Arms Limited, 1942." width="420">
+  <img src="docs/assets/sophie-okowinski-bren-gun.jpg" alt="Sophie O'Kowinski reaming a Bren gun barrel at the John Inglis Company munitions plant, 1943." width="420">
+</p>
+
+<p align="center"><em>Canadian industrial war production, via Library and Archives Canada.</em></p>
+
+## Canada Is Going to Work
+
+You might have heard the world is going to **WAR**.
+
+Well, Canada is going to **WORK**.
+
+Workspace Alberta is built for how Canadian businesses actually work: real tools, real workflows, and measurable productivity in the places where value gets created.
+
+---
+
 ## The Last Mile of Work
 
 AI promised 5X productivity. Most small businesses got a chatbot that writes mediocre marketing copy.
@@ -8,21 +25,19 @@ The model isn't the bottleneck. The connection is.
 
 Wiring up your QuickBooks to your calendar to your AI costs $150/hour. You need a developer. Most small businesses will never do this. That's the gap. That's where the 5X productivity is hiding.
 
-**WorkspaceAlberta solves the last mile**—pre-configured workspaces that already speak to the tools your industry uses.
+**WorkspaceAlberta solves the last mile** - pre-configured workspaces that already speak to the places where the work is.
 
 ---
 
 ## "Wouldn't It Be Great If..."
 
-This is how you use it. You describe a problem:
+This is not a prompt library.
 
-> *"Wouldn't it be great if I could see all government contracts for steel fabrication in Alberta, filtered by ones we could actually bid on?"*
+It is the sentence a business owner says when they can feel the friction in the operation but do not yet have the wiring to remove it.
 
-> *"Wouldn't it be great if I could find which customers are both overdue AND have meetings scheduled this week?"*
+"Wouldn't it be great if..." is not marketing copy. It is the bottleneck, stated plainly.
 
-> *"Wouldn't it be great if I could pull our inventory spreadsheet and compare it to the materials list on that new RFP?"*
-
-The AI already has permission to look. It pulls the data. Builds the report. Asks you when it gets stuck—not some support ticket black hole. Done.
+The job of this workspace is to turn that sentence into faster decisions, fewer missed opportunities, and more useful output from the people already doing the work.
 
 ---
 
@@ -44,7 +59,7 @@ Business owners don't need another app, another login, or another workflow build
 
 WorkspaceAlberta is like Word, but for solving problems.
 
-It's a program you open almost every day to work on one specific *"wouldn't it be great if..."* problem—the kind that's unique to your trade, your shop, your contracts.
+It's a program you open almost every day to work on one specific *"wouldn't it be great if..."* problem - the kind that's unique to your trade, your shop, your contracts.
 
 ---
 
@@ -62,7 +77,7 @@ Behind every one of these companies are dozens of systems that need to talk to e
 
 Any tool that helps a fabricator **create demand**, a mill **manufacture more efficiently**, or a contractor **cut costs** has multiplier effects across the entire province:
 
-- **$4 billion** in forest product exports alone—shipped to the US, China, Japan, and South Korea
+- **$4 billion** in forest product exports alone - shipped to the US, China, Japan, and South Korea
 - **$1.6 billion** in annual wages paid to forestry workers
 - **70 communities** across Alberta that depend directly on these industries
 - **$988 million** in tax revenue flowing back to the province
@@ -73,17 +88,17 @@ More contracts won. More jobs kept. More skill developed. More value staying her
 
 ## What This Actually Does
 
-WorkspaceAlberta removes the barrier between your business and an intelligent assistant that already understands your tools, your industry, and the federal contracts relevant to your work.
+WorkspaceAlberta is a procurement workspace for Canadian businesses.
 
-### Step 1: List Your Tools
-Edit **`owner-tools-list.md`** with the software you actually use—QuickBooks, Slack, Google Drive, your ERP, whatever. No technical knowledge required.
+It brings federal opportunity discovery closer to the people who actually have to price the work, judge the fit, assess the deadlines, and decide whether to bid.
 
-### Step 2: Describe the Problem
-Edit **`monthly-pain-point.md`** with one specific problem:
-> *"I spend 6 hours every week manually checking CanadaBuys for steel contracts and comparing them to our inventory spreadsheet."*
+The point is not to impress someone with an AI demo. The point is to help a real company:
 
-### Step 3: Open and Work
-Launch the workspace. Your assistant already knows your tools and has access to live federal tender data filtered for your industry. Ask it questions. Give it tasks. Solve the problem.
+- see relevant public-sector demand sooner
+- understand requirements faster
+- make better bid or no-bid decisions
+- miss fewer deadlines
+- keep more work moving
 
 ---
 
@@ -91,10 +106,10 @@ Launch the workspace. Your assistant already knows your tools and has access to 
 
 The workspace includes direct integration with **CanadaBuys**, the federal government's procurement database. Your assistant can:
 
-- Pull live tender notices for Steel, Lumber, and Aluminum across Alberta
-- Filter opportunities by UNSPSC codes and industry keywords
-- Analyze contract requirements against your actual capabilities
-- Flag deadlines and compliance requirements before you miss them
+- pull live tender notices for steel, lumber, and aluminum across Alberta
+- filter opportunities by UNSPSC codes and industry keywords
+- analyze contract requirements against your actual capabilities
+- flag deadlines and compliance requirements before you miss them
 
 ---
 
@@ -104,28 +119,15 @@ This isn't another SaaS dashboard. There's no monthly fee, no login portal, no "
 
 You download it. You open it. You work.
 
-The workspace runs locally on your machine or in a cloud development environment. Your data stays yours. The AI reads your tools through secure, permissioned connections—it can see what you authorize and nothing else.
+The workspace runs locally on your machine or in a cloud development environment. Your data stays yours. The AI reads only what you authorize and nothing else.
 
 ---
 
-## Technical Details
+## Technical Notes
 
-For developers and IT teams who want to understand what's under the hood:
+Technical setup for Codex/OpenClaw lives in [`AGENTS.md`](AGENTS.md) and [`docs/codex-setup.md`](docs/codex-setup.md).
 
-- **Generator Engine**: Reads your tool list and produces MCP (Model Context Protocol) configurations
-- **MCP Servers**: Secure bridges that let the AI interact with business software (read spreadsheets, check calendars, query databases)
-- **CanadaBuys Pipeline**: Python-based ETL that fetches, filters, and summarizes federal procurement data
-- **Cursor/Codespaces**: Works in Cursor IDE locally or GitHub Codespaces in the cloud
-
-```bash
-# Generate workspace configuration
-python generator/generator.py google_drive slack quickbooks stripe
-
-# Run federal contract pipeline
-python pipelines/canadabuys/pipeline.py --source open
-```
-
-Codex/OpenClaw technical guidance: [`AGENTS.md`](AGENTS.md) and [`docs/codex-setup.md`](docs/codex-setup.md)
+Image source notes live in [`docs/imagery-sources.md`](docs/imagery-sources.md).
 
 ---
 
@@ -140,7 +142,5 @@ This isn't replacing workers with AI. It's operational leverage for the people d
 The last mile is where the real work lives. We're building the wiring.
 
 **Canada is going to work.**
-
-
 
 *Data sources: [Statistics Canada](https://www150.statcan.gc.ca), [Innovation Canada](https://ised-isde.canada.ca), [Alberta Forest Products Association](https://albertaforestproducts.ca), [Job Bank Canada](https://www.jobbank.gc.ca)*
