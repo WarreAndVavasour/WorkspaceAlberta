@@ -19,8 +19,18 @@ EXPECTED_TOOLS = {
     "list_upcoming_deadlines",
     "summarize_contracts",
     "refresh_data",
-    "check_cohere_hf_status",
+    "search_opportunities",
+    "get_opportunity_details",
+    "list_deadlines",
+    "find_matching_opportunities",
+    "daily_bid_brief",
+    "check_cohere_status",
     "analyze_contract_with_cohere",
+    "search_alberta_opportunities",
+    "get_alberta_opportunity_details",
+    "list_alberta_deadlines",
+    "summarize_alberta_opportunities",
+    "find_alberta_opportunities",
 }
 
 
@@ -56,7 +66,7 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                     ]
                     self.assertTrue(text_chunks)
 
-                    status_result = await session.call_tool("check_cohere_hf_status", {})
+                    status_result = await session.call_tool("check_cohere_status", {})
                     self.assertFalse(status_result.isError)
 
                     status_chunks = [

@@ -17,15 +17,41 @@ import gzip
 import json
 import os
 import re
-from urllib.error import HTTPError, URLError
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def load_local_env() -> None:
+    """Load repo-local .env values for local MCP runs without printing secrets."""
+    if os.environ.get("CANADABUYS_LOAD_ENV_FILE", "1").lower() in {"0", "false", "no"}:
+        return
+
+    for env_path in (ROOT_DIR / ".env", Path.cwd() / ".env"):
+        if not env_path.exists():
+            continue
+        for line in env_path.read_text(encoding="utf-8-sig").splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or "=" not in stripped:
+                continue
+            key, value = stripped.split("=", 1)
+            key = key.strip()
+            if key.startswith("export "):
+                key = key[len("export "):].strip()
+            if not key or key in os.environ:
+                continue
+            os.environ[key] = value.strip().strip('"').strip("'")
+
+
+load_local_env()
 
 # Initialize server
 server = Server("canadabuys")
@@ -46,9 +72,21 @@ HF_CHAT_COMPLETIONS_URL = os.environ.get(
     "CANADABUYS_HF_CHAT_COMPLETIONS_URL",
     "https://router.huggingface.co/v1/chat/completions",
 )
-COHERE_HF_MODEL = os.environ.get(
+COHERE_CHAT_COMPLETIONS_URL = os.environ.get(
+    "CANADABUYS_COHERE_CHAT_COMPLETIONS_URL",
+    "https://api.cohere.ai/compatibility/v1/chat/completions",
+)
+COHERE_MODEL = os.environ.get(
     "CANADABUYS_COHERE_MODEL",
+    "command-a-plus-05-2026",
+)
+COHERE_HF_MODEL = os.environ.get(
+    "CANADABUYS_COHERE_HF_MODEL",
     "CohereLabs/command-a-plus-05-2026-w4a4:cohere",
+)
+COHERE_API_KEY_ENV_NAMES = (
+    "COHERE_API_KEY",
+    "COHERE_PROD_API_KEY",
 )
 HF_TOKEN_ENV_NAMES = (
     "HF_TOKEN",
@@ -56,6 +94,30 @@ HF_TOKEN_ENV_NAMES = (
     "HUGGING_FACE_HUB_TOKEN",
 )
 MAX_CONTRACT_PROMPT_CHARS = 12000
+
+ALBERTA_APC_API_BASE = os.environ.get(
+    "ALBERTA_APC_API_BASE",
+    "https://purchasing.alberta.ca/api",
+).rstrip("/")
+ALBERTA_APC_APP_BASE = os.environ.get(
+    "ALBERTA_APC_APP_BASE",
+    "https://purchasing.alberta.ca",
+).rstrip("/")
+ALBERTA_CATEGORY_CODES = {
+    "construction": "CNST",
+    "cnst": "CNST",
+    "goods": "GD",
+    "good": "GD",
+    "gd": "GD",
+    "services": "SRV",
+    "service": "SRV",
+    "srv": "SRV",
+}
+ALBERTA_CATEGORY_LABELS = {
+    "CNST": "Construction",
+    "GD": "Goods",
+    "SRV": "Services",
+}
 
 
 def parse_date(value: str) -> datetime | None:
@@ -144,6 +206,25 @@ def get_field(contract: dict, *field_names: str) -> str:
     return ""
 
 
+def get_cohere_api_key() -> tuple[str, str]:
+    """Return the first configured Cohere API key and its env var name."""
+    for name in COHERE_API_KEY_ENV_NAMES:
+        token = os.environ.get(name, "").strip()
+        if token:
+            return token, name
+    return "", ""
+
+
+def get_cohere_api_keys() -> list[tuple[str, str]]:
+    """Return configured Cohere API keys in preferred failover order."""
+    keys = []
+    for name in COHERE_API_KEY_ENV_NAMES:
+        token = os.environ.get(name, "").strip()
+        if token:
+            keys.append((token, name))
+    return keys
+
+
 def get_hf_token() -> tuple[str, str]:
     """Return the first configured Hugging Face token and its env var name."""
     for name in HF_TOKEN_ENV_NAMES:
@@ -179,6 +260,37 @@ def strip_cohere_thinking(text: str) -> str:
     return cleaned.strip()
 
 
+class CohereApiError(RuntimeError):
+    """Cohere API failure with status details for controlled failover."""
+
+    def __init__(self, status_code: int, message: str, key_name: str) -> None:
+        self.status_code = status_code
+        self.message = message
+        self.key_name = key_name
+        super().__init__(f"Cohere API returned HTTP {status_code}: {message[:300]}")
+
+
+def is_cohere_limit_error(error: CohereApiError) -> bool:
+    """Return true for failures where the prod key should be tried."""
+    if error.status_code in {402, 429}:
+        return True
+
+    message = error.message.lower()
+    return any(
+        phrase in message
+        for phrase in (
+            "rate limit",
+            "rate_limit",
+            "too many requests",
+            "quota",
+            "credit",
+            "billing",
+            "trial",
+            "limit exceeded",
+        )
+    )
+
+
 def call_cohere_hf_chat(
     messages: list[dict[str, str]],
     max_tokens: int = 800,
@@ -196,6 +308,7 @@ def call_cohere_hf_chat(
         "max_tokens": max_tokens,
         "temperature": temperature,
         "top_p": 0.95,
+        "reasoning_effort": "none",
         "stream": False,
     }
     request = Request(
@@ -238,6 +351,418 @@ def call_cohere_hf_chat(
     if not content:
         raise RuntimeError("Hugging Face router returned an empty message.")
     return strip_cohere_thinking(content)
+
+
+def call_cohere_direct_chat(
+    messages: list[dict[str, str]],
+    max_tokens: int = 1200,
+    temperature: float = 0.2,
+    token: str = "",
+    key_name: str = "",
+) -> str:
+    """Call Command A+ through Cohere's OpenAI-compatible endpoint."""
+    if not token:
+        token, key_name = get_cohere_api_key()
+    if not token:
+        names = " or ".join(COHERE_API_KEY_ENV_NAMES)
+        raise RuntimeError(f"Cohere API key is not configured. Set {names}.")
+    if not key_name:
+        key_name = "Cohere API key"
+
+    cohere_messages = [
+        {
+            "role": "developer" if message.get("role") == "system" else message.get("role", "user"),
+            "content": message.get("content", ""),
+        }
+        for message in messages
+    ]
+    payload = {
+        "model": COHERE_MODEL,
+        "messages": cohere_messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "top_p": 0.95,
+        "reasoning_effort": "none",
+        "stream": False,
+    }
+    request = Request(
+        COHERE_CHAT_COMPLETIONS_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "User-Agent": "CanadaBuys-MCP/1.0",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=120) as response:
+            body = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        raw_body = exc.read().decode("utf-8", errors="replace")
+        try:
+            error_body = json.loads(raw_body)
+            error_message = str(
+                error_body.get("message") or error_body.get("error") or raw_body
+            )
+        except json.JSONDecodeError:
+            error_message = raw_body
+        raise CohereApiError(exc.code, error_message, key_name) from exc
+    except URLError as exc:
+        raise RuntimeError(f"Could not reach Cohere API: {exc.reason}") from exc
+
+    choices = body.get("choices", [])
+    if not choices:
+        raise RuntimeError("Cohere API returned no choices.")
+    content = choices[0].get("message", {}).get("content", "")
+    if not content:
+        raise RuntimeError("Cohere API returned an empty message.")
+    return strip_cohere_thinking(content)
+
+
+def call_cohere_chat(
+    messages: list[dict[str, str]],
+    max_tokens: int = 1200,
+    temperature: float = 0.2,
+) -> tuple[str, str, str]:
+    """Call the configured Cohere route, preferring direct Cohere keys."""
+    cohere_keys = get_cohere_api_keys()
+    if cohere_keys:
+        last_error = None
+        for index, (token, key_name) in enumerate(cohere_keys):
+            try:
+                content = call_cohere_direct_chat(
+                    messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    token=token,
+                    key_name=key_name,
+                )
+                provider = "Cohere API"
+                if index > 0:
+                    provider += f" via `{key_name}` fallback"
+                return content, provider, COHERE_MODEL
+            except CohereApiError as exc:
+                last_error = exc
+                has_next_key = index + 1 < len(cohere_keys)
+                if not has_next_key or not is_cohere_limit_error(exc):
+                    raise
+
+        if last_error:
+            raise last_error
+
+    return (
+        call_cohere_hf_chat(messages, max_tokens=max_tokens, temperature=temperature),
+        "Hugging Face Inference Providers",
+        COHERE_HF_MODEL,
+    )
+
+
+# ============== Alberta Purchasing Connection ==============
+
+
+def apc_selectable(value: str) -> dict[str, Any]:
+    """Build APC's selectable filter shape."""
+    return {"value": value, "selected": True, "count": 0}
+
+
+def normalize_alberta_category(category: str) -> str:
+    """Normalize user-facing category names to APC category codes."""
+    raw = (category or "").strip().lower()
+    return ALBERTA_CATEGORY_CODES.get(raw, raw.upper())
+
+
+def parse_alberta_reference(reference: str) -> tuple[int, int]:
+    """Parse references like AB-2026-03908 into APC public detail path parts."""
+    match = re.search(r"AB-(\d{4})-(\d+)", reference.strip(), flags=re.IGNORECASE)
+    if not match:
+        raise ValueError("Use an Alberta APC reference like `AB-2026-03908`.")
+    return int(match.group(1)), int(match.group(2))
+
+
+def read_json_request(request: Request, timeout: int = 120) -> dict:
+    """Read a JSON HTTP response with a useful error message."""
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        try:
+            parsed = json.loads(body)
+            message = parsed.get("message") or parsed.get("title") or parsed.get("error") or body
+            if "errors" in parsed:
+                message = f"{message}: {parsed['errors']}"
+        except json.JSONDecodeError:
+            message = body
+        raise RuntimeError(f"HTTP {exc.code}: {str(message)[:500]}") from exc
+    except URLError as exc:
+        raise RuntimeError(f"Could not reach source: {exc.reason}") from exc
+
+
+def build_alberta_filter(
+    *,
+    status: str = "OPEN",
+    category: str = "",
+    close_start: str = "",
+    close_end: str = "",
+    post_start: str = "",
+    post_end: str = "",
+) -> dict[str, Any]:
+    """Build the APC opportunity filter payload."""
+    statuses = []
+    if status and status.lower() not in {"all", "any"}:
+        statuses.append(apc_selectable(status.strip().upper()))
+
+    categories = []
+    if category:
+        categories.append(apc_selectable(normalize_alberta_category(category)))
+
+    filt: dict[str, Any] = {
+        "solicitationNumber": "",
+        "categories": categories,
+        "statuses": statuses,
+        "agreementTypes": [],
+        "solicitationTypes": [],
+        "opportunityTypes": [],
+        "deliveryRegions": [],
+        "deliveryRegion": "",
+        "organizations": [],
+        "unspsc": [],
+        "postDateRange": "$$custom",
+        "closeDateRange": "$$custom",
+        "onlyBookmarked": False,
+        "onlyInterestExpressed": False,
+    }
+    if close_start:
+        filt["closeDateStart"] = close_start
+    if close_end:
+        filt["closeDateEnd"] = close_end
+    if post_start:
+        filt["postDateStart"] = post_start
+    if post_end:
+        filt["postDateEnd"] = post_end
+    return filt
+
+
+def search_alberta_api(
+    *,
+    query: str = "",
+    status: str = "OPEN",
+    category: str = "",
+    limit: int = 10,
+    offset: int = 0,
+    sort_field: str = "PostDateTime",
+    sort_direction: str = "desc",
+    close_start: str = "",
+    close_end: str = "",
+    post_start: str = "",
+    post_end: str = "",
+) -> dict:
+    """Search Alberta Purchasing Connection opportunities."""
+    limit = clamp_int(limit, default=10, minimum=1, maximum=100)
+    offset = clamp_int(offset, default=0, minimum=0, maximum=100)
+    payload = {
+        "query": query or "",
+        "queryMode": "standard",
+        "includeEnhancedMatchIds": True,
+        "filter": build_alberta_filter(
+            status=status,
+            category=category,
+            close_start=close_start,
+            close_end=close_end,
+            post_start=post_start,
+            post_end=post_end,
+        ),
+        "limit": limit,
+        "offset": offset,
+        "sortOptions": [{"field": sort_field, "direction": sort_direction}],
+    }
+    request = Request(
+        f"{ALBERTA_APC_API_BASE}/opportunity/search",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+            "Referer": f"{ALBERTA_APC_APP_BASE}/search",
+            "User-Agent": "CanadaBuys-MCP/1.0",
+        },
+        method="POST",
+    )
+    return read_json_request(request)
+
+
+def get_alberta_api_details(reference: str) -> dict:
+    """Fetch public APC details for an opportunity reference."""
+    year, draft_id = parse_alberta_reference(reference)
+    request = Request(
+        f"{ALBERTA_APC_API_BASE}/opportunity/public/{year}/{draft_id}",
+        headers={
+            "Accept": "application/json",
+            "Referer": f"{ALBERTA_APC_APP_BASE}/search",
+            "User-Agent": "CanadaBuys-MCP/1.0",
+        },
+    )
+    return read_json_request(request)
+
+
+def render_alberta_opportunity_line(opp: dict, index: int) -> str:
+    """Render one APC result for a search listing."""
+    title = str(opp.get("title") or opp.get("shortTitle") or "Untitled opportunity")[:90]
+    ref = opp.get("referenceNumber", "")
+    org = str(opp.get("contractingOrganization") or "")[:70]
+    category = ALBERTA_CATEGORY_LABELS.get(opp.get("categoryCode"), opp.get("categoryCode", ""))
+    close_date = opp.get("closeDateTime") or ""
+    solicitation = opp.get("solicitationTypeCode") or ""
+    return (
+        f"**{index}. {title}**\n"
+        f"   Reference: `{ref}`\n"
+        f"   Organization: {org}\n"
+        f"   Category: {category} | Type: {solicitation}\n"
+        f"   Closing: {close_date}\n"
+    )
+
+
+def render_alberta_details_markdown(data: dict) -> str:
+    """Render an APC opportunity detail response as markdown."""
+    opp = data.get("opportunity", {})
+    title = opp.get("title") or opp.get("shortTitle") or "Untitled Alberta Opportunity"
+    ref = opp.get("referenceNumber", "")
+    year, draft_id = parse_alberta_reference(ref) if ref else ("", "")
+    public_url = f"{ALBERTA_APC_APP_BASE}/opportunity/{year}/{draft_id}" if ref else ALBERTA_APC_APP_BASE
+    contact_info = data.get("contractingEntityContactInformation") or {}
+    organization = (
+        opp.get("contractingOrganization")
+        or opp.get("contractingOrgName")
+        or contact_info.get("organizationName")
+        or (str(title).split(" - ", 1)[0] if " - " in str(title) else "")
+    )
+
+    lines = [f"# {title}", ""]
+    lines.append("## Overview")
+    lines.append(f"- **Source:** Alberta Purchasing Connection")
+    lines.append(f"- **Reference:** {ref}")
+    lines.append(f"- **Solicitation:** {opp.get('solicitationNumber', '')}")
+    lines.append(f"- **Status:** {opp.get('statusCode', '')}")
+    lines.append(f"- **Category:** {ALBERTA_CATEGORY_LABELS.get(opp.get('categoryCode'), opp.get('categoryCode', ''))}")
+    lines.append(f"- **Solicitation Type:** {opp.get('solicitationTypeCode', '')}")
+    lines.append(f"- **Opportunity Type:** {opp.get('postingTypeCode', '')}")
+    lines.append(f"- **Organization:** {organization}")
+    lines.append(f"- **Posted:** {opp.get('postDateTime', '')}")
+    lines.append(f"- **Closing:** {opp.get('closeDateTime', '')}")
+    lines.append("")
+
+    region = opp.get("regionOfDelivery") or ""
+    if region:
+        lines.append("## Region")
+        lines.append(str(region))
+        lines.append("")
+
+    commodity_codes = data.get("commodityCodes") or opp.get("commodityCodes") or []
+    if commodity_codes:
+        lines.append("## Commodity Codes")
+        for code in commodity_codes[:12]:
+            if isinstance(code, dict):
+                code_value = (
+                    code.get("commodity")
+                    or code.get("class")
+                    or code.get("family")
+                    or code.get("segment")
+                    or code.get("code")
+                    or code.get("value")
+                    or ""
+                )
+                title_value = (
+                    code.get("commodityTitle")
+                    or code.get("classTitle")
+                    or code.get("familyTitle")
+                    or code.get("segmentTitle")
+                    or code.get("title")
+                    or code.get("description")
+                    or ""
+                )
+                lines.append(f"- {code_value} {title_value}".strip())
+            else:
+                lines.append(f"- {code}")
+        lines.append("")
+
+    description = opp.get("projectDescription") or ""
+    if description:
+        lines.append("## Description")
+        lines.append(str(description)[:3000])
+        lines.append("")
+
+    requirements = opp.get("additionalRequirements") or ""
+    if requirements:
+        lines.append("## Additional Requirements")
+        lines.append(str(requirements)[:2000])
+        lines.append("")
+
+    submission = opp.get("submissionDetails") or ""
+    question_submission = opp.get("questionSubmissionDetails") or ""
+    if submission or question_submission:
+        lines.append("## Submission")
+        if submission:
+            lines.append(str(submission)[:1500])
+        if question_submission:
+            lines.append(f"Questions: {str(question_submission)[:1000]}")
+        lines.append("")
+
+    external_link = opp.get("externalOriginLink")
+    lines.append("## Links")
+    lines.append(f"- [View on Alberta Purchasing Connection]({public_url})")
+    if external_link:
+        lines.append(f"- [External posting]({external_link})")
+
+    return "\n".join(lines)
+
+
+def score_alberta_opportunity(opp: dict, profile: dict) -> tuple[int, list[str]]:
+    """Score an APC opportunity against the saved business profile."""
+    score = 0
+    reasons = []
+    keywords = profile.get("capabilities", [])
+    location = profile.get("location", "").lower()
+
+    title = str(opp.get("title") or opp.get("shortTitle") or "").lower()
+    desc = str(opp.get("projectDescription") or "").lower()
+    commodity_titles = " ".join(str(v) for v in opp.get("commodityCodeTitles") or []).lower()
+    regions = " ".join(str(v) for v in opp.get("regionOfDelivery") or []).lower()
+
+    title_matches = [kw for kw in keywords if kw.lower() in title]
+    if title_matches:
+        score += 10 * len(title_matches)
+        reasons.append(f"title matches: {', '.join(title_matches[:3])}")
+
+    desc_matches = [kw for kw in keywords if kw.lower() in desc and kw.lower() not in title]
+    if desc_matches:
+        score += 5 * len(desc_matches)
+        reasons.append(f"description matches: {', '.join(desc_matches[:3])}")
+
+    commodity_matches = [kw for kw in keywords if kw.lower() in commodity_titles]
+    if commodity_matches:
+        score += 8 * len(commodity_matches)
+        reasons.append(f"commodity matches: {', '.join(commodity_matches[:3])}")
+
+    if location:
+        loc_parts = [p.strip().lower() for p in location.replace(",", " ").split()]
+        for part in loc_parts:
+            if len(part) > 3 and part in regions:
+                score += 10
+                reasons.append(f"delivers to {part}")
+                break
+
+    closing_date = parse_date(str(opp.get("closeDateTime") or ""))
+    if closing_date:
+        now = datetime.now(timezone.utc)
+        if closing_date.tzinfo is None:
+            closing_date = closing_date.replace(tzinfo=timezone.utc)
+        days_until = (closing_date - now).days
+        if 0 < days_until <= 14:
+            score += 5
+            reasons.append(f"closes in {days_until} days")
+
+    return score, reasons
 
 
 # ============== Business Profile ==============
@@ -424,6 +949,296 @@ def find_contract_by_reference(reference: str, contracts: list[dict]) -> dict | 
     return None
 
 
+# ============== Unified Opportunity Helpers ==============
+
+
+def include_source(source: str, candidate: str) -> bool:
+    """Return true if a unified tool should include a source."""
+    raw = (source or "all").strip().lower()
+    aliases = {
+        "all": {"all", "both", ""},
+        "federal": {"federal", "canadabuys", "canada", "national"},
+        "alberta": {"alberta", "apc"},
+    }
+    return raw in aliases["all"] or raw in aliases[candidate]
+
+
+def is_alberta_reference(reference: str) -> bool:
+    """Return true if the reference looks like an APC reference."""
+    return bool(re.search(r"^AB-\d{4}-\d+", reference.strip(), flags=re.IGNORECASE))
+
+
+def load_contracts_for_unified() -> tuple[list[dict], list[str]]:
+    """Load CanadaBuys contracts, refreshing once when no cache exists."""
+    warnings = []
+    contracts = load_contracts()
+    if contracts:
+        return contracts, warnings
+
+    try:
+        contracts = fetch_all_contracts()
+        save_contracts(contracts)
+        warnings.append("CanadaBuys cache was empty, so it was refreshed from open data.")
+    except Exception as exc:
+        warnings.append(f"CanadaBuys data unavailable: {exc}")
+        contracts = []
+    return contracts, warnings
+
+
+def normalize_canadabuys_contract(contract: dict) -> dict[str, Any]:
+    """Normalize a CanadaBuys row to the shared opportunity shape."""
+    return {
+        "source": "CanadaBuys",
+        "source_key": "federal",
+        "reference": get_field(contract, "referenceNumber-numeroReference"),
+        "solicitation": get_field(contract, "solicitationNumber-numeroSollicitation"),
+        "title": get_field(contract, "title-titre-eng", "title-titre-fra") or "Untitled federal opportunity",
+        "buyer": get_field(contract, "contractingEntityName-nomEntitContractante-eng"),
+        "status": get_field(contract, "tenderStatus-appelOffresStatut-eng"),
+        "category": get_field(contract, "procurementCategory-categorieApprovisionnement"),
+        "posted": get_field(contract, "publicationDate-datePublication"),
+        "closing": get_field(contract, "tenderClosingDate-appelOffresDateCloture"),
+        "region": get_field(contract, "regionsOfDelivery-regionsLivraison-eng", "regionsOfOpportunity-regionAppelOffres-eng"),
+        "description": get_field(contract, "tenderDescription-descriptionAppelOffres-eng"),
+        "url": get_field(contract, "noticeURL-URLavis-eng"),
+        "raw": contract,
+    }
+
+
+def normalize_alberta_opportunity(opp: dict) -> dict[str, Any]:
+    """Normalize an APC search result to the shared opportunity shape."""
+    ref = opp.get("referenceNumber", "")
+    url = ""
+    if ref:
+        try:
+            year, draft_id = parse_alberta_reference(ref)
+            url = f"{ALBERTA_APC_APP_BASE}/opportunity/{year}/{draft_id}"
+        except ValueError:
+            url = ALBERTA_APC_APP_BASE
+
+    region = opp.get("regionOfDelivery") or []
+    if isinstance(region, list):
+        region_text = ", ".join(str(item) for item in region)
+    else:
+        region_text = str(region)
+
+    return {
+        "source": "Alberta Purchasing Connection",
+        "source_key": "alberta",
+        "reference": ref,
+        "solicitation": opp.get("solicitationNumber", ""),
+        "title": opp.get("title") or opp.get("shortTitle") or "Untitled Alberta opportunity",
+        "buyer": opp.get("contractingOrganization", ""),
+        "status": opp.get("statusCode", ""),
+        "category": ALBERTA_CATEGORY_LABELS.get(opp.get("categoryCode"), opp.get("categoryCode", "")),
+        "posted": opp.get("postDateTime", ""),
+        "closing": opp.get("closeDateTime", ""),
+        "region": region_text,
+        "description": opp.get("projectDescription", ""),
+        "url": opp.get("externalOriginLink") or url,
+        "raw": opp,
+    }
+
+
+def opportunity_date(opportunity: dict, field: str) -> datetime:
+    """Parse a normalized opportunity date for sorting."""
+    parsed = parse_date(str(opportunity.get(field) or ""))
+    if not parsed:
+        return datetime.max.replace(tzinfo=timezone.utc)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def opportunity_text(opportunity: dict) -> str:
+    """Return searchable text for a normalized opportunity."""
+    return " ".join(
+        str(opportunity.get(field, ""))
+        for field in ("title", "buyer", "category", "region", "description", "solicitation", "reference")
+    ).lower()
+
+
+def federal_contract_matches(contract: dict, keywords: str, province: str, category: str) -> bool:
+    """Apply simple unified filters to a CanadaBuys row."""
+    normalized = normalize_canadabuys_contract(contract)
+    text = opportunity_text(normalized)
+    if keywords and keywords.lower() not in text:
+        return False
+    if province and province.lower() not in str(normalized.get("region", "")).lower():
+        return False
+    if category and category.lower() not in text:
+        return False
+    return True
+
+
+def render_unified_opportunity_line(opportunity: dict, index: int, extra: str = "") -> str:
+    """Render a normalized opportunity for unified listings."""
+    title = str(opportunity.get("title") or "Untitled opportunity")[:90]
+    buyer = str(opportunity.get("buyer") or "")[:70]
+    output = (
+        f"**{index}. {title}**\n"
+        f"   Source: {opportunity.get('source')}\n"
+        f"   Reference: `{opportunity.get('reference', '')}`\n"
+        f"   Buyer: {buyer}\n"
+        f"   Category: {opportunity.get('category', '')}\n"
+        f"   Closing: {opportunity.get('closing', '')}\n"
+    )
+    if extra:
+        output += f"   {extra}\n"
+    return output
+
+
+def collect_unified_search(args: dict) -> tuple[list[dict], list[str]]:
+    """Collect normalized search results across requested sources."""
+    source = args.get("source", "all")
+    keywords = args.get("keywords", "")
+    category = args.get("category", "")
+    province = args.get("province", "")
+    limit = clamp_int(args.get("limit"), default=20, minimum=1, maximum=50)
+    warnings = []
+    opportunities = []
+
+    if include_source(source, "federal"):
+        contracts, federal_warnings = load_contracts_for_unified()
+        warnings.extend(federal_warnings)
+        for contract in contracts:
+            if federal_contract_matches(contract, keywords, province, category):
+                opportunities.append(normalize_canadabuys_contract(contract))
+                if len([o for o in opportunities if o["source_key"] == "federal"]) >= limit:
+                    break
+
+    if include_source(source, "alberta"):
+        if province and "alberta" not in province.lower():
+            warnings.append("Alberta APC was skipped because the province filter is not Alberta.")
+        else:
+            apc_category = normalize_alberta_category(category) if category else ""
+            if category and apc_category not in ALBERTA_CATEGORY_LABELS:
+                apc_category = ""
+            try:
+                data = search_alberta_api(
+                    query=keywords,
+                    status="OPEN",
+                    category=apc_category,
+                    limit=limit,
+                    sort_field="PostDateTime",
+                    sort_direction="desc",
+                )
+                opportunities.extend(normalize_alberta_opportunity(opp) for opp in data.get("values", []))
+            except RuntimeError as exc:
+                warnings.append(f"Alberta APC unavailable: {exc}")
+
+    opportunities.sort(key=lambda item: opportunity_date(item, "posted"), reverse=True)
+    return opportunities[:limit], warnings
+
+
+def collect_unified_deadlines(args: dict) -> tuple[list[dict], list[str]]:
+    """Collect normalized closing-soon opportunities across requested sources."""
+    source = args.get("source", "all")
+    days = clamp_int(args.get("days"), default=30, minimum=1, maximum=365)
+    limit = clamp_int(args.get("limit"), default=20, minimum=1, maximum=50)
+    category = args.get("category", "")
+    province = args.get("province", "")
+    now = datetime.now(timezone.utc)
+    close_end = now + timedelta(days=days)
+    warnings = []
+    opportunities = []
+
+    if include_source(source, "federal"):
+        contracts, federal_warnings = load_contracts_for_unified()
+        warnings.extend(federal_warnings)
+        for contract in contracts:
+            if not federal_contract_matches(contract, "", province, category):
+                continue
+            closing = parse_date(get_field(contract, "tenderClosingDate-appelOffresDateCloture"))
+            if not closing:
+                continue
+            if closing.tzinfo is None:
+                closing = closing.replace(tzinfo=timezone.utc)
+            if now <= closing <= close_end:
+                opportunities.append(normalize_canadabuys_contract(contract))
+
+    if include_source(source, "alberta"):
+        if province and "alberta" not in province.lower():
+            warnings.append("Alberta APC was skipped because the province filter is not Alberta.")
+        else:
+            apc_category = normalize_alberta_category(category) if category else ""
+            if category and apc_category not in ALBERTA_CATEGORY_LABELS:
+                apc_category = ""
+            try:
+                data = search_alberta_api(
+                    status="OPEN",
+                    category=apc_category,
+                    limit=limit,
+                    sort_field="CloseDateTime",
+                    sort_direction="asc",
+                    close_start=now.strftime("%Y-%m-%d"),
+                    close_end=close_end.strftime("%Y-%m-%d"),
+                )
+                opportunities.extend(normalize_alberta_opportunity(opp) for opp in data.get("values", []))
+            except RuntimeError as exc:
+                warnings.append(f"Alberta APC unavailable: {exc}")
+
+    opportunities.sort(key=lambda item: opportunity_date(item, "closing"))
+    return opportunities[:limit], warnings
+
+
+def collect_unified_matches(profile: dict, days: int, limit: int) -> tuple[list[tuple[int, int, dict, list[str]]], list[str]]:
+    """Collect scored opportunity matches across federal and Alberta sources."""
+    now = datetime.now(timezone.utc)
+    warnings = []
+    scored: list[tuple[int, int, dict, list[str]]] = []
+
+    contracts, federal_warnings = load_contracts_for_unified()
+    warnings.extend(federal_warnings)
+    for contract in contracts:
+        closing = parse_date(get_field(contract, "tenderClosingDate-appelOffresDateCloture"))
+        if not closing:
+            continue
+        if closing.tzinfo is None:
+            closing = closing.replace(tzinfo=timezone.utc)
+        days_until = (closing - now).days
+        if days_until < 0 or days_until > days:
+            continue
+        score, reasons = score_contract(contract, profile)
+        if score > 0:
+            scored.append((score, days_until, normalize_canadabuys_contract(contract), reasons))
+
+    keywords = [kw for kw in profile.get("capabilities", []) if len(str(kw)) >= 4]
+    found_alberta: dict[str, dict] = {}
+    close_start = now.strftime("%Y-%m-%d")
+    close_end = (now + timedelta(days=days)).strftime("%Y-%m-%d")
+    for keyword in keywords[:8]:
+        try:
+            data = search_alberta_api(
+                query=str(keyword),
+                status="OPEN",
+                limit=25,
+                close_start=close_start,
+                close_end=close_end,
+            )
+        except RuntimeError as exc:
+            warnings.append(f"Alberta APC unavailable for `{keyword}`: {exc}")
+            continue
+        for opp in data.get("values", []):
+            ref = opp.get("referenceNumber")
+            if ref:
+                found_alberta[ref] = opp
+
+    for opp in found_alberta.values():
+        score, reasons = score_alberta_opportunity(opp, profile)
+        if score > 0:
+            closing = parse_date(str(opp.get("closeDateTime") or ""))
+            days_until = 9999
+            if closing:
+                if closing.tzinfo is None:
+                    closing = closing.replace(tzinfo=timezone.utc)
+                days_until = (closing - now).days
+            scored.append((score, days_until, normalize_alberta_opportunity(opp), reasons))
+
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return scored[:limit], warnings
+
+
 # ============== MCP Tools ==============
 
 @server.list_tools()
@@ -550,9 +1365,217 @@ async def list_tools() -> list[Tool]:
                 "properties": {}
             }
         ),
+        # ===== Unified Procurement Tools =====
         Tool(
-            name="check_cohere_hf_status",
-            description="Check whether the optional Cohere Command A+ model integration through Hugging Face is configured. Does not call the model.",
+            name="search_opportunities",
+            description="Search CanadaBuys and Alberta Purchasing Connection together.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "keywords": {
+                        "type": "string",
+                        "description": "Search words or phrase"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "all, federal, or alberta",
+                        "default": "all"
+                    },
+                    "province": {
+                        "type": "string",
+                        "description": "Optional province or delivery region filter"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Optional category such as services, goods, construction, steel, lumber"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum combined results (default 20, max 50)",
+                        "default": 20
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="get_opportunity_details",
+            description="Get details for a federal CanadaBuys or Alberta APC opportunity by reference number.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "Reference number, such as AB-2026-03908 or a CanadaBuys reference"
+                    }
+                },
+                "required": ["reference"]
+            }
+        ),
+        Tool(
+            name="list_deadlines",
+            description="List CanadaBuys and Alberta APC opportunities closing soon.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "integer",
+                        "description": "Show opportunities closing within N days (default 30)",
+                        "default": 30
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "all, federal, or alberta",
+                        "default": "all"
+                    },
+                    "province": {
+                        "type": "string",
+                        "description": "Optional province or delivery region filter"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Optional category filter"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum combined results (default 20, max 50)",
+                        "default": 20
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="find_matching_opportunities",
+            description="Rank CanadaBuys and Alberta APC opportunities against the saved business profile.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "integer",
+                        "description": "Only show opportunities closing within N days (default 60)",
+                        "default": 60
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum opportunities to return (default 15, max 30)",
+                        "default": 15
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="daily_bid_brief",
+            description="Generate a free daily bid brief from CanadaBuys and Alberta APC for the saved business profile.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "integer",
+                        "description": "Look ahead this many days for matches and deadlines (default 14)",
+                        "default": 14
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum items per section (default 5, max 10)",
+                        "default": 5
+                    }
+                }
+            }
+        ),
+        # ===== Alberta Purchasing Connection Tools =====
+        Tool(
+            name="search_alberta_opportunities",
+            description="Search Alberta Purchasing Connection opportunities from Alberta public-sector buyers.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "keywords": {
+                        "type": "string",
+                        "description": "Search words or phrase"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Optional category: services, goods, or construction"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "APC status code (default OPEN)",
+                        "default": "OPEN"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum results (default 10, max 50)",
+                        "default": 10
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="get_alberta_opportunity_details",
+            description="Get full Alberta Purchasing Connection details by reference number, such as AB-2026-03908.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "APC reference number"
+                    }
+                },
+                "required": ["reference"]
+            }
+        ),
+        Tool(
+            name="list_alberta_deadlines",
+            description="List open Alberta Purchasing Connection opportunities closing soon.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "integer",
+                        "description": "Show opportunities closing within N days (default 30)",
+                        "default": 30
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Optional category: services, goods, or construction"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum results (default 20, max 50)",
+                        "default": 20
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="summarize_alberta_opportunities",
+            description="Summarize current open Alberta Purchasing Connection opportunities by category.",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        Tool(
+            name="find_alberta_opportunities",
+            description="Find Alberta Purchasing Connection opportunities that match your saved business profile.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "integer",
+                        "description": "Only show opportunities closing within N days (default: 60)",
+                        "default": 60
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum opportunities to return (default: 15)",
+                        "default": 15
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="check_cohere_status",
+            description="Check whether the optional Cohere Command A+ model integration is configured. Does not call the model.",
             inputSchema={
                 "type": "object",
                 "properties": {}
@@ -560,7 +1583,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="analyze_contract_with_cohere",
-            description="Use Cohere Command A+ through Hugging Face to review a CanadaBuys tender and explain fit, risks, and next steps.",
+            description="Use Cohere Command A+ to review a CanadaBuys tender and explain fit, risks, and next steps.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -578,8 +1601,8 @@ async def list_tools() -> list[Tool]:
                     },
                     "max_tokens": {
                         "type": "integer",
-                        "description": "Maximum model response tokens (default 800, max 1500)",
-                        "default": 800
+                        "description": "Maximum model response tokens (default 1200, max 2000)",
+                        "default": 1200
                     }
                 },
                 "required": ["reference"]
@@ -609,8 +1632,28 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             return await find_opportunities(arguments)
         elif name == "get_my_profile":
             return await get_my_profile(arguments)
-        elif name == "check_cohere_hf_status":
-            return await check_cohere_hf_status(arguments)
+        elif name == "search_opportunities":
+            return await search_opportunities(arguments)
+        elif name == "get_opportunity_details":
+            return await get_opportunity_details(arguments)
+        elif name == "list_deadlines":
+            return await list_deadlines(arguments)
+        elif name == "find_matching_opportunities":
+            return await find_matching_opportunities(arguments)
+        elif name == "daily_bid_brief":
+            return await daily_bid_brief(arguments)
+        elif name == "search_alberta_opportunities":
+            return await search_alberta_opportunities(arguments)
+        elif name == "get_alberta_opportunity_details":
+            return await get_alberta_opportunity_details(arguments)
+        elif name == "list_alberta_deadlines":
+            return await list_alberta_deadlines(arguments)
+        elif name == "summarize_alberta_opportunities":
+            return await summarize_alberta_opportunities(arguments)
+        elif name == "find_alberta_opportunities":
+            return await find_alberta_opportunities(arguments)
+        elif name == "check_cohere_status":
+            return await check_cohere_status(arguments)
         elif name == "analyze_contract_with_cohere":
             return await analyze_contract_with_cohere(arguments)
         else:
@@ -867,22 +1910,400 @@ async def get_my_profile(args: dict) -> list[TextContent]:
     return [TextContent(type="text", text=output)]
 
 
-async def check_cohere_hf_status(args: dict) -> list[TextContent]:
-    """Return non-secret status for the optional Cohere/HF integration."""
-    token, env_name = get_hf_token()
-    output = "# Cohere on Hugging Face\n\n"
-    output += f"**Model:** `{COHERE_HF_MODEL}`\n"
-    output += f"**Endpoint:** `{HF_CHAT_COMPLETIONS_URL}`\n"
-    output += f"**Token configured:** {'yes, via `' + env_name + '`' if token else 'no'}\n\n"
+# ============== Unified Procurement Handlers ==============
+
+
+async def search_opportunities(args: dict) -> list[TextContent]:
+    """Search across federal and Alberta opportunity sources."""
+    opportunities, warnings = collect_unified_search(args)
+    if not opportunities:
+        output = "No opportunities found matching criteria."
+        if warnings:
+            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
+        return [TextContent(type="text", text=output)]
+
+    output = "# Opportunities\n\n"
+    output += f"Showing {len(opportunities)} combined results from CanadaBuys and Alberta Purchasing Connection.\n\n"
+    for i, opportunity in enumerate(opportunities, 1):
+        output += render_unified_opportunity_line(opportunity, i) + "\n"
+
+    if warnings:
+        output += "## Warnings\n"
+        for warning in warnings:
+            output += f"- {warning}\n"
+
+    output += "\nUse `get_opportunity_details` with a reference number for full details."
+    return [TextContent(type="text", text=output)]
+
+
+async def get_opportunity_details(args: dict) -> list[TextContent]:
+    """Get details from the right source based on reference number."""
+    reference = args.get("reference", "")
+    if not reference:
+        return [TextContent(type="text", text="Please provide a reference number.")]
+
+    if is_alberta_reference(reference):
+        return await get_alberta_opportunity_details({"reference": reference})
+
+    contracts, warnings = load_contracts_for_unified()
+    contract = find_contract_by_reference(reference, contracts)
+    if contract:
+        output = render_contract_markdown(contract)
+        if warnings:
+            output += "\n\n## Warnings\n" + "\n".join(f"- {warning}" for warning in warnings)
+        return [TextContent(type="text", text=output)]
+
+    output = f"Opportunity not found: {reference}"
+    if warnings:
+        output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
+    return [TextContent(type="text", text=output)]
+
+
+async def list_deadlines(args: dict) -> list[TextContent]:
+    """List closing-soon opportunities across sources."""
+    days = clamp_int(args.get("days"), default=30, minimum=1, maximum=365)
+    opportunities, warnings = collect_unified_deadlines(args)
+    if not opportunities:
+        output = f"No opportunities closing within {days} days."
+        if warnings:
+            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
+        return [TextContent(type="text", text=output)]
+
+    now = datetime.now(timezone.utc)
+    output = f"# Opportunities Closing Within {days} Days\n\n"
+    for i, opportunity in enumerate(opportunities, 1):
+        closing = opportunity_date(opportunity, "closing")
+        days_until = ""
+        if closing != datetime.max.replace(tzinfo=timezone.utc):
+            days_until = f"Closes in {(closing - now).days} days"
+        output += render_unified_opportunity_line(opportunity, i, days_until) + "\n"
+
+    if warnings:
+        output += "## Warnings\n"
+        for warning in warnings:
+            output += f"- {warning}\n"
+
+    return [TextContent(type="text", text=output)]
+
+
+async def find_matching_opportunities(args: dict) -> list[TextContent]:
+    """Rank opportunities from both sources against the saved profile."""
+    profile = load_profile()
+    if not profile:
+        return [TextContent(type="text", text="No business profile set. Use `set_business_profile` first to tell me about your business.")]
+
+    days = clamp_int(args.get("days"), default=60, minimum=1, maximum=365)
+    limit = clamp_int(args.get("limit"), default=15, minimum=1, maximum=30)
+    scored, warnings = collect_unified_matches(profile, days, limit)
+
+    if not scored:
+        output = f"No matching opportunities found in the next {days} days."
+        if warnings:
+            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings[:5])
+        return [TextContent(type="text", text=output)]
+
+    company = profile.get("company_name", "Your Business")
+    output = f"# Matching Opportunities for {company}\n\n"
+    output += f"Found **{len(scored)}** ranked opportunities across CanadaBuys and Alberta APC.\n\n"
+
+    for i, (score, days_until, opportunity, reasons) in enumerate(scored[:limit], 1):
+        extra = f"Match Score: {score}"
+        if days_until != 9999:
+            extra += f" | Closes in {days_until} days"
+        output += render_unified_opportunity_line(opportunity, i, extra)
+        output += f"   Why it matches: {'; '.join(reasons)}\n\n"
+
+    if warnings:
+        output += "## Warnings\n"
+        for warning in warnings[:5]:
+            output += f"- {warning}\n"
+
+    return [TextContent(type="text", text=output)]
+
+
+async def daily_bid_brief(args: dict) -> list[TextContent]:
+    """Generate a free daily bid brief from both opportunity sources."""
+    profile = load_profile()
+    if not profile:
+        return [TextContent(type="text", text="No business profile set. Use `set_business_profile` first, then run `daily_bid_brief`.")]
+
+    days = clamp_int(args.get("days"), default=14, minimum=1, maximum=60)
+    limit = clamp_int(args.get("limit"), default=5, minimum=1, maximum=10)
+    warnings = []
+
+    contracts, federal_warnings = load_contracts_for_unified()
+    warnings.extend(federal_warnings)
+    federal_count = len(contracts)
+    alberta_count: Any = "Unknown"
+    try:
+        alberta_count = search_alberta_api(status="OPEN", limit=1).get("totalCount", "Unknown")
+    except RuntimeError as exc:
+        warnings.append(f"Alberta APC summary unavailable: {exc}")
+
+    matches, match_warnings = collect_unified_matches(profile, days, limit)
+    warnings.extend(match_warnings)
+    deadlines, deadline_warnings = collect_unified_deadlines({"days": days, "limit": limit, "source": "all"})
+    warnings.extend(deadline_warnings)
+
+    company = profile.get("company_name", "Your Business")
+    output = f"# Daily Bid Brief for {company}\n\n"
+    output += "Free community brief. Build the habit first; pricing can wait until people rely on it.\n\n"
+    output += "## Market Snapshot\n"
+    output += f"- **Federal CanadaBuys open notices:** {federal_count}\n"
+    output += f"- **Alberta APC open opportunities:** {alberta_count}\n"
+    output += f"- **Lookahead window:** {days} days\n\n"
+
+    output += "## Best Fits\n"
+    if matches:
+        for i, (score, days_until, opportunity, reasons) in enumerate(matches[:limit], 1):
+            extra = f"Score {score}"
+            if days_until != 9999:
+                extra += f" | closes in {days_until} days"
+            output += render_unified_opportunity_line(opportunity, i, extra)
+            output += f"   Reason: {'; '.join(reasons)}\n\n"
+    else:
+        output += "No profile-matched opportunities found in this lookahead window.\n\n"
+
+    output += "## Closing Soon\n"
+    if deadlines:
+        now = datetime.now(timezone.utc)
+        for i, opportunity in enumerate(deadlines[:limit], 1):
+            closing = opportunity_date(opportunity, "closing")
+            extra = ""
+            if closing != datetime.max.replace(tzinfo=timezone.utc):
+                extra = f"Closes in {(closing - now).days} days"
+            output += render_unified_opportunity_line(opportunity, i, extra) + "\n"
+    else:
+        output += "No upcoming deadlines found.\n\n"
+
+    output += "## Suggested Action\n"
+    if matches:
+        output += "Open the top one or two matches, check mandatory requirements and documents, then make a bid/no-bid call.\n"
+    else:
+        output += "Broaden the profile keywords or extend the lookahead window.\n"
+
+    if warnings:
+        output += "\n## Warnings\n"
+        seen = []
+        for warning in warnings:
+            if warning not in seen:
+                seen.append(warning)
+                output += f"- {warning}\n"
+            if len(seen) >= 5:
+                break
+
+    return [TextContent(type="text", text=output)]
+
+
+# ============== Alberta Purchasing Connection Handlers ==============
+
+
+async def search_alberta_opportunities(args: dict) -> list[TextContent]:
+    """Search Alberta Purchasing Connection opportunities."""
+    keywords = args.get("keywords", "")
+    category = args.get("category", "")
+    status = args.get("status", "OPEN")
+    limit = clamp_int(args.get("limit"), default=10, minimum=1, maximum=50)
+
+    try:
+        data = search_alberta_api(
+            query=keywords,
+            status=status,
+            category=category,
+            limit=limit,
+            sort_field="PostDateTime",
+            sort_direction="desc",
+        )
+    except RuntimeError as exc:
+        return [TextContent(type="text", text=f"Alberta APC search failed: {exc}")]
+
+    rows = data.get("values", [])
+    if not rows:
+        return [TextContent(type="text", text="No Alberta opportunities found matching criteria.")]
+
+    output = "# Alberta Opportunities\n\n"
+    total = data.get("totalCount")
+    if total is not None:
+        output += f"Showing {len(rows)} of {total} matching APC records.\n\n"
+    else:
+        output += f"Found {len(rows)} matching APC records.\n\n"
+
+    for i, opp in enumerate(rows[:limit], 1):
+        output += render_alberta_opportunity_line(opp, i) + "\n"
+
+    output += "Use `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details."
+    return [TextContent(type="text", text=output)]
+
+
+async def get_alberta_opportunity_details(args: dict) -> list[TextContent]:
+    """Get APC opportunity details by reference."""
+    reference = args.get("reference", "")
+    if not reference:
+        return [TextContent(type="text", text="Please provide an Alberta APC reference number.")]
+
+    try:
+        data = get_alberta_api_details(reference)
+    except (RuntimeError, ValueError) as exc:
+        return [TextContent(type="text", text=f"Alberta opportunity not available: {exc}")]
+
+    return [TextContent(type="text", text=render_alberta_details_markdown(data))]
+
+
+async def list_alberta_deadlines(args: dict) -> list[TextContent]:
+    """List open APC opportunities closing soon."""
+    days = clamp_int(args.get("days"), default=30, minimum=1, maximum=365)
+    limit = clamp_int(args.get("limit"), default=20, minimum=1, maximum=50)
+    category = args.get("category", "")
+    now = datetime.now(timezone.utc)
+    close_start = now.strftime("%Y-%m-%d")
+    close_end = (now + timedelta(days=days)).strftime("%Y-%m-%d")
+
+    try:
+        data = search_alberta_api(
+            status="OPEN",
+            category=category,
+            limit=limit,
+            sort_field="CloseDateTime",
+            sort_direction="asc",
+            close_start=close_start,
+            close_end=close_end,
+        )
+    except RuntimeError as exc:
+        return [TextContent(type="text", text=f"Alberta deadline search failed: {exc}")]
+
+    rows = data.get("values", [])
+    if not rows:
+        return [TextContent(type="text", text=f"No Alberta opportunities closing within {days} days.")]
+
+    output = f"# Alberta Opportunities Closing Within {days} Days\n\n"
+    for i, opp in enumerate(rows[:limit], 1):
+        output += render_alberta_opportunity_line(opp, i) + "\n"
+    return [TextContent(type="text", text=output)]
+
+
+async def summarize_alberta_opportunities(args: dict) -> list[TextContent]:
+    """Summarize open APC opportunities."""
+    try:
+        total_data = search_alberta_api(status="OPEN", limit=1)
+        category_counts = {}
+        for label, code in (("Services", "SRV"), ("Goods", "GD"), ("Construction", "CNST")):
+            category_data = search_alberta_api(status="OPEN", category=code, limit=1)
+            category_counts[label] = category_data.get("totalCount", 0)
+    except RuntimeError as exc:
+        return [TextContent(type="text", text=f"Alberta APC summary failed: {exc}")]
+
+    output = "# Alberta Purchasing Connection Summary\n\n"
+    output += f"**Open Opportunities:** {total_data.get('totalCount', 'Unknown')}\n\n"
+    output += "## By Category\n"
+    for label, count in category_counts.items():
+        output += f"- **{label}:** {count}\n"
+    output += "\nAPC includes Government of Alberta and Alberta public-sector buyers such as municipalities, school boards, health entities, and post-secondary institutions."
+
+    return [TextContent(type="text", text=output)]
+
+
+async def find_alberta_opportunities(args: dict) -> list[TextContent]:
+    """Find APC opportunities matching the saved business profile."""
+    profile = load_profile()
+    if not profile:
+        return [TextContent(type="text", text="No business profile set. Use `set_business_profile` first to tell me about your business.")]
+
+    keywords = [kw for kw in profile.get("capabilities", []) if len(str(kw)) >= 4]
+    if not keywords:
+        return [TextContent(type="text", text="Your profile does not have enough keywords yet. Update it with more detail, then try again.")]
+
+    days = clamp_int(args.get("days"), default=60, minimum=1, maximum=365)
+    limit = clamp_int(args.get("limit"), default=15, minimum=1, maximum=30)
+    now = datetime.now(timezone.utc)
+    close_start = now.strftime("%Y-%m-%d")
+    close_end = (now + timedelta(days=days)).strftime("%Y-%m-%d")
+
+    found: dict[str, dict] = {}
+    errors = []
+    for keyword in keywords[:8]:
+        try:
+            data = search_alberta_api(
+                query=str(keyword),
+                status="OPEN",
+                limit=25,
+                close_start=close_start,
+                close_end=close_end,
+            )
+        except RuntimeError as exc:
+            errors.append(str(exc))
+            continue
+        for opp in data.get("values", []):
+            ref = opp.get("referenceNumber")
+            if ref:
+                found[ref] = opp
+
+    scored = []
+    for opp in found.values():
+        score, reasons = score_alberta_opportunity(opp, profile)
+        if score > 0:
+            closing = parse_date(str(opp.get("closeDateTime") or ""))
+            days_until = 9999
+            if closing:
+                if closing.tzinfo is None:
+                    closing = closing.replace(tzinfo=timezone.utc)
+                days_until = (closing - now).days
+            scored.append((score, days_until, opp, reasons))
+
+    scored.sort(key=lambda item: (-item[0], item[1]))
+
+    if not scored:
+        message = f"No matching Alberta opportunities found in the next {days} days."
+        if errors:
+            message += f"\n\nAPC search warnings: {'; '.join(errors[:2])}"
+        return [TextContent(type="text", text=message)]
+
+    company = profile.get("company_name", "Your Business")
+    output = f"# Alberta Opportunities for {company}\n\n"
+    output += f"Found **{len(scored)}** matching APC opportunities (showing top {min(limit, len(scored))}).\n\n"
+
+    for i, (score, days_until, opp, reasons) in enumerate(scored[:limit], 1):
+        title = str(opp.get("title") or opp.get("shortTitle") or "Untitled opportunity")[:90]
+        ref = opp.get("referenceNumber", "")
+        org = str(opp.get("contractingOrganization") or "")[:60]
+        output += f"### {i}. {title}\n"
+        output += f"**Match Score:** {score}"
+        if days_until != 9999:
+            output += f" | **Closes in:** {days_until} days"
+        output += "\n"
+        output += f"**Why it matches:** {'; '.join(reasons)}\n"
+        output += f"**Organization:** {org}\n"
+        output += f"**Reference:** `{ref}`\n\n"
+
+    output += "---\nUse `get_alberta_opportunity_details` with a reference number to inspect the posting."
+    return [TextContent(type="text", text=output)]
+
+
+async def check_cohere_status(args: dict) -> list[TextContent]:
+    """Return non-secret status for the optional Cohere integration."""
+    cohere_token, cohere_env_name = get_cohere_api_key()
+    hf_token, hf_env_name = get_hf_token()
+
+    output = "# Cohere Command A+ Status\n\n"
+    output += f"**Preferred route:** {'Cohere API' if cohere_token else 'Hugging Face Inference Providers'}\n"
+    output += f"**Cohere model:** `{COHERE_MODEL}`\n"
+    output += f"**Cohere endpoint:** `{COHERE_CHAT_COMPLETIONS_URL}`\n"
+    output += f"**Cohere key configured:** {'yes, via `' + cohere_env_name + '`' if cohere_token else 'no'}\n\n"
+    if os.environ.get("COHERE_API_KEY", "").strip() and os.environ.get("COHERE_PROD_API_KEY", "").strip():
+        output += "**Cohere failover:** `COHERE_API_KEY` first, then `COHERE_PROD_API_KEY` on rate-limit, quota, or credit failures.\n\n"
+    output += f"**HF model route:** `{COHERE_HF_MODEL}`\n"
+    output += f"**HF endpoint:** `{HF_CHAT_COMPLETIONS_URL}`\n"
+    output += f"**HF token configured:** {'yes, via `' + hf_env_name + '`' if hf_token else 'no'}\n\n"
     output += "This status check does not call the model or reveal any token value."
-    if not token:
-        output += "\n\nSet `HF_TOKEN` or `HUGGINGFACEHUB_API_TOKEN` to enable live analysis."
+    if not cohere_token and not hf_token:
+        output += "\n\nSet `COHERE_API_KEY`, `COHERE_PROD_API_KEY`, `HF_TOKEN`, or `HUGGINGFACEHUB_API_TOKEN` to enable live analysis."
+    elif hf_token and not cohere_token:
+        output += "\n\nHF tokens must include the `Make calls to Inference Providers` permission."
 
     return [TextContent(type="text", text=output)]
 
 
 async def analyze_contract_with_cohere(args: dict) -> list[TextContent]:
-    """Use Cohere Command A+ through HF to analyze a cached tender notice."""
+    """Use Cohere Command A+ to analyze a cached tender notice."""
     reference = args.get("reference", "")
     if not reference:
         return [TextContent(type="text", text="Please provide a reference number.")]
@@ -910,7 +2331,7 @@ async def analyze_contract_with_cohere(args: dict) -> list[TextContent]:
     if not question:
         question = "Should this business pursue this opportunity, and what should they check next?"
 
-    max_tokens = clamp_int(args.get("max_tokens"), default=800, minimum=200, maximum=1500)
+    max_tokens = clamp_int(args.get("max_tokens"), default=1200, minimum=400, maximum=2000)
     contract_markdown = render_contract_markdown(contract)
     if len(contract_markdown) > MAX_CONTRACT_PROMPT_CHARS:
         contract_markdown = contract_markdown[:MAX_CONTRACT_PROMPT_CHARS] + "\n\n[Contract text truncated for model call.]"
@@ -941,12 +2362,13 @@ async def analyze_contract_with_cohere(args: dict) -> list[TextContent]:
     ]
 
     try:
-        analysis = call_cohere_hf_chat(messages, max_tokens=max_tokens)
+        analysis, provider, model = call_cohere_chat(messages, max_tokens=max_tokens)
     except RuntimeError as exc:
-        return [TextContent(type="text", text=f"Cohere/HF analysis is not available: {exc}")]
+        return [TextContent(type="text", text=f"Cohere analysis is not available: {exc}")]
 
     output = "# Cohere Tender Analysis\n\n"
-    output += f"**Model:** `{COHERE_HF_MODEL}`\n"
+    output += f"**Provider:** {provider}\n"
+    output += f"**Model:** `{model}`\n"
     output += f"**Reference:** `{get_field(contract, 'referenceNumber-numeroReference')}`\n\n"
     output += analysis
     output += "\n\n---\nVerify requirements, amendments, and attachments on CanadaBuys before making a bid decision."
