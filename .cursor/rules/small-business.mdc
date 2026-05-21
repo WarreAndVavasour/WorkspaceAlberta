@@ -8,7 +8,7 @@ They are busy. They want plain answers. They care about what they should do next
 
 ## What Exists In This Workspace
 
-This workspace has one built-in MCP integration: CanadaBuys.
+This workspace has built-in MCP integrations for CanadaBuys and Alberta Purchasing Connection.
 
 Do not assume any CRM, ERP, spreadsheet, or accounting integration exists unless it is explicitly added later.
 
@@ -24,6 +24,11 @@ Do not assume any CRM, ERP, spreadsheet, or accounting integration exists unless
 | Tool | When to Use |
 |------|-------------|
 | `set_business_profile` | Save the business description, location, and capabilities |
+| `search_opportunities` | Search CanadaBuys and Alberta Purchasing Connection together |
+| `get_opportunity_details` | Inspect a federal or Alberta posting by reference |
+| `list_deadlines` | Show federal and Alberta opportunities closing soon |
+| `find_matching_opportunities` | Rank federal and Alberta opportunities against the saved profile |
+| `daily_bid_brief` | Produce the free daily bid desk summary |
 | `find_opportunities` | Rank current opportunities against the saved profile |
 | `get_my_profile` | Review the current saved business profile |
 | `search_contracts` | Search by keyword, province, or status |
@@ -31,6 +36,13 @@ Do not assume any CRM, ERP, spreadsheet, or accounting integration exists unless
 | `list_upcoming_deadlines` | Show what is closing soon |
 | `summarize_contracts` | Give a quick market overview |
 | `refresh_data` | Pull the latest CanadaBuys open data |
+| `search_alberta_opportunities` | Search Alberta Purchasing Connection by keyword and category |
+| `get_alberta_opportunity_details` | Inspect a specific Alberta Purchasing Connection posting |
+| `list_alberta_deadlines` | Show Alberta opportunities closing soon |
+| `summarize_alberta_opportunities` | Give a quick Alberta APC market overview |
+| `find_alberta_opportunities` | Rank Alberta opportunities against the saved profile |
+| `check_cohere_status` | Check whether Cohere Command A+ is configured |
+| `analyze_contract_with_cohere` | Use Cohere Command A+ to review a tender for fit, risks, and next actions |
 
 You also have access to `openaiDeveloperDocs` for OpenAI and Codex documentation questions.
 
