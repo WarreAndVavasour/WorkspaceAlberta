@@ -4,6 +4,12 @@ This server powers the procurement MCP wiring in this repository.
 
 It exposes CanadaBuys and Alberta Purchasing Connection procurement data over MCP so an assistant can help a business search opportunities, review details, and triage what to pursue.
 
+The server is now split into:
+
+- `procurement_core/service.py`: pure Python procurement logic shared by every adapter
+- `server.py`: local stdio MCP adapter for MCP-first desktop/agent tools
+- `server_sse.py`: hosted MCP-over-SSE plus REST/OpenAPI adapter for deployed use
+
 ## Run Directly
 
 From the repo root:
@@ -11,6 +17,38 @@ From the repo root:
 ```bash
 python mcp-servers/canadabuys/server.py
 ```
+
+## Hosted Endpoint
+
+From the repo root:
+
+```bash
+uvicorn server_sse:app --app-dir mcp-servers/canadabuys --host 0.0.0.0 --port 8000
+```
+
+Hosted routes:
+
+- `GET /health`: health check
+- `GET /sse`: MCP over SSE connection
+- `POST /messages/`: MCP over SSE message endpoint
+- `GET /tools`: MCP tool schemas as JSON
+- `POST /tools/{tool_name}`: call any MCP tool over HTTP
+- `POST /search`: unified CanadaBuys + Alberta APC search
+- `GET /details/{reference}`: opportunity details
+- `POST /deadlines`: closing-soon opportunities
+- `POST /matches`: profile-ranked opportunities
+- `POST /brief`: daily bid brief
+- `GET /docs`: Swagger UI
+- `GET /openapi.json`: OpenAPI schema for non-MCP AI tools
+
+Docker build from the repo root:
+
+```bash
+docker build -f mcp-servers/canadabuys/Dockerfile -t workspacealberta-procurement .
+docker run --env-file .env -p 8080:8080 workspacealberta-procurement
+```
+
+Production note: the current profile store is file-backed under `CANADABUYS_DATA_DIR`. Add authentication and per-user profile storage before exposing `/profile`, `/matches`, or `/brief` as a public multi-user service.
 
 ## Available Tools
 
@@ -68,6 +106,7 @@ From the repo root:
 
 ```bash
 python -m unittest tests.test_canadabuys_mcp_smoke
+python -m unittest tests.test_procurement_http_app
 ```
 
 ## Data Source

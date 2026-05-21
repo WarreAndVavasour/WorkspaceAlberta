@@ -1,342 +1,183 @@
 #!/usr/bin/env python3
-"""
-CanadaBuys MCP Server - SSE/HTTP Transport
+"""Hosted MCP and REST/OpenAPI adapter for the shared procurement core."""
 
-Exposes the CanadaBuys MCP server over HTTP with SSE transport.
-This allows remote access from E2B sandboxes via Anthropic's MCP connector.
-
-Usage:
-    uvicorn server_sse:app --host 0.0.0.0 --port 8000
-
-    Or for quick testing with ngrok:
-    ngrok http 8000
-"""
-
-import csv
-import gzip
-import json
-import os
-from datetime import datetime, timezone
+import sys
 from pathlib import Path
 from typing import Any
-from urllib.request import Request, urlopen
 
+from fastapi import Body, FastAPI, HTTPException, Request
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
-from mcp.types import Tool, TextContent
-from starlette.applications import Starlette
-from starlette.routing import Mount, Route
-from starlette.responses import JSONResponse
+from mcp.types import TextContent, Tool
 
-# Initialize MCP server
-server = Server("canadabuys")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-# Configuration
-DATA_DIR = Path(os.environ.get("CANADABUYS_DATA_DIR", Path.home() / ".canadabuys"))
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+from procurement_core.service import TOOL_NAMES, call_tool_text, process_bid_room_artifact  # noqa: E402
+from mcp_tools import get_mcp_tools  # noqa: E402
 
-# CanadaBuys open data URL
-OPEN_TENDERS_URL = "https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv"
-
-REQUEST_HEADERS = {
-    "User-Agent": "CanadaBuys-MCP/1.0",
-    "Accept": "*/*",
-}
-
-
-def parse_date(value: str) -> datetime | None:
-    """Parse a date string into a datetime object."""
-    if not value:
-        return None
-    raw = value.strip()
-    if raw.endswith("Z"):
-        raw = raw[:-1] + "+00:00"
-    try:
-        return datetime.fromisoformat(raw)
-    except ValueError:
-        pass
-    try:
-        return datetime.strptime(raw, "%Y-%m-%d")
-    except ValueError:
-        return None
-
-
-def fetch_all_contracts() -> list[dict]:
-    """Fetch all contracts from CanadaBuys."""
-    request = Request(OPEN_TENDERS_URL, headers=REQUEST_HEADERS)
-
-    with urlopen(request, timeout=120) as response:
-        raw_data = response.read()
-
-        if raw_data[:2] == b'\x1f\x8b':
-            raw_data = gzip.decompress(raw_data)
-
-        text_data = raw_data.decode("utf-8-sig")
-        lines = [line for line in text_data.split('\n') if line.strip()]
-        if not lines:
-            return []
-
-        reader = csv.DictReader(lines)
-        return list(reader)
-
-
-def load_cached_contracts() -> list[dict]:
-    """Load contracts from local cache."""
-    cache_path = DATA_DIR / "latest.csv"
-    if not cache_path.exists():
-        return []
-
-    with cache_path.open("r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        return list(reader)
-
-
-def save_contracts(contracts: list[dict]) -> Path:
-    """Save contracts to local cache."""
-    latest_path = DATA_DIR / "latest.csv"
-
-    if not contracts:
-        return latest_path
-
-    fieldnames = [k for k in contracts[0].keys() if k is not None]
-
-    with latest_path.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
-        writer.writeheader()
-        writer.writerows(contracts)
-
-    return latest_path
-
-
-# ============================================================
-# MCP TOOLS
-# ============================================================
-
-@server.list_tools()
-async def list_tools() -> list[Tool]:
-    """List available tools."""
-    return [
-        Tool(
-            name="search_contracts",
-            description="Search Canadian federal government contracts by keywords, province, or status",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "keywords": {
-                        "type": "string",
-                        "description": "Keywords to search in title and description"
-                    },
-                    "province": {
-                        "type": "string",
-                        "description": "Province code (e.g., AB, ON, BC)"
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum results to return (default: 10)"
-                    }
-                }
-            }
-        ),
-        Tool(
-            name="get_contract_details",
-            description="Get full details for a specific contract by reference number",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "reference": {
-                        "type": "string",
-                        "description": "Contract reference or solicitation number"
-                    }
-                },
-                "required": ["reference"]
-            }
-        ),
-        Tool(
-            name="list_upcoming_deadlines",
-            description="List contracts with upcoming closing deadlines",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "days": {
-                        "type": "integer",
-                        "description": "Show contracts closing within N days (default: 30)"
-                    },
-                    "province": {
-                        "type": "string",
-                        "description": "Filter by province code"
-                    }
-                }
-            }
-        ),
-        Tool(
-            name="refresh_data",
-            description="Refresh contract data from CanadaBuys (may take a minute)",
-            inputSchema={
-                "type": "object",
-                "properties": {}
-            }
-        ),
-        Tool(
-            name="summarize_contracts",
-            description="Get a summary of available contracts",
-            inputSchema={
-                "type": "object",
-                "properties": {}
-            }
-        )
-    ]
-
-
-@server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
-    """Handle tool calls."""
-
-    if name == "search_contracts":
-        contracts = load_cached_contracts()
-        if not contracts:
-            contracts = fetch_all_contracts()
-            save_contracts(contracts)
-
-        keywords = arguments.get("keywords", "").lower()
-        province = arguments.get("province", "").upper()
-        limit = arguments.get("limit", 10)
-
-        results = []
-        for contract in contracts:
-            # CanadaBuys CSV uses bilingual column names
-            title = contract.get("title-titre-eng", "").lower()
-            desc = contract.get("description-eng", contract.get("gsinDescription-nibsDescription-eng", "")).lower()
-            region = contract.get("regionDelivery-regionLivraison-eng", "").upper()
-
-            if keywords and keywords not in title and keywords not in desc:
-                continue
-            if province and province not in region:
-                continue
-
-            results.append({
-                "reference": contract.get("referenceNumber-numeroReference", "N/A"),
-                "title": contract.get("title-titre-eng", "N/A")[:100],
-                "closing_date": contract.get("tenderClosingDate-appelOffresDateCloture", "N/A"),
-                "region": region,
-                "value": contract.get("estimatedValue-valeurEstimee", "N/A")
-            })
-
-            if len(results) >= limit:
-                break
-
-        return [TextContent(type="text", text=json.dumps(results, indent=2))]
-
-    elif name == "get_contract_details":
-        reference = arguments.get("reference", "")
-        contracts = load_cached_contracts()
-
-        for contract in contracts:
-            if contract.get("referenceNumber-numeroReference") == reference or contract.get("solicitationNumber-numeroSollicitation") == reference:
-                return [TextContent(type="text", text=json.dumps(contract, indent=2))]
-
-        return [TextContent(type="text", text=f"Contract not found: {reference}")]
-
-    elif name == "list_upcoming_deadlines":
-        contracts = load_cached_contracts()
-        if not contracts:
-            contracts = fetch_all_contracts()
-            save_contracts(contracts)
-
-        days = arguments.get("days", 30)
-        province = arguments.get("province", "").upper()
-        now = datetime.now(timezone.utc)
-
-        upcoming = []
-        for contract in contracts:
-            closing = parse_date(contract.get("tenderClosingDate-appelOffresDateCloture", ""))
-            if not closing:
-                continue
-
-            if closing.tzinfo is None:
-                closing = closing.replace(tzinfo=timezone.utc)
-
-            days_until = (closing - now).days
-            if 0 <= days_until <= days:
-                region = contract.get("regionDelivery-regionLivraison-eng", "").upper()
-                if province and province not in region:
-                    continue
-
-                upcoming.append({
-                    "reference": contract.get("referenceNumber-numeroReference", "N/A"),
-                    "title": contract.get("title-titre-eng", "N/A")[:80],
-                    "closing_date": contract.get("tenderClosingDate-appelOffresDateCloture", "N/A"),
-                    "days_until": days_until,
-                    "region": region
-                })
-
-        upcoming.sort(key=lambda x: x["days_until"])
-        return [TextContent(type="text", text=json.dumps(upcoming[:20], indent=2))]
-
-    elif name == "refresh_data":
-        contracts = fetch_all_contracts()
-        save_contracts(contracts)
-        return [TextContent(type="text", text=f"Refreshed data: {len(contracts)} contracts loaded")]
-
-    elif name == "summarize_contracts":
-        contracts = load_cached_contracts()
-        if not contracts:
-            contracts = fetch_all_contracts()
-            save_contracts(contracts)
-
-        summary = {
-            "total_contracts": len(contracts),
-            "sample": [
-                {
-                    "title": c.get("title-titre-eng", "N/A")[:60],
-                    "closing": c.get("tenderClosingDate-appelOffresDateCloture", "N/A"),
-                    "reference": c.get("referenceNumber-numeroReference", "N/A")
-                }
-                for c in contracts[:5]
-            ]
-        }
-        return [TextContent(type="text", text=json.dumps(summary, indent=2))]
-
-    return [TextContent(type="text", text=f"Unknown tool: {name}")]
-
-
-# ============================================================
-# SSE TRANSPORT SETUP
-# ============================================================
-
+mcp_server = Server("canadabuys")
+app = FastAPI(
+    title="WorkspaceAlberta Procurement API",
+    description=(
+        "Custom procurement MCP server and REST API for CanadaBuys, "
+        "Alberta Purchasing Connection, business-profile matching, daily bid "
+        "briefs, and optional Cohere Command A+ analysis."
+    ),
+    version="0.2.0",
+)
 sse = SseServerTransport("/messages/")
 
 
-async def handle_sse(request):
-    """Handle SSE connection."""
+def serialize_tool(tool: Tool) -> dict[str, Any]:
+    """Return a JSON-safe representation of an MCP Tool."""
+    if hasattr(tool, "model_dump"):
+        return tool.model_dump()
+    if hasattr(tool, "dict"):
+        return tool.dict()
+    return {
+        "name": tool.name,
+        "description": tool.description,
+        "inputSchema": tool.inputSchema,
+    }
+
+
+async def run_tool(tool_name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Run a shared-core tool and return a REST-friendly envelope."""
+    if tool_name not in TOOL_NAMES:
+        raise HTTPException(status_code=404, detail=f"Unknown tool: {tool_name}")
+    content = await call_tool_text(tool_name, arguments or {})
+    return {
+        "tool": tool_name,
+        "content_type": "text/markdown",
+        "content": content,
+    }
+
+
+@mcp_server.list_tools()
+async def list_tools() -> list[Tool]:
+    """List available procurement MCP tools."""
+    return get_mcp_tools()
+
+
+@mcp_server.call_tool()
+async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+    """Handle an MCP tool call through the shared procurement core."""
+    text = await call_tool_text(name, arguments)
+    return [TextContent(type="text", text=text)]
+
+
+async def handle_sse(request: Request) -> None:
+    """Handle MCP SSE connections."""
     async with sse.connect_sse(
-        request.scope, request.receive, request._send
+        request.scope,
+        request.receive,
+        request._send,
     ) as streams:
-        await server.run(
-            streams[0], streams[1], server.create_initialization_options()
+        await mcp_server.run(
+            streams[0],
+            streams[1],
+            mcp_server.create_initialization_options(),
         )
 
 
-async def handle_messages(request):
-    """Handle message posting."""
+async def handle_messages(request: Request) -> None:
+    """Handle MCP SSE client messages."""
     await sse.handle_post_message(request.scope, request.receive, request._send)
 
 
-async def health(request):
-    """Health check endpoint."""
-    return JSONResponse({"status": "ok", "server": "canadabuys-mcp"})
+app.add_route("/sse", handle_sse, methods=["GET"])
+app.add_route("/messages/", handle_messages, methods=["POST"])
 
 
-# Starlette app with SSE routes
-app = Starlette(
-    debug=True,
-    routes=[
-        Route("/health", health),
-        Route("/sse", handle_sse),
-        Route("/messages/", handle_messages, methods=["POST"]),
-    ],
-)
+@app.get("/health", tags=["system"])
+async def health() -> dict[str, Any]:
+    """Report service health without calling upstream procurement sources."""
+    return {
+        "status": "ok",
+        "server": "workspacealberta-procurement",
+        "mcp": {"sse": "/sse", "messages": "/messages/"},
+        "rest": {"openapi": "/openapi.json", "docs": "/docs"},
+        "tools": len(TOOL_NAMES),
+    }
+
+
+@app.get("/tools", tags=["system"])
+async def tools() -> dict[str, Any]:
+    """List MCP-compatible tools and JSON schemas."""
+    return {"tools": [serialize_tool(tool) for tool in get_mcp_tools()]}
+
+
+@app.post("/tools/{tool_name}", tags=["tools"])
+async def generic_tool(
+    tool_name: str,
+    arguments: dict[str, Any] | None = Body(default=None),
+) -> dict[str, Any]:
+    """Call any procurement tool by MCP tool name."""
+    return await run_tool(tool_name, arguments)
+
+
+@app.post("/search", tags=["procurement"])
+async def search(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Search CanadaBuys and Alberta Purchasing Connection together."""
+    return await run_tool("search_opportunities", arguments)
+
+
+@app.get("/details/{reference}", tags=["procurement"])
+async def details(reference: str) -> dict[str, Any]:
+    """Get details for a CanadaBuys or Alberta APC opportunity."""
+    return await run_tool("get_opportunity_details", {"reference": reference})
+
+
+@app.post("/deadlines", tags=["procurement"])
+async def deadlines(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """List federal and Alberta opportunities closing soon."""
+    return await run_tool("list_deadlines", arguments)
+
+
+@app.post("/matches", tags=["procurement"])
+async def matches(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Rank opportunities against the saved business profile."""
+    return await run_tool("find_matching_opportunities", arguments)
+
+
+@app.post("/brief", tags=["procurement"])
+async def brief(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Generate the daily bid brief."""
+    return await run_tool("daily_bid_brief", arguments)
+
+
+@app.post("/bid-room/process", tags=["bid-room"])
+async def bid_room_process(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Process a bid room in E2B and analyze it with Cohere inside the sandbox."""
+    try:
+        return process_bid_room_artifact(arguments or {})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/profile", tags=["profile"])
+async def set_profile(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Set the business profile used for opportunity matching."""
+    return await run_tool("set_business_profile", arguments)
+
+
+@app.get("/profile", tags=["profile"])
+async def get_profile() -> dict[str, Any]:
+    """Return the saved business profile."""
+    return await run_tool("get_my_profile", {})
+
+
+@app.post("/cohere/analyze", tags=["analysis"])
+async def cohere_analyze(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Analyze a CanadaBuys tender with Cohere Command A+ when configured."""
+    return await run_tool("analyze_contract_with_cohere", arguments)
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -24,6 +24,7 @@ EXPECTED_TOOLS = {
     "list_deadlines",
     "find_matching_opportunities",
     "daily_bid_brief",
+    "process_bid_room",
     "check_cohere_status",
     "analyze_contract_with_cohere",
     "search_alberta_opportunities",
