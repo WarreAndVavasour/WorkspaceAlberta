@@ -109,7 +109,7 @@ MCP is the first-class interface because this is meant to be used by agents. The
 
 Underneath the endpoint is pure Python procurement logic. The data processing, filtering, matching, deadline ranking, and brief generation do not require an LLM. The model layer is added only where judgment helps: risk review, requirements explanation, and bid/no-bid reasoning.
 
-E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, parsing attachments, extracting compliance requirements, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Command A+ runs inside the short-lived sandbox with read-only evidence tools over the extracted documents. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md).
+E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, parsing attachments, extracting compliance requirements, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Command A+ runs inside the short-lived sandbox with read-only evidence tools over the extracted documents. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md), and the business-owner operating diagram lives in [`docs/bid-room-operating-diagram.md`](docs/bid-room-operating-diagram.md).
 
 ---
 

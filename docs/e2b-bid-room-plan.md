@@ -2,6 +2,8 @@
 
 WorkspaceAlberta should keep the deployed MCP/REST endpoint as the always-on product surface. E2B is the isolated compute layer behind it.
 
+For the full business-owner and tool-call map, see [`bid-room-operating-diagram.md`](bid-room-operating-diagram.md).
+
 ## Why E2B
 
 The Professional tier changes the ceiling:
