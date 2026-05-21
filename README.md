@@ -108,6 +108,8 @@ MCP is the first-class interface because this is meant to be used by agents. The
 
 Underneath the endpoint is pure Python procurement logic. The data processing, filtering, matching, deadline ranking, and brief generation do not require an LLM. The model layer is added only where judgment helps: risk review, requirements explanation, and bid/no-bid reasoning.
 
+E2B sandboxes are the planned isolated compute layer for heavier bid-room work: opening tender packages, parsing attachments, extracting compliance requirements, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md).
+
 ---
 
 ## Free First
@@ -175,11 +177,13 @@ MCP server:
 - [`mcp-servers/canadabuys/server.py`](mcp-servers/canadabuys/server.py)
 - [`mcp-servers/canadabuys/server_sse.py`](mcp-servers/canadabuys/server_sse.py) for hosted MCP over SSE plus REST/OpenAPI
 - [`procurement_core/service.py`](procurement_core/service.py) for the shared Python procurement core
+- [`procurement_core/e2b_bid_room.py`](procurement_core/e2b_bid_room.py) for live E2B bid-room sandbox processing
 
 Smoke test:
 
 - [`tests/test_canadabuys_mcp_smoke.py`](tests/test_canadabuys_mcp_smoke.py)
 - [`tests/test_procurement_http_app.py`](tests/test_procurement_http_app.py)
+- `python scripts/e2b_bid_room_smoke.py` for a live E2B sandbox test
 
 Configuration:
 

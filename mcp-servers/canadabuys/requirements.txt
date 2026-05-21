@@ -3,3 +3,4 @@ fastapi>=0.111.0
 starlette>=0.27.0
 uvicorn>=0.23.0
 sse-starlette>=1.6.0
+e2b>=2.21.1
