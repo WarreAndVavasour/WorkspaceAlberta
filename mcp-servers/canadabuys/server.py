@@ -17,6 +17,7 @@ import gzip
 import json
 import os
 import re
+from urllib.error import HTTPError, URLError
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -40,6 +41,21 @@ REQUEST_HEADERS = {
     "User-Agent": "CanadaBuys-MCP/1.0",
     "Accept": "*/*",
 }
+
+HF_CHAT_COMPLETIONS_URL = os.environ.get(
+    "CANADABUYS_HF_CHAT_COMPLETIONS_URL",
+    "https://router.huggingface.co/v1/chat/completions",
+)
+COHERE_HF_MODEL = os.environ.get(
+    "CANADABUYS_COHERE_MODEL",
+    "CohereLabs/command-a-plus-05-2026-w4a4:cohere",
+)
+HF_TOKEN_ENV_NAMES = (
+    "HF_TOKEN",
+    "HUGGINGFACEHUB_API_TOKEN",
+    "HUGGING_FACE_HUB_TOKEN",
+)
+MAX_CONTRACT_PROMPT_CHARS = 12000
 
 
 def parse_date(value: str) -> datetime | None:
@@ -126,6 +142,102 @@ def get_field(contract: dict, *field_names: str) -> str:
         if val:
             return str(val)
     return ""
+
+
+def get_hf_token() -> tuple[str, str]:
+    """Return the first configured Hugging Face token and its env var name."""
+    for name in HF_TOKEN_ENV_NAMES:
+        token = os.environ.get(name, "").strip()
+        if token:
+            return token, name
+    return "", ""
+
+
+def clamp_int(value: Any, default: int, minimum: int, maximum: int) -> int:
+    """Clamp user-provided integer tool arguments to a safe range."""
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(minimum, min(maximum, parsed))
+
+
+def strip_cohere_thinking(text: str) -> str:
+    """Remove Command A+ thinking blocks if the provider returns them."""
+    cleaned = re.sub(
+        r"<\|START_THINKING\|>.*?<\|END_THINKING\|>",
+        "",
+        text,
+        flags=re.DOTALL,
+    )
+    cleaned = re.sub(
+        r"<START_THINKING>.*?<END_THINKING>",
+        "",
+        cleaned,
+        flags=re.DOTALL,
+    )
+    return cleaned.strip()
+
+
+def call_cohere_hf_chat(
+    messages: list[dict[str, str]],
+    max_tokens: int = 800,
+    temperature: float = 0.2,
+) -> str:
+    """Call Command A+ through the Hugging Face OpenAI-compatible router."""
+    token, _ = get_hf_token()
+    if not token:
+        names = " or ".join(HF_TOKEN_ENV_NAMES[:2])
+        raise RuntimeError(f"Hugging Face token is not configured. Set {names}.")
+
+    payload = {
+        "model": COHERE_HF_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "top_p": 0.95,
+        "stream": False,
+    }
+    request = Request(
+        HF_CHAT_COMPLETIONS_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "User-Agent": "CanadaBuys-MCP/1.0",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=120) as response:
+            body = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        raw_body = exc.read().decode("utf-8", errors="replace")
+        try:
+            error_body = json.loads(raw_body)
+            error_message = str(error_body.get("error", raw_body))
+        except json.JSONDecodeError:
+            error_message = raw_body
+
+        if exc.code == 403 and "Inference Providers" in error_message:
+            raise RuntimeError(
+                "Hugging Face token is present but lacks Inference Providers permission. "
+                "Create or update a fine-grained token with 'Make calls to Inference Providers'."
+            ) from exc
+        raise RuntimeError(
+            f"Hugging Face router returned HTTP {exc.code}: {error_message[:300]}"
+        ) from exc
+    except URLError as exc:
+        raise RuntimeError(f"Could not reach Hugging Face router: {exc.reason}") from exc
+
+    choices = body.get("choices", [])
+    if not choices:
+        raise RuntimeError("Hugging Face router returned no choices.")
+    content = choices[0].get("message", {}).get("content", "")
+    if not content:
+        raise RuntimeError("Hugging Face router returned an empty message.")
+    return strip_cohere_thinking(content)
 
 
 # ============== Business Profile ==============
@@ -298,6 +410,20 @@ def render_contract_markdown(contract: dict) -> str:
     return "\n".join(lines)
 
 
+def find_contract_by_reference(reference: str, contracts: list[dict]) -> dict | None:
+    """Find a contract by reference or solicitation number."""
+    needle = reference.lower().strip()
+    if not needle:
+        return None
+
+    for contract in contracts:
+        ref = get_field(contract, "referenceNumber-numeroReference").lower()
+        sol = get_field(contract, "solicitationNumber-numeroSollicitation").lower()
+        if needle in ref or needle in sol:
+            return contract
+    return None
+
+
 # ============== MCP Tools ==============
 
 @server.list_tools()
@@ -423,6 +549,41 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {}
             }
+        ),
+        Tool(
+            name="check_cohere_hf_status",
+            description="Check whether the optional Cohere Command A+ model integration through Hugging Face is configured. Does not call the model.",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        Tool(
+            name="analyze_contract_with_cohere",
+            description="Use Cohere Command A+ through Hugging Face to review a CanadaBuys tender and explain fit, risks, and next steps.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "Reference or solicitation number for the tender to analyze"
+                    },
+                    "business_context": {
+                        "type": "string",
+                        "description": "Optional company capabilities or bid context. If omitted, the saved business profile is used."
+                    },
+                    "question": {
+                        "type": "string",
+                        "description": "Optional specific question to ask about the tender"
+                    },
+                    "max_tokens": {
+                        "type": "integer",
+                        "description": "Maximum model response tokens (default 800, max 1500)",
+                        "default": 800
+                    }
+                },
+                "required": ["reference"]
+            }
         )
     ]
 
@@ -448,6 +609,10 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             return await find_opportunities(arguments)
         elif name == "get_my_profile":
             return await get_my_profile(arguments)
+        elif name == "check_cohere_hf_status":
+            return await check_cohere_hf_status(arguments)
+        elif name == "analyze_contract_with_cohere":
+            return await analyze_contract_with_cohere(arguments)
         else:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
     except Exception as e:
@@ -503,13 +668,9 @@ async def get_contract_details(args: dict) -> list[TextContent]:
         return [TextContent(type="text", text="Please provide a reference number.")]
 
     contracts = load_contracts()
-
-    for contract in contracts:
-        ref = get_field(contract, "referenceNumber-numeroReference").lower()
-        sol = get_field(contract, "solicitationNumber-numeroSollicitation").lower()
-
-        if reference in ref or reference in sol:
-            return [TextContent(type="text", text=render_contract_markdown(contract))]
+    contract = find_contract_by_reference(reference, contracts)
+    if contract:
+        return [TextContent(type="text", text=render_contract_markdown(contract))]
 
     return [TextContent(type="text", text=f"Contract not found: {reference}")]
 
@@ -702,6 +863,93 @@ async def get_my_profile(args: dict) -> list[TextContent]:
     output += f"**Description:**\n{profile.get('description', 'Not set')}\n\n"
     output += f"**Industries:** {', '.join(profile.get('industries', [])) or 'None detected'}\n"
     output += f"**Keywords:** {', '.join(profile.get('capabilities', [])[:15])}\n"
+
+    return [TextContent(type="text", text=output)]
+
+
+async def check_cohere_hf_status(args: dict) -> list[TextContent]:
+    """Return non-secret status for the optional Cohere/HF integration."""
+    token, env_name = get_hf_token()
+    output = "# Cohere on Hugging Face\n\n"
+    output += f"**Model:** `{COHERE_HF_MODEL}`\n"
+    output += f"**Endpoint:** `{HF_CHAT_COMPLETIONS_URL}`\n"
+    output += f"**Token configured:** {'yes, via `' + env_name + '`' if token else 'no'}\n\n"
+    output += "This status check does not call the model or reveal any token value."
+    if not token:
+        output += "\n\nSet `HF_TOKEN` or `HUGGINGFACEHUB_API_TOKEN` to enable live analysis."
+
+    return [TextContent(type="text", text=output)]
+
+
+async def analyze_contract_with_cohere(args: dict) -> list[TextContent]:
+    """Use Cohere Command A+ through HF to analyze a cached tender notice."""
+    reference = args.get("reference", "")
+    if not reference:
+        return [TextContent(type="text", text="Please provide a reference number.")]
+
+    contracts = load_contracts()
+    if not contracts:
+        return [TextContent(type="text", text="No contract data available. Run `refresh_data` first.")]
+
+    contract = find_contract_by_reference(reference, contracts)
+    if not contract:
+        return [TextContent(type="text", text=f"Contract not found: {reference}")]
+
+    business_context = args.get("business_context", "").strip()
+    if not business_context:
+        profile = load_profile()
+        if profile:
+            company = profile.get("company_name", "The business")
+            location = profile.get("location", "")
+            description = profile.get("description", "")
+            business_context = f"{company}. Location: {location}. Capabilities: {description}".strip()
+        else:
+            business_context = "No saved business profile or extra business context was provided."
+
+    question = args.get("question", "").strip()
+    if not question:
+        question = "Should this business pursue this opportunity, and what should they check next?"
+
+    max_tokens = clamp_int(args.get("max_tokens"), default=800, minimum=200, maximum=1500)
+    contract_markdown = render_contract_markdown(contract)
+    if len(contract_markdown) > MAX_CONTRACT_PROMPT_CHARS:
+        contract_markdown = contract_markdown[:MAX_CONTRACT_PROMPT_CHARS] + "\n\n[Contract text truncated for model call.]"
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You help Canadian businesses review CanadaBuys tender notices. "
+                "Be practical, concise, and careful. Do not invent requirements. "
+                "If the notice text is missing key details, say what the user should inspect on CanadaBuys."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                "Review this tender for a business owner.\n\n"
+                "Return these sections:\n"
+                "1. Fit\n"
+                "2. Why it may be worth a look\n"
+                "3. Bid risks or missing details\n"
+                "4. Next actions\n\n"
+                f"Business context:\n{business_context}\n\n"
+                f"Question:\n{question}\n\n"
+                f"Tender notice:\n{contract_markdown}"
+            ),
+        },
+    ]
+
+    try:
+        analysis = call_cohere_hf_chat(messages, max_tokens=max_tokens)
+    except RuntimeError as exc:
+        return [TextContent(type="text", text=f"Cohere/HF analysis is not available: {exc}")]
+
+    output = "# Cohere Tender Analysis\n\n"
+    output += f"**Model:** `{COHERE_HF_MODEL}`\n"
+    output += f"**Reference:** `{get_field(contract, 'referenceNumber-numeroReference')}`\n\n"
+    output += analysis
+    output += "\n\n---\nVerify requirements, amendments, and attachments on CanadaBuys before making a bid decision."
 
     return [TextContent(type="text", text=output)]
 

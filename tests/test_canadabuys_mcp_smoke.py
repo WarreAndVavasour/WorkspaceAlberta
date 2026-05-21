@@ -19,6 +19,8 @@ EXPECTED_TOOLS = {
     "list_upcoming_deadlines",
     "summarize_contracts",
     "refresh_data",
+    "check_cohere_hf_status",
+    "analyze_contract_with_cohere",
 }
 
 
@@ -53,6 +55,17 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                         if hasattr(content, "text")
                     ]
                     self.assertTrue(text_chunks)
+
+                    status_result = await session.call_tool("check_cohere_hf_status", {})
+                    self.assertFalse(status_result.isError)
+
+                    status_chunks = [
+                        content.text
+                        for content in status_result.content
+                        if hasattr(content, "text")
+                    ]
+                    self.assertTrue(status_chunks)
+                    self.assertIn("This status check does not call the model", status_chunks[0])
 
 
 if __name__ == "__main__":

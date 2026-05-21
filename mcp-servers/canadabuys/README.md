@@ -22,6 +22,8 @@ python mcp-servers/canadabuys/server.py
 - `list_upcoming_deadlines`
 - `summarize_contracts`
 - `refresh_data`
+- `check_cohere_hf_status`
+- `analyze_contract_with_cohere`
 
 ## Configuration
 
@@ -30,6 +32,9 @@ No environment variables are required for local use.
 Optional:
 
 - `CANADABUYS_DATA_DIR`: override the default cache directory
+- `HF_TOKEN` or `HUGGINGFACEHUB_API_TOKEN`: enable Cohere Command A+ analysis through Hugging Face Inference Providers
+- `CANADABUYS_COHERE_MODEL`: override the default HF model route, currently `CohereLabs/command-a-plus-05-2026-w4a4:cohere`
+- `CANADABUYS_HF_CHAT_COMPLETIONS_URL`: override the Hugging Face chat completions endpoint
 
 By default the server caches under `~/.canadabuys`.
 
