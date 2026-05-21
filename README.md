@@ -61,7 +61,7 @@ The job of this workspace is to turn that sentence into faster decisions, fewer 
 
 ## What This Actually Does
 
-WorkspaceAlberta is a local MCP workspace for Canadian procurement.
+WorkspaceAlberta is an MCP-first workspace for Canadian procurement.
 
 It now brings together:
 
@@ -86,6 +86,27 @@ This is meant to answer practical questions:
 - What closes soon?
 - What should we read first?
 - What should we ignore?
+
+---
+
+## The Custom Procurement MCP Server
+
+The custom MCP server is the product.
+
+It is a deployed working endpoint that knows the live public procurement pipeline exposed by **CanadaBuys** and **Alberta Purchasing Connection**. It can serve that pipeline back to users through an AI assistant based on what they do, where they work, what they can supply, and what deadlines matter.
+
+The core tools are:
+
+- `search_opportunities` for unified federal and Alberta search
+- `get_opportunity_details` for a single posting by reference number
+- `list_deadlines` for what is closing soon
+- `find_matching_opportunities` for profile-based ranking
+- `daily_bid_brief` for the daily owner/operator summary
+- `analyze_contract_with_cohere` for optional Cohere Command A+ tender review
+
+MCP is the first-class interface because this is meant to be used by agents. The same procurement core also exposes REST/OpenAPI so other AI tools can hook into the same contract intelligence without needing native MCP support.
+
+Underneath the endpoint is pure Python procurement logic. The data processing, filtering, matching, deadline ranking, and brief generation do not require an LLM. The model layer is added only where judgment helps: risk review, requirements explanation, and bid/no-bid reasoning.
 
 ---
 
@@ -152,10 +173,13 @@ The owner should not have to care whether the answer came from a CSV, an API, a 
 MCP server:
 
 - [`mcp-servers/canadabuys/server.py`](mcp-servers/canadabuys/server.py)
+- [`mcp-servers/canadabuys/server_sse.py`](mcp-servers/canadabuys/server_sse.py) for hosted MCP over SSE plus REST/OpenAPI
+- [`procurement_core/service.py`](procurement_core/service.py) for the shared Python procurement core
 
 Smoke test:
 
 - [`tests/test_canadabuys_mcp_smoke.py`](tests/test_canadabuys_mcp_smoke.py)
+- [`tests/test_procurement_http_app.py`](tests/test_procurement_http_app.py)
 
 Configuration:
 
