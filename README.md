@@ -1,8 +1,8 @@
 # WorkspaceAlberta
 
 <p align="center">
-  <img src="docs/assets/women-workers-small-arms.jpg" alt="Women workers at Small Arms Limited, 1942." width="420">
-  <img src="docs/assets/sophie-okowinski-bren-gun.jpg" alt="Sophie O'Kowinski reaming a Bren gun barrel at the John Inglis Company munitions plant, 1943." width="420">
+  <img src="docs/assets/women-workers-small-arms.jpg" alt="Women workers at Small Arms Limited, 1942." width="49%">
+  <img src="docs/assets/sophie-okowinski-bren-gun.jpg" alt="Sophie O'Kowinski reaming a Bren gun barrel at the John Inglis Company munitions plant, 1943." width="49%">
 </p>
 
 <p align="center"><em>Canadian industrial war production, via Library and Archives Canada.</em></p>
