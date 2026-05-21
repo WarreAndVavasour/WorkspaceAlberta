@@ -335,6 +335,39 @@ def get_mcp_tools() -> list[Tool]:
             }
         ),
         Tool(
+            name="process_bid_room",
+            description="Use an E2B sandbox to process tender attachments and call Cohere Command A+ inside the sandbox for bid-room analysis.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "CanadaBuys or Alberta APC reference number"
+                    },
+                    "business_context": {
+                        "type": "string",
+                        "description": "Optional company capabilities or bid context. If omitted, the saved business profile is used."
+                    },
+                    "max_attachments": {
+                        "type": "integer",
+                        "description": "Maximum direct attachments to process (default 5, max 5)",
+                        "default": 5
+                    },
+                    "timeout_seconds": {
+                        "type": "integer",
+                        "description": "E2B sandbox timeout in seconds (default 900)",
+                        "default": 900
+                    },
+                    "command_timeout_seconds": {
+                        "type": "integer",
+                        "description": "Sandbox command timeout in seconds (default 420)",
+                        "default": 420
+                    }
+                },
+                "required": ["reference"]
+            }
+        ),
+        Tool(
             name="check_cohere_status",
             description="Check whether the optional Cohere Command A+ model integration is configured. Does not call the model.",
             inputSchema={

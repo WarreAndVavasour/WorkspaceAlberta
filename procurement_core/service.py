@@ -1250,6 +1250,7 @@ TOOL_NAMES = (
     "list_alberta_deadlines",
     "summarize_alberta_opportunities",
     "find_alberta_opportunities",
+    "process_bid_room",
     "check_cohere_status",
     "analyze_contract_with_cohere",
 )
@@ -1697,6 +1698,75 @@ async def daily_bid_brief(args: dict) -> str:
                 break
 
     return output
+
+
+def process_bid_room_artifact(args: dict) -> dict[str, Any]:
+    """Process a bid room in E2B and return a JSON-ready artifact envelope."""
+    from procurement_core.e2b_bid_room import (
+        build_apc_bid_room_payload,
+        build_canadabuys_bid_room_payload,
+        render_bid_room_markdown,
+        run_live_bid_room_process,
+    )
+
+    reference = str(args.get("reference") or "").strip()
+    if not reference:
+        raise ValueError("Please provide a reference number.")
+
+    profile = load_profile() or {}
+    business_context = str(args.get("business_context") or "").strip()
+    max_attachments = clamp_int(args.get("max_attachments"), default=5, minimum=0, maximum=5)
+    timeout_seconds = clamp_int(args.get("timeout_seconds"), default=900, minimum=60, maximum=86400)
+    command_timeout_seconds = clamp_int(args.get("command_timeout_seconds"), default=420, minimum=120, maximum=3600)
+    keep_alive = bool(args.get("keep_alive", False))
+    warnings: list[str] = []
+
+    if is_alberta_reference(reference):
+        try:
+            details = get_alberta_api_details(reference)
+        except (RuntimeError, ValueError) as exc:
+            raise ValueError(f"Alberta opportunity not available: {exc}") from exc
+        payload = build_apc_bid_room_payload(
+            details,
+            profile,
+            business_context=business_context,
+            max_attachments=max_attachments,
+        )
+    else:
+        contracts, federal_warnings = load_contracts_for_unified()
+        warnings.extend(federal_warnings)
+        contract = find_contract_by_reference(reference, contracts)
+        if not contract:
+            raise ValueError(f"Opportunity not found: {reference}")
+        payload = build_canadabuys_bid_room_payload(
+            contract,
+            profile,
+            business_context=business_context,
+            max_attachments=max_attachments,
+        )
+
+    result = run_live_bid_room_process(
+        payload,
+        timeout_seconds=timeout_seconds,
+        command_timeout_seconds=command_timeout_seconds,
+        keep_alive=keep_alive,
+    )
+    if warnings:
+        result.artifact.setdefault("warnings", []).extend(warnings)
+    return {
+        "sandbox_id": result.sandbox_id,
+        "sandbox_killed": result.killed,
+        "artifact": result.artifact,
+        "markdown": render_bid_room_markdown(result),
+    }
+
+
+async def process_bid_room(args: dict) -> str:
+    """Process a tender package in E2B and analyze it with Cohere inside the sandbox."""
+    try:
+        return process_bid_room_artifact(args)["markdown"]
+    except (RuntimeError, ValueError) as exc:
+        return f"Bid room processing is not available: {exc}"
 
 
 # ============== Alberta Purchasing Connection Handlers ==============

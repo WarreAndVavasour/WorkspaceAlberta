@@ -14,7 +14,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from procurement_core.service import TOOL_NAMES, call_tool_text  # noqa: E402
+from procurement_core.service import TOOL_NAMES, call_tool_text, process_bid_room_artifact  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 
 mcp_server = Server("canadabuys")
@@ -146,6 +146,17 @@ async def matches(arguments: dict[str, Any] | None = Body(default=None)) -> dict
 async def brief(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Generate the daily bid brief."""
     return await run_tool("daily_bid_brief", arguments)
+
+
+@app.post("/bid-room/process", tags=["bid-room"])
+async def bid_room_process(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Process a bid room in E2B and analyze it with Cohere inside the sandbox."""
+    try:
+        return process_bid_room_artifact(arguments or {})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @app.post("/profile", tags=["profile"])

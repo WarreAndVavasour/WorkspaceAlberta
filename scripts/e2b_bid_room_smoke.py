@@ -13,6 +13,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from procurement_core.e2b_bid_room import run_live_bid_room_smoke  # noqa: E402
+from procurement_core.service import process_bid_room_artifact  # noqa: E402
 
 
 def main() -> int:
@@ -28,8 +29,8 @@ def main() -> int:
     parser.add_argument(
         "--command-timeout",
         type=int,
-        default=120,
-        help="Command timeout in seconds. Default: 120.",
+        default=420,
+        help="Command timeout in seconds. Default: 420.",
     )
     parser.add_argument(
         "--keep-alive",
@@ -37,11 +38,41 @@ def main() -> int:
         help="Leave the sandbox running after the smoke test.",
     )
     parser.add_argument(
+        "--reference",
+        help="CanadaBuys or Alberta APC reference to process with real attachments and Cohere.",
+    )
+    parser.add_argument(
+        "--business-context",
+        default="",
+        help="Optional business context for reference-based processing.",
+    )
+    parser.add_argument(
+        "--max-attachments",
+        type=int,
+        default=5,
+        help="Maximum attachments to process for a real reference. Default: 5.",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Print the full JSON artifact.",
     )
     args = parser.parse_args()
+
+    if args.reference:
+        envelope = process_bid_room_artifact({
+            "reference": args.reference,
+            "business_context": args.business_context,
+            "max_attachments": args.max_attachments,
+            "timeout_seconds": args.timeout,
+            "command_timeout_seconds": args.command_timeout,
+            "keep_alive": args.keep_alive,
+        })
+        if args.json:
+            print(json.dumps(envelope, indent=2))
+        else:
+            print(envelope["markdown"])
+        return 0
 
     result = run_live_bid_room_smoke(
         timeout_seconds=args.timeout,

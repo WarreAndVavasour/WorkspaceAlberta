@@ -103,12 +103,13 @@ The core tools are:
 - `find_matching_opportunities` for profile-based ranking
 - `daily_bid_brief` for the daily owner/operator summary
 - `analyze_contract_with_cohere` for optional Cohere Command A+ tender review
+- `process_bid_room` for live E2B attachment extraction and Cohere tool-assisted bid review
 
 MCP is the first-class interface because this is meant to be used by agents. The same procurement core also exposes REST/OpenAPI so other AI tools can hook into the same contract intelligence without needing native MCP support.
 
 Underneath the endpoint is pure Python procurement logic. The data processing, filtering, matching, deadline ranking, and brief generation do not require an LLM. The model layer is added only where judgment helps: risk review, requirements explanation, and bid/no-bid reasoning.
 
-E2B sandboxes are the planned isolated compute layer for heavier bid-room work: opening tender packages, parsing attachments, extracting compliance requirements, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md).
+E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, parsing attachments, extracting compliance requirements, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Command A+ runs inside the short-lived sandbox with read-only evidence tools over the extracted documents. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md).
 
 ---
 
