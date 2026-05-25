@@ -1,0 +1,6 @@
+# Workspace Alberta Hermes config template
+# This is intentionally minimal. The installer sets these values with `hermes config set`
+# so it can preserve an existing Hermes config file.
+
+dashboard:
+  theme: workspace-alberta

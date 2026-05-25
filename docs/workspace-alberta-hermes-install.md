@@ -14,6 +14,67 @@ This is the white-label layer around the procurement workspace.
 
 ---
 
+## Out-of-box Pi install
+
+For a single-purpose Workspace Alberta appliance, the repo includes an installer that turns a fresh Raspberry Pi OS / Debian user account into the branded default experience.
+
+From a fresh Pi desktop session:
+
+```bash
+git clone https://github.com/HarleyCoops/WorkspaceAlberta.git ~/WorkspaceAlberta
+cd ~/WorkspaceAlberta
+chmod +x installer/install-workspace-alberta-pi.sh
+./installer/install-workspace-alberta-pi.sh
+```
+
+The installer does the repeatable setup work:
+
+- installs baseline OS packages: `git`, `curl`, `python3`, `python3-venv`, `chromium`
+- installs Hermes if `hermes` is not already on `PATH`
+- creates the repo `.venv` and runs the CanadaBuys MCP smoke test
+- copies `hermes/dashboard-themes/workspace-alberta.yaml` into `~/.hermes/dashboard-themes/`
+- sets `dashboard.theme` to `workspace-alberta`
+- enables the local API server on `127.0.0.1:8642`
+- patches the local dashboard browser title to `WorkspaceAlberta`
+- installs user-level systemd services for the dashboard and gateway
+- enables service linger so the appliance can run without an active SSH session
+- installs a Chromium autostart launcher for the desktop session
+
+After install, the default local endpoints are:
+
+```text
+Dashboard: http://127.0.0.1:9119/
+API:       http://127.0.0.1:8642/v1
+Model:     hermes-agent
+```
+
+Useful service commands:
+
+```bash
+systemctl --user status workspace-alberta-dashboard.service
+systemctl --user status workspace-alberta-gateway.service
+systemctl --user restart workspace-alberta-dashboard.service
+systemctl --user restart workspace-alberta-gateway.service
+journalctl --user -u workspace-alberta-dashboard.service -f
+```
+
+Installer knobs:
+
+```bash
+# Do not install Chromium desktop autostart
+INSTALL_KIOSK=0 ./installer/install-workspace-alberta-pi.sh
+
+# Use non-default ports
+DASHBOARD_PORT=9120 API_PORT=8650 ./installer/install-workspace-alberta-pi.sh
+
+# Do not patch the local dashboard HTML title
+PATCH_TITLE=0 ./installer/install-workspace-alberta-pi.sh
+```
+
+For a shipping unit, pre-run this installer on the Pi image, then add the user's provider credentials locally through `hermes setup`, `hermes model`, or `~/.hermes/.env`. Never bake real API keys into the repo or image template.
+
+---
+
 ## Target experience
 
 A small business owner or estimator should be able to power on the Pi and land at:
@@ -49,7 +110,8 @@ Raspberry Pi
     ├── procurement MCP server
     ├── branded dashboard theme
     ├── setup documentation
-    └── future installer scripts
+    ├── installer scripts and user-level systemd service templates
+    └── Chromium autostart launcher
 ```
 
 Use a Hermes profile for the branded installation when possible:
