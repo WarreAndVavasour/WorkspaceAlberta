@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Workspace Alberta
+Comment=Open the Workspace Alberta Hermes dashboard
+Exec=${HOME}/.local/bin/workspace-alberta-kiosk.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true

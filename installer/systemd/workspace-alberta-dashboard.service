@@ -1,0 +1,16 @@
+[Unit]
+Description=Workspace Alberta Hermes Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=HERMES_HOME=${WORKSPACE_ALBERTA_HERMES_HOME}
+WorkingDirectory=${WORKSPACE_ALBERTA_REPO}
+ExecStartPre=-/usr/bin/env bash -lc 'hermes dashboard --stop || true'
+ExecStart=/usr/bin/env bash -lc 'exec hermes dashboard --host 127.0.0.1 --port ${WORKSPACE_ALBERTA_DASHBOARD_PORT} --tui --no-open'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

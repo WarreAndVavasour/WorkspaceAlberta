@@ -1,0 +1,15 @@
+[Unit]
+Description=Workspace Alberta Hermes Gateway / Local API Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=HERMES_HOME=${WORKSPACE_ALBERTA_HERMES_HOME}
+WorkingDirectory=${WORKSPACE_ALBERTA_REPO}
+ExecStart=/usr/bin/env bash -lc 'exec hermes gateway run'
+Restart=always
+RestartSec=8
+
+[Install]
+WantedBy=default.target
