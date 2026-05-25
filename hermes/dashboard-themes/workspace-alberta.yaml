@@ -65,6 +65,9 @@ customCSS: |
     --workspace-alberta-amber: #F2A541;
     --workspace-alberta-cream: #F4E9D8;
     --workspace-alberta-pine: #071417;
+    --workspace-alberta-flag-blue: #005EB8;
+    --workspace-alberta-flag-red: #D71920;
+    --workspace-alberta-flag-gold: #F2A541;
   }
 
   body::before {
@@ -79,6 +82,79 @@ customCSS: |
     background-size: 48px 48px;
     mask-image: radial-gradient(circle at top, black, transparent 72%);
     z-index: 0;
+  }
+
+  /* White-label header: make the left rail obviously Workspace Alberta. */
+  #app-sidebar > div:first-child {
+    min-height: 5.75rem;
+    align-items: center;
+    background:
+      linear-gradient(90deg, rgba(0, 94, 184, 0.26), rgba(242, 165, 65, 0.14)),
+      color-mix(in srgb, var(--workspace-alberta-pine) 88%, black);
+  }
+
+  #app-sidebar > div:first-child > div:first-child {
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  /* Alberta flag badge: blue field, small Union Jack hint, and gold shield. */
+  #app-sidebar > div:first-child > div:first-child::before {
+    content: "";
+    display: block;
+    width: 3.7rem;
+    height: 2.35rem;
+    flex: 0 0 auto;
+    border-radius: 0.28rem;
+    border: 1px solid rgba(244, 233, 216, 0.72);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 8px 26px rgba(0, 0, 0, 0.24);
+    background:
+      radial-gradient(ellipse at 64% 54%, #F2D36B 0 12%, transparent 13%),
+      linear-gradient(#3B8A3E, #3B8A3E) 57% 58% / 0.74rem 0.28rem no-repeat,
+      linear-gradient(#FFFFFF, #FFFFFF) 0 0 / 1.55rem 1.1rem no-repeat,
+      linear-gradient(33deg, transparent 42%, #D71920 43% 51%, transparent 52%) 0 0 / 1.55rem 1.1rem no-repeat,
+      linear-gradient(-33deg, transparent 42%, #D71920 43% 51%, transparent 52%) 0 0 / 1.55rem 1.1rem no-repeat,
+      linear-gradient(90deg, transparent 42%, #D71920 43% 57%, transparent 58%) 0 0 / 1.55rem 1.1rem no-repeat,
+      linear-gradient(0deg, transparent 42%, #D71920 43% 57%, transparent 58%) 0 0 / 1.55rem 1.1rem no-repeat,
+      var(--workspace-alberta-flag-blue);
+  }
+
+  /* Hide the default hard-coded Hermes/Agent text and paint our brand. */
+  #app-sidebar > div:first-child > div:first-child > *:last-child {
+    position: relative;
+    min-width: 8.75rem;
+    color: transparent !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+  }
+
+  #app-sidebar > div:first-child > div:first-child > *:last-child::after {
+    content: "Workspace\A Alberta";
+    white-space: pre;
+    display: block;
+    color: var(--workspace-alberta-cream);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+    text-transform: none;
+    text-shadow: 0 0 18px rgba(242, 165, 65, 0.34);
+  }
+
+  /* Mobile header brand override. */
+  header > *:last-child {
+    color: transparent !important;
+    font-size: 0 !important;
+  }
+
+  header > *:last-child::after {
+    content: "WorkspaceAlberta";
+    color: var(--workspace-alberta-cream);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
   }
 
   .blend-lighter {
