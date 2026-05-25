@@ -1,0 +1,90 @@
+name: workspace-alberta
+label: Workspace Alberta
+description: Branded Workspace Alberta operator console for Canadian procurement intelligence
+
+palette:
+  background:
+    hex: "#071417"
+    alpha: 1
+  midground:
+    hex: "#F4E9D8"
+    alpha: 1
+  foreground:
+    hex: "#FFFFFF"
+    alpha: 0
+  warmGlow: "rgba(242, 165, 65, 0.32)"
+  noiseOpacity: 0.85
+
+typography:
+  fontSans: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  fontMono: '"JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace'
+  fontUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  baseSize: "16px"
+  lineHeight: "1.55"
+  letterSpacing: "-0.005em"
+
+layout:
+  radius: "0.9rem"
+  density: comfortable
+
+colorOverrides:
+  card: "color-mix(in srgb, #F4E9D8 5%, #071417)"
+  cardForeground: "#F4E9D8"
+  primary: "#F2A541"
+  primaryForeground: "#071417"
+  secondary: "color-mix(in srgb, #F4E9D8 8%, #071417)"
+  secondaryForeground: "#F4E9D8"
+  muted: "color-mix(in srgb, #F4E9D8 7%, #071417)"
+  mutedForeground: "rgba(244, 233, 216, 0.76)"
+  accent: "rgba(242, 165, 65, 0.18)"
+  accentForeground: "#F4E9D8"
+  success: "#60D394"
+  warning: "#F2A541"
+  destructive: "#EF476F"
+  border: "rgba(244, 233, 216, 0.18)"
+  input: "rgba(244, 233, 216, 0.18)"
+  ring: "#F2A541"
+
+assets:
+  bg: "radial-gradient(circle at 12% 0%, rgba(242, 165, 65, 0.22), transparent 34%), radial-gradient(circle at 88% 18%, rgba(96, 211, 148, 0.10), transparent 30%), linear-gradient(135deg, #071417 0%, #102B2F 48%, #071417 100%)"
+  custom:
+    motto: "Wouldn't it be great if..."
+
+componentStyles:
+  card:
+    boxShadow: "0 24px 80px rgba(0, 0, 0, 0.28)"
+  header:
+    borderBottom: "1px solid rgba(244, 233, 216, 0.14)"
+  sidebar:
+    borderRight: "1px solid rgba(244, 233, 216, 0.14)"
+  badge:
+    textTransform: "uppercase"
+
+customCSS: |
+  :root {
+    --workspace-alberta-amber: #F2A541;
+    --workspace-alberta-cream: #F4E9D8;
+    --workspace-alberta-pine: #071417;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.14;
+    background-image:
+      linear-gradient(rgba(244, 233, 216, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244, 233, 216, 0.08) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at top, black, transparent 72%);
+    z-index: 0;
+  }
+
+  .blend-lighter {
+    letter-spacing: -0.035em;
+  }
+
+  a {
+    text-underline-offset: 0.18em;
+  }
