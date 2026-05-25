@@ -191,6 +191,7 @@ Configuration:
 - [`AGENTS.md`](AGENTS.md) for Codex/OpenClaw guidance
 - [`mcp-servers/canadabuys/README.md`](mcp-servers/canadabuys/README.md) for server tools and environment variables
 - [`docs/codex-setup.md`](docs/codex-setup.md) for local setup notes
+- [`docs/workspace-alberta-hermes-install.md`](docs/workspace-alberta-hermes-install.md) for the branded Hermes / Raspberry Pi setup draft
 
 Data and model sources:
 
