@@ -15,4 +15,4 @@ COPY mcp-servers/canadabuys ./mcp-servers/canadabuys
 EXPOSE 8080
 
 WORKDIR /app/mcp-servers/canadabuys
-CMD ["uvicorn", "server_sse:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "server_http:app", "--host", "0.0.0.0", "--port", "8080"]

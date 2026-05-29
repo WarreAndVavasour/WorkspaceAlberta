@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Hosted MCP and REST/OpenAPI adapter for the shared procurement core."""
 
+import contextlib
 import sys
+from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from mcp.server import Server
-from mcp.server.sse import SseServerTransport
+from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.types import TextContent, Tool
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -18,6 +20,21 @@ from procurement_core.service import TOOL_NAMES, call_tool_text, process_bid_roo
 from mcp_tools import get_mcp_tools  # noqa: E402
 
 mcp_server = Server("canadabuys")
+session_manager = StreamableHTTPSessionManager(
+    app=mcp_server,
+    json_response=False,
+    stateless=False,
+    session_idle_timeout=1800,
+)
+
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Run the StreamableHTTP MCP session manager for the app lifetime."""
+    async with session_manager.run():
+        yield
+
+
 app = FastAPI(
     title="WorkspaceAlberta Procurement API",
     description=(
@@ -25,9 +42,9 @@ app = FastAPI(
         "Alberta Purchasing Connection, business-profile matching, daily bid "
         "briefs, and optional Cohere Command A+ analysis."
     ),
-    version="0.2.0",
+    version="0.3.0",
+    lifespan=lifespan,
 )
-sse = SseServerTransport("/messages/")
 
 
 def serialize_tool(tool: Tool) -> dict[str, Any]:
@@ -68,27 +85,14 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     return [TextContent(type="text", text=text)]
 
 
-async def handle_sse(request: Request) -> None:
-    """Handle MCP SSE connections."""
-    async with sse.connect_sse(
-        request.scope,
-        request.receive,
-        request._send,
-    ) as streams:
-        await mcp_server.run(
-            streams[0],
-            streams[1],
-            mcp_server.create_initialization_options(),
-        )
+async def handle_mcp(request: Request) -> None:
+    """Handle modern StreamableHTTP MCP requests at a single endpoint."""
+    await session_manager.handle_request(request.scope, request.receive, request._send)
 
 
-async def handle_messages(request: Request) -> None:
-    """Handle MCP SSE client messages."""
-    await sse.handle_post_message(request.scope, request.receive, request._send)
+app.add_route("/mcp", handle_mcp, methods=["GET", "POST", "DELETE"])
 
 
-app.add_route("/sse", handle_sse, methods=["GET"])
-app.add_route("/messages/", handle_messages, methods=["POST"])
 
 
 @app.get("/health", tags=["system"])
@@ -97,7 +101,7 @@ async def health() -> dict[str, Any]:
     return {
         "status": "ok",
         "server": "workspacealberta-procurement",
-        "mcp": {"sse": "/sse", "messages": "/messages/"},
+        "mcp": {"streamable_http": "/mcp"},
         "rest": {"openapi": "/openapi.json", "docs": "/docs"},
         "tools": len(TOOL_NAMES),
     }
