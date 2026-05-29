@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
-from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException
 from mcp.server import Server
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.types import TextContent, Tool
@@ -85,12 +85,14 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     return [TextContent(type="text", text=text)]
 
 
-async def handle_mcp(request: Request) -> None:
-    """Handle modern StreamableHTTP MCP requests at a single endpoint."""
-    await session_manager.handle_request(request.scope, request.receive, request._send)
+class MCPStreamableHTTPApp:
+    """ASGI adapter for the MCP StreamableHTTP session manager."""
+
+    async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
+        await session_manager.handle_request(scope, receive, send)
 
 
-app.add_route("/mcp", handle_mcp, methods=["GET", "POST", "DELETE"])
+app.add_route("/mcp", MCPStreamableHTTPApp(), methods=["GET", "POST", "DELETE"])
 
 
 
