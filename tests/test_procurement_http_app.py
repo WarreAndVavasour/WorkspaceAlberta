@@ -17,7 +17,11 @@ from server_http import app  # noqa: E402
 
 class ProcurementHttpAppTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = TestClient(app)
+        self.client_context = TestClient(app)
+        self.client = self.client_context.__enter__()
+
+    def tearDown(self) -> None:
+        self.client_context.__exit__(None, None, None)
 
     def test_health_tools_openapi_and_generic_tool(self) -> None:
         health = self.client.get("/health")
@@ -28,6 +32,9 @@ class ProcurementHttpAppTest(unittest.TestCase):
 
         old_sse = self.client.get("/sse")
         self.assertEqual(old_sse.status_code, 404)
+
+        mcp_probe = self.client.get("/mcp", headers={"Accept": "text/event-stream"})
+        self.assertNotEqual(mcp_probe.status_code, 500)
 
         tools = self.client.get("/tools")
         self.assertEqual(tools.status_code, 200)
