@@ -176,7 +176,7 @@ The owner should not have to care whether the answer came from a CSV, an API, a 
 MCP server:
 
 - [`mcp-servers/canadabuys/server.py`](mcp-servers/canadabuys/server.py)
-- [`mcp-servers/canadabuys/server_sse.py`](mcp-servers/canadabuys/server_sse.py) for hosted MCP over SSE plus REST/OpenAPI
+- [`mcp-servers/canadabuys/server_http.py`](mcp-servers/canadabuys/server_http.py) for hosted StreamableHTTP MCP plus REST/OpenAPI
 - [`procurement_core/service.py`](procurement_core/service.py) for the shared Python procurement core
 - [`procurement_core/e2b_bid_room.py`](procurement_core/e2b_bid_room.py) for live E2B bid-room sandbox processing
 

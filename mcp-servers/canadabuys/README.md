@@ -8,7 +8,7 @@ The server is now split into:
 
 - `procurement_core/service.py`: pure Python procurement logic shared by every adapter
 - `server.py`: local stdio MCP adapter for MCP-first desktop/agent tools
-- `server_sse.py`: hosted MCP-over-SSE plus REST/OpenAPI adapter for deployed use
+- `server_http.py`: hosted StreamableHTTP MCP plus REST/OpenAPI adapter for deployed use
 
 ## Run Directly
 
@@ -23,14 +23,13 @@ python mcp-servers/canadabuys/server.py
 From the repo root:
 
 ```bash
-uvicorn server_sse:app --app-dir mcp-servers/canadabuys --host 0.0.0.0 --port 8000
+uvicorn server_http:app --app-dir mcp-servers/canadabuys --host 0.0.0.0 --port 8000
 ```
 
 Hosted routes:
 
+- `GET/POST/DELETE /mcp`: modern StreamableHTTP MCP endpoint
 - `GET /health`: health check
-- `GET /sse`: MCP over SSE connection
-- `POST /messages/`: MCP over SSE message endpoint
 - `GET /tools`: MCP tool schemas as JSON
 - `POST /tools/{tool_name}`: call any MCP tool over HTTP
 - `POST /search`: unified CanadaBuys + Alberta APC search
@@ -49,6 +48,30 @@ docker run --env-file .env -p 8080:8080 workspacealberta-procurement
 ```
 
 Production note: the current profile store is file-backed under `CANADABUYS_DATA_DIR`. Add authentication and per-user profile storage before exposing `/profile`, `/matches`, or `/brief` as a public multi-user service.
+
+## Connect an MCP Client
+
+Use the deployed StreamableHTTP endpoint:
+
+```text
+https://<host>/mcp
+```
+
+Local test endpoint:
+
+```text
+http://127.0.0.1:8000/mcp
+```
+
+For Hermes native MCP:
+
+```yaml
+mcp_servers:
+  workspacealberta:
+    url: "https://<host>/mcp"
+    timeout: 180
+    connect_timeout: 60
+```
 
 ## Available Tools
 

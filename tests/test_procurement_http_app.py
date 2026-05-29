@@ -12,7 +12,7 @@ os.environ["CANADABUYS_DATA_DIR"] = TEST_DATA_DIR.name
 sys.path.insert(0, str(SERVER_DIR))
 
 from fastapi.testclient import TestClient  # noqa: E402
-from server_sse import app  # noqa: E402
+from server_http import app  # noqa: E402
 
 
 class ProcurementHttpAppTest(unittest.TestCase):
@@ -22,7 +22,12 @@ class ProcurementHttpAppTest(unittest.TestCase):
     def test_health_tools_openapi_and_generic_tool(self) -> None:
         health = self.client.get("/health")
         self.assertEqual(health.status_code, 200)
-        self.assertEqual(health.json()["status"], "ok")
+        health_body = health.json()
+        self.assertEqual(health_body["status"], "ok")
+        self.assertEqual(health_body["mcp"], {"streamable_http": "/mcp"})
+
+        old_sse = self.client.get("/sse")
+        self.assertEqual(old_sse.status_code, 404)
 
         tools = self.client.get("/tools")
         self.assertEqual(tools.status_code, 200)
