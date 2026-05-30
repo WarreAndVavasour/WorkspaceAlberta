@@ -72,6 +72,29 @@ Use the Build Canada tools for:
 
 Do not assume the repo has CRM, ERP, spreadsheet, or accounting integrations unless they are explicitly added later.
 
+## GBrain Knowledge Layer
+
+GBrain by Garry Tan is available as a repo-local lookup/indexing layer, not a replacement for the CanadaBuys MCP server or canonical tests.
+
+- Repo source id: `workspacealberta`
+- Preferred wrapper: `/home/chris/.local/bin/gbrain`
+- Source marker: `.gbrain-source`
+- Repo-local skill: `.claude/skills/gbrain/SKILL.md`
+
+Common commands:
+
+```bash
+GB=/home/chris/.local/bin/gbrain
+"$GB" sources list
+"$GB" sync --source workspacealberta --no-pull --yes --no-embed
+"$GB" search "CanadaBuys MCP server"
+"$GB" query "what does this repo say about CanadaBuys and MCP?" --no-expand
+# Optional, when embedding quota is available:
+"$GB" embed --stale
+```
+
+After changing visible repo docs or agent setup, sync the source and verify with a known phrase search.
+
 ## Editing Rules
 
 - Keep the repo Codex/OpenClaw-specific.

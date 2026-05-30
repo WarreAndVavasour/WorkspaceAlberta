@@ -7,7 +7,10 @@
 
 # IDE
 .idea/
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/skills/gbrain/
+!.claude/skills/gbrain/SKILL.md
 *.swp
 *.swo
 *~

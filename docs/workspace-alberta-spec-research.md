@@ -10,6 +10,8 @@ WorkspaceAlberta should feel like a dedicated machine, not a laptop accessory.
 
 The reference model is Bloomberg LP: a high-trust, dedicated workspace for executives who need ideas, data, product work, and agentic execution in one place. The physical object should justify a premium setup fee and subscription before anyone sees a line of software.
 
+Business model note: the customer does not own the equipment. The hardware is leased as part of the WorkspaceAlberta subscription and comes back when the subscription ends. The setup fee covers installation, configuration, onboarding, and deployment time; the monthly fee covers the ongoing workspace, support, updates, workflows, and equipment access. Psychologically, the first payment should be framed as setup plus the first month of hands-on AI adoption/training, not as buying hardware. That lowers sunk-cost anxiety while still creating a serious commitment.
+
 The look we are aiming for:
 
 - exposed, deliberate, visibly technical Raspberry Pi 5 core
@@ -29,7 +31,10 @@ Recommended path:
 1. Prototype with Pi 5 16GB, white power, two white HDMI cables, silver/copper cooling, and a weighted aluminum base.
 2. Use a premium central-pole dual arm if the monitors are not too heavy.
 3. Choose either Apple Studio Displays for the flagship $5,000 physical package or ALOGIC/Samsung for a lower-cost prototype.
-4. Add Raspberry Pi AI HAT+ only if we have a camera/object-recognition demo that makes the hardware acceleration visible and explainable.
+4. Add M.2 NVMe as a standard local workspace/boot module.
+5. Add Raspberry Pi AI HAT+ only if we have a camera/object-recognition demo that makes the hardware acceleration visible and explainable.
+
+Hardware design update: the exact open aluminum plinth shown in the current reference image does not appear to exist as a polished off-the-shelf Raspberry Pi 5 case. Treat the case as a custom WorkspaceAlberta part, not a shopping problem. The flagship hardware object should be a custom brushed-aluminum `Open Compute Plinth` that mounts the Pi 5, the NVMe module, the exposed copper/silver cooler, and rear cable exits as one deliberate desk object. Off-the-shelf Pi cases can inform the thermals, but they either hide the board too much or look like maker accessories.
 
 ## Build packages
 
@@ -60,6 +65,38 @@ The flagship package clears the $5,000 visual bar. The value-premium and white-s
 | White case alternate | CanaKit | CanaKit Turbine Case for Raspberry Pi 5, white | $14.95 USD | https://www.canakit.com/canakit-raspberry-pi-5-turbine-case-white.html | Matches white theme, but hides the board more than ideal. |
 
 Power note: Raspberry Pi 5 power input is USB-C. Use a Pi 5-specific 5V/5A USB-C PD supply. A generic phone charger may boot the board, but it weakens the premium story and can cause peripheral-current limits or undervoltage.
+
+## Power architecture for external fans
+
+If we add a dramatic external fan or adapted CPU cooler, power cannot be an afterthought. The clean build should hide fan power inside the aluminum base rather than hanging another wall wart off the desk.
+
+Rules:
+
+- Do not power a 12V PC CPU fan directly from the Raspberry Pi fan header. The Pi fan header is for Pi-class 5V PWM cooling, not a 12V desktop cooler fan.
+- Do not power fans from 3.3V GPIO.
+- A small 5V fan can run from the Pi 5 fan header or 5V rail if current is modest, but it still competes with the Pi and peripherals.
+- A 12V Noctua CPU-cooler fan needs a separate 12V rail, or a USB-C PD trigger/buck-boost power module hidden in the base.
+- If the Pi controls fan speed with PWM, use a proper driver/MOSFET or 4-wire PWM fan interface and a shared ground. Do not improvise fan power through GPIO pins.
+
+Recommended physical design:
+
+1. One white USB-C PD supply enters the aluminum base.
+2. Inside the base, a hidden power distribution board creates:
+   - clean 5V/5A USB-C output for the Raspberry Pi 5
+   - separate 5V or 12V fan rail, depending on fan choice
+3. The Pi receives normal USB-C power.
+4. The external fan receives separate power from the base.
+5. Only a small PWM/control lead, if needed, runs between the Pi and fan driver.
+
+Representative fan loads:
+
+| Fan class | Voltage | Current | Power | Fit for WorkspaceAlberta |
+|---|---:|---:|---:|---|
+| Tiny 5V Pi-class fan | 5V | ~0.05A | ~0.25W | Electrically easy, visually not dramatic. |
+| Medium 5V fan | 5V | ~0.25A | ~1.25W | Possible from a dedicated 5V rail; avoid cluttering the Pi rail. |
+| Noctua NH-L9i-class 92mm slim fan | 12V | ~0.11A | ~1.32W | Needs hidden 12V rail. Mechanically possible, visually wrong unless modified. |
+
+Conclusion: for the premium build, the base should be the power system. The Pi should not be asked to power a showpiece cooler. If the cooler is only copper/brass passive, the problem disappears and the build stays cleaner.
 
 ## Optional AI accelerator
 
