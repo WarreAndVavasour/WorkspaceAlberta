@@ -1,0 +1,33 @@
+{
+  "_comment": "WorkspaceAlberta procurement MCP. Copy the entry you need into your client config.",
+
+  "cursor_or_http_native_clients": {
+    "mcpServers": {
+      "workspacealberta": {
+        "url": "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+      }
+    }
+  },
+
+  "claude_desktop_via_mcp_remote": {
+    "mcpServers": {
+      "workspacealberta": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "mcp-remote",
+          "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+        ]
+      }
+    }
+  },
+
+  "local_stdio": {
+    "mcpServers": {
+      "workspacealberta-local": {
+        "command": "python",
+        "args": ["mcp-servers/canadabuys/server.py"]
+      }
+    }
+  }
+}

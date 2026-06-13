@@ -373,9 +373,13 @@ def call_cohere_direct_chat(
         "max_tokens": max_tokens,
         "temperature": temperature,
         "top_p": 0.95,
-        "reasoning_effort": "none",
         "stream": False,
     }
+    # Cohere's compatibility endpoint returns HTTP 500 for some prompts when
+    # reasoning_effort is pinned; only send it when explicitly configured.
+    reasoning_effort = os.environ.get("CANADABUYS_COHERE_REASONING_EFFORT")
+    if reasoning_effort:
+        payload["reasoning_effort"] = reasoning_effort
     request = Request(
         COHERE_CHAT_COMPLETIONS_URL,
         data=json.dumps(payload).encode("utf-8"),

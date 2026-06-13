@@ -1,5 +1,8 @@
 {
   "mcpServers": {
+    "workspacealberta": {
+      "url": "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+    },
     "buildcanada": {
       "command": "python",
       "args": ["${workspaceFolder}/mcp-servers/canadabuys/server.py"],
