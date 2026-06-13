@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 760" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="alu" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9ecef"/><stop offset="0.5" stop-color="#c4ccd2"/><stop offset="1" stop-color="#aab3ba"/>
+    </linearGradient>
+    <linearGradient id="cop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d98a5b"/><stop offset="1" stop-color="#a85a32"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="760" fill="#15181c"/>
+  <text x="48" y="56" fill="#fff" font-size="26" font-weight="bold">WorkspaceAlberta Terminal</text>
+  <text x="48" y="82" fill="#9aa3ab" font-size="15" letter-spacing="2">EXPLODED VIEW — CONTROL-NODE CORE</text>
+  <line x1="400" y1="120" x2="400" y2="700" stroke="#3a4148" stroke-width="2" stroke-dasharray="3 6"/>
+
+  <!-- layer helper: each board drawn as a parallelogram (iso) -->
+  <!-- 1 cable exits / NVMe -->
+  <g transform="translate(300,140)">
+    <polygon points="0,40 200,0 280,40 80,80" fill="#2a2f35" stroke="#5b646c"/>
+    <rect x="120" y="28" width="60" height="10" rx="3" fill="#3c444c"/>
+    <circle cx="60" cy="56" r="4" fill="#e7eaed"/><circle cx="80" cy="52" r="4" fill="#e7eaed"/>
+  </g>
+  <text x="610" y="178" fill="#cdd4da" font-size="15">M.2 NVMe module + rear cable exits</text>
+  <line x1="430" y1="185" x2="600" y2="178" stroke="#5b646c"/>
+
+  <!-- 2 copper heatsinks -->
+  <g transform="translate(300,250)">
+    <polygon points="0,40 200,0 280,40 80,80" fill="url(#cop)" stroke="#7a4528"/>
+    <rect x="70" y="20" width="16" height="22" fill="#c87a4d"/><rect x="100" y="13" width="16" height="22" fill="#c87a4d"/>
+    <rect x="130" y="6" width="16" height="22" fill="#c87a4d"/><rect x="160" y="2" width="16" height="14" fill="#c87a4d"/>
+  </g>
+  <text x="610" y="288" fill="#cdd4da" font-size="15">Copper heatsink 4-pack (accent)</text>
+  <line x1="430" y1="295" x2="600" y2="288" stroke="#5b646c"/>
+
+  <!-- 3 CNC cooling box -->
+  <g transform="translate(300,360)">
+    <polygon points="0,40 200,0 280,40 80,80" fill="url(#alu)" stroke="#8d969d"/>
+    <polygon points="0,40 80,80 80,104 0,64" fill="#9aa3aa" stroke="#8d969d"/>
+    <polygon points="80,80 280,40 280,64 80,104" fill="#b6bec4" stroke="#8d969d"/>
+  </g>
+  <text x="610" y="398" fill="#cdd4da" font-size="15">Pi5 Passive Cooling CNC Box, silver</text>
+  <line x1="430" y1="405" x2="600" y2="398" stroke="#5b646c"/>
+
+  <!-- 4 Raspberry Pi 5 -->
+  <g transform="translate(300,480)">
+    <polygon points="0,40 200,0 280,40 80,80" fill="#1f7a3d" stroke="#0e3d1f"/>
+    <rect x="150" y="20" width="40" height="28" rx="2" fill="#11341d"/>
+    <rect x="60" y="44" width="34" height="14" rx="2" fill="#2a2f35"/><rect x="100" y="36" width="34" height="14" rx="2" fill="#2a2f35"/>
+  </g>
+  <text x="610" y="518" fill="#cdd4da" font-size="15">Raspberry Pi 5 16GB — control node</text>
+  <line x1="430" y1="525" x2="600" y2="518" stroke="#5b646c"/>
+
+  <!-- 5 plinth base -->
+  <g transform="translate(280,600)">
+    <polygon points="0,46 220,0 320,46 100,92" fill="url(#alu)" stroke="#8d969d"/>
+    <polygon points="0,46 100,92 100,120 0,74" fill="#9aa3aa" stroke="#8d969d"/>
+    <polygon points="100,92 320,46 320,74 100,120" fill="#b6bec4" stroke="#8d969d"/>
+  </g>
+  <text x="610" y="650" fill="#cdd4da" font-size="15">Custom brushed-aluminum plinth</text>
+  <line x1="470" y1="652" x2="600" y2="650" stroke="#5b646c"/>
+
+  <text x="48" y="730" fill="#6c757d" font-size="12">Source: docs/terminal-spec.md · Pi is the visible brand artifact, not the whole compute story.</text>
+</svg>

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" font-family="Helvetica, Arial, sans-serif">
+  <rect width="900" height="560" fill="#0f1216"/>
+  <text x="48" y="52" fill="#fff" font-size="24" font-weight="bold">The Bloomberg Split</text>
+  <text x="48" y="76" fill="#9aa3ab" font-size="14" letter-spacing="2">WORKSPACEALBERTA TERMINAL — DESK SILHOUETTE</text>
+
+  <!-- desk line -->
+  <line x1="60" y1="470" x2="840" y2="470" stroke="#3a4148" stroke-width="3"/>
+
+  <!-- central pole -->
+  <rect x="438" y="250" width="24" height="220" rx="4" fill="#c4ccd2"/>
+  <rect x="360" y="455" width="180" height="18" rx="6" fill="#aab3ba"/>
+
+  <!-- left monitor -->
+  <g>
+    <rect x="150" y="170" width="290" height="180" rx="10" fill="#1b1f24" stroke="#5b646c" stroke-width="2"/>
+    <rect x="166" y="186" width="258" height="148" rx="4" fill="#11151a"/>
+    <rect x="450" y="250" width="22" height="10" fill="#aab3ba"/>
+  </g>
+  <!-- right monitor -->
+  <g>
+    <rect x="460" y="170" width="290" height="180" rx="10" fill="#1b1f24" stroke="#5b646c" stroke-width="2"/>
+    <rect x="476" y="186" width="258" height="148" rx="4" fill="#11151a"/>
+    <rect x="428" y="250" width="22" height="10" fill="#aab3ba"/>
+  </g>
+
+  <!-- keyboard -->
+  <rect x="360" y="486" width="180" height="40" rx="6" fill="#e7eaed"/>
+  <!-- mouse -->
+  <ellipse cx="585" cy="506" rx="20" ry="30" fill="#e7eaed"/>
+
+  <!-- Pi plinth control node at base -->
+  <g transform="translate(120,500)">
+    <polygon points="0,20 80,2 120,20 40,38" fill="#c4ccd2" stroke="#8d969d"/>
+    <rect x="34" y="10" width="26" height="9" rx="2" fill="#1f7a3d"/>
+    <circle cx="74" cy="16" r="3" fill="#d98a5b"/>
+  </g>
+  <text x="120" y="556" fill="#6c757d" font-size="12">Pi control node</text>
+
+  <text x="700" y="500" fill="#6c757d" font-size="12">dual 27" 4K · aluminum tall pole</text>
+</svg>

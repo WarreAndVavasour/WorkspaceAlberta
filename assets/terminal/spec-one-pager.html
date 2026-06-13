@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WorkspaceAlberta Terminal — Spec Sheet</title>
+<style>
+  :root { --ink:#15181c; --mut:#5b646c; --acc:#a85a32; --line:#d8dde1; --bg:#f6f7f8; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; font-family:"Helvetica Neue",Arial,sans-serif; color:var(--ink); }
+  .page { width:210mm; min-height:297mm; padding:18mm 16mm; margin:0 auto; background:#fff; }
+  header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:3px solid var(--ink); padding-bottom:10px; }
+  h1 { font-size:26px; margin:0; letter-spacing:0.5px; }
+  .sub { color:var(--mut); font-size:12px; letter-spacing:2px; text-transform:uppercase; }
+  .price { text-align:right; }
+  .price .amt { font-size:30px; font-weight:bold; }
+  .price .per { color:var(--mut); font-size:13px; }
+  h2 { font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--acc); margin:22px 0 8px; }
+  p { font-size:13px; line-height:1.5; margin:0 0 8px; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--mut); font-weight:600; }
+  td.r,th.r { text-align:right; }
+  .tiers td.r { font-variant-numeric:tabular-nums; }
+  .canon { background:var(--bg); font-weight:bold; }
+  .grid { display:flex; gap:18px; }
+  .grid > div { flex:1; }
+  footer { margin-top:24px; border-top:1px solid var(--line); padding-top:10px; color:var(--mut); font-size:11px; display:flex; justify-content:space-between; }
+  .cta { display:inline-block; background:var(--acc); color:#fff; padding:8px 16px; border-radius:5px; font-weight:bold; font-size:13px; text-decoration:none; }
+  @media print { body { background:#fff; } .page { box-shadow:none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div>
+      <h1>WorkspaceAlberta Terminal</h1>
+      <div class="sub">AI procurement terminal · built in Alberta</div>
+    </div>
+    <div class="price">
+      <div class="amt">CA$4,300<span class="per"> / month</span></div>
+      <div class="per">all-in lease · device returns at end of term</div>
+    </div>
+  </header>
+
+  <h2>The idea</h2>
+  <p>A dedicated desk terminal modeled on the Bloomberg terminal — not a laptop accessory. The Raspberry&nbsp;Pi&nbsp;5 is the visible control node and brand artifact; the premium object is the whole terminal: dual displays, central aluminum mast, brushed-aluminum plinth, cable discipline, and managed WorkspaceAlberta software and support. Heavy reasoning runs against hosted Canadian models (Cohere Command&nbsp;A+) and the live WorkspaceAlberta endpoint.</p>
+
+  <div class="grid">
+    <div>
+      <h2>Canonical build (Value-premium)</h2>
+      <table>
+        <tr><th>Role</th><th>Item</th></tr>
+        <tr><td>Compute core</td><td>Raspberry Pi 5 16GB</td></tr>
+        <tr><td>Power</td><td>Pi 45W USB-C supply, white</td></tr>
+        <tr><td>Display I/O</td><td>2× white micro-HDMI → HDMI</td></tr>
+        <tr><td>Cooling</td><td>Pi5 Passive Cooling CNC Box, silver</td></tr>
+        <tr><td>Accent</td><td>Copper heatsink 4-pack</td></tr>
+        <tr><td>Arm</td><td>Ergotron LX Dual Stacking, tall pole, aluminum</td></tr>
+        <tr><td>Displays</td><td>2× ALOGIC Clarity 27" 4K</td></tr>
+        <tr><td>Keyboard</td><td>Apple Magic Keyboard + Touch ID + numpad</td></tr>
+        <tr><td>Pointer</td><td>Apple Magic Mouse, white USB-C</td></tr>
+        <tr><td>Base</td><td>Custom aluminum plinth (Hammond / SendCutSend)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h2>Package tiers (hardware subtotal)</h2>
+      <table class="tiers">
+        <tr><th>Tier</th><th class="r">CAD</th></tr>
+        <tr><td>Flagship Apple/aluminum</td><td class="r">$6,067.70</td></tr>
+        <tr class="canon"><td>Value premium (canonical)</td><td class="r">$2,949.68</td></tr>
+        <tr><td>White statement</td><td class="r">$2,759.58</td></tr>
+        <tr><td>Prototype</td><td class="r">$1,805.67</td></tr>
+      </table>
+      <h2>Included in the lease</h2>
+      <p>Device · WorkspaceAlberta software + hosted services · daily bid brief · tender fit &amp; risk analysis · bid-room processing · install, onboarding &amp; training · support, updates &amp; equipment access.</p>
+      <p style="margin-top:10px"><a class="cta" href="https://buy.stripe.com/8x28wQg3qfneaIl0aHg7e05">Start a lease →</a></p>
+    </div>
+  </div>
+
+  <footer>
+    <span>Warre &amp; Vavasour · warreandvavasour.com</span>
+    <span>Spec source: docs/terminal-spec.md · hardware subtotals exclude assembly, branding, shipping, tax</span>
+  </footer>
+</div>
+</body>
+</html>

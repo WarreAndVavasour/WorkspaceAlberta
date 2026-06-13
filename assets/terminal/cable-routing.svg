@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8d969d"/>
+    </marker>
+  </defs>
+  <rect width="900" height="600" fill="#15181c"/>
+  <text x="48" y="50" fill="#fff" font-size="24" font-weight="bold">Power &amp; Cable Routing</text>
+  <text x="48" y="74" fill="#9aa3ab" font-size="14" letter-spacing="2">ONE CORD IN · HIDDEN DISTRIBUTION · CLEAN EXITS</text>
+
+  <!-- base enclosure -->
+  <rect x="250" y="150" width="400" height="300" rx="12" fill="none" stroke="#3a4148" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="262" y="176" fill="#5b646c" font-size="13" letter-spacing="1">ALUMINUM BASE (sealed)</text>
+
+  <!-- single USB-C PD in -->
+  <rect x="60" y="270" width="150" height="60" rx="8" fill="#e7eaed"/>
+  <text x="135" y="296" fill="#15181c" font-size="14" text-anchor="middle" font-weight="bold">Wall USB-C PD</text>
+  <text x="135" y="316" fill="#3a4148" font-size="12" text-anchor="middle">single white cord</text>
+  <line x1="210" y1="300" x2="320" y2="300" stroke="#8d969d" stroke-width="3" marker-end="url(#arr)"/>
+
+  <!-- distribution board -->
+  <rect x="320" y="255" width="180" height="90" rx="8" fill="#243b2b" stroke="#3f6b4c"/>
+  <text x="410" y="295" fill="#cdeacb" font-size="14" text-anchor="middle" font-weight="bold">Power distribution</text>
+  <text x="410" y="315" fill="#9ec79a" font-size="12" text-anchor="middle">board (hidden)</text>
+
+  <!-- Pi rail -->
+  <line x1="500" y1="285" x2="600" y2="240" stroke="#8d969d" stroke-width="3" marker-end="url(#arr)"/>
+  <rect x="600" y="205" width="180" height="70" rx="8" fill="#1f7a3d" stroke="#0e3d1f"/>
+  <text x="690" y="235" fill="#fff" font-size="14" text-anchor="middle" font-weight="bold">Raspberry Pi 5</text>
+  <text x="690" y="256" fill="#cdeacb" font-size="12" text-anchor="middle">5V / 5A USB-C</text>
+
+  <!-- fan rail -->
+  <line x1="500" y1="315" x2="600" y2="370" stroke="#8d969d" stroke-width="3" marker-end="url(#arr)"/>
+  <rect x="600" y="345" width="180" height="70" rx="8" fill="#2a2f35" stroke="#5b646c"/>
+  <text x="690" y="375" fill="#fff" font-size="14" text-anchor="middle" font-weight="bold">Fan rail</text>
+  <text x="690" y="396" fill="#aab3ba" font-size="12" text-anchor="middle">separate 5V / 12V</text>
+
+  <!-- PWM control lead Pi <-> fan -->
+  <line x1="690" y1="275" x2="690" y2="345" stroke="#d98a5b" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arr)"/>
+  <text x="700" y="315" fill="#d98a5b" font-size="12">PWM control lead only</text>
+
+  <!-- rules -->
+  <text x="48" y="500" fill="#9aa3ab" font-size="13" font-weight="bold">RULES</text>
+  <text x="48" y="522" fill="#cdd4da" font-size="13">— Do not power a 12V fan from the Pi fan header or 3.3V GPIO.</text>
+  <text x="48" y="542" fill="#cdd4da" font-size="13">— 12V cooler fan gets its own rail / USB-C PD trigger inside the base.</text>
+  <text x="48" y="562" fill="#cdd4da" font-size="13">— Only a 4-wire PWM/control lead crosses between Pi and fan driver; shared ground.</text>
+  <text x="48" y="586" fill="#6c757d" font-size="11">Source: docs/workspace-alberta-spec-research.md · power architecture</text>
+</svg>
