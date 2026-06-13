@@ -37,6 +37,8 @@ case "$cmd" in
   details)  get "/details/$1" | show ;;
   analyze)  post /tools/refresh_data '{}' >/dev/null
             post /cohere/analyze "$(python3 -c 'import json,sys; a=sys.argv[1:]; print(json.dumps({"reference":a[0],**({"question":a[1]} if len(a)>1 else {})}))' "$@")" | show ;;
+  bidroom)  post /tools/refresh_data '{}' >/dev/null
+            post /bid-room/process "$(python3 -c 'import json,sys; a=sys.argv[1:]; print(json.dumps({"reference":a[0],"max_attachments":3}))' "$@")" | show ;;
   cohere)   post /tools/check_cohere_status '{}' | show ;;
   *) grep '^#' "$0" | sed 's/^# \{0,1\}//' ; exit 0 ;;
 esac
