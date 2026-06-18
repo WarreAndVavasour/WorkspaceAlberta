@@ -15,8 +15,7 @@
         "command": "npx",
         "args": [
           "-y",
-          "mcp-remote",
-          "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+          "@warreandvavasour/workspace-alberta"
         ]
       }
     }

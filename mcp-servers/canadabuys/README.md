@@ -73,6 +73,21 @@ mcp_servers:
     connect_timeout: 60
 ```
 
+For MCP clients that only support local command/stdio servers, use the npm bridge package after it is published:
+
+```json
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "command": "npx",
+      "args": ["-y", "@warreandvavasour/workspace-alberta"]
+    }
+  }
+}
+```
+
+The npm package does not run the procurement server locally. It bridges stdio clients to the hosted StreamableHTTP endpoint.
+
 ## Available Tools
 
 Primary unified tools:

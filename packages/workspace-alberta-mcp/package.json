@@ -1,0 +1,44 @@
+{
+  "name": "@warreandvavasour/workspace-alberta",
+  "version": "0.1.0",
+  "description": "Stdio MCP bridge for the hosted WorkspaceAlberta procurement endpoint.",
+  "type": "module",
+  "bin": {
+    "workspace-alberta": "bin/workspace-alberta.js"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "scripts": {
+    "smoke": "node bin/workspace-alberta.js --help",
+    "pack:check": "npm pack --dry-run"
+  },
+  "keywords": [
+    "mcp",
+    "procurement",
+    "canadabuys",
+    "alberta",
+    "workspacealberta"
+  ],
+  "author": "warre & vavasour",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HarleyCoops/WorkspaceAlberta.git",
+    "directory": "packages/workspace-alberta-mcp"
+  },
+  "homepage": "https://github.com/HarleyCoops/WorkspaceAlberta#readme",
+  "bugs": {
+    "url": "https://github.com/HarleyCoops/WorkspaceAlberta/issues"
+  },
+  "dependencies": {
+    "mcp-remote": "^0.1.38"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
