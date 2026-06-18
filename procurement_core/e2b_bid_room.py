@@ -636,6 +636,50 @@ def tool_results_message(tool_call_id, result_items):
     }
 
 
+def synthesize_from_tool_results(api_key, prompt, base_request, tool_result_evidence):
+    # Ask Cohere for the final review using plain-text tool evidence.
+    # This avoids provider-specific `role: tool` document-block validation while
+    # still forcing the first Cohere call to inspect evidence through tools.
+    synthesis_prompt = {
+        **prompt,
+        "tool_results": tool_result_evidence,
+        "final_instruction": (
+            "The evidence-tool phase is complete. Do not request additional tools. "
+            "Return the final strict JSON object now."
+        ),
+    }
+    synthesis_request = {
+        **base_request,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are a Canadian public procurement bid-room analyst. "
+                    "Use the provided extracted evidence and tool results. Return only valid JSON."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    "Generate the final JSON object for this bid-room review. "
+                    "The first character of your response must be `{`. "
+                    "Do not request tools and do not include markdown.\n\n"
+                    + json.dumps(synthesis_prompt, ensure_ascii=False)
+                ),
+            },
+        ],
+        "response_format": payload.get("cohere", {}).get("response_format", {"type": "json_object"}),
+    }
+    synthesis_body = cohere_post(api_key, synthesis_request)
+    synthesis_content = extract_message_text(synthesis_body.get("message") or {})
+    if not synthesis_content:
+        raise RuntimeError(
+            "Cohere did not produce a final JSON response after tool calls. "
+            f"Body snippet: {json.dumps(synthesis_body, ensure_ascii=False)[:900]}"
+        )
+    return validate_cohere_analysis(parse_model_json(str(synthesis_content)))
+
+
 def compact_tool_result(item):
     if not isinstance(item, dict):
         return {"value": normalize_line(str(item))[:700]}
@@ -759,7 +803,6 @@ def call_cohere(evidence_bundle):
                 "arguments": arguments,
                 "results": compact_results,
             })
-            messages.append(tool_results_message(normalized["id"], result_items))
     else:
         tool_trace.append({
             "id": "",
@@ -768,6 +811,9 @@ def call_cohere(evidence_bundle):
             "result_count": 0,
             "error": "Cohere returned no tool calls.",
         })
+
+    if tool_result_evidence:
+        return synthesize_from_tool_results(api_key, prompt, base_request, tool_result_evidence), tool_trace
 
     final_request = {
         **base_request,
