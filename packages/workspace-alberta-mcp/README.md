@@ -4,7 +4,11 @@ Stdio bridge for the hosted WorkspaceAlberta procurement MCP endpoint.
 
 This package is for MCP clients that expect a local `command` transport. It starts `mcp-remote` and connects it to the hosted WorkspaceAlberta StreamableHTTP endpoint.
 
-## MCP client config
+> Note: this convenience package is not yet published to npm. Until it is, bridge
+> Claude Desktop with the public `mcp-remote` package (see below), or use a native
+> HTTP client against the hosted endpoint directly.
+
+## MCP client config (published package)
 
 ```json
 {
@@ -12,6 +16,23 @@ This package is for MCP clients that expect a local `command` transport. It star
     "workspacealberta": {
       "command": "npx",
       "args": ["-y", "@warreandvavasour/workspace-alberta"]
+    }
+  }
+}
+```
+
+## MCP client config (works today, via public mcp-remote)
+
+```json
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+      ]
     }
   }
 }

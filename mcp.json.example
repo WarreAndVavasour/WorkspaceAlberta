@@ -1,5 +1,5 @@
 {
-  "_comment": "WorkspaceAlberta procurement MCP. Copy the entry you need into your client config.",
+  "_comment": "WorkspaceAlberta procurement MCP. Copy the entry you need. HTTP-native clients (Cursor, Claude Code) should use the first entry.",
 
   "cursor_or_http_native_clients": {
     "mcpServers": {
@@ -10,12 +10,14 @@
   },
 
   "claude_desktop_via_mcp_remote": {
+    "_comment": "Claude Desktop has no native HTTP transport. Bridge it with the public mcp-remote package pointed at the hosted endpoint.",
     "mcpServers": {
       "workspacealberta": {
         "command": "npx",
         "args": [
           "-y",
-          "@warreandvavasour/workspace-alberta"
+          "mcp-remote",
+          "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
         ]
       }
     }
