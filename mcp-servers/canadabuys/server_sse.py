@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.types import TextContent, Tool
@@ -89,6 +90,12 @@ async def handle_messages(request: Request) -> None:
 
 app.add_route("/sse", handle_sse, methods=["GET"])
 app.add_route("/messages/", handle_messages, methods=["POST"])
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    """Send visitors of the bare URL to the interactive API docs."""
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health", tags=["system"])
