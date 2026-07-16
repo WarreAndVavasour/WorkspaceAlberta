@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "com.warreandvavasour/workspace-alberta",
+  "description": "Canadian procurement intelligence: searches CanadaBuys and Alberta Purchasing Connection tenders, ranks opportunities against a business profile, lists deadlines, and drafts daily bid briefs. Free, no API key.",
+  "repository": {
+    "url": "https://github.com/HarleyCoops/WorkspaceAlberta",
+    "source": "github"
+  },
+  "version": "0.4.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registry_type": "npm",
+      "identifier": "@warreandvavasour/workspace-alberta",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

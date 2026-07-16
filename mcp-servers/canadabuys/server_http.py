@@ -7,7 +7,9 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
 from mcp.server import Server
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.types import TextContent, Tool
@@ -20,19 +22,25 @@ from procurement_core.service import TOOL_NAMES, call_tool_text, process_bid_roo
 from mcp_tools import get_mcp_tools  # noqa: E402
 
 mcp_server = Server("canadabuys")
-session_manager = StreamableHTTPSessionManager(
-    app=mcp_server,
-    json_response=False,
-    stateless=False,
-    session_idle_timeout=1800,
-)
+session_manager: StreamableHTTPSessionManager | None = None
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Run the StreamableHTTP MCP session manager for the app lifetime."""
+    global session_manager
+    # Built per startup: the SDK allows .run() only once per manager instance.
+    # Stateless + JSON: Cloud Run autoscaling routes each request to any
+    # instance, so in-memory sessions would intermittently fail with
+    # "Missing session ID".
+    session_manager = StreamableHTTPSessionManager(
+        app=mcp_server,
+        json_response=True,
+        stateless=True,
+    )
     async with session_manager.run():
         yield
+    session_manager = None
 
 
 app = FastAPI(
@@ -42,8 +50,18 @@ app = FastAPI(
         "Alberta Purchasing Connection, business-profile matching, daily bid "
         "briefs, and optional Cohere Command A+ analysis."
     ),
-    version="0.3.0",
+    version="0.4.0",
     lifespan=lifespan,
+)
+
+# Browser-based MCP clients (web inspectors, playgrounds) need CORS to pass
+# preflight; the API is public and read-mostly, so a wildcard is acceptable.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["mcp-session-id", "mcp-protocol-version"],
 )
 
 
@@ -89,12 +107,81 @@ class MCPStreamableHTTPApp:
     """ASGI adapter for the MCP StreamableHTTP session manager."""
 
     async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
+        if session_manager is None:
+            raise RuntimeError("MCP session manager is not running")
+        if scope.get("type") == "http" and scope.get("method") == "GET":
+            # The stateless transport has no server-push stream and never
+            # answers GET, leaving the connection hanging; fail fast instead.
+            response = JSONResponse(
+                {"error": "Method Not Allowed. POST JSON-RPC messages to this endpoint."},
+                status_code=405,
+                headers={"Allow": "POST, DELETE"},
+            )
+            await response(scope, receive, send)
+            return
+        if scope.get("type") == "http":
+            # The SDK 406s unless the client accepts BOTH application/json and
+            # text/event-stream; many simple HTTP clients send only one. The
+            # server runs in JSON response mode, so widening Accept is safe.
+            headers = [(key, value) for key, value in scope.get("headers", []) if key != b"accept"]
+            headers.append((b"accept", b"application/json, text/event-stream"))
+            scope = {**scope, "headers": headers}
         await session_manager.handle_request(scope, receive, send)
 
 
 app.add_route("/mcp", MCPStreamableHTTPApp(), methods=["GET", "POST", "DELETE"])
 
 
+
+
+LANDING_PAGE_TEMPLATE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkspaceAlberta Procurement MCP</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; max-width: 44rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.55; color: #1c1c1c; }}
+  code, pre {{ background: #f4f4f4; border-radius: 6px; }}
+  code {{ padding: 0.1rem 0.35rem; }}
+  pre {{ padding: 1rem; overflow-x: auto; }}
+  a {{ color: #0b57d0; }}
+  h1 {{ margin-bottom: 0.2rem; }}
+  .sub {{ color: #555; margin-top: 0; }}
+</style>
+</head>
+<body>
+<h1>WorkspaceAlberta</h1>
+<p class="sub">Canadian procurement intelligence over MCP: CanadaBuys + Alberta Purchasing Connection.</p>
+<p>This service is live. It searches federal and Alberta public tenders, lists deadlines,
+ranks opportunities against your business, and drafts daily bid briefs. No account or API key needed.</p>
+<h2>Connect an MCP client</h2>
+<p>Add this server to Claude Desktop, Cursor, Cline, VS Code, Zed, or any MCP-capable client:</p>
+<pre>{{
+  "mcpServers": {{
+    "workspaceAlberta": {{
+      "type": "http",
+      "url": "{mcp_url}"
+    }}
+  }}
+}}</pre>
+<h2>Prefer plain REST?</h2>
+<p>The same tools are exposed over REST/OpenAPI:
+<a href="/docs">interactive docs</a> &middot; <a href="/openapi.json">openapi.json</a> &middot;
+<a href="/tools">tool schemas</a> &middot; <a href="/health">health</a></p>
+<p>Always open and verify the original tender documents before bidding. This tool triages
+and summarizes; it does not replace the source posting.</p>
+<p><a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation on GitHub</a></p>
+</body>
+</html>
+"""
+
+
+@app.get("/", include_in_schema=False)
+async def landing(request: Request) -> HTMLResponse:
+    """Human-friendly landing page with MCP connect instructions."""
+    base = str(request.base_url).rstrip("/")
+    return HTMLResponse(LANDING_PAGE_TEMPLATE.format(mcp_url=f"{base}/mcp"))
 
 
 @app.get("/health", tags=["system"])
@@ -105,7 +192,7 @@ async def health() -> dict[str, Any]:
         "server": "workspacealberta-procurement",
         "mcp": {"streamable_http": "/mcp"},
         "rest": {"openapi": "/openapi.json", "docs": "/docs"},
-        "tools": len(TOOL_NAMES),
+        "tools": len(get_mcp_tools()),
     }
 
 

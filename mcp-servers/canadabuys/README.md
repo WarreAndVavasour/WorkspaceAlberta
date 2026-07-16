@@ -28,7 +28,8 @@ uvicorn server_http:app --app-dir mcp-servers/canadabuys --host 0.0.0.0 --port 8
 
 Hosted routes:
 
-- `GET/POST/DELETE /mcp`: modern StreamableHTTP MCP endpoint
+- `GET/POST/DELETE /mcp`: modern StreamableHTTP MCP endpoint (stateless, JSON responses; no session bookkeeping required and clients that send only `Accept: application/json` are accepted)
+- `GET /`: human-friendly landing page with connect instructions
 - `GET /health`: health check
 - `GET /tools`: MCP tool schemas as JSON
 - `POST /tools/{tool_name}`: call any MCP tool over HTTP
@@ -47,7 +48,7 @@ docker build -f mcp-servers/canadabuys/Dockerfile -t workspacealberta-procuremen
 docker run --env-file .env -p 8080:8080 workspacealberta-procurement
 ```
 
-Production note: the current profile store is file-backed under `CANADABUYS_DATA_DIR`. Add authentication and per-user profile storage before exposing `/profile`, `/matches`, or `/brief` as a public multi-user service.
+Production note: the profile store is file-backed under `CANADABUYS_DATA_DIR`, shared by every caller. For public multi-user deployments set `WORKSPACEALBERTA_PUBLIC_MODE=1`: the shared-file profile tools (`set_business_profile`, `get_my_profile`) are hidden and blocked, and callers pass an inline `profile` argument (company_name, location, description, optional capabilities/industries) to `find_matching_opportunities`, `daily_bid_brief`, `find_opportunities`, and `find_alberta_opportunities` instead. CORS is enabled so browser-based MCP clients can connect. See `docs/deployment-ops/public-endpoint-accessibility.md` for the full operator checklist.
 
 ## Connect an MCP Client
 
@@ -124,6 +125,7 @@ No environment variables are required for local use.
 
 Optional:
 
+- `WORKSPACEALBERTA_PUBLIC_MODE`: set to `1` on shared public deployments to hide the shared-file profile tools and require inline `profile` arguments
 - `CANADABUYS_DATA_DIR`: override the default cache directory
 - `ALBERTA_APC_API_BASE`: override the Alberta Purchasing Connection API base, currently `https://purchasing.alberta.ca/api`
 - `ALBERTA_APC_APP_BASE`: override the Alberta Purchasing Connection app base, currently `https://purchasing.alberta.ca`

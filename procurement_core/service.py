@@ -791,6 +791,44 @@ def load_profile() -> dict:
         return json.load(f)
 
 
+def is_public_mode() -> bool:
+    """True when this deployment serves many anonymous users at once."""
+    return os.environ.get("WORKSPACEALBERTA_PUBLIC_MODE", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Tools that read or write the single file-backed profile. On a shared public
+# endpoint every caller would see (and overwrite) the same file, so public
+# mode hides them and callers pass a `profile` argument per request instead.
+PROFILE_STORAGE_TOOL_NAMES = ("set_business_profile", "get_my_profile")
+
+NO_PROFILE_MESSAGE = (
+    "No business profile available. Pass a `profile` argument with this call "
+    "(company_name, location, description), or use `set_business_profile` first "
+    "on a private deployment."
+)
+
+
+def resolve_profile(args: dict) -> dict:
+    """Return the profile to use: an inline `profile` argument wins over the saved file."""
+    inline = args.get("profile")
+    if isinstance(inline, dict) and inline:
+        description = str(inline.get("description") or "")
+        capabilities = [str(kw) for kw in (inline.get("capabilities") or []) if str(kw).strip()]
+        if not capabilities:
+            capabilities = extract_keywords(description)
+        industries = [str(ind) for ind in (inline.get("industries") or []) if str(ind).strip()]
+        if not industries:
+            industries = infer_industries(capabilities, description)
+        return {
+            "company_name": str(inline.get("company_name") or "Your Business"),
+            "location": str(inline.get("location") or ""),
+            "description": description,
+            "capabilities": capabilities,
+            "industries": industries,
+        }
+    return load_profile()
+
+
 def save_profile(profile: dict) -> None:
     """Save business profile to disk."""
     profile_path = DATA_DIR / "profile.json"
@@ -1268,6 +1306,13 @@ async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> 
     if not handler:
         return f"Unknown tool: {name}"
 
+    if is_public_mode() and name in PROFILE_STORAGE_TOOL_NAMES:
+        return (
+            "This hosted endpoint is shared, so it does not store per-user business profiles. "
+            "Pass a `profile` argument directly to `find_matching_opportunities`, "
+            "`daily_bid_brief`, `find_opportunities`, or `find_alberta_opportunities` instead."
+        )
+
     try:
         return await handler(args)
     except Exception as exc:
@@ -1446,9 +1491,9 @@ async def set_business_profile(args: dict) -> str:
 
 async def find_opportunities(args: dict) -> str:
     """Find contracts matching business profile."""
-    profile = load_profile()
+    profile = resolve_profile(args)
     if not profile:
-        return "No business profile set. Use `set_business_profile` first to tell me about your business."
+        return NO_PROFILE_MESSAGE
 
     contracts = load_contracts()
     if not contracts:
@@ -1596,10 +1641,10 @@ async def list_deadlines(args: dict) -> str:
 
 
 async def find_matching_opportunities(args: dict) -> str:
-    """Rank opportunities from both sources against the saved profile."""
-    profile = load_profile()
+    """Rank opportunities from both sources against an inline or saved profile."""
+    profile = resolve_profile(args)
     if not profile:
-        return "No business profile set. Use `set_business_profile` first to tell me about your business."
+        return NO_PROFILE_MESSAGE
 
     days = clamp_int(args.get("days"), default=60, minimum=1, maximum=365)
     limit = clamp_int(args.get("limit"), default=15, minimum=1, maximum=30)
@@ -1632,9 +1677,9 @@ async def find_matching_opportunities(args: dict) -> str:
 
 async def daily_bid_brief(args: dict) -> str:
     """Generate a free daily bid brief from both opportunity sources."""
-    profile = load_profile()
+    profile = resolve_profile(args)
     if not profile:
-        return "No business profile set. Use `set_business_profile` first, then run `daily_bid_brief`."
+        return NO_PROFILE_MESSAGE
 
     days = clamp_int(args.get("days"), default=14, minimum=1, maximum=60)
     limit = clamp_int(args.get("limit"), default=5, minimum=1, maximum=10)
@@ -1717,7 +1762,7 @@ def process_bid_room_artifact(args: dict) -> dict[str, Any]:
     if not reference:
         raise ValueError("Please provide a reference number.")
 
-    profile = load_profile() or {}
+    profile = resolve_profile(args) or {}
     business_context = str(args.get("business_context") or "").strip()
     max_attachments = clamp_int(args.get("max_attachments"), default=5, minimum=0, maximum=5)
     timeout_seconds = clamp_int(args.get("timeout_seconds"), default=900, minimum=60, maximum=86400)
@@ -1881,10 +1926,10 @@ async def summarize_alberta_opportunities(args: dict) -> str:
 
 
 async def find_alberta_opportunities(args: dict) -> str:
-    """Find APC opportunities matching the saved business profile."""
-    profile = load_profile()
+    """Find APC opportunities matching an inline or saved business profile."""
+    profile = resolve_profile(args)
     if not profile:
-        return "No business profile set. Use `set_business_profile` first to tell me about your business."
+        return NO_PROFILE_MESSAGE
 
     keywords = [kw for kw in profile.get("capabilities", []) if len(str(kw)) >= 4]
     if not keywords:
@@ -1996,7 +2041,7 @@ async def analyze_contract_with_cohere(args: dict) -> str:
 
     business_context = args.get("business_context", "").strip()
     if not business_context:
-        profile = load_profile()
+        profile = resolve_profile(args)
         if profile:
             company = profile.get("company_name", "The business")
             location = profile.get("location", "")
