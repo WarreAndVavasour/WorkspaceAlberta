@@ -1,12 +1,53 @@
 #!/usr/bin/env python3
 """
-Procurement Core Service
+Procurement Core Service — the engine behind every WorkspaceAlberta tool.
 
-Pure Python procurement logic for CanadaBuys, Alberta Purchasing Connection,
-business-profile matching, daily bid briefs, and optional Cohere analysis.
+This module is the single source of truth for procurement logic. It has no MCP
+dependency of its own: the stdio adapter (``mcp-servers/canadabuys/server.py``)
+and the hosted HTTP adapter (``mcp-servers/canadabuys/server_http.py``) are both
+thin wrappers that dispatch into :func:`call_tool_text` here. That means every
+tool behaves identically whether it is called over stdio MCP, StreamableHTTP
+MCP, or the REST/OpenAPI mirror.
 
-Configuration:
-    CANADABUYS_DATA_DIR - Where to cache data (default: ~/.canadabuys/)
+Layout (top to bottom):
+
+1.  **Configuration & env loading** — repo-local ``.env`` support, data-cache
+    directory, CanadaBuys open-data URL, Cohere/Hugging Face model routes, and
+    Alberta Purchasing Connection (APC) API bases and category-code maps.
+2.  **Model routing** — :func:`call_cohere_chat` prefers direct Cohere keys
+    (``COHERE_API_KEY`` then ``COHERE_PROD_API_KEY`` failover on rate/quota
+    errors, see :func:`is_cohere_limit_error`) and falls back to the Hugging
+    Face OpenAI-compatible router for the W4A4 community route.
+3.  **Alberta Purchasing Connection client** — filter/payload builders,
+    search (:func:`search_alberta_api`), public detail fetch, markdown
+    renderers, and profile scoring for APC rows.
+4.  **Business profile** — keyword extraction, industry inference,
+    UNSPSC-prefix maps, and deterministic contract scoring
+    (:func:`score_contract`). Profiles persist to ``DATA_DIR/profile.json``.
+5.  **Unified opportunity layer** — normalizes CanadaBuys CSV rows and APC
+    JSON into one shared shape (see :func:`normalize_canadabuys_contract` and
+    :func:`normalize_alberta_opportunity`) so search, deadlines, matching, and
+    the daily brief can treat both sources the same way.
+6.  **Tool dispatch** — ``TOOL_NAMES`` lists every public tool; each name maps
+    to an async handler function of the same name in this module. Handlers
+    accept an arguments ``dict`` and return markdown text.
+7.  **Bid room bridge** — :func:`process_bid_room_artifact` hands off to
+    ``procurement_core.e2b_bid_room`` for sandboxed attachment processing.
+
+Data flow: CanadaBuys publishes a full open-tender CSV which is fetched with
+:func:`fetch_all_contracts` and cached at ``DATA_DIR/latest.csv``; APC is
+queried live per request. Scoring is deterministic (no LLM); the model layer
+is used only for judgment tools (``analyze_contract_with_cohere`` and the
+sandboxed bid-room review).
+
+Configuration (environment variables):
+    CANADABUYS_DATA_DIR                    Cache dir (default ``~/.canadabuys/``)
+    CANADABUYS_LOAD_ENV_FILE               Set 0/false to skip .env loading
+    COHERE_API_KEY / COHERE_PROD_API_KEY   Direct Cohere routes (failover order)
+    HF_TOKEN / HUGGINGFACEHUB_API_TOKEN    Hugging Face router fallback
+    CANADABUYS_COHERE_MODEL                Default ``command-a-plus-05-2026``
+    CANADABUYS_COHERE_REASONING_EFFORT     Only sent when explicitly set
+    ALBERTA_APC_API_BASE / _APP_BASE       APC endpoint overrides
 """
 
 import csv
@@ -783,7 +824,17 @@ INDUSTRY_UNSPSC = {
 
 
 def load_profile() -> dict:
-    """Load business profile from disk."""
+    """Load the business profile.
+
+    Multi-tenant hosted requests (tenant context set + Supabase configured)
+    read from the subscriber's ``wa_subscribers.profile`` column; everything
+    else reads the local ``DATA_DIR/profile.json`` as before.
+    """
+    from procurement_core import storage
+
+    if storage.tenant_active():
+        return storage.get_json_field("profile", {}) or {}
+
     profile_path = DATA_DIR / "profile.json"
     if not profile_path.exists():
         return {}
@@ -792,7 +843,13 @@ def load_profile() -> dict:
 
 
 def save_profile(profile: dict) -> None:
-    """Save business profile to disk."""
+    """Save the business profile (tenant row when hosted, disk otherwise)."""
+    from procurement_core import storage
+
+    if storage.tenant_active():
+        storage.set_json_field("profile", profile)
+        return
+
     profile_path = DATA_DIR / "profile.json"
     with profile_path.open("w", encoding="utf-8") as f:
         json.dump(profile, f, indent=2)
@@ -1053,12 +1110,110 @@ def opportunity_text(opportunity: dict) -> str:
     ).lower()
 
 
+KEYWORD_STOPWORDS = frozenset({
+    "and", "the", "for", "with", "from", "that", "this", "are", "was",
+    "all", "any", "per",
+})
+
+
+def tokenize_keywords(keywords: str) -> list[str]:
+    """Split a keyword phrase into lowercase search tokens.
+
+    Tokens are alphanumeric runs; tokens shorter than 3 characters and
+    stopwords are dropped. Order is preserved and duplicates removed.
+    """
+    tokens: list[str] = []
+    for raw in re.split(r"[^a-z0-9]+", str(keywords or "").lower()):
+        if len(raw) < 3 or raw in KEYWORD_STOPWORDS:
+            continue
+        if raw not in tokens:
+            tokens.append(raw)
+    return tokens
+
+
+def token_in_text(token: str, text: str) -> bool:
+    """Return True when a token appears in lowercase text.
+
+    Word-boundary match so "ice" does not match "service"; a trailing
+    plural "s" is tolerated so "signs" also matches "sign".
+    """
+    forms = [token]
+    if token.endswith("s") and len(token) > 3:
+        forms.append(token[:-1])
+    return any(re.search(rf"\b{re.escape(form)}", text) for form in forms)
+
+
+def token_coverage(text: str, tokens: list[str]) -> float:
+    """Return the fraction of tokens present in text (1.0 when no tokens)."""
+    if not tokens:
+        return 1.0
+    hits = sum(1 for token in tokens if token_in_text(token, text))
+    return hits / len(tokens)
+
+
+def alberta_opportunity_text(opp: dict) -> str:
+    """Return lowercase searchable text for an APC search row."""
+    parts = [
+        str(opp.get("title") or ""),
+        str(opp.get("shortTitle") or ""),
+        str(opp.get("contractingOrganization") or ""),
+        str(opp.get("projectDescription") or ""),
+        " ".join(str(value) for value in opp.get("commodityCodeTitles") or []),
+    ]
+    return " ".join(parts).lower()
+
+
+def alberta_posted_date(opp: dict) -> datetime:
+    """Return the APC posting date, or datetime.min when unavailable."""
+    parsed = parse_date(str(opp.get("postDateTime") or ""))
+    if parsed is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def rank_by_token_coverage(
+    rows: list[dict],
+    keywords: str,
+    text_fn: Any,
+    date_fn: Any,
+) -> tuple[list[dict], str]:
+    """Filter and rank rows by AND-token coverage of the keyword phrase.
+
+    Single-token (or empty) queries pass through unchanged in API order.
+    Multi-token queries keep only rows with full token coverage, sorted by
+    recency desc. When no row has full coverage, all rows are kept and
+    ranked by (coverage desc, recency desc) and a fallback warning is
+    returned so callers never return nothing when the API found rows.
+    """
+    tokens = tokenize_keywords(keywords)
+    if len(tokens) <= 1:
+        return list(rows), ""
+    scored = [(token_coverage(text_fn(row), tokens), date_fn(row), row) for row in rows]
+    full = [item for item in scored if item[0] >= 1.0]
+    if full:
+        full.sort(key=lambda item: item[1], reverse=True)
+        return [item[2] for item in full], ""
+    scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    warning = (
+        f"Relevance fallback: no records matched all search tokens "
+        f"({', '.join(tokens)}); showing best partial matches ranked by coverage."
+    )
+    return [item[2] for item in scored], warning
+
+
 def federal_contract_matches(contract: dict, keywords: str, province: str, category: str) -> bool:
     """Apply simple unified filters to a CanadaBuys row."""
     normalized = normalize_canadabuys_contract(contract)
     text = opportunity_text(normalized)
-    if keywords and keywords.lower() not in text:
-        return False
+    if keywords:
+        tokens = tokenize_keywords(keywords)
+        if len(tokens) <= 1:
+            if keywords.lower() not in text:
+                return False
+        elif not all(token_in_text(token, text) for token in tokens):
+            return False
     if province and province.lower() not in str(normalized.get("region", "")).lower():
         return False
     if category and category.lower() not in text:
@@ -1114,11 +1269,19 @@ def collect_unified_search(args: dict) -> tuple[list[dict], list[str]]:
                     query=keywords,
                     status="OPEN",
                     category=apc_category,
-                    limit=limit,
+                    limit=100 if len(tokenize_keywords(keywords)) > 1 else limit,
                     sort_field="PostDateTime",
                     sort_direction="desc",
                 )
-                opportunities.extend(normalize_alberta_opportunity(opp) for opp in data.get("values", []))
+                alberta_rows, relevance_warning = rank_by_token_coverage(
+                    data.get("values", []),
+                    keywords,
+                    alberta_opportunity_text,
+                    alberta_posted_date,
+                )
+                if relevance_warning:
+                    warnings.append(relevance_warning)
+                opportunities.extend(normalize_alberta_opportunity(opp) for opp in alberta_rows[:limit])
             except RuntimeError as exc:
                 warnings.append(f"Alberta APC unavailable: {exc}")
 
@@ -1257,6 +1420,11 @@ TOOL_NAMES = (
     "process_bid_room",
     "check_cohere_status",
     "analyze_contract_with_cohere",
+    # Extension tools (procurement_core/extensions.py)
+    "watch_opportunity",
+    "list_watchlist",
+    "unwatch_opportunity",
+    "bid_no_bid_scorecard",
 )
 
 
@@ -1782,13 +1950,14 @@ async def search_alberta_opportunities(args: dict) -> str:
     category = args.get("category", "")
     status = args.get("status", "OPEN")
     limit = clamp_int(args.get("limit"), default=10, minimum=1, maximum=50)
+    multi_token = len(tokenize_keywords(keywords)) > 1
 
     try:
         data = search_alberta_api(
             query=keywords,
             status=status,
             category=category,
-            limit=limit,
+            limit=100 if multi_token else limit,
             sort_field="PostDateTime",
             sort_direction="desc",
         )
@@ -1799,15 +1968,24 @@ async def search_alberta_opportunities(args: dict) -> str:
     if not rows:
         return "No Alberta opportunities found matching criteria."
 
+    rows, relevance_warning = rank_by_token_coverage(
+        rows, keywords, alberta_opportunity_text, alberta_posted_date
+    )
+
     output = "# Alberta Opportunities\n\n"
     total = data.get("totalCount")
-    if total is not None:
-        output += f"Showing {len(rows)} of {total} matching APC records.\n\n"
+    if multi_token:
+        output += f"Showing {len(rows[:limit])} of {len(rows)} matching APC records.\n\n"
+    elif total is not None:
+        output += f"Showing {len(rows[:limit])} of {total} matching APC records.\n\n"
     else:
         output += f"Found {len(rows)} matching APC records.\n\n"
 
     for i, opp in enumerate(rows[:limit], 1):
         output += render_alberta_opportunity_line(opp, i) + "\n"
+
+    if relevance_warning:
+        output += f"## Warnings\n- {relevance_warning}\n\n"
 
     output += "Use `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details."
     return output
@@ -2052,3 +2230,16 @@ async def analyze_contract_with_cohere(args: dict) -> str:
     output += "\n\n---\nVerify requirements, amendments, and attachments on CanadaBuys before making a bid decision."
 
     return output
+
+
+# ============== Extension Tool Bindings ==============
+# Imported last so `call_tool_text` dispatch (which resolves handlers from
+# this module's globals) can find the extension handlers by name. The
+# extensions module imports service helpers lazily, so no circular import.
+
+from procurement_core.extensions import (  # noqa: E402
+    bid_no_bid_scorecard,
+    list_watchlist,
+    unwatch_opportunity,
+    watch_opportunity,
+)

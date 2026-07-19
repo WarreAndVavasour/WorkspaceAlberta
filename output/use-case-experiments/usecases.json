@@ -1,0 +1,227 @@
+{
+  "experiment": "workspacealberta-mcp-alberta-usecase-traces",
+  "description": "22 realistic Alberta small-business user prompts executed live against the deployed WorkspaceAlberta MCP server. Each trace = user prompt + ordered agent tool calls (with per-step thought, arguments, raw result, latency, error flag) + final synthesized user-facing output.",
+  "endpoint": "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp",
+  "use_cases": [
+    {
+      "id": "uc-01",
+      "persona": "CWB-certified welding shop owner, Red Deer",
+      "prompt": "I run a small CWB welding shop in Red Deer with 8 guys. What government work is out there for a shop like mine right now?",
+      "steps": [
+        {"thought": "Owner described his trade and town in one sentence — save it as his business profile so matching works.", "tool": "set_business_profile", "arguments": {"company_name": "Red Deer Rig Welding", "description": "CWB-certified welding shop: structural steel welding, pipe welding, mobile rig welding, repairs and custom fabrication. 8 employees.", "location": "Red Deer, Alberta"}},
+        {"thought": "Profile saved — rank live federal and Alberta opportunities against it.", "tool": "find_matching_opportunities", "arguments": {"days": 45, "limit": 8}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-02",
+      "persona": "HVAC contractor, Calgary",
+      "prompt": "Any school or public building HVAC contracts out for tender in Alberta? We do commercial HVAC install and service.",
+      "steps": [
+        {"thought": "Search the Alberta source for HVAC postings.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "HVAC"}},
+        {"thought": "Open the most relevant result to check scope, closing date, and requirements.", "tool": "get_alberta_opportunity_details", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-03",
+      "persona": "Landscaping company owner, Lethbridge",
+      "prompt": "We do landscaping and grounds maintenance around Lethbridge and southern Alberta. Find me tenders we could bid on.",
+      "steps": [
+        {"thought": "Unified search with a province filter keeps federal postings in play too, but scoped to Alberta delivery.", "tool": "search_opportunities", "arguments": {"keywords": "landscaping grounds maintenance", "province": "Alberta", "limit": 10}},
+        {"thought": "Pull details on the best-looking hit.", "tool": "get_opportunity_details", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-04",
+      "persona": "Catering company, Fort McMurray",
+      "prompt": "We're a catering company in Fort Mac — camps, crew food, events. Any RFPs we should know about?",
+      "steps": [
+        {"thought": "Search Alberta postings for catering and food service work.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "catering food service"}},
+        {"thought": "Get details on the top result.", "tool": "get_alberta_opportunity_details", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-05",
+      "persona": "Gravel hauling trucker, Medicine Hat",
+      "prompt": "I've got two gravel trucks out of Medicine Hat. Who's tendering gravel supply or hauling this summer?",
+      "steps": [
+        {"thought": "Search Alberta for gravel supply and hauling tenders.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "gravel supply hauling"}},
+        {"thought": "Also check what closes soonest so nothing is missed.", "tool": "list_alberta_deadlines", "arguments": {"days": 30, "limit": 10}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-06",
+      "persona": "Janitorial services owner, Edmonton",
+      "prompt": "Cleaning contracts for government buildings or schools in Edmonton — what's available?",
+      "steps": [
+        {"thought": "Search both sources for janitorial and cleaning contracts.", "tool": "search_opportunities", "arguments": {"keywords": "janitorial cleaning", "province": "Alberta", "limit": 10}},
+        {"thought": "Open details on the most relevant posting.", "tool": "get_opportunity_details", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-07",
+      "persona": "Small IT services firm, St. Albert",
+      "prompt": "We're a 5-person IT support shop in St. Albert. Any government RFPs for IT support or managed services we could actually win?",
+      "steps": [
+        {"thought": "Search for IT support and managed services postings.", "tool": "search_opportunities", "arguments": {"keywords": "IT support managed services", "limit": 10}},
+        {"thought": "Summarize the Alberta landscape so the owner sees the shape of the market, not just one hit.", "tool": "summarize_alberta_opportunities", "arguments": {"keywords": "information technology"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-08",
+      "persona": "Print shop owner, Airdrie",
+      "prompt": "Do municipalities tender printing work? We do signs, forms, and commercial printing in Airdrie.",
+      "steps": [
+        {"thought": "Search for printing and sign work.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "printing signs"}},
+        {"thought": "Give a quick summary of what's open in Alberta overall for context.", "tool": "summarize_alberta_opportunities", "arguments": {}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-09",
+      "persona": "Security guard company, Calgary",
+      "prompt": "Security services contracts — and tell me straight: is the best one worth bidding or not?",
+      "steps": [
+        {"thought": "Find security service postings.", "tool": "search_opportunities", "arguments": {"keywords": "security guard services", "province": "Alberta", "limit": 8}},
+        {"thought": "Run the bid/no-bid scorecard on the top match for a straight go/caution/no-go answer.", "tool": "bid_no_bid_scorecard", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "paywall"
+    },
+    {
+      "id": "uc-10",
+      "persona": "Electrician, Grande Prairie",
+      "prompt": "Master electrician in GP. What electrical work is closing in the next two weeks? I can mobilize fast.",
+      "steps": [
+        {"thought": "He needs the closing-soon list first, filtered tight to 14 days.", "tool": "list_alberta_deadlines", "arguments": {"days": 14, "limit": 15}},
+        {"thought": "Then search specifically for electrical work to cross-check.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "electrical"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-11",
+      "persona": "Fabrication shop owner, Edmonton — morning routine",
+      "prompt": "Give me my morning brief — what fits my shop and what's closing soon?",
+      "steps": [
+        {"thought": "The brief needs his profile on file first — he told us last week what he does; re-save to be safe.", "tool": "set_business_profile", "arguments": {"company_name": "Ironline Fabrication Ltd.", "description": "Custom metal fabrication shop: structural steel, stairs, railings, platforms, CWB-certified welding, steel supply and install for commercial and light industrial projects. 12 employees, serving central Alberta.", "location": "Edmonton, Alberta"}},
+        {"thought": "Generate the free daily bid brief.", "tool": "daily_bid_brief", "arguments": {"days": 14, "limit": 5}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-12",
+      "persona": "Snow removal contractor, Canmore",
+      "prompt": "Winter's coming — any snow clearing contracts with towns or the province I should get in front of?",
+      "steps": [
+        {"thought": "Search for snow removal and ice control tenders.", "tool": "search_opportunities", "arguments": {"keywords": "snow removal ice control", "province": "Alberta", "limit": 10}},
+        {"thought": "Open the top result.", "tool": "get_opportunity_details", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-13",
+      "persona": "Concrete contractor, Red Deer",
+      "prompt": "Sidewalks, curbs, flatwork — what concrete tenders are out there in central Alberta?",
+      "steps": [
+        {"thought": "Search Alberta for concrete sidewalk and curb work.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "concrete sidewalk curb"}},
+        {"thought": "Pull details on the best match.", "tool": "get_alberta_opportunity_details", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-14",
+      "persona": "Fence builder, rural Alberta",
+      "prompt": "I heard the Rural Municipalities of Alberta has a fencing RFP out. What are the details — materials only or install too?",
+      "steps": [
+        {"thought": "Confirm the RMA fencing posting by searching.", "tool": "search_opportunities", "arguments": {"keywords": "fencing", "source": "alberta", "limit": 8}},
+        {"thought": "Open the RMA fencing RFP details (ref seen earlier: AB-2026-04199 — verify against search results).", "tool": "get_opportunity_details", "arguments": {"reference": "AB-2026-04199"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-15",
+      "persona": "Structural steel estimator, Edmonton",
+      "prompt": "That Hwy 2 bridge tender near Morinville (AB-2026-04073) — pull the details and have the AI review it for risks and requirements.",
+      "steps": [
+        {"thought": "Get the full tender details first.", "tool": "get_opportunity_details", "arguments": {"reference": "AB-2026-04073"}},
+        {"thought": "Then run the Cohere AI review on the same reference.", "tool": "analyze_contract_with_cohere", "arguments": {"reference": "AB-2026-04073"}}
+      ],
+      "expected_outcome": "known-bug",
+      "notes": "Fresh-clone testing found analyze_contract_with_cohere dead-ends on Alberta references ('Contract not found'). Document actual behavior."
+    },
+    {
+      "id": "uc-16",
+      "persona": "GC owner, Calgary — weighing federal vs provincial",
+      "prompt": "Is there more construction work on the federal side or the Alberta side right now? Where should I focus?",
+      "steps": [
+        {"thought": "Same keywords, both sources, to compare volume and fit.", "tool": "search_opportunities", "arguments": {"keywords": "construction", "source": "federal", "limit": 10}},
+        {"thought": "Now the Alberta side.", "tool": "search_opportunities", "arguments": {"keywords": "construction", "source": "alberta", "limit": 10}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-17",
+      "persona": "Fabrication owner tracking a tender",
+      "prompt": "Keep an eye on that bridge tender for me — I don't want to lose track of the closing date.",
+      "steps": [
+        {"thought": "Add it to his persistent watchlist with a note.", "tool": "watch_opportunity", "arguments": {"reference": "AB-2026-04073", "note": "Check bonding and CoR before 2026-07-30"}},
+        {"thought": "Show the watchlist back to confirm it's tracked.", "tool": "list_watchlist", "arguments": {}}
+      ],
+      "expected_outcome": "paywall"
+    },
+    {
+      "id": "uc-18",
+      "persona": "Industrial supply reseller, Calgary",
+      "prompt": "The City of Calgary had an RFP for shop supplies (26-1524 I think). Is it still open and what are they buying?",
+      "steps": [
+        {"thought": "Search to confirm the posting.", "tool": "search_opportunities", "arguments": {"keywords": "shop supplies", "source": "alberta", "limit": 8}},
+        {"thought": "Open the specific reference.", "tool": "get_opportunity_details", "arguments": {"reference": "AB-2026-04750"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-19",
+      "persona": "Road builder, central Alberta",
+      "prompt": "What's Alberta Transportation tendering right now? Give me the lay of the land.",
+      "steps": [
+        {"thought": "Search Alberta for grading and highway work, which is how Transportation tenders read.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "grading highway"}},
+        {"thought": "Summarize the Alberta market overall for the lay of the land.", "tool": "summarize_alberta_opportunities", "arguments": {}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-20",
+      "persona": "Plumber, Lethbridge",
+      "prompt": "Any plumbing work in schools or hospitals out for tender? Journeyman plumber, small crew, Lethbridge.",
+      "steps": [
+        {"thought": "Search for plumbing tenders.", "tool": "search_opportunities", "arguments": {"keywords": "plumbing", "province": "Alberta", "limit": 10}},
+        {"thought": "Details on the top hit.", "tool": "get_opportunity_details", "arguments": {"reference": "<ref-from-previous-step>"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-21",
+      "persona": "Any busy owner — deadline panic check",
+      "prompt": "What closes this week? I feel like I'm missing stuff.",
+      "steps": [
+        {"thought": "Pure deadline triage across both governments, 7-day window.", "tool": "list_deadlines", "arguments": {"days": 7, "limit": 20, "source": "all"}}
+      ],
+      "expected_outcome": "success"
+    },
+    {
+      "id": "uc-22",
+      "persona": "Paving company, Spruce Grove",
+      "prompt": "Asphalt paving contracts — parking lots, roads, anything. What's out there and is it worth our time?",
+      "steps": [
+        {"thought": "Search for asphalt and paving work.", "tool": "search_alberta_opportunities", "arguments": {"keywords": "asphalt paving"}},
+        {"thought": "Summarize to judge whether the paving market is worth his estimating time.", "tool": "summarize_alberta_opportunities", "arguments": {"keywords": "asphalt"}}
+      ],
+      "expected_outcome": "success"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "uc-04": {
+    "tool": "search_alberta_opportunities",
+    "arguments": {
+      "keywords": "catering food service"
+    },
+    "is_error": false,
+    "result_text": "# Alberta Opportunities\n\nShowing 1 of 1 matching APC records.\n\n**1. City of Lloydminster - Request for Proposal - Lloydminster Golf Course Operator Services**\n   Reference: `AB-2026-05147`\n   Organization: City of Lloydminster\n   Category: Services | Type: RFP\n   Closing: 2026-09-09T14:00:00\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details."
+  },
+  "uc-05": {
+    "tool": "search_alberta_opportunities",
+    "arguments": {
+      "keywords": "gravel supply hauling"
+    },
+    "is_error": false,
+    "result_text": "# Alberta Opportunities\n\nShowing 10 of 100 matching APC records.\n\n**1. City of Lloydminster - Invitation to Bid - Northwest Drainage Channel - Phase 4 Upgrades**\n   Reference: `AB-2026-05152`\n   Organization: City of Lloydminster\n   Category: Construction | Type: ITB\n   Closing: 2026-08-13T14:00:00\n\n**2. Epcor - Request for Proposal - RFP 203611 Wastewater Hauling**\n   Reference: `AB-2026-04999`\n   Organization: Epcor\n   Category: Services | Type: RFP\n   Closing: 2026-07-30T13:22:54\n\n**3. Forestry and Parks - Request for Proposal - Permanent Sample Plot Measurements**\n   Reference: `AB-2026-05175`\n   Organization: Forestry and Parks\n   Category: Services | Type: RFP\n   Closing: 2026-08-04T14:00:59\n\n**4. Infrastructure - Request for Proposal - Uniforms. Clothing, and Accessories **\n   Reference: `AB-2026-05173`\n   Organization: Infrastructure\n   Category: Goods | Type: RFP\n   Closing: 2026-08-21T14:00:00\n\n**5. Transportation and Economic Corridors - Invitation to Bid - TND0025052 - Erosion Repair, S**\n   Reference: `AB-2026-05171`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-19T14:01:00\n\n**6. Olds College - Request for Quotes - Bowl Cutter Machine**\n   Reference: `AB-2026-05172`\n   Organization: Olds College\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-31T14:00:00\n\n**7. Transportation and Economic Corridors - Invitation to Bid - TND0021637 - Grading, Granular**\n   Reference: `AB-2026-05169`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-20T14:01:00\n\n**8. Forestry and Parks - Request for Proposal - Haig Lake and Chinchaga Generator Rental**\n   Reference: `AB-2026-05166`\n   Organization: Forestry and Parks\n   Category: Services | Type: RFP\n   Closing: 2026-08-12T14:00:59\n\n**9. Parkland County - Request for Proposal - Entwistle Pumphouse Chlorine Dosing System**\n   Reference: `AB-2026-05080`\n   Organization: Parkland County\n   Category: Services | Type: RFP\n   Closing: 2026-08-07T14:00:00\n\n**10. Infrastructure - Request for Quotes - Violation Tickets to be utilized by various Law Enfo**\n   Reference: `AB-2026-05141`\n   Organization: Infrastructure\n   Category: Goods | Type: RFQ\n   Closing: 2026-08-21T14:00:00\n\n## Warnings\n- Relevance fallback: no records matched all search tokens (gravel, supply, hauling); showing best partial matches ranked by coverage.\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details."
+  },
+  "uc-08": {
+    "tool": "search_alberta_opportunities",
+    "arguments": {
+      "keywords": "printing signs"
+    },
+    "is_error": false,
+    "result_text": "# Alberta Opportunities\n\nShowing 3 of 3 matching APC records.\n\n**1. Northern Alberta Institute of Technology (NAIT) - Negotiated Request for Proposal - SCM26-**\n   Reference: `AB-2026-05047`\n   Organization: Northern Alberta Institute of Technology (NAIT)\n   Category: Services | Type: NRFP\n   Closing: 2026-08-07T14:00:00\n\n**2. Municipal District of Wainwright No. 61 - Notice of Planned Procurement - Notice of Propos**\n   Reference: `AB-2026-00485`\n   Organization: Municipal District of Wainwright No. 61\n   Category: Goods | Type: NPP\n   Closing: \n\n**3. Municipal District of Wainwright No. 61 - Notice of Planned Procurement - Notice of Propos**\n   Reference: `AB-2025-04966`\n   Organization: Municipal District of Wainwright No. 61\n   Category: Goods | Type: NPP\n   Closing: \n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details."
+  },
+  "uc-12": {
+    "tool": "search_opportunities",
+    "arguments": {
+      "keywords": "snow removal ice control",
+      "province": "Alberta",
+      "limit": 10
+    },
+    "is_error": false,
+    "result_text": "# Opportunities\n\nShowing 1 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Kinetic GPO - Notice of Planned Procurement - NOI 2026**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2025-07386`\n   Buyer: Kinetic GPO\n   Category: Goods\n   Closing: None\n\n## Warnings\n- CanadaBuys cache was empty, so it was refreshed from open data.\n\nUse `get_opportunity_details` with a reference number for full details."
+  },
+  "uc-20": {
+    "tool": "search_opportunities",
+    "arguments": {
+      "keywords": "plumbing",
+      "province": "Alberta",
+      "limit": 10
+    },
+    "is_error": false,
+    "result_text": "# Opportunities\n\nShowing 7 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. City of Edmonton - Negotiated Request for Proposal - Boiler and Heating System Chemical Su**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05109`\n   Buyer: City of Edmonton\n   Category: Services\n   Closing: 2026-08-10T16:00:00\n\n**2. City of Red Deer - Negotiated Request for Proposal - In-Line Condition Assessment of Criti**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05077`\n   Buyer: City of Red Deer\n   Category: Services\n   Closing: 2026-08-11T13:30:59\n\n**3. Infrastructure - Invitation to Bid - EDSON - Tourist Information Centre Rest Area Replace **\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04989`\n   Buyer: Infrastructure\n   Category: Construction\n   Closing: 2026-07-28T14:00:00\n\n**4. Onion Lake Cree Nation - Request for Proposal - RFP - Pre-Qualification Consulting Service**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04815`\n   Buyer: Onion Lake Cree Nation\n   Category: Services\n   Closing: 2026-07-24T14:00:59\n\n**5. City of Calgary - Request for Proposal - 26-1630 Mechanical, Heating, Air Conditioning, Pl**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04542`\n   Buyer: City of Calgary\n   Category: Construction\n   Closing: 2026-07-23T16:00:59\n\n**6. W857A-25WR02 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA W**\n   Source: CanadaBuys\n   Reference: `WS5706873105-Doc5741888282`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-08-07T14:00:00\n\n**7. W3723-25SD01 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA S**\n   Source: CanadaBuys\n   Reference: `WS5706735549-Doc5738930627`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-08-07T14:00:00\n\n\nUse `get_opportunity_details` with a reference number for full details."
+  },
+  "sanity-hvac": {
+    "tool": "search_alberta_opportunities",
+    "arguments": {
+      "keywords": "HVAC"
+    },
+    "is_error": false,
+    "result_text": "# Alberta Opportunities\n\nShowing 10 of 14 matching APC records.\n\n**1. City of Lethbridge - Notice of Award - HVAC Upgrade Stan Siwik Pool**\n   Reference: `AB-2026-05180`\n   Organization: City of Lethbridge\n   Category: Services | Type: NOA\n   Closing: \n\n**2. Forestry and Parks - Invitation to Bid - Cold Lake Provincial Park - Shower Building**\n   Reference: `AB-2026-04972`\n   Organization: Forestry and Parks\n   Category: Construction | Type: ITB\n   Closing: 2026-08-04T14:00:59\n\n**3. University of Calgary - Pre-qualification Request - Air and Hydronic Balancing Contractor**\n   Reference: `AB-2026-04901`\n   Organization: University of Calgary\n   Category: Construction | Type: PQR\n   Closing: 2026-08-03T14:00:00\n\n**4. Infrastructure - Request for Proposal - Request for Proposals (RFP) for Fixed Price Constr**\n   Reference: `AB-2026-04656`\n   Organization: Infrastructure\n   Category: Construction | Type: RFP\n   Closing: 2026-08-04T14:00:00\n\n**5. City of Calgary - Request for Proposal - 26-1630 Mechanical, Heating, Air Conditioning, Pl**\n   Reference: `AB-2026-04542`\n   Organization: City of Calgary\n   Category: Construction | Type: RFP\n   Closing: 2026-07-23T16:00:59\n\n**6. Infrastructure - Request for Proposal - RFP for Fixed Price Construction Services for Peac**\n   Reference: `AB-2026-04150`\n   Organization: Infrastructure\n   Category: Construction | Type: RFP\n   Closing: 2026-07-21T14:00:00\n\n**7. City of Calgary - Notice of Award - 24-0254 CPS MEEMS UCC Expansion Project- Consulting Se**\n   Reference: `AB-2025-07920`\n   Organization: City of Calgary\n   Category: Services | Type: NOA\n   Closing: \n\n**8. Infrastructure - Pre-qualification Request - PRE-QUALIFICATION REQUEST (“PQR”) NUMBER 0217**\n   Reference: `AB-2021-05685`\n   Organization: Infrastructure\n   Category: Services | Type: PQR\n   Closing: 2026-10-14T16:00:00\n\n**9. University of Calgary - Advanced Contract Award Notice / Notice of Proposed Procurement - **\n   Reference: `AB-2025-03496`\n   Organization: University of Calgary\n   Category: Goods | Type: ACAN\n   Closing: \n\n**10. University of Calgary - Advanced Contract Award Notice / Notice of Proposed Procurement - **\n   Reference: `AB-2025-01505`\n   Organization: University of Calgary\n   Category: Goods | Type: ACAN\n   Closing: \n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details."
+  }
+}
