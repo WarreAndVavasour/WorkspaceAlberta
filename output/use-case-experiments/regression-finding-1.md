@@ -29,3 +29,21 @@
 ## Tests
 
 `tests/test_search_relevance.py` (new, 15 tests, no network): tokenization/stopwords, word-boundary and plural matching, coverage fractions, full-coverage ranking, recency ordering, fallback ranking + warning, searchable-text composition (description/organization/commodity titles), and the federal matcher's single-word vs multi-word behavior. Full suite: `python -m unittest discover -s tests` — **58 tests, OK**.
+
+---
+
+## Cohere dead-end fix
+
+**Date:** 2026-07-19 · **Fix:** `analyze_contract_with_cohere` in `procurement_core/service.py` now branches on `is_alberta_reference(reference)` — the same pattern already used by `get_opportunity_details`.
+
+**The bug:** the tool loaded only the CanadaBuys federal CSV cache (`load_contracts()` + `find_contract_by_reference`). Alberta APC references (`AB-YYYY-NNNNN`) — the majority of what unified search surfaces — are not in that cache, so the tool returned `Contract not found: AB-…` before Cohere was ever called. The Cohere system prompt was also federal-only.
+
+**The fix:**
+- Alberta refs route to `get_alberta_api_details(reference)` (RuntimeError/ValueError wrapped as `Alberta opportunity not available: …`) and are rendered with `render_alberta_details_markdown(data)`, truncated to the same `MAX_CONTRACT_PROMPT_CHARS` limit.
+- Federal path unchanged (CSV cache + `render_contract_markdown`).
+- System prompt is now source-neutral ("Canadian public tender notices — CanadaBuys federal or Alberta Purchasing Connection"), and the verification footer names the correct source per branch.
+- Output header gains a `**Source:**` line (Alberta Purchasing Connection vs CanadaBuys), keeping Provider/Model/Reference.
+
+**Tests:** `tests/test_cohere_alberta.py` (new, 6 tests, no network, no API key — `get_alberta_api_details`, `call_cohere_chat`, profile loading, and the federal cache are monkeypatched): Alberta ref reaches the Cohere call with the Alberta source label, long Alberta markdown is truncated to the prompt limit, a bad Alberta ref returns the graceful "not available" message, Cohere failure returns the graceful "not available" message, the federal path still works with the CanadaBuys source label, and an unknown federal ref still returns "Contract not found". Full suite: `python -m unittest discover -s tests` — **64 tests, OK**.
+
+**Live verification:** skipped — no `COHERE_API_KEY` in the process environment and `env/` contains only the `.env.example` template.

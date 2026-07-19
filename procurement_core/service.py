@@ -2159,18 +2159,30 @@ async def check_cohere_status(args: dict) -> str:
 
 
 async def analyze_contract_with_cohere(args: dict) -> str:
-    """Use Cohere Command A+ to analyze a cached tender notice."""
+    """Use Cohere Command A+ to analyze a tender notice from either source."""
     reference = args.get("reference", "")
     if not reference:
         return "Please provide a reference number."
 
-    contracts = load_contracts()
-    if not contracts:
-        return "No contract data available. Run `refresh_data` first."
+    if is_alberta_reference(reference):
+        source_name = "Alberta Purchasing Connection"
+        source_ref = reference.strip()
+        try:
+            alberta_data = get_alberta_api_details(reference)
+        except (RuntimeError, ValueError) as exc:
+            return f"Alberta opportunity not available: {exc}"
+        contract_markdown = render_alberta_details_markdown(alberta_data)
+    else:
+        source_name = "CanadaBuys"
+        contracts = load_contracts()
+        if not contracts:
+            return "No contract data available. Run `refresh_data` first."
 
-    contract = find_contract_by_reference(reference, contracts)
-    if not contract:
-        return f"Contract not found: {reference}"
+        contract = find_contract_by_reference(reference, contracts)
+        if not contract:
+            return f"Contract not found: {reference}"
+        source_ref = get_field(contract, "referenceNumber-numeroReference")
+        contract_markdown = render_contract_markdown(contract)
 
     business_context = args.get("business_context", "").strip()
     if not business_context:
@@ -2188,7 +2200,6 @@ async def analyze_contract_with_cohere(args: dict) -> str:
         question = "Should this business pursue this opportunity, and what should they check next?"
 
     max_tokens = clamp_int(args.get("max_tokens"), default=1200, minimum=400, maximum=2000)
-    contract_markdown = render_contract_markdown(contract)
     if len(contract_markdown) > MAX_CONTRACT_PROMPT_CHARS:
         contract_markdown = contract_markdown[:MAX_CONTRACT_PROMPT_CHARS] + "\n\n[Contract text truncated for model call.]"
 
@@ -2196,9 +2207,10 @@ async def analyze_contract_with_cohere(args: dict) -> str:
         {
             "role": "system",
             "content": (
-                "You help Canadian businesses review CanadaBuys tender notices. "
+                "You help Canadian businesses review Canadian public tender notices "
+                "(CanadaBuys federal or Alberta Purchasing Connection). "
                 "Be practical, concise, and careful. Do not invent requirements. "
-                "If the notice text is missing key details, say what the user should inspect on CanadaBuys."
+                "If the notice text is missing key details, say what the user should inspect on the source portal."
             ),
         },
         {
@@ -2223,11 +2235,15 @@ async def analyze_contract_with_cohere(args: dict) -> str:
         return f"Cohere analysis is not available: {exc}"
 
     output = "# Cohere Tender Analysis\n\n"
+    output += f"**Source:** {source_name}\n"
     output += f"**Provider:** {provider}\n"
     output += f"**Model:** `{model}`\n"
-    output += f"**Reference:** `{get_field(contract, 'referenceNumber-numeroReference')}`\n\n"
+    output += f"**Reference:** `{source_ref}`\n\n"
     output += analysis
-    output += "\n\n---\nVerify requirements, amendments, and attachments on CanadaBuys before making a bid decision."
+    output += (
+        f"\n\n---\nVerify requirements, amendments, and attachments on {source_name} "
+        "before making a bid decision."
+    )
 
     return output
 
