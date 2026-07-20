@@ -85,6 +85,12 @@ Wiring up the places where the work lives usually costs money, time, and technic
 
 **WorkspaceAlberta solves the last mile** by giving an AI assistant the wiring it needs to search, compare, summarize, and brief public procurement opportunities from inside the workspace where the owner is already working.
 
+<p align="center">
+  <img src="docs/assets/high-level-bridge-edmonton-1909.jpg" alt="The High Level Bridge between Edmonton and Strathcona under construction, circa 1909." width="100%">
+</p>
+
+<p align="center"><em>The High Level Bridge under construction, Edmonton, c. 1909 — Alberta steel, riveted by hand. City of Edmonton Archives, EA-500-4 (public domain).</em></p>
+
 ---
 
 ## What This Actually Does
@@ -97,6 +103,12 @@ It now brings together:
 - **Alberta Purchasing Connection** for Alberta public-sector opportunities
 - **Cohere Command A+** for optional tender analysis and fit review
 - **A daily bid brief** that summarizes the market, best-fit matches, and deadlines from both sources
+
+<p align="center">
+  <img src="docs/assets/welder-robin-nodwell-calgary-1963.jpg" alt="A welder at Robin Nodwell Ltd., Calgary, 1963." width="55%">
+</p>
+
+<p align="center"><em>Welder at Robin Nodwell Ltd., Calgary, 1963 — from the Provincial Archives of Alberta series "What Alberta Makes Makes Alberta" (PA3324, no known copyright restrictions).</em></p>
 
 The assistant can:
 
@@ -143,6 +155,12 @@ Underneath the endpoint is pure Python procurement logic. The data processing, f
 
 E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, parsing attachments, extracting compliance requirements, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Command A+ runs inside the short-lived sandbox with read-only evidence tools over the extracted documents. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md), and the business-owner operating diagram lives in [`docs/bid-room-operating-diagram.md`](docs/bid-room-operating-diagram.md).
 
+<p align="center">
+  <img src="docs/assets/machinist-canada-oil-tool-calgary-1963.jpg" alt="A machinist at Canada Oil Tool Manufacturing, Calgary, 1963." width="55%">
+</p>
+
+<p align="center"><em>Machinist at Canada Oil Tool Manufacturing, Calgary, 1963 — precision work for the energy sector. Provincial Archives of Alberta, PA3318/2 (no known copyright restrictions).</em></p>
+
 ---
 
 ## Why This Matters
@@ -163,6 +181,12 @@ Alberta's **steel, lumber, and metals** industries represent over **2,500 compan
 | Fabricated Metal Products | 1,871 establishments | $23.4B manufacturing sector | 16,600 |
 | Primary & Machinery Manufacturing | 200+ facilities | Included above | 12,000+ |
 
+<p align="center">
+  <img src="docs/assets/collage-what-alberta-makes.jpg" alt="Three photographs of workers pouring steel at the Foothills Steel Foundry, Calgary, 1963." width="100%">
+</p>
+
+<p align="center"><em>What Alberta makes makes Alberta — the pour at Foothills Steel Foundry, Calgary, 1963. Provincial Archives of Alberta, PA3315.1–.3 (no known copyright restrictions).</em></p>
+
 Behind every one of these companies are dozens of systems that need to talk to each other just to get anything done: quoting software, inventory spreadsheets, accounting packages, project trackers, supplier portals, and government tender databases.
 
 Any tool that helps a fabricator **create demand**, a mill **manufacture more efficiently**, or a contractor **cut costs** has multiplier effects across the entire province:
@@ -171,6 +195,13 @@ Any tool that helps a fabricator **create demand**, a mill **manufacture more ef
 - **$1.6 billion** in annual wages paid to forestry workers
 - **70 communities** across Alberta that depend directly on these industries
 - **$988 million** in tax revenue flowing back to the province
+
+<p align="center">
+  <img src="docs/assets/walters-saw-mill-edmonton-1908.jpg" alt="Walter's Saw Mill, Edmonton, 1908." width="49%">
+  <img src="docs/assets/alberta-lumber-co-factory-1908.jpg" alt="Alberta Lumber Co.'s Factory, Edmonton, 1908." width="49%">
+</p>
+
+<p align="center"><em>Walter's Saw Mill (1908) and the Alberta Lumber Co.'s Factory (1908), Edmonton — value-added Alberta manufacturing, first edition. City of Edmonton Archives, EA-500-205 and EA-500-290 (public domain).</em></p>
 
 More contracts won. More jobs kept. More skill developed. More value staying here at home.
 
@@ -207,6 +238,12 @@ Data and model sources:
 - CohereLabs Command A+ W4A4 on Hugging Face: <https://huggingface.co/CohereLabs/command-a-plus-05-2026-w4a4>
 
 Image source notes live in [`docs/imagery-sources.md`](docs/imagery-sources.md).
+
+<p align="center">
+  <img src="docs/assets/collage-museum-wall.jpg" alt="A museum wall of Canadian industrial photography: steel, foundries, machine shops, and mills from 1870 to 1957." width="100%">
+</p>
+
+<p align="center"><em>The museum wall. Top row: crucible pour, Stelco, Hamilton, 1957 (Herb Taylor / Library and Archives Canada, CC BY 2.0); Norwood Foundry crew, Edmonton, 1935 (Provincial Archives of Alberta, A6237); Bawden Machine Co. blacksmith shop, Toronto, c. 1918 (LAC, CC BY 2.0); machinist, Alberta Foundry &amp; Machine Shop, Medicine Hat, c. 1940s (PAA, A10335). Bottom row: grading lumber by hand (Nicholas Morant / LAC, CC BY 4.0); mill interior, Maberly, Ontario, c. 1870 (LAC, CC BY 2.0); Manitoba Bridge &amp; Iron Works, Winnipeg, c. 1914–18 (LAC, CC BY 2.0); Alberta Foundry &amp; Machine Co. lineup, Medicine Hat, c. 1915 (PAA, A10587).</em></p>
 
 ---
 
