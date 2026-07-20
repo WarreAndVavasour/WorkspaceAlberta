@@ -1,0 +1,152 @@
+pageType: content
+background:
+  type: solid
+  color: "$paper"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 440, 16]
+    content:
+      style: "$lKick"
+      color: "$copper"
+      wrap: false
+      text: 06 · THE DETAILS THAT DECIDE
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$lKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 82, 832, 46]
+    content:
+      style: "$lDisp"
+      fontSize: 36
+      wrap: false
+      text: The three numbers that matter, out of the 140-page RFP.
+  - elementId: card
+    elementType: shape
+    bounds: [64, 150, 832, 286]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: card-label
+    elementType: text
+    bounds: [88, 168, 500, 12]
+    content:
+      style: "$lLabel"
+      color: "$copper"
+      wrap: false
+      text: ARTIFACT · TENDER AB-2026-04073
+  - elementId: fact-1-label
+    elementType: text
+    bounds: [88, 200, 360, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: MANDATORY
+  - elementId: fact-1-value
+    elementType: text
+    bounds: [88, 216, 360, 34]
+    content:
+      style: "$lBody"
+      fontSize: 13
+      color: "$lblack"
+      lineHeight: 1.35
+      text: Certificate of Recognition (CoR)
+  - elementId: fact-2-label
+    elementType: text
+    bounds: [496, 200, 376, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: BID BOND
+  - elementId: fact-2-value
+    elementType: text
+    bounds: [496, 216, 376, 34]
+    content:
+      style: "$lBody"
+      fontSize: 13
+      color: "$lblack"
+      lineHeight: 1.35
+      text: Digital format, required with every tender
+  - elementId: fact-3-label
+    elementType: text
+    bounds: [88, 278, 360, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: SUBMISSION
+  - elementId: fact-3-value
+    elementType: text
+    bounds: [88, 294, 360, 34]
+    content:
+      style: "$lBody"
+      fontSize: 13
+      color: "$lblack"
+      lineHeight: 1.35
+      text: Email only — hard copy refused
+  - elementId: fact-4-label
+    elementType: text
+    bounds: [496, 278, 376, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: PRE-TENDER MEETING
+  - elementId: fact-4-value
+    elementType: text
+    bounds: [496, 294, 376, 34]
+    content:
+      style: "$lBody"
+      fontSize: 13
+      color: "$lblack"
+      lineHeight: 1.35
+      text: June 10, 2026 · MS Teams
+  - elementId: fact-5-label
+    elementType: text
+    bounds: [88, 356, 360, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: CONTACT
+  - elementId: fact-5-value
+    elementType: text
+    bounds: [88, 372, 360, 34]
+    content:
+      style: "$lBody"
+      fontSize: 13
+      color: "$lblack"
+      lineHeight: 1.35
+      text: Named procurement officer, gov.ab.ca
+  - elementId: fact-6-label
+    elementType: text
+    bounds: [496, 356, 376, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: SCALE
+  - elementId: fact-6-value
+    elementType: text
+    bounds: [496, 372, 376, 36]
+    content:
+      style: "$lBody"
+      fontSize: 13
+      color: "$lblack"
+      lineHeight: 1.35
+      text: 279,400 m³ excavation · 57,000 t asphalt · HP 310×110 steel piling
+  - elementId: footer
+    elementType: text
+    bounds: [64, 452, 832, 14]
+    content:
+      style: "$lLabel"
+      wrap: false
+      text: GET_OPPORTUNITY_DETAILS · VERBATIM TOOL OUTPUT · REF AB-2026-04073

@@ -1,0 +1,138 @@
+pageType: content
+background:
+  type: solid
+  color: "$paper"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 440, 16]
+    content:
+      style: "$lKick"
+      color: "$copper"
+      wrap: false
+      text: 09 · WHO THIS IS FOR
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$lKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 84, 832, 50]
+    content:
+      style: "$lDisp"
+      fontSize: 40
+      wrap: false
+      text: |
+        <p>2,500 companies. <span style="color:$copper">$37 billion.</span> One search box away.</p>
+  - elementId: market-table
+    elementType: table
+    bounds: [64, 156, 832, 208]
+    columnWidths: [0.32, 0.34, 0.18, 0.16]
+    rowHeights: [0.22, 0.26, 0.26, 0.26]
+    style:
+      cellStyle:
+        fontFamily: Liter
+        fontSize: 12.5
+        color: "$lblack"
+        align: [left, middle]
+        border: {style: solid, width: 1, color: "$lhair"}
+      firstRowStyle:
+        fill: {type: solid, color: "$aluminum"}
+        color: "$lblack"
+        fontSize: 10
+        letterSpacing: 1.5
+    rows:
+      - - text: SECTOR
+        - text: COMPANIES
+        - text: IMPACT
+        - text: JOBS
+      - - text: Forestry & wood products
+        - text: 676+ businesses, 40 major mills
+          color: "$muted"
+          fontSize: 11.5
+        - text: $14B
+          fontFamily: Oranienbaum
+          fontSize: 16
+        - text: "41,400"
+          fontFamily: Oranienbaum
+          fontSize: 16
+      - - text: Fabricated metal products
+        - text: 1,871 establishments
+          color: "$muted"
+          fontSize: 11.5
+        - text: $23.4B sector
+          fontFamily: Oranienbaum
+          fontSize: 16
+        - text: "16,600"
+          fontFamily: Oranienbaum
+          fontSize: 16
+      - - text: Primary & machinery mfg.
+        - text: 200+ facilities
+          color: "$muted"
+          fontSize: 11.5
+        - text: included above
+          color: "$muted"
+          fontSize: 11.5
+          italic: true
+        - text: 12,000+
+          fontFamily: Oranienbaum
+          fontSize: 16
+  - elementId: chip-1
+    elementType: shape
+    bounds: [64, 392, 152, 30]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: chip-1-label
+    elementType: text
+    bounds: [64, 392, 152, 30]
+    content:
+      style: "$lLabel"
+      fontSize: 9.5
+      letterSpacing: 1.5
+      align: [center, middle]
+      wrap: false
+      text: $4B FOREST EXPORTS
+  - elementId: chip-2
+    elementType: shape
+    bounds: [228, 392, 336, 30]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: chip-2-label
+    elementType: text
+    bounds: [228, 392, 336, 30]
+    content:
+      style: "$lLabel"
+      fontSize: 9.5
+      letterSpacing: 1.5
+      align: [center, middle]
+      wrap: false
+      text: 70 COMMUNITIES DEPEND ON THESE INDUSTRIES
+  - elementId: chip-3
+    elementType: shape
+    bounds: [576, 392, 172, 30]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: chip-3-label
+    elementType: text
+    bounds: [576, 392, 172, 30]
+    content:
+      style: "$lLabel"
+      fontSize: 9.5
+      letterSpacing: 1.5
+      align: [center, middle]
+      wrap: false
+      text: $988M TAX REVENUE
+  - elementId: caption
+    elementType: text
+    bounds: [64, 452, 832, 14]
+    content:
+      style: "$lLabel"
+      wrap: false
+      text: STATISTICS CANADA · INNOVATION CANADA · ALBERTA FOREST PRODUCTS ASSOCIATION

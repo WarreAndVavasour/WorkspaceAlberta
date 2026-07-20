@@ -1,0 +1,79 @@
+pageType: cover
+background:
+  type: solid
+  color: "$dbg"
+elements:
+  - elementId: bg-img
+    elementType: image
+    bounds: [0, 0, 960, 540]
+    src: media/women-workers-small-arms.jpg
+    fit: {mode: cover}
+  - elementId: bg-overlay
+    elementType: shape
+    bounds: [0, 0, 960, 540]
+    shapeName: rect
+    fill: {type: solid, color: "#0a0807cc"}
+  - elementId: bg-grad
+    elementType: shape
+    bounds: [0, 280, 960, 260]
+    shapeName: rect
+    fill:
+      type: gradient
+      gradientType: linear
+      angle: 90
+      stops:
+        - {position: 0, color: "#0a080700"}
+        - {position: 1, color: "#0a0807e6"}
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 38, 520, 16]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      wrap: false
+      text: WARRE & VAVASOUR · AN AI LABORATORY
+  - elementId: top-right
+    elementType: text
+    bounds: [560, 38, 336, 16]
+    content:
+      style: "$dKick"
+      align: [right, top]
+      wrap: false
+      text: BOW VALLEY, ALBERTA · 2026
+  - elementId: headline
+    elementType: text
+    bounds: [64, 196, 780, 80]
+    content:
+      style: "$dDisp"
+      fontSize: 64
+      wrap: false
+      text: Welcome to Work, Alberta.
+  - elementId: sub
+    elementType: text
+    bounds: [64, 294, 560, 56]
+    content:
+      style: "$dBody"
+      fontSize: 16
+      text: |
+        <p>WorkspaceAlberta — live government demand, wired directly to the people who can do the work.</p>
+  - elementId: rule
+    elementType: shape
+    bounds: [64, 438, 120, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$gold"}
+  - elementId: strip-label
+    elementType: text
+    bounds: [64, 454, 560, 16]
+    content:
+      style: "$dKick"
+      color: "$dink66"
+      wrap: false
+      text: PRODUCT BRIEF · THE FIRST OFFERING IS OPEN AND FREE
+  - elementId: credit
+    elementType: text
+    bounds: [496, 512, 400, 12]
+    content:
+      style: "$dLabel"
+      align: [right, top]
+      wrap: false
+      text: Canadian industrial war production · Library and Archives Canada

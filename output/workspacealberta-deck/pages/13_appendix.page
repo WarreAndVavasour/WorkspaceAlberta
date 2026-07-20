@@ -1,0 +1,218 @@
+pageType: content
+background:
+  type: solid
+  color: "$paper"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 480, 16]
+    content:
+      style: "$lKick"
+      color: "$copper"
+      wrap: false
+      text: APPENDIX · ONE FAMILY, TWO REGISTERS
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$lKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 82, 832, 80]
+    content:
+      style: "$lDisp"
+      fontSize: 32
+      lineHeight: 1.2
+      text: |
+        <p>Should the product have a separate brand? No — a register, not a divorce.</p>
+  - elementId: lab-header
+    elementType: text
+    bounds: [64, 186, 400, 16]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 2
+      wrap: false
+      text: WARRE & VAVASOUR — THE LAB
+  - elementId: lab-sw-1
+    elementType: shape
+    bounds: [64, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#0a0807"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: lab-sw-1-label
+    elementType: text
+    bounds: [58, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#0a0807"
+  - elementId: lab-sw-2
+    elementType: shape
+    bounds: [128, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#d9a441"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: lab-sw-2-label
+    elementType: text
+    bounds: [122, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#d9a441"
+  - elementId: lab-sw-3
+    elementType: shape
+    bounds: [192, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#c2542a"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: lab-sw-3-label
+    elementType: text
+    bounds: [186, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#c2542a"
+  - elementId: lab-sw-4
+    elementType: shape
+    bounds: [256, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#f3ede1"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: lab-sw-4-label
+    elementType: text
+    bounds: [250, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#f3ede1"
+  - elementId: lab-note
+    elementType: text
+    bounds: [64, 300, 380, 56]
+    content:
+      style: "$lBody"
+      fontSize: 12
+      lineHeight: 1.55
+      text: |
+        <p>Dark, editorial, conviction. Fraunces → Oranienbaum in this deck.</p>
+  - elementId: prod-header
+    elementType: text
+    bounds: [496, 186, 400, 16]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 2
+      wrap: false
+      text: WORKSPACEALBERTA — THE PRODUCT
+  - elementId: prod-sw-1
+    elementType: shape
+    bounds: [496, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#f7f5ef"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: prod-sw-1-label
+    elementType: text
+    bounds: [490, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#f7f5ef"
+  - elementId: prod-sw-2
+    elementType: shape
+    bounds: [560, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#b87333"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: prod-sw-2-label
+    elementType: text
+    bounds: [554, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#b87333"
+  - elementId: prod-sw-3
+    elementType: shape
+    bounds: [624, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#79a9d8"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: prod-sw-3-label
+    elementType: text
+    bounds: [618, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#79a9d8"
+  - elementId: prod-sw-4
+    elementType: shape
+    bounds: [688, 216, 48, 48]
+    shapeName: rect
+    fill: {type: solid, color: "#111111"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: prod-sw-4-label
+    elementType: text
+    bounds: [682, 270, 60, 12]
+    content:
+      style: "$lLabel"
+      fontSize: 8.5
+      letterSpacing: 0.5
+      align: [center, top]
+      wrap: false
+      text: "#111111"
+  - elementId: prod-note
+    elementType: text
+    bounds: [496, 300, 380, 56]
+    content:
+      style: "$lBody"
+      fontSize: 12
+      lineHeight: 1.55
+      text: |
+        <p>Porcelain, industrial, daylight. The product the lab stands behind.</p>
+  - elementId: divider
+    elementType: shape
+    bounds: [64, 392, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: rule-line
+    elementType: text
+    bounds: [64, 414, 832, 30]
+    content:
+      style: "$lDisp"
+      fontSize: 20
+      align: [center, top]
+      wrap: false
+      text: Dark slides make the argument. Light slides do the work.
+  - elementId: imagery-note
+    elementType: text
+    bounds: [64, 462, 832, 30]
+    content:
+      style: "$lBody"
+      fontSize: 10
+      align: [center, top]
+      lineHeight: 1.5
+      text: |
+        <p style="text-align:center">Library and Archives Canada industrial photography, duotone treatment. No stock gloss, no fake stats, no fake testimonials.</p>

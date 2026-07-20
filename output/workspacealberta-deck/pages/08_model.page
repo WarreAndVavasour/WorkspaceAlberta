@@ -1,0 +1,119 @@
+pageType: content
+background:
+  type: solid
+  color: "$dbg"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 440, 16]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      wrap: false
+      text: 07 · FREE BRIEF, PAID BID WORK
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$dKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 84, 832, 50]
+    content:
+      style: "$dDisp"
+      fontSize: 40
+      wrap: false
+      text: |
+        <p>Free to look. <span style="color:$gold">$85/month</span> to bid.</p>
+  - elementId: panel-free
+    elementType: shape
+    bounds: [64, 152, 400, 232]
+    shapeName: rect
+    fill: {type: solid, color: "$dpanel"}
+    border: {style: solid, width: 1, color: "$dhair2"}
+  - elementId: free-header
+    elementType: text
+    bounds: [88, 172, 352, 16]
+    content:
+      style: "$dKick"
+      color: "$dink"
+      letterSpacing: 2
+      wrap: false
+      text: FREE FOREVER
+  - elementId: free-rule
+    elementType: shape
+    bounds: [88, 198, 352, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: free-items
+    elementType: text
+    bounds: [88, 214, 352, 150]
+    content:
+      style: "$dBody"
+      fontSize: 13
+      lineHeight: 1.5
+      text: |
+        <p><span style="color:$dink40">—</span>  Search both governments in one question</p>
+        <p style="margin-top:12px"><span style="color:$dink40">—</span>  Daily bid brief</p>
+        <p style="margin-top:12px"><span style="color:$dink40">—</span>  Full tender details</p>
+        <p style="margin-top:12px"><span style="color:$dink40">—</span>  Closing-soon deadlines</p>
+  - elementId: panel-pro
+    elementType: shape
+    bounds: [496, 152, 400, 232]
+    shapeName: rect
+    fill: {type: solid, color: "$dpanel"}
+    border: {style: solid, width: 1, color: "$gold"}
+  - elementId: pro-header
+    elementType: text
+    bounds: [520, 172, 352, 16]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      letterSpacing: 2
+      wrap: false
+      text: PRO · $85 CAD/MONTH
+  - elementId: pro-rule
+    elementType: shape
+    bounds: [520, 198, 352, 1]
+    shapeName: rect
+    fill: {type: solid, color: "#d9a44155"}
+  - elementId: pro-items
+    elementType: text
+    bounds: [520, 214, 352, 156]
+    content:
+      style: "$dBody"
+      fontSize: 12.5
+      lineHeight: 1.4
+      text: |
+        <p><span style="color:$gold">+</span>  Bid rooms: sandboxed E2B analysis of full tender packages</p>
+        <p style="margin-top:10px"><span style="color:$gold">+</span>  Cohere Command A+ review: risks, requirements, fit score</p>
+        <p style="margin-top:10px"><span style="color:$gold">+</span>  Watchlist with closing-date countdowns</p>
+        <p style="margin-top:10px"><span style="color:$gold">+</span>  Bid/no-bid scorecards on demand</p>
+  - elementId: paywall-panel
+    elementType: shape
+    bounds: [64, 404, 832, 76]
+    shapeName: rect
+    fill: {type: solid, color: "$dpanel"}
+    border: {style: solid, width: 1, color: "$dhair2"}
+  - elementId: paywall-quote
+    elementType: text
+    bounds: [88, 420, 640, 20]
+    content:
+      style: "$dBody"
+      fontSize: 12
+      italic: true
+      wrap: false
+      text: |
+        <p>"WorkspaceAlberta Pro required. A WorkspaceAlberta Pro API key is required for this tool."</p>
+  - elementId: paywall-caption
+    elementType: text
+    bounds: [88, 450, 760, 12]
+    content:
+      style: "$dLabel"
+      color: "$gold"
+      letterSpacing: 1.5
+      wrap: false
+      text: THE ACTUAL PAYWALL, VERBATIM · THE METER STARTS AT THE MOMENT OF INTENT

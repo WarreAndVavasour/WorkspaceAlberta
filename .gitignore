@@ -35,3 +35,18 @@ output/canadabuys/attachments/
 
 # Optional project-local Build Canada cache if you set CANADABUYS_DATA_DIR under the repo
 .data/
+
+# Scratch and local tooling
+.tmp/
+.bin-shims/
+research/
+
+# Probe and spec-extraction output
+output/spec-extract/
+output/use-case-experiments/
+
+# OPERA runtime data (synced CSVs, DuckDB, exports)
+data/opera/
+
+# Nested personal clone of the repo — not tracked content
+HarleyCoops/

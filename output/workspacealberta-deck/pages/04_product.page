@@ -1,0 +1,145 @@
+pageType: content
+background:
+  type: solid
+  color: "$paper"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 400, 16]
+    content:
+      style: "$lKick"
+      color: "$copper"
+      wrap: false
+      text: 03 · THE PRODUCT
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$lKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 84, 832, 50]
+    content:
+      style: "$lDisp"
+      fontSize: 40
+      wrap: false
+      text: The custom MCP server is the product.
+  - elementId: body
+    elementType: text
+    bounds: [64, 146, 580, 96]
+    content:
+      style: "$lBody"
+      fontSize: 14
+      text: |
+        <p>A deployed, working endpoint that knows the live public procurement pipeline — CanadaBuys and Alberta Purchasing Connection — and serves it back through any AI assistant, ranked by what you do, where you work, and what deadlines matter. No new portal to babysit.</p>
+  - elementId: chip-src-1
+    elementType: shape
+    bounds: [64, 288, 236, 44]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: chip-src-1-label
+    elementType: text
+    bounds: [64, 288, 236, 44]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 1.5
+      align: [center, middle]
+      wrap: false
+      text: CANADABUYS · FEDERAL
+  - elementId: chip-src-2
+    elementType: shape
+    bounds: [64, 352, 236, 44]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: chip-src-2-label
+    elementType: text
+    bounds: [64, 352, 236, 44]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      fontSize: 9.5
+      letterSpacing: 1.2
+      align: [center, middle]
+      wrap: false
+      text: ALBERTA PURCHASING CONNECTION
+  - elementId: arrow-1
+    elementType: line
+    bounds: [304, 310, 88, 20]
+    viewBox: [88, 20]
+    points: "0,0 88,20"
+    curve: sharp
+    arrow: [null, arrow]
+    border: {style: solid, width: 1.5, color: "$copper"}
+  - elementId: arrow-2
+    elementType: line
+    bounds: [304, 352, 88, 20]
+    viewBox: [88, 20]
+    points: "0,20 88,0"
+    curve: sharp
+    arrow: [null, arrow]
+    border: {style: solid, width: 1.5, color: "$copper"}
+  - elementId: hub-card
+    elementType: shape
+    bounds: [396, 286, 224, 110]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1.5, color: "$copper"}
+  - elementId: hub-label
+    elementType: text
+    bounds: [396, 308, 224, 16]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 1.8
+      align: [center, top]
+      wrap: false
+      text: WORKSPACEALBERTA MCP
+  - elementId: hub-big
+    elementType: text
+    bounds: [396, 330, 224, 38]
+    content:
+      style: "$lDisp"
+      fontSize: 28
+      color: "$copper"
+      align: [center, top]
+      wrap: false
+      text: 21 TOOLS
+  - elementId: arrow-3
+    elementType: line
+    bounds: [624, 337, 64, 8]
+    viewBox: [64, 8]
+    points: "0,4 64,4"
+    curve: sharp
+    arrow: [null, arrow]
+    border: {style: solid, width: 1.5, color: "$copper"}
+  - elementId: chip-out
+    elementType: shape
+    bounds: [692, 308, 204, 66]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: chip-out-label
+    elementType: text
+    bounds: [692, 318, 204, 46]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 1.5
+      align: [center, top]
+      lineHeight: 1.7
+      text: |
+        <p style="text-align:center">ANY AI ASSISTANT</p>
+        <p style="text-align:center"><span style="color:$muted">MCP / REST</span></p>
+  - elementId: caption
+    elementType: text
+    bounds: [64, 456, 832, 16]
+    content:
+      style: "$lLabel"
+      wrap: false
+      text: Pure Python procurement core. The model layer is added only where judgment helps. Same core exposed as REST/OpenAPI.

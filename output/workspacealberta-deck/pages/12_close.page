@@ -1,0 +1,110 @@
+pageType: final
+background:
+  type: solid
+  color: "$dbg"
+elements:
+  - elementId: bg-img
+    elementType: image
+    bounds: [0, 0, 960, 540]
+    src: media/small-arms-machinist-laughing.jpg
+    fit: {mode: cover}
+  - elementId: bg-overlay
+    elementType: shape
+    bounds: [0, 0, 960, 540]
+    shapeName: rect
+    fill: {type: solid, color: "#0a0807e0"}
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 520, 16]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      wrap: false
+      text: WARRE & VAVASOUR · AN AI LABORATORY
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$dKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 150, 832, 70]
+    content:
+      style: "$dDisp"
+      fontSize: 56
+      wrap: false
+      text: Canada is going to work.
+  - elementId: sub
+    elementType: text
+    bounds: [64, 236, 620, 48]
+    content:
+      style: "$dBody"
+      fontSize: 15
+      text: |
+        <p>More contracts won. More jobs kept. More skill developed. More value staying here at home.</p>
+  - elementId: cta-1-rule
+    elementType: shape
+    bounds: [64, 336, 80, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$gold"}
+  - elementId: cta-1-label
+    elementType: text
+    bounds: [64, 352, 400, 14]
+    content:
+      style: "$dKick"
+      color: "$dink66"
+      letterSpacing: 2
+      wrap: false
+      text: READ THE BRIEF TOMORROW — FREE
+  - elementId: cta-1-link
+    elementType: text
+    bounds: [64, 374, 400, 20]
+    content:
+      style: "$dBody"
+      fontSize: 14
+      color: "$dink"
+      wrap: false
+      text: github.com/HarleyCoops/WorkspaceAlberta
+  - elementId: cta-2-rule
+    elementType: shape
+    bounds: [496, 336, 80, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$gold"}
+  - elementId: cta-2-label
+    elementType: text
+    bounds: [496, 352, 400, 14]
+    content:
+      style: "$dKick"
+      color: "$dink66"
+      letterSpacing: 2
+      wrap: false
+      text: READY TO BID — $85 CAD/MONTH
+  - elementId: cta-2-link
+    elementType: text
+    bounds: [496, 374, 400, 20]
+    content:
+      style: "$dBody"
+      fontSize: 14
+      color: "$dink"
+      wrap: false
+      text: buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a
+  - elementId: bottom-left
+    elementType: text
+    bounds: [64, 506, 520, 12]
+    content:
+      style: "$dLabel"
+      letterSpacing: 1.5
+      wrap: false
+      text: WARRE & VAVASOUR · AN AI LABORATORY · BOW VALLEY, ALBERTA
+  - elementId: bottom-right
+    elementType: text
+    bounds: [616, 506, 280, 12]
+    content:
+      style: "$dLabel"
+      letterSpacing: 1.5
+      align: [right, top]
+      wrap: false
+      text: BUILT FOR TRADES, NOT TECH

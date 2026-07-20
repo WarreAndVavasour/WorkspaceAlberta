@@ -210,4 +210,28 @@ Image source notes live in [`docs/imagery-sources.md`](docs/imagery-sources.md).
 
 ---
 
+## The OPERA Analytics Server
+
+The country is traveling west. Domestic travel to the western provinces is scaling, and the properties hosting those travelers run on systems like OPERA Cloud.
+
+The Warre & Vavasour tourism thesis: in an extreme-AI world, people crave the analog. Real places, real adventures. The premium goes to authentic, place-bound experiences — and AI is invisible wiring, not the product.
+
+The wiring problem looks exactly like procurement's last mile. A hotel's own data lives inside OPERA Cloud, and getting it out for analysis usually means expensive middleware or manual exports. Front-desk managers, revenue people, and owners can't use what they can't reach.
+
+So the repo ships a second MCP server: [`mcp-servers/opera-analytics/server.py`](mcp-servers/opera-analytics/server.py), a read-only analytics data tap for OPERA Cloud Reporting & Analytics Data APIs. A property's own user signs in as themselves — OAuth2 password grant, with credentials from the hotel's own OPERA Cloud Developer Portal. No partner program, no middleware vendor.
+
+It covers **75 analytics subject areas** — guest/deposit/AR ledgers, transactions, reservation statistics and pace, managers report, history and forecast, rate codes, profiles, blocks, catering events, housekeeping inventory — through **9 tools**:
+
+- `opera_auth_status` to check the session
+- `list_subject_areas` / `describe_subject_area` to see what data exists
+- `run_graphql_query` / `query_subject_area` to pull it
+- `export_to_csv` / `sync_subject_area` to land it locally
+- `list_local_tables` / `query_local_data` to work with what's synced
+
+Data lands in local CSV files and a DuckDB database the team can open in Excel or Power BI, or ask questions about in plain language through any MCP-capable assistant. Read-only by design. Set `OPERA_MOCK=1` to try it offline with no credentials; smoke test: `python -m unittest tests.test_opera_analytics_smoke`. Server docs live in [`mcp-servers/opera-analytics/README.md`](mcp-servers/opera-analytics/README.md).
+
+Tools employees can actually use, from the systems they already have. The same pattern as the procurement work: take an awkward system of record, give people their own data back, charge for outcomes not visibility.
+
+---
+
 *Data sources: [Statistics Canada](https://www150.statcan.gc.ca), [Innovation Canada](https://ised-isde.canada.ca), [Alberta Forest Products Association](https://albertaforestproducts.ca), [Job Bank Canada](https://www.jobbank.gc.ca)*

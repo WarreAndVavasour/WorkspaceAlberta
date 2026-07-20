@@ -1,0 +1,78 @@
+version: v2
+title: WorkspaceAlberta — Product Brief
+size: [960, 540]
+theme:
+  colors:
+    dbg: "#0a0807"
+    dpanel: "#100c09"
+    dink: "#f3ede1"
+    dink66: "#f3ede1a8"
+    dink40: "#f3ede166"
+    dink16: "#f3ede129"
+    gold: "#d9a441"
+    gold2: "#e8c277"
+    ember: "#c2542a"
+    dhair: "#f3ede11f"
+    dhair2: "#f3ede138"
+    paper: "#f7f5ef"
+    aluminum: "#d6d3ca"
+    concrete: "#b9b7ae"
+    lblack: "#111111"
+    lblack66: "#11111166"
+    muted: "#5f625f"
+    copper: "#b87333"
+    sky: "#79a9d8"
+    lhair: "#11111124"
+  textStyles:
+    dKick:
+      fontFamily: Liter
+      fontSize: 10
+      color: "$dink40"
+      letterSpacing: 2.5
+    lKick:
+      fontFamily: Liter
+      fontSize: 10
+      color: "$lblack66"
+      letterSpacing: 2.5
+    dDisp:
+      fontFamily: Oranienbaum
+      color: "$dink"
+      lineHeight: 1.1
+    lDisp:
+      fontFamily: Oranienbaum
+      color: "$lblack"
+      lineHeight: 1.1
+    dBody:
+      fontFamily: Liter
+      fontSize: 15
+      color: "$dink66"
+      lineHeight: 1.6
+    lBody:
+      fontFamily: Liter
+      fontSize: 14
+      color: "$muted"
+      lineHeight: 1.6
+    dLabel:
+      fontFamily: Liter
+      fontSize: 9
+      color: "$dink40"
+      letterSpacing: 2
+    lLabel:
+      fontFamily: Liter
+      fontSize: 9
+      color: "$muted"
+      letterSpacing: 2
+pages:
+  - pages/01_cover.page
+  - pages/02_problem.page
+  - pages/03_ethos.page
+  - pages/04_product.page
+  - pages/05_hero.page
+  - pages/06_brief.page
+  - pages/07_depth.page
+  - pages/08_model.page
+  - pages/09_proof.page
+  - pages/10_market.page
+  - pages/11_sovereign.page
+  - pages/12_close.page
+  - pages/13_appendix.page

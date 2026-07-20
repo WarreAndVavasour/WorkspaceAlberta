@@ -40,6 +40,8 @@ If you are changing OpenAI- or Codex-related setup in this repo:
 - [opencode.json](C:\Users\chris\WorkspaceAlberta\opencode.json): OpenCode project config
 - [mcp-servers/canadabuys/server.py](C:\Users\chris\WorkspaceAlberta\mcp-servers\canadabuys\server.py): stdio MCP server
 - [tests/test_canadabuys_mcp_smoke.py](C:\Users\chris\WorkspaceAlberta\tests\test_canadabuys_mcp_smoke.py): startup and response smoke test
+- [mcp-servers/opera-analytics/server.py](C:\Users\chris\WorkspaceAlberta\mcp-servers\opera-analytics\server.py): OPERA Cloud analytics stdio MCP server
+- [tests/test_opera_analytics_smoke.py](C:\Users\chris\WorkspaceAlberta\tests\test_opera_analytics_smoke.py): OPERA analytics startup and response smoke test
 
 ## Key Commands
 

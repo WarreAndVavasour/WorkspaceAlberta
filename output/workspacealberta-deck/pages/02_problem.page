@@ -1,0 +1,63 @@
+pageType: content
+background:
+  type: solid
+  color: "$dbg"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 400, 16]
+    content:
+      style: "$dKick"
+      wrap: false
+      text: 01 · THE LAST MILE
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$dKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: h1
+    elementType: text
+    bounds: [64, 88, 832, 54]
+    content:
+      style: "$dDisp"
+      fontSize: 44
+      wrap: false
+      text: AI promised 5X productivity.
+  - elementId: h2
+    elementType: text
+    bounds: [64, 152, 520, 156]
+    content:
+      style: "$dDisp"
+      fontSize: 44
+      color: "$dink40"
+      text: |
+        <p>Most small businesses got a <span style="color:$ember">chatbot</span> that writes mediocre marketing copy.</p>
+  - elementId: body
+    elementType: text
+    bounds: [64, 330, 500, 120]
+    content:
+      style: "$dBody"
+      fontSize: 15
+      text: |
+        <p>The model is not the bottleneck. The connection is. Government tender databases are the perfect example: the work is public, the demand is real, but the discovery process is still awkward enough that good companies miss good opportunities.</p>
+  - elementId: photo
+    elementType: image
+    bounds: [612, 136, 284, 340]
+    src: media/sophie-okowinski-bren-gun.jpg
+    fit: {mode: cover}
+    border: {style: solid, width: 1, color: "$dhair2"}
+  - elementId: photo-overlay
+    elementType: shape
+    bounds: [612, 136, 284, 340]
+    shapeName: rect
+    fill: {type: solid, color: "#0a080759"}
+  - elementId: caption
+    elementType: text
+    bounds: [612, 484, 284, 26]
+    content:
+      style: "$dLabel"
+      lineHeight: 1.4
+      text: Sophie O'Kowinski, John Inglis Co., 1943 · Library and Archives Canada

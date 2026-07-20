@@ -1,0 +1,149 @@
+pageType: content
+background:
+  type: solid
+  color: "$paper"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 400, 16]
+    content:
+      style: "$lKick"
+      color: "$copper"
+      wrap: false
+      text: 05 · THE HABIT
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$lKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 86, 600, 50]
+    content:
+      style: "$lDisp"
+      fontSize: 40
+      wrap: false
+      text: The market, before coffee.
+  - elementId: stats-caption
+    elementType: text
+    bounds: [64, 162, 300, 12]
+    content:
+      style: "$lLabel"
+      wrap: false
+      text: LIVE COUNTS · JULY 18, 2026
+  - elementId: stat-1
+    elementType: text
+    bounds: [64, 182, 280, 78]
+    content:
+      style: "$lDisp"
+      fontSize: 64
+      wrap: false
+      text: "850"
+  - elementId: stat-1-label
+    elementType: text
+    bounds: [64, 266, 290, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: FEDERAL OPEN NOTICES · CANADABUYS
+  - elementId: stat-divider
+    elementType: shape
+    bounds: [396, 188, 1, 86]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: stat-2
+    elementType: text
+    bounds: [448, 182, 280, 78]
+    content:
+      style: "$lDisp"
+      fontSize: 64
+      wrap: false
+      text: 1,523
+  - elementId: stat-2-label
+    elementType: text
+    bounds: [448, 266, 320, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: ALBERTA OPEN OPPORTUNITIES · APC
+  - elementId: col-1-rule
+    elementType: shape
+    bounds: [64, 332, 32, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$copper"}
+  - elementId: col-1-label
+    elementType: text
+    bounds: [64, 346, 256, 16]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 2
+      wrap: false
+      text: BEST FITS
+  - elementId: col-1-desc
+    elementType: text
+    bounds: [64, 368, 256, 18]
+    content:
+      style: "$lBody"
+      fontSize: 11
+      wrap: false
+      text: Ranked against your profile
+  - elementId: col-2-rule
+    elementType: shape
+    bounds: [352, 332, 32, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$copper"}
+  - elementId: col-2-label
+    elementType: text
+    bounds: [352, 346, 256, 16]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 2
+      wrap: false
+      text: CLOSING SOON
+  - elementId: col-2-desc
+    elementType: text
+    bounds: [352, 368, 256, 18]
+    content:
+      style: "$lBody"
+      fontSize: 11
+      wrap: false
+      text: Closing-date countdowns
+  - elementId: col-3-rule
+    elementType: shape
+    bounds: [640, 332, 32, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$copper"}
+  - elementId: col-3-label
+    elementType: text
+    bounds: [640, 346, 256, 16]
+    content:
+      style: "$lKick"
+      color: "$lblack"
+      letterSpacing: 2
+      wrap: false
+      text: SUGGESTED ACTION
+  - elementId: col-3-desc
+    elementType: text
+    bounds: [640, 368, 256, 18]
+    content:
+      style: "$lBody"
+      fontSize: 11
+      wrap: false
+      text: The next move, stated plainly
+  - elementId: bottom-line
+    elementType: text
+    bounds: [64, 444, 832, 24]
+    content:
+      style: "$lBody"
+      fontSize: 14
+      color: "$lblack"
+      wrap: false
+      text: |
+        <p>The daily bid brief is <span style="color:$copper">free. Permanently.</span> The habit stays free while it forms — and after.</p>

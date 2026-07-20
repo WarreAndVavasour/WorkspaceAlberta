@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkspaceAlberta Pro — Canadian Procurement Intelligence</title>
+<meta name="description" content="Unified CanadaBuys + Alberta Purchasing Connection search, bid-room analysis, and daily bid briefs for Canadian businesses. Free daily brief. Pro at $85/month.">
+<style>
+  :root {
+    --paper: #f7f5ef;
+    --white: #ffffff;
+    --aluminum: #d6d3ca;
+    --concrete: #b9b7ae;
+    --ink: #111111;
+    --muted: #5f625f;
+    --copper: #b87333;
+    --sky: #79a9d8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 56px 0 8px; }
+  .kicker {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--copper); font-weight: 700;
+  }
+  h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.15; margin: 12px 0 16px; }
+  .lede { font-size: 19px; color: var(--muted); max-width: 640px; }
+  .rule { border: 0; border-top: 1px solid var(--aluminum); margin: 40px 0; }
+
+  .tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 8px 0 16px; }
+  @media (max-width: 720px) { .tiers { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--white); border: 1px solid var(--aluminum);
+    padding: 32px 28px; display: flex; flex-direction: column;
+  }
+  .card.pro { border-top: 4px solid var(--copper); }
+  .card h2 { font-size: 22px; margin-bottom: 4px; }
+  .price { font-size: 40px; margin: 10px 0 2px; }
+  .price small { font-size: 15px; color: var(--muted); font-family: 'Helvetica Neue', Arial, sans-serif; }
+  .tagline { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
+  ul.features { list-style: none; margin: 0 0 26px; flex: 1; }
+  ul.features li { padding: 9px 0 9px 26px; border-bottom: 1px solid var(--paper); position: relative; font-size: 16px; }
+  ul.features li::before { content: "—"; position: absolute; left: 0; color: var(--copper); }
+  ul.features li.dim { color: var(--concrete); }
+  ul.features li.dim::before { color: var(--concrete); }
+  .btn {
+    display: block; text-align: center; text-decoration: none;
+    font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700;
+    font-size: 16px; padding: 15px 20px; letter-spacing: 0.02em;
+  }
+  .btn-pro { background: var(--ink); color: var(--white); }
+  .btn-pro:hover { background: var(--copper); }
+  .btn-free { border: 1px solid var(--ink); color: var(--ink); }
+  .btn-free:hover { border-color: var(--copper); color: var(--copper); }
+  .fine { font-size: 13px; color: var(--muted); text-align: center; margin-top: 10px; font-family: 'Helvetica Neue', Arial, sans-serif; }
+
+  .why { max-width: 680px; }
+  .why h3 { font-size: 20px; margin-bottom: 10px; }
+  .why p { margin-bottom: 14px; color: #333; }
+  .why .accent { color: var(--copper); font-weight: 700; }
+
+  .faq { margin-top: 8px; }
+  .faq h3 { font-size: 20px; margin-bottom: 16px; }
+  .faq dt { font-weight: 700; margin-top: 14px; }
+  .faq dd { color: var(--muted); margin-top: 4px; }
+
+  footer { padding: 40px 0 56px; color: var(--muted); font-size: 14px; font-family: 'Helvetica Neue', Arial, sans-serif; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">WorkspaceAlberta · Canadian Procurement Intelligence</div>
+    <h1>See the work before the deadline is already too close.</h1>
+    <p class="lede">One assistant, wired to CanadaBuys and Alberta Purchasing Connection. It searches, matches, briefs, and reads the tender package — so a good bid/no-bid call takes minutes, not a lost afternoon.</p>
+  </header>
+
+  <hr class="rule">
+
+  <section class="tiers">
+    <div class="card">
+      <h2>Daily Brief</h2>
+      <div class="price">$0 <small>forever</small></div>
+      <p class="tagline">Build the habit of checking public demand every day.</p>
+      <ul class="features">
+        <li>Free daily bid brief: market snapshot, best fits, closing soon</li>
+        <li>Unified CanadaBuys + Alberta APC search</li>
+        <li>Opportunity details by reference number</li>
+        <li>Deadline tracking</li>
+        <li class="dim">Bid-room document analysis</li>
+        <li class="dim">Cohere Command A+ tender review</li>
+        <li class="dim">Watchlist &amp; bid/no-bid scorecards</li>
+      </ul>
+      <a class="btn btn-free" href="https://github.com/christiancooper/WorkspaceAlberta">Get started free</a>
+      <p class="fine">Runs in your own AI workspace. No credit card.</p>
+    </div>
+
+    <div class="card pro">
+      <h2>WorkspaceAlberta Pro</h2>
+      <div class="price">$85 <small>CAD / month</small></div>
+      <p class="tagline">For owners and estimators who bid public work to win it.</p>
+      <ul class="features">
+        <li>Everything in the free tier</li>
+        <li><strong>Bid rooms:</strong> sandboxed analysis of full tender packages — PDFs, drawings lists, submission forms</li>
+        <li><strong>Cohere Command A+ review:</strong> requirements, risks, missing information, fit score — grounded in the actual documents</li>
+        <li><strong>Watchlist</strong> with closing-date tracking and notes</li>
+        <li><strong>Bid/no-bid scorecards</strong> on demand</li>
+        <li>Profile-matched ranking across federal and Alberta sources</li>
+        <li>Priority support from a Canadian team</li>
+      </ul>
+      <a class="btn btn-pro" href="https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a">Subscribe — $85/month</a>
+      <p class="fine">Secure checkout by Stripe. Cancel anytime. Promo codes accepted.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="why">
+    <h3>Why charge at all?</h3>
+    <p>"Free MCP server" tells you nothing about whether it will save your estimator four hours on Thursday. A price is a claim: <span class="accent">this pays for itself on the first tender you would otherwise have missed.</span></p>
+    <p>One missed opportunity that fit your shop costs more than a year of Pro. One afternoon an estimator doesn't spend digging through a 140-page RFP package costs more than a month of it.</p>
+    <p>The daily brief stays free — Canadian businesses should see Canadian public demand every day, full stop. Pro is for the moment you stop browsing and start bidding.</p>
+  </section>
+
+  <hr class="rule">
+
+  <section class="faq">
+    <h3>Questions owners actually ask</h3>
+    <dl>
+      <dt>What do I need to use it?</dt>
+      <dd>An AI assistant that speaks MCP (Claude Desktop, Cursor, OpenCode) — or plain REST if you'd rather wire it into your own tools. Setup takes minutes.</dd>
+      <dt>Where does my data live?</dt>
+      <dd>Tender data comes from public Canadian sources. Bid-room document work runs in an isolated, short-lived sandbox, and the AI review uses Cohere — a Canadian model company.</dd>
+      <dt>Is this only for Alberta?</dt>
+      <dd>Alberta Purchasing Connection plus all of federal CanadaBuys today. More provinces are on the roadmap.</dd>
+      <dt>Can I cancel?</dt>
+      <dd>Any time, from the Stripe billing portal. The free brief keeps working.</dd>
+    </dl>
+  </section>
+
+  <footer>
+    WorkspaceAlberta — Canadian demand signals, Canadian models, Canadian tools.<br>
+    Questions: christian.cooper.us@gmail.com
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,143 @@
+pageType: content
+background:
+  type: solid
+  color: "$dbg"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 440, 16]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      wrap: false
+      text: 10 · THE SOVEREIGN PATH
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$dKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 84, 520, 96]
+    content:
+      style: "$dDisp"
+      fontSize: 38
+      text: |
+        <p>Canadian AI security is Canadian national security.</p>
+  - elementId: stack-1-label
+    elementType: text
+    bounds: [64, 216, 120, 14]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      letterSpacing: 2
+      wrap: false
+      text: DEMAND
+  - elementId: stack-1-value
+    elementType: text
+    bounds: [196, 214, 380, 20]
+    content:
+      style: "$dBody"
+      fontSize: 14
+      color: "$dink"
+      wrap: false
+      text: CanadaBuys + Alberta APC
+  - elementId: stack-sep-1
+    elementType: shape
+    bounds: [64, 254, 512, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: stack-2-label
+    elementType: text
+    bounds: [64, 272, 120, 14]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      letterSpacing: 2
+      wrap: false
+      text: MODEL
+  - elementId: stack-2-value
+    elementType: text
+    bounds: [196, 270, 380, 20]
+    content:
+      style: "$dBody"
+      fontSize: 14
+      color: "$dink"
+      wrap: false
+      text: Cohere Command A+ (open, W4A4 on Hugging Face)
+  - elementId: stack-sep-2
+    elementType: shape
+    bounds: [64, 310, 512, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: stack-3-label
+    elementType: text
+    bounds: [64, 328, 120, 14]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      letterSpacing: 2
+      wrap: false
+      text: TOOLS
+  - elementId: stack-3-value
+    elementType: text
+    bounds: [196, 326, 380, 20]
+    content:
+      style: "$dBody"
+      fontSize: 14
+      color: "$dink"
+      wrap: false
+      text: this MCP server, open and free
+  - elementId: stack-sep-3
+    elementType: shape
+    bounds: [64, 366, 512, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: stack-4-label
+    elementType: text
+    bounds: [64, 384, 120, 14]
+    content:
+      style: "$dKick"
+      color: "$gold"
+      letterSpacing: 2
+      wrap: false
+      text: COMPUTE
+  - elementId: stack-4-value
+    elementType: text
+    bounds: [196, 382, 380, 40]
+    content:
+      style: "$dBody"
+      fontSize: 14
+      color: "$dink"
+      lineHeight: 1.4
+      text: managed terminals now; Canadian-built Linux devices on the long path
+  - elementId: sub
+    elementType: text
+    bounds: [64, 450, 512, 40]
+    content:
+      style: "$dBody"
+      fontSize: 13
+      lineHeight: 1.55
+      text: |
+        <p>The point is not nationalism as decoration. The point is operational independence.</p>
+  - elementId: term-panel
+    elementType: shape
+    bounds: [600, 84, 296, 360]
+    shapeName: rect
+    fill: {type: solid, color: "$dpanel"}
+    border: {style: solid, width: 1, color: "$dhair2"}
+  - elementId: term-img
+    elementType: image
+    bounds: [608, 92, 280, 344]
+    src: media/hero-render.png
+    fit: {mode: contain}
+  - elementId: term-caption
+    elementType: text
+    bounds: [600, 452, 296, 26]
+    content:
+      style: "$dLabel"
+      lineHeight: 1.4
+      text: THE WORKSPACEALBERTA TERMINAL · ASSEMBLED NOW, CANADIAN-BUILT ON THE LONG PATH

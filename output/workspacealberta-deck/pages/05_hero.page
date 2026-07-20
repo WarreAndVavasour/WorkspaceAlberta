@@ -1,0 +1,163 @@
+pageType: content
+background:
+  type: solid
+  color: "$paper"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 440, 16]
+    content:
+      style: "$lKick"
+      color: "$copper"
+      wrap: false
+      text: 04 · LIVE TEST · JULY 18, 2026
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$lKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 82, 832, 46]
+    content:
+      style: "$lDisp"
+      fontSize: 36
+      wrap: false
+      text: One sentence about your shop. A ranked tender list in 30 seconds.
+  - elementId: card-in
+    elementType: shape
+    bounds: [64, 152, 360, 270]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: card-in-label
+    elementType: text
+    bounds: [88, 172, 312, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: THE INPUT — ONE SENTENCE
+  - elementId: card-in-rule
+    elementType: shape
+    bounds: [88, 196, 40, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$copper"}
+  - elementId: card-in-quote
+    elementType: text
+    bounds: [88, 216, 312, 150]
+    content:
+      style: "$lDisp"
+      fontFamily: Liter
+      fontSize: 15
+      color: "$lblack"
+      lineHeight: 1.6
+      text: |
+        <p>"Custom metal fabrication shop: structural steel, stairs, railings, platforms, CWB-certified welding. 12 employees, Edmonton."</p>
+  - elementId: card-in-attr
+    elementType: text
+    bounds: [88, 384, 312, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: Ironline Fabrication Ltd. · test persona
+  - elementId: mid-arrow
+    elementType: icon
+    bounds: [428, 279, 16, 16]
+    iconName: "fas:arrow-right"
+    fill: {type: solid, color: "$copper"}
+  - elementId: card-out
+    elementType: shape
+    bounds: [448, 152, 448, 270]
+    shapeName: rect
+    fill: {type: solid, color: "#ffffff"}
+    border: {style: solid, width: 1, color: "$lhair"}
+  - elementId: card-out-label
+    elementType: text
+    bounds: [472, 172, 320, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: THE OUTPUT — RANKED MATCH
+  - elementId: card-out-rule
+    elementType: shape
+    bounds: [472, 196, 40, 2]
+    shapeName: rect
+    fill: {type: solid, color: "$copper"}
+  - elementId: score
+    elementType: text
+    bounds: [472, 208, 120, 64]
+    content:
+      style: "$lDisp"
+      fontSize: 56
+      color: "$copper"
+      wrap: false
+      text: "91"
+  - elementId: score-label
+    elementType: text
+    bounds: [474, 276, 120, 12]
+    content:
+      style: "$lLabel"
+      wrap: false
+      text: MATCH SCORE
+  - elementId: out-org
+    elementType: text
+    bounds: [612, 208, 260, 42]
+    content:
+      style: "$lBody"
+      fontSize: 15
+      color: "$lblack"
+      lineHeight: 1.35
+      text: |
+        <p>Alberta Transportation & Economic Corridors — ITB TND0012201</p>
+  - elementId: out-detail
+    elementType: text
+    bounds: [612, 254, 260, 34]
+    content:
+      style: "$lBody"
+      fontSize: 11
+      lineHeight: 1.45
+      text: |
+        <p>Structural steel girder bridge · Hwy 2 interchange, Morinville AB</p>
+  - elementId: out-closes
+    elementType: text
+    bounds: [612, 292, 260, 16]
+    content:
+      style: "$lBody"
+      fontSize: 11
+      color: "$lblack"
+      wrap: false
+      text: |
+        <p>Closes 2026-07-30 · <span style="color:$copper">11 days remaining</span></p>
+  - elementId: out-divider
+    elementType: shape
+    bounds: [472, 326, 400, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: out-why-label
+    elementType: text
+    bounds: [472, 340, 300, 12]
+    content:
+      style: "$lLabel"
+      wrap: false
+      text: WHY IT MATCHES
+  - elementId: out-why
+    elementType: text
+    bounds: [472, 358, 400, 16]
+    content:
+      style: "$lBody"
+      fontSize: 10.5
+      wrap: false
+      text: steel · structural steel · fabrication · supply · delivers to Alberta
+  - elementId: footer
+    elementType: text
+    bounds: [64, 452, 832, 14]
+    content:
+      style: "$lLabel"
+      wrap: false
+      text: REAL DATA · ALBERTA PURCHASING CONNECTION · REF AB-2026-04073 · RETRIEVED LIVE VIA MCP

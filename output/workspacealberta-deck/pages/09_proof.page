@@ -1,0 +1,159 @@
+pageType: content
+background:
+  type: solid
+  color: "$paper"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 440, 16]
+    content:
+      style: "$lKick"
+      color: "$copper"
+      wrap: false
+      text: 08 · TESTED, NOT PROMISED
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$lKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: headline
+    elementType: text
+    bounds: [64, 82, 832, 46]
+    content:
+      style: "$lDisp"
+      fontSize: 36
+      wrap: false
+      text: We ran the user tests before we made this deck.
+  - elementId: hair-top
+    elementType: shape
+    bounds: [64, 166, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: stat-1
+    elementType: text
+    bounds: [64, 184, 256, 54]
+    content:
+      style: "$lDisp"
+      fontSize: 44
+      wrap: false
+      text: 5.4 s
+  - elementId: stat-1-label
+    elementType: text
+    bounds: [64, 246, 256, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: FRESH CLONE
+  - elementId: stat-2
+    elementType: text
+    bounds: [352, 184, 256, 54]
+    content:
+      style: "$lDisp"
+      fontSize: 44
+      wrap: false
+      text: 49 s
+  - elementId: stat-2-label
+    elementType: text
+    bounds: [352, 246, 256, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: DEPENDENCY INSTALL · CLEAN ON WINDOWS
+  - elementId: stat-3
+    elementType: text
+    bounds: [640, 184, 256, 54]
+    content:
+      style: "$lDisp"
+      fontSize: 44
+      wrap: false
+      text: 7/7
+  - elementId: stat-3-label
+    elementType: text
+    bounds: [640, 246, 256, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: SMOKE TESTS PASSING
+  - elementId: hair-mid
+    elementType: shape
+    bounds: [64, 284, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: stat-4
+    elementType: text
+    bounds: [64, 302, 256, 54]
+    content:
+      style: "$lDisp"
+      fontSize: 44
+      wrap: false
+      text: "21"
+  - elementId: stat-4-label
+    elementType: text
+    bounds: [64, 364, 256, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: MCP TOOLS LIVE
+  - elementId: stat-5
+    elementType: text
+    bounds: [352, 302, 256, 54]
+    content:
+      style: "$lDisp"
+      fontSize: 44
+      wrap: false
+      text: ~2 s
+  - elementId: stat-5-label
+    elementType: text
+    bounds: [352, 364, 256, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: FIRST LIVE SEARCH
+  - elementId: stat-6
+    elementType: text
+    bounds: [640, 302, 256, 54]
+    content:
+      style: "$lDisp"
+      fontSize: 44
+      wrap: false
+      text: 30 s
+  - elementId: stat-6-label
+    elementType: text
+    bounds: [640, 364, 256, 14]
+    content:
+      style: "$lLabel"
+      fontSize: 10
+      wrap: false
+      text: ONE SENTENCE TO RANKED MATCHES
+  - elementId: vdiv-1
+    elementType: shape
+    bounds: [336, 184, 1, 194]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: vdiv-2
+    elementType: shape
+    bounds: [624, 184, 1, 194]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: hair-bottom
+    elementType: shape
+    bounds: [64, 402, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$lhair"}
+  - elementId: honest
+    elementType: text
+    bounds: [64, 426, 832, 52]
+    content:
+      style: "$lBody"
+      fontSize: 12
+      lineHeight: 1.6
+      text: |
+        <p><span style="color:$copper">What broke:</span> the README has no setup path, naming is inconsistent, and the AI review tool dead-ends on Alberta references. All logged with fixes ranked in docs/user-tests/. We show the seams.</p>

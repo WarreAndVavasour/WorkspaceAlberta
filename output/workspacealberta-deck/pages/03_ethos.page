@@ -1,0 +1,91 @@
+pageType: content
+background:
+  type: solid
+  color: "$dbg"
+elements:
+  - elementId: kicker
+    elementType: text
+    bounds: [64, 36, 440, 16]
+    content:
+      style: "$dKick"
+      wrap: false
+      text: 02 · THE SENTENCE THAT STARTS EVERYTHING
+  - elementId: top-right
+    elementType: text
+    bounds: [660, 36, 236, 16]
+    content:
+      style: "$dKick"
+      align: [right, top]
+      wrap: false
+      text: W&V · WORKSPACEALBERTA
+  - elementId: lead-in
+    elementType: text
+    bounds: [64, 104, 600, 34]
+    content:
+      style: "$dDisp"
+      fontSize: 22
+      italic: true
+      color: "$gold2"
+      wrap: false
+      text: Wouldn't it be great if…
+  - elementId: wish-1
+    elementType: text
+    bounds: [64, 170, 832, 32]
+    content:
+      style: "$dDisp"
+      fontSize: 25
+      wrap: false
+      text: — a fabricator saw the right tender before the deadline was already too close
+  - elementId: sep-1
+    elementType: shape
+    bounds: [64, 218, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: wish-2
+    elementType: text
+    bounds: [64, 236, 832, 32]
+    content:
+      style: "$dDisp"
+      fontSize: 25
+      wrap: false
+      text: — a contractor could ask one question across federal and Alberta postings
+  - elementId: sep-2
+    elementType: shape
+    bounds: [64, 284, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: wish-3
+    elementType: text
+    bounds: [64, 302, 832, 32]
+    content:
+      style: "$dDisp"
+      fontSize: 25
+      wrap: false
+      text: — a shop owner got a daily bid brief without learning another portal
+  - elementId: sep-3
+    elementType: shape
+    bounds: [64, 350, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: wish-4
+    elementType: text
+    bounds: [64, 368, 832, 32]
+    content:
+      style: "$dDisp"
+      fontSize: 25
+      wrap: false
+      text: — a good bid/no-bid decision took minutes instead of a lost afternoon
+  - elementId: sep-4
+    elementType: shape
+    bounds: [64, 416, 832, 1]
+    shapeName: rect
+    fill: {type: solid, color: "$dhair"}
+  - elementId: footer
+    elementType: text
+    bounds: [64, 466, 832, 18]
+    content:
+      style: "$dBody"
+      fontSize: 13
+      color: "$dink40"
+      wrap: false
+      text: This is not a prompt library. It is the bottleneck, stated plainly.
