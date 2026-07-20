@@ -145,32 +145,6 @@ E2B sandboxes are the isolated compute layer for heavier bid-room work: opening 
 
 ---
 
-## Free Brief, Paid Bid Work
-
-The daily bid brief is free, permanently. Canadian businesses should see Canadian public demand every day — that habit is the foundation, and it stays free while it forms and after.
-
-**WorkspaceAlberta Pro** is $85 CAD/month, and it starts where browsing stops: the moment an owner decides to actually bid.
-
-Pro unlocks the tools that do estimator work:
-
-- **Bid rooms** — sandboxed E2B analysis of full tender packages: PDFs, submission forms, drawings lists
-- **Cohere Command A+ review** — requirements, risks, missing information, and a fit score grounded in the actual documents
-- **Watchlist** with closing-date tracking and notes
-- **Bid/no-bid scorecards** on demand
-
-Why charge at all? "Free MCP server" tells a business owner nothing — it reads as a toy. $85/month is a claim: this pays for itself on the first tender you would otherwise have missed, or the first afternoon an estimator doesn't spend digging through a 140-page RFP.
-
-Subscribe at [`subscribe.html`](subscribe.html) or directly via [Stripe checkout](https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a). Pricing details and provisioning plan: [`docs/pricing-and-subscription.md`](docs/pricing-and-subscription.md).
-
-The sequence still holds:
-
-1. Build trust with the free brief.
-2. Build the community.
-3. Prove the brief saves time.
-4. Charge for the bid work, never for the visibility.
-
----
-
 ## Why This Matters
 
 Get 50% of the population 10% better. Every year. That is generational growth.
@@ -235,17 +209,5 @@ Data and model sources:
 Image source notes live in [`docs/imagery-sources.md`](docs/imagery-sources.md).
 
 ---
-
-## The Last Mile
-
-Every efficiency gained by an Alberta fabricator, mill, or contractor ripples outward.
-
-Faster quotes mean more bids submitted. Better visibility means fewer missed opportunities. Better tender triage means less wasted estimating time. Better Canadian AI infrastructure means less dependence in the places where dependence matters.
-
-This is not replacing workers with AI. It is operational leverage for the people doing the actual work.
-
-The last mile is where the real work lives. We are building the wiring.
-
-**Canada is going to work.**
 
 *Data sources: [Statistics Canada](https://www150.statcan.gc.ca), [Innovation Canada](https://ised-isde.canada.ca), [Alberta Forest Products Association](https://albertaforestproducts.ca), [Job Bank Canada](https://www.jobbank.gc.ca)*
