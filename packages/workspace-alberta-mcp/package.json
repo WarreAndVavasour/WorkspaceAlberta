@@ -1,6 +1,7 @@
 {
   "name": "@warreandvavasour/workspace-alberta",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "mcpName": "io.github.HarleyCoops/workspace-alberta",
   "description": "Stdio MCP bridge for the hosted WorkspaceAlberta procurement endpoint.",
   "type": "module",
   "bin": {
