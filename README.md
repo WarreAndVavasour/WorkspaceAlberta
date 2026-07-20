@@ -7,6 +7,56 @@
 
 <p align="center"><em>Canadian industrial war production, via Library and Archives Canada.</em></p>
 
+## Getting Started
+
+The hosted MCP server is live and free for browsing — no install, no account, no API key. Point any MCP-capable assistant at it:
+
+```
+https://elbowsupknivesout.warreandvavasour.com/mcp
+```
+
+**Cursor, Claude Code, and other HTTP-native clients** — add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "url": "https://elbowsupknivesout.warreandvavasour.com/mcp"
+    }
+  }
+}
+```
+
+**Claude Desktop** (no native HTTP transport) — bridge with `mcp-remote`:
+
+```json
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://elbowsupknivesout.warreandvavasour.com/mcp"]
+    }
+  }
+}
+```
+
+Then ask it something a real owner would ask:
+
+- *"I run a CWB welding shop in Red Deer — what government work fits my shop right now?"*
+- *"What closes this week? I don't want to miss anything."*
+- *"Give me my morning brief — what fits us, and what's closing soon?"*
+
+**Run it locally instead** (the whole server is pure Python):
+
+```bash
+python -m pip install -r requirements.txt
+python mcp-servers/canadabuys/server.py
+```
+
+Smoke test: `python -m unittest tests.test_canadabuys_mcp_smoke`. Client config variants live in [`mcp.json.example`](mcp.json.example); full tool and REST reference in [`docs/mcp-tool-reference.md`](docs/mcp-tool-reference.md).
+
+---
+
 ## Canadian AI Security Is Canadian National Security
 
 WorkspaceAlberta is a Canadian procurement intelligence workspace. It connects public tender data to the people who can actually do the work: fabricators, mills, contractors, shops, manufacturers, and the small teams that keep the real economy moving.
