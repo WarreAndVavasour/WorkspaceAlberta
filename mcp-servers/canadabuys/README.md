@@ -74,7 +74,7 @@ mcp_servers:
     connect_timeout: 60
 ```
 
-For MCP clients that only support local command/stdio servers, use the npm bridge package after it is published:
+For MCP clients that only support local command/stdio servers, use the published npm bridge package:
 
 ```json
 {
