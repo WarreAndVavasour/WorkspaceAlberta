@@ -2,7 +2,7 @@
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 
-const DEFAULT_ENDPOINT = "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp";
+const DEFAULT_ENDPOINT = "https://elbowsupknivesout.warreandvavasour.com/mcp";
 const require = createRequire(import.meta.url);
 
 function printHelp() {

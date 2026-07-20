@@ -14,7 +14,7 @@
 # Override the target with: export WA_URL=http://127.0.0.1:8000
 set -euo pipefail
 
-WA_URL="${WA_URL:-https://workspacealberta-719334491060.northamerica-northeast1.run.app}"
+WA_URL="${WA_URL:-https://elbowsupknivesout.warreandvavasour.com}"
 cmd="${1:-help}"; shift || true
 
 post() { curl -s -X POST "$WA_URL$1" -H "Content-Type: application/json" -d "$2"; }

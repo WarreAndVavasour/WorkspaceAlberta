@@ -31,7 +31,7 @@ This package is for MCP clients that expect a local `command` transport. It star
       "args": [
         "-y",
         "mcp-remote",
-        "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+        "https://elbowsupknivesout.warreandvavasour.com/mcp"
       ]
     }
   }
@@ -57,8 +57,11 @@ npx -y @warreandvavasour/workspace-alberta http://127.0.0.1:8000/mcp
 If your MCP client supports StreamableHTTP directly, use the hosted endpoint without this package:
 
 ```text
-https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp
+https://elbowsupknivesout.warreandvavasour.com/mcp
 ```
+
+Fallback if the front domain is ever unreachable:
+`https://workspacealberta-983058968342.northamerica-northeast1.run.app/mcp`
 
 ## Publishing checklist (maintainers)
 
