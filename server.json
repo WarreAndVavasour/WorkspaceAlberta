@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "com.warreandvavasour/workspace-alberta",
+  "name": "io.github.harleycoops/workspace-alberta",
   "description": "Canadian procurement intelligence: CanadaBuys and Alberta tenders, ranked for your shop.",
   "repository": {
     "url": "https://github.com/HarleyCoops/WorkspaceAlberta",
