@@ -9,8 +9,6 @@
 
 ## Canadian AI Security Is Canadian National Security
 
-Canada should not discover its own industrial demand through foreign dashboards, foreign workflows, and foreign defaults.
-
 WorkspaceAlberta is a Canadian procurement intelligence workspace. It connects public tender data to the people who can actually do the work: fabricators, mills, contractors, shops, manufacturers, and the small teams that keep the real economy moving.
 
 The direction is explicit:
@@ -36,26 +34,6 @@ The model is not the whole bottleneck. The connection is.
 Wiring up the places where the work lives usually costs money, time, and technical patience a small business does not have. Government tender databases are a perfect example: the work is public, the demand is real, but the discovery process is still awkward enough that good companies miss good opportunities.
 
 **WorkspaceAlberta solves the last mile** by giving an AI assistant the wiring it needs to search, compare, summarize, and brief public procurement opportunities from inside the workspace where the owner is already working.
-
----
-
-## "Wouldn't It Be Great If..."
-
-This is not a prompt library.
-
-It is the sentence a business owner says when they can feel the friction in the operation but do not yet have the wiring to remove it.
-
-"Wouldn't it be great if..." is not marketing copy. It is the bottleneck, stated plainly.
-
-Wouldn't it be great if:
-
-- a fabricator saw the right tender before the deadline was already too close
-- a contractor could ask one question across federal and Alberta postings
-- a shop owner got a daily bid brief without learning another portal
-- a Canadian model could help triage Canadian public work using Canadian tools
-- a good bid/no-bid decision took minutes instead of a lost afternoon
-
-The job of this workspace is to turn that sentence into faster decisions, fewer missed opportunities, and more useful output from the people already doing the work.
 
 ---
 
