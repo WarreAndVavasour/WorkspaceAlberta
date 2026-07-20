@@ -59,3 +59,26 @@ If your MCP client supports StreamableHTTP directly, use the hosted endpoint wit
 ```text
 https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp
 ```
+
+## Publishing checklist (maintainers)
+
+The package is verified with `npm pack --dry-run` (3 files, ~1.7 kB tarball) and
+`node bin/workspace-alberta.js --help`. Two ways to publish:
+
+**Via GitHub Actions (preferred):** `.github/workflows/publish-npm.yml` already
+exists — add an npm automation token with publish rights on the
+`@warreandvavasour` scope as the workflow's `NODE_AUTH_TOKEN` secret, then run
+the workflow from the Actions tab (it supports a dry-run input) or publish a
+GitHub release.
+
+**Locally:**
+
+1. `npm login` as an owner of the `@warreandvavasour` npm scope (create the org
+   at npmjs.com if it does not exist yet — scope name must match exactly).
+2. From this directory: `npm publish` (`publishConfig.access` is already
+   `public`, so no extra flag is needed).
+3. Verify: `npx -y @warreandvavasour/workspace-alberta --help`.
+
+After publishing, remove the "not yet published" note at the top of this
+README and the matching caveat in `mcp-servers/canadabuys/README.md`.
+Version bumps: `npm version patch|minor` here, then republish.

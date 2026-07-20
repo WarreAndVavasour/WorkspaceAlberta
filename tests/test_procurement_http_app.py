@@ -33,8 +33,9 @@ class ProcurementHttpAppTest(unittest.TestCase):
         old_sse = self.client.get("/sse")
         self.assertEqual(old_sse.status_code, 404)
 
+        # Stateless mode has no server-push stream; GET must fail fast, not hang.
         mcp_probe = self.client.get("/mcp", headers={"Accept": "text/event-stream"})
-        self.assertNotEqual(mcp_probe.status_code, 500)
+        self.assertEqual(mcp_probe.status_code, 405)
 
         tools = self.client.get("/tools")
         self.assertEqual(tools.status_code, 200)
@@ -58,6 +59,85 @@ class ProcurementHttpAppTest(unittest.TestCase):
             "This status check does not call the model",
             cohere_status.json()["content"],
         )
+
+    def test_landing_page(self) -> None:
+        landing = self.client.get("/")
+        self.assertEqual(landing.status_code, 200)
+        self.assertIn("text/html", landing.headers["content-type"])
+        self.assertIn("/mcp", landing.text)
+        self.assertIn("mcpServers", landing.text)
+
+    def test_cors_preflight(self) -> None:
+        preflight = self.client.options(
+            "/mcp",
+            headers={
+                "Origin": "https://example.com",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type,authorization,mcp-session-id",
+            },
+        )
+        self.assertEqual(preflight.status_code, 200)
+        self.assertEqual(preflight.headers["access-control-allow-origin"], "*")
+
+    def test_mcp_stateless_json_only_accept(self) -> None:
+        initialize = self.client.post(
+            "/mcp",
+            headers={"Accept": "application/json"},
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "test", "version": "0"},
+                },
+            },
+        )
+        self.assertEqual(initialize.status_code, 200)
+        self.assertEqual(initialize.json()["result"]["serverInfo"]["name"], "canadabuys")
+
+        # Stateless: a fresh request with no mcp-session-id header still works.
+        tools = self.client.post(
+            "/mcp",
+            headers={"Accept": "application/json"},
+            json={"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        )
+        self.assertEqual(tools.status_code, 200)
+        tool_names = {tool["name"] for tool in tools.json()["result"]["tools"]}
+        self.assertIn("search_opportunities", tool_names)
+
+
+class InlineProfileTest(unittest.TestCase):
+    def test_inline_profile_resolves(self) -> None:
+        from procurement_core.service import resolve_profile
+
+        profile = resolve_profile(
+            {
+                "profile": {
+                    "company_name": "Test Fab",
+                    "location": "Edmonton, Alberta",
+                    "description": "structural steel fabrication and welding",
+                }
+            }
+        )
+        self.assertEqual(profile["company_name"], "Test Fab")
+        self.assertIn("steel", profile["industries"])
+        self.assertTrue(profile["capabilities"])
+
+    def test_profile_arg_declared_on_matching_tools(self) -> None:
+        from mcp_tools import get_mcp_tools
+
+        by_name = {tool.name: tool for tool in get_mcp_tools()}
+        for name in (
+            "find_opportunities",
+            "find_matching_opportunities",
+            "daily_bid_brief",
+            "find_alberta_opportunities",
+            "process_bid_room",
+            "analyze_contract_with_cohere",
+        ):
+            self.assertIn("profile", by_name[name].inputSchema["properties"], name)
 
 
 if __name__ == "__main__":

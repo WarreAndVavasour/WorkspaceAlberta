@@ -32,6 +32,33 @@ the calling model sees when choosing tools.
 
 from mcp.types import Tool
 
+# Inline per-request profile: anonymous callers on the shared hosted endpoint
+# have no tenant row, so this is how they describe their business without
+# overwriting each other's saved file. Overrides the saved profile when passed.
+PROFILE_ARG_SCHEMA = {
+    "type": "object",
+    "description": (
+        "Inline business profile used for this call only. Overrides any saved "
+        "profile. On the shared public endpoint without a subscriber key, "
+        "this is the way to describe your business."
+    ),
+    "properties": {
+        "company_name": {"type": "string", "description": "Company name"},
+        "location": {"type": "string", "description": "Where the business is located, e.g. 'Edmonton, Alberta'"},
+        "description": {"type": "string", "description": "What the business does: products, services, capabilities"},
+        "capabilities": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Optional explicit capability keywords; derived from description when omitted",
+        },
+        "industries": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Optional industries such as steel, lumber, aluminum, construction",
+        },
+    },
+}
+
 
 def get_mcp_tools() -> list[Tool]:
     """Return the full declared tool list in stable order."""
@@ -131,7 +158,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="find_opportunities",
-            description="Find government contracts that match your business profile. Returns scored and ranked opportunities with explanations of why each one fits your capabilities.",
+            description="Find government contracts that match your business profile. Returns scored and ranked opportunities with explanations of why each one fits your capabilities. Pass an inline `profile` to describe the business per call.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -144,7 +171,8 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum opportunities to return (default: 15)",
                         "default": 15
-                    }
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
                 }
             }
         ),
@@ -236,7 +264,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="find_matching_opportunities",
-            description="Rank CanadaBuys and Alberta APC opportunities against the saved business profile.",
+            description="Rank CanadaBuys and Alberta APC opportunities against a business profile. Pass an inline `profile` to describe the business per call.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -249,13 +277,14 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum opportunities to return (default 15, max 30)",
                         "default": 15
-                    }
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
                 }
             }
         ),
         Tool(
             name="daily_bid_brief",
-            description="Generate a free daily bid brief from CanadaBuys and Alberta APC for the saved business profile.",
+            description="Generate a free daily bid brief from CanadaBuys and Alberta APC for a business profile. Pass an inline `profile` to describe the business per call.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -268,7 +297,8 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum items per section (default 5, max 10)",
                         "default": 5
-                    }
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
                 }
             }
         ),
@@ -347,7 +377,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="find_alberta_opportunities",
-            description="Find Alberta Purchasing Connection opportunities that match your saved business profile.",
+            description="Find Alberta Purchasing Connection opportunities that match your business profile. Pass an inline `profile` to describe the business per call.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -360,7 +390,8 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum opportunities to return (default: 15)",
                         "default": 15
-                    }
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
                 }
             }
         ),
@@ -392,7 +423,8 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Sandbox command timeout in seconds (default 420)",
                         "default": 420
-                    }
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
                 },
                 "required": ["reference"]
             }
@@ -427,7 +459,8 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum model response tokens (default 1200, max 2000)",
                         "default": 1200
-                    }
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
                 },
                 "required": ["reference"]
             }
