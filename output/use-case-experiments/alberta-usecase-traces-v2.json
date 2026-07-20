@@ -1,0 +1,996 @@
+{
+  "experiment": "workspacealberta-mcp-alberta-usecase-traces",
+  "version": "1.0",
+  "generated_at": "2026-07-20T12:34:53.293983+00:00",
+  "endpoint": "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp",
+  "transport": "MCP StreamableHTTP (streamablehttp_client + ClientSession)",
+  "method": "Each of 22 scripted Alberta small-business prompts was executed live against the deployed WorkspaceAlberta MCP server: planned tool calls were adapted to the live list_tools schema, run sequentially with per-call 120s timeouts, and <ref-from-previous-step> placeholders were resolved from the first reference number found in the previous step's raw result text.",
+  "trace_count": 22,
+  "outcome_summary": {
+    "success": 19,
+    "paywall": 3
+  },
+  "traces": [
+    {
+      "id": "uc-01",
+      "persona": "CWB-certified welding shop owner, Red Deer",
+      "prompt": "I run a small CWB welding shop in Red Deer with 8 guys. What government work is out there for a shop like mine right now?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Owner described his trade and town in one sentence — save it as his business profile so matching works.",
+          "tool": "set_business_profile",
+          "planned_arguments": {
+            "company_name": "Red Deer Rig Welding",
+            "description": "CWB-certified welding shop: structural steel welding, pipe welding, mobile rig welding, repairs and custom fabrication. 8 employees.",
+            "location": "Red Deer, Alberta"
+          },
+          "arguments": {
+            "company_name": "Red Deer Rig Welding",
+            "description": "CWB-certified welding shop: structural steel welding, pipe welding, mobile rig welding, repairs and custom fabrication. 8 employees.",
+            "location": "Red Deer, Alberta"
+          },
+          "result_text": "# Profile Saved!\n\n**Company:** Red Deer Rig Welding\n**Location:** Red Deer, Alberta\n\n**Detected Industries:** steel\n**Keywords I'll search for:** steel, structural steel, welding, certified, shop, structural, pipe, mobile, repairs, custom\n\nUse `find_opportunities` to see matching contracts!",
+          "is_error": false,
+          "latency_ms": 500
+        },
+        {
+          "step": 2,
+          "thought": "Profile saved — rank live federal and Alberta opportunities against it.",
+          "tool": "find_matching_opportunities",
+          "planned_arguments": {
+            "days": 45,
+            "limit": 8
+          },
+          "arguments": {
+            "days": 45,
+            "limit": 8
+          },
+          "result_text": "# Matching Opportunities for Red Deer Rig Welding\n\nFound **8** ranked opportunities across CanadaBuys and Alberta APC.\n\n**1. Transportation and Economic Corridors - Invitation to Bid - TND0012201 - Hwy 2:36 - Gradin**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04073`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-07-30T14:01:00\n   Match Score: 55 | Closes in 10 days\n   Why it matches: title matches: steel, structural steel, structural; description matches: pipe, fabrication; delivers to alberta; closes in 10 days\n\n**2. Forestry and Parks - Request for Quotes - Snowmobiles  - Deep snow capable**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05108`\n   Buyer: Forestry and Parks\n   Category: Goods\n   Closing: 2026-07-29T14:00:59\n   Match Score: 38 | Closes in 9 days\n   Why it matches: title matches: mobile; description matches: steel; commodity matches: mobile; delivers to alberta; closes in 9 days\n\n**3. Transportation and Economic Corridors - Invitation to Bid - TND0025091 - Asphalt Concrete **\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04468`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-07-21T14:01:00\n   Match Score: 33 | Closes in 1 days\n   Why it matches: description matches: steel, pipe; commodity matches: structural; delivers to alberta; closes in 1 days\n\n**4. Special Areas Board - Request for Proposal - RE9223 - Culvert #5**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04979`\n   Buyer: Special Areas Board\n   Category: Goods\n   Closing: 2026-07-22T14:00:00\n   Match Score: 33 | Closes in 2 days\n   Why it matches: description matches: steel, pipe; commodity matches: structural; delivers to alberta; closes in 2 days\n\n**5. Transportation and Economic Corridors - Invitation to Bid - TND0020252 - Grading, Granular**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04633`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-07-28T14:01:00\n   Match Score: 33 | Closes in 8 days\n   Why it matches: description matches: steel, pipe; commodity matches: structural; delivers to alberta; closes in 8 days\n\n**6. Special Areas Board - Request for Proposal - Culvert #7**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05129`\n   Buyer: Special Areas Board\n   Category: Goods\n   Closing: 2026-07-30T10:00:00\n   Match Score: 33 | Closes in 9 days\n   Why it matches: description matches: steel, pipe; commodity matches: structural; delivers to alberta; closes in 9 days\n\n**7. Special Areas Board - Request for Proposal - Culvert #6**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05127`\n   Buyer: Special Areas Board\n   Category: Goods\n   Closing: 2026-07-30T10:00:00\n   Match Score: 33 | Closes in 9 days\n   Why it matches: description matches: steel, pipe; commodity matches: structural; delivers to alberta; closes in 9 days\n\n**8. Transportation and Economic Corridors - Invitation to Bid - TND0023901 - Selective Grading**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05070`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-08-07T14:01:00\n   Match Score: 30 | Closes in 18 days\n   Why it matches: title matches: repairs; description matches: steel, pipe; delivers to alberta\n\n",
+          "is_error": false,
+          "latency_ms": 5389
+        }
+      ],
+      "tools_used": [
+        "set_business_profile",
+        "find_matching_opportunities"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-02",
+      "persona": "HVAC contractor, Calgary",
+      "prompt": "Any school or public building HVAC contracts out for tender in Alberta? We do commercial HVAC install and service.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search the Alberta source for HVAC postings.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "HVAC"
+          },
+          "arguments": {
+            "keywords": "HVAC"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 10 of 14 matching APC records.\n\n**1. City of Lethbridge - Notice of Award - HVAC Upgrade Stan Siwik Pool**\n   Reference: `AB-2026-05180`\n   Organization: City of Lethbridge\n   Category: Services | Type: NOA\n   Closing: \n\n**2. Forestry and Parks - Invitation to Bid - Cold Lake Provincial Park - Shower Building**\n   Reference: `AB-2026-04972`\n   Organization: Forestry and Parks\n   Category: Construction | Type: ITB\n   Closing: 2026-08-04T14:00:59\n\n**3. University of Calgary - Pre-qualification Request - Air and Hydronic Balancing Contractor**\n   Reference: `AB-2026-04901`\n   Organization: University of Calgary\n   Category: Construction | Type: PQR\n   Closing: 2026-08-03T14:00:00\n\n**4. Infrastructure - Request for Proposal - Request for Proposals (RFP) for Fixed Price Constr**\n   Reference: `AB-2026-04656`\n   Organization: Infrastructure\n   Category: Construction | Type: RFP\n   Closing: 2026-08-04T14:00:00\n\n**5. City of Calgary - Request for Proposal - 26-1630 Mechanical, Heating, Air Conditioning, Pl**\n   Reference: `AB-2026-04542`\n   Organization: City of Calgary\n   Category: Construction | Type: RFP\n   Closing: 2026-07-23T16:00:59\n\n**6. Infrastructure - Request for Proposal - RFP for Fixed Price Construction Services for Peac**\n   Reference: `AB-2026-04150`\n   Organization: Infrastructure\n   Category: Construction | Type: RFP\n   Closing: 2026-07-21T14:00:00\n\n**7. City of Calgary - Notice of Award - 24-0254 CPS MEEMS UCC Expansion Project- Consulting Se**\n   Reference: `AB-2025-07920`\n   Organization: City of Calgary\n   Category: Services | Type: NOA\n   Closing: \n\n**8. Infrastructure - Pre-qualification Request - PRE-QUALIFICATION REQUEST (“PQR”) NUMBER 0217**\n   Reference: `AB-2021-05685`\n   Organization: Infrastructure\n   Category: Services | Type: PQR\n   Closing: 2026-10-14T16:00:00\n\n**9. University of Calgary - Advanced Contract Award Notice / Notice of Proposed Procurement - **\n   Reference: `AB-2025-03496`\n   Organization: University of Calgary\n   Category: Goods | Type: ACAN\n   Closing: \n\n**10. University of Calgary - Advanced Contract Award Notice / Notice of Proposed Procurement - **\n   Reference: `AB-2025-01505`\n   Organization: University of Calgary\n   Category: Goods | Type: ACAN\n   Closing: \n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 360
+        },
+        {
+          "step": 2,
+          "thought": "Open the most relevant result to check scope, closing date, and requirements.",
+          "tool": "get_alberta_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-05180"
+          },
+          "arguments": {
+            "reference": "AB-2026-05180"
+          },
+          "result_text": "# City of Lethbridge - Notice of Award - HVAC Upgrade Stan Siwik Pool\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-05180\n- **Solicitation:** COL-25-223-1\n- **Status:** OPEN\n- **Category:** Services\n- **Solicitation Type:** NOA\n- **Opportunity Type:** NOTICE\n- **Organization:** City of Lethbridge\n- **Posted:** 2026-07-17T15:56:10.26266\n- **Closing:** None\n\n## Region\nAlberta,Lethbridge\n\n## Commodity Codes\n- 81100000 Professional engineering services\n\n## Description\nNotice of Award\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/5180)",
+          "is_error": false,
+          "latency_ms": 358
+        }
+      ],
+      "tools_used": [
+        "search_alberta_opportunities",
+        "get_alberta_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-03",
+      "persona": "Landscaping company owner, Lethbridge",
+      "prompt": "We do landscaping and grounds maintenance around Lethbridge and southern Alberta. Find me tenders we could bid on.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Unified search with a province filter keeps federal postings in play too, but scoped to Alberta delivery.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "landscaping grounds maintenance",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "arguments": {
+            "keywords": "landscaping grounds maintenance",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "result_text": "# Opportunities\n\nShowing 10 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Infrastructure - Invitation to Bid - Alberta Surgical Initiative Fort Saskatchewan Communi**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05179`\n   Buyer: Infrastructure\n   Category: Construction\n   Closing: 2026-08-06T14:00:00\n\n**2. City of Calgary - Request for Quotes - 26-1008 Calgary Transit 42Ave Lift Station Modifica**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05178`\n   Buyer: City of Calgary\n   Category: Construction\n   Closing: 2026-08-13T14:00:59\n\n**3. Infrastructure - Invitation to Bid - BARRHEAD – PROVINCIAL BUILDING Replace Security Acces**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05177`\n   Buyer: Infrastructure\n   Category: Services\n   Closing: 2026-08-11T14:00:00\n\n**4. Infrastructure - Invitation to Bid - Interior Plant Maintenance**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05146`\n   Buyer: Infrastructure\n   Category: Services\n   Closing: 2026-07-28T14:01:00\n\n**5. Forestry and Parks - Invitation to Bid - South Region Vault Toilet Replacement**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05103`\n   Buyer: Forestry and Parks\n   Category: Construction\n   Closing: 2026-08-13T14:00:59\n\n**6. City of Calgary - Request for Proposal - RFP 26-1580 Ramsay Elevated Guideway**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05014`\n   Buyer: City of Calgary\n   Category: Construction\n   Closing: 2026-09-10T14:00:01\n\n**7. Forestry and Parks - Invitation to Bid - Freeman Lake Public Lands – Campground Refurbishm**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04955`\n   Buyer: Forestry and Parks\n   Category: Construction\n   Closing: 2026-07-21T14:00:59\n\n**8. Municipal District of Taber - Request for Proposal - RFP - RR18-0 & RR18-2 Upgrades - EX20**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04937`\n   Buyer: Municipal District of Taber\n   Category: Services\n   Closing: 2026-07-31T14:00:00\n\n**9. City of Calgary - Request for Proposal - 26-1632 Supply and delivery various types of cond**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04923`\n   Buyer: City of Calgary\n   Category: Goods\n   Closing: 2026-08-04T16:00:59\n\n**10. Infrastructure - Request for Proposal - GRANDE PRAIRIE - PROVINCIAL BUILDING & COURTHOUSE **\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04856`\n   Buyer: Infrastructure\n   Category: Construction\n   Closing: 2026-07-23T14:00:00\n\n## Warnings\n- Relevance fallback: no records matched all search tokens (landscaping, grounds, maintenance); showing best partial matches ranked by coverage.\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 1250
+        },
+        {
+          "step": 2,
+          "thought": "Pull details on the best-looking hit.",
+          "tool": "get_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-05179"
+          },
+          "arguments": {
+            "reference": "AB-2026-05179"
+          },
+          "result_text": "# Infrastructure - Invitation to Bid - Alberta Surgical Initiative Fort Saskatchewan Community Hospital\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-05179\n- **Solicitation:** Plan # 023502\n- **Status:** OPEN\n- **Category:** Construction\n- **Solicitation Type:** ITB\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** Infrastructure\n- **Posted:** 2026-07-17T15:48:28.221847\n- **Closing:** 2026-08-06T14:00:00\n\n## Region\nAlberta\n\n## Commodity Codes\n- 72000000 Building and Facility Construction and Maintenance Services\n- 72100000 Building and facility maintenance and repair services\n- 85000000 Healthcare Services\n\n## Description\nPCL Construction Management Inc. on behalf of Alberta Infrastructure\n\nThe project involves renovations within the existing Fort Saskatchewan Community Hospital to expand and modernize several clinical departments including IV Therapy, Day Surgery  and the Medical Device Reprocessing. The intent of the project is to increase surgical capacity.\n\n## Additional Requirements\nEmail dolsen@pcl.com and EDRodriguez@pcl.com for access to bid\npackages.\n\n## Submission\nQuestions: July 30, 2026 at 2:00 p.m., Alberta Time\nSee bid instructions for inquiry contact.\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/5179)",
+          "is_error": false,
+          "latency_ms": 3421
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "get_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-04",
+      "persona": "Catering company, Fort McMurray",
+      "prompt": "We're a catering company in Fort Mac — camps, crew food, events. Any RFPs we should know about?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search Alberta postings for catering and food service work.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "catering food service"
+          },
+          "arguments": {
+            "keywords": "catering food service"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 1 of 1 matching APC records.\n\n**1. City of Lloydminster - Request for Proposal - Lloydminster Golf Course Operator Services**\n   Reference: `AB-2026-05147`\n   Organization: City of Lloydminster\n   Category: Services | Type: RFP\n   Closing: 2026-09-09T14:00:00\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 671
+        },
+        {
+          "step": 2,
+          "thought": "Get details on the top result.",
+          "tool": "get_alberta_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-05147"
+          },
+          "arguments": {
+            "reference": "AB-2026-05147"
+          },
+          "result_text": "# City of Lloydminster - Request for Proposal - Lloydminster Golf Course Operator Services\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-05147\n- **Solicitation:** LGCCRFP 2026-01\n- **Status:** OPEN\n- **Category:** Services\n- **Solicitation Type:** RFP\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** City of Lloydminster\n- **Posted:** 2026-07-16T16:00:36.307941\n- **Closing:** 2026-09-09T14:00:00\n\n## Region\nAlberta,Lloydminster\n\n## Commodity Codes\n- 49000000 Sports and Recreational Equipment and Supplies and Accessories\n- 50000000 Food Beverage and Tobacco Products\n- 50190000 Prepared and preserved foods\n- 50200000 Beverages\n- 73130000 Food and beverage industries\n- 90100000 Restaurants and catering\n- 90101500 Eating and drinking establishments\n- 90101600 Banquet and catering services\n- 90140000 Commercial sports\n- 90141500 Professional sporting events\n- 90141600 Sports event promotion and sponsorship\n- 90141700 Amateur and recreational sports\n\n## Description\nThe City of Lloydminster (City) is seeking Proposals from qualified proponents to operate and manage comprehensive golf services at the Lloydminster Golf and Curling Centre (LGCC). The successful Vendor will act as the primary operator and customer-facing service provider for all golf related services, including but not limited to:\n• Pro shop retail operations\n• Golf instruction and player development\n• Back shop and cart services\n• Tournament and event coordination\n• League development and programming\n• Food and beverage services (restaurant and on-course beverage cart)\n• Customer service and overall guest experience\n\nThe successful Vendor will be responsible for creating a welcoming, professional, and high-quality golf experience that supports participation growth, customer retention, and overall facility profitability. The City is seeking a Vendor with strong leadership, proven golf operations experience, and a demonstrated ability to grow the game of golf across all demographics, including youth and new participants. \n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/5147)\n- [External posting](https://lloydminster.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/dd2cf973-f9bc-4e4c-8577-c143a3c7fe0b)",
+          "is_error": false,
+          "latency_ms": 1109
+        }
+      ],
+      "tools_used": [
+        "search_alberta_opportunities",
+        "get_alberta_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-05",
+      "persona": "Gravel hauling trucker, Medicine Hat",
+      "prompt": "I've got two gravel trucks out of Medicine Hat. Who's tendering gravel supply or hauling this summer?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search Alberta for gravel supply and hauling tenders.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "gravel supply hauling"
+          },
+          "arguments": {
+            "keywords": "gravel supply hauling"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 10 of 100 matching APC records.\n\n**1. City of Lloydminster - Invitation to Bid - Northwest Drainage Channel - Phase 4 Upgrades**\n   Reference: `AB-2026-05152`\n   Organization: City of Lloydminster\n   Category: Construction | Type: ITB\n   Closing: 2026-08-13T14:00:00\n\n**2. Epcor - Request for Proposal - RFP 203611 Wastewater Hauling**\n   Reference: `AB-2026-04999`\n   Organization: Epcor\n   Category: Services | Type: RFP\n   Closing: 2026-07-30T13:22:54\n\n**3. Forestry and Parks - Request for Proposal - Permanent Sample Plot Measurements**\n   Reference: `AB-2026-05175`\n   Organization: Forestry and Parks\n   Category: Services | Type: RFP\n   Closing: 2026-08-04T14:00:59\n\n**4. Infrastructure - Request for Proposal - Uniforms. Clothing, and Accessories **\n   Reference: `AB-2026-05173`\n   Organization: Infrastructure\n   Category: Goods | Type: RFP\n   Closing: 2026-08-21T14:00:00\n\n**5. Transportation and Economic Corridors - Invitation to Bid - TND0025052 - Erosion Repair, S**\n   Reference: `AB-2026-05171`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-19T14:01:00\n\n**6. Olds College - Request for Quotes - Bowl Cutter Machine**\n   Reference: `AB-2026-05172`\n   Organization: Olds College\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-31T14:00:00\n\n**7. Transportation and Economic Corridors - Invitation to Bid - TND0021637 - Grading, Granular**\n   Reference: `AB-2026-05169`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-20T14:01:00\n\n**8. Forestry and Parks - Request for Proposal - Haig Lake and Chinchaga Generator Rental**\n   Reference: `AB-2026-05166`\n   Organization: Forestry and Parks\n   Category: Services | Type: RFP\n   Closing: 2026-08-12T14:00:59\n\n**9. Parkland County - Request for Proposal - Entwistle Pumphouse Chlorine Dosing System**\n   Reference: `AB-2026-05080`\n   Organization: Parkland County\n   Category: Services | Type: RFP\n   Closing: 2026-08-07T14:00:00\n\n**10. Infrastructure - Request for Quotes - Violation Tickets to be utilized by various Law Enfo**\n   Reference: `AB-2026-05141`\n   Organization: Infrastructure\n   Category: Goods | Type: RFQ\n   Closing: 2026-08-21T14:00:00\n\n## Warnings\n- Relevance fallback: no records matched all search tokens (gravel, supply, hauling); showing best partial matches ranked by coverage.\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 530
+        },
+        {
+          "step": 2,
+          "thought": "Also check what closes soonest so nothing is missed.",
+          "tool": "list_alberta_deadlines",
+          "planned_arguments": {
+            "days": 30,
+            "limit": 10
+          },
+          "arguments": {
+            "days": 30,
+            "limit": 10
+          },
+          "result_text": "# Alberta Opportunities Closing Within 30 Days\n\n**1. Special Areas Board - Request for Proposal - RE9239 - Apply a “Blow and Go” Type of Crack **\n   Reference: `AB-2026-04935`\n   Organization: Special Areas Board\n   Category: Services | Type: RFP\n   Closing: 2026-07-20T10:00:00\n\n**2. MacEwan University - Negotiated Request for Proposal - Compactor for School of Business**\n   Reference: `AB-2026-04918`\n   Organization: MacEwan University\n   Category: Goods | Type: NRFP\n   Closing: 2026-07-20T12:00:00\n\n**3. Red Deer Catholic Separate School Division - Request for Quotes - Request for Quote- Exter**\n   Reference: `AB-2026-04699`\n   Organization: Red Deer Catholic Separate School Division\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T12:00:00\n\n**4. Onion Lake Cree Nation - Request for Proposal - Wellness Centre – New Building**\n   Reference: `AB-2026-04849`\n   Organization: Onion Lake Cree Nation\n   Category: Construction | Type: RFP\n   Closing: 2026-07-20T12:00:59\n\n**5. Calgary Board of Education - Request for Quotes - For the Supply and Delivery of One (1) S**\n   Reference: `AB-2026-04743`\n   Organization: Calgary Board of Education\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T14:00:00\n\n**6. Calgary Board of Education - Invitation to Bid - General Contractor - MCC Panel Replacemen**\n   Reference: `AB-2026-04678`\n   Organization: Calgary Board of Education\n   Category: Services | Type: ITB\n   Closing: 2026-07-20T14:00:00\n\n**7. Workers' Compensation Board of Alberta - Request for Proposal - User Interface/User Experi**\n   Reference: `AB-2026-04470`\n   Organization: Workers' Compensation Board of Alberta\n   Category: Services | Type: RFP\n   Closing: 2026-07-20T14:00:00\n\n**8. Northern Alberta Institute of Technology (NAIT) - Request for Quotes - The Supply and Deli**\n   Reference: `AB-2026-04824`\n   Organization: Northern Alberta Institute of Technology (NAIT)\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T14:00:00\n\n**9. County of Wetaskiwin No. 10 - Request for Proposal - Range Road 12 Rehabilitation**\n   Reference: `AB-2026-04604`\n   Organization: County of Wetaskiwin No. 10\n   Category: Construction | Type: RFP\n   Closing: 2026-07-20T14:00:01\n\n**10. Alberta Energy Regulator - Request for Proposal - 336-RFP Integrated Workplace Management **\n   Reference: `AB-2026-04428`\n   Organization: Alberta Energy Regulator\n   Category: Services | Type: RFP\n   Closing: 2026-07-20T14:00:59\n\n",
+          "is_error": false,
+          "latency_ms": 359
+        }
+      ],
+      "tools_used": [
+        "search_alberta_opportunities",
+        "list_alberta_deadlines"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-06",
+      "persona": "Janitorial services owner, Edmonton",
+      "prompt": "Cleaning contracts for government buildings or schools in Edmonton — what's available?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search both sources for janitorial and cleaning contracts.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "janitorial cleaning",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "arguments": {
+            "keywords": "janitorial cleaning",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "result_text": "# Opportunities\n\nShowing 10 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Forestry and Parks - Request for Proposal - Janitorial Services**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05017`\n   Buyer: Forestry and Parks\n   Category: Services\n   Closing: 2026-07-23T14:00:59\n\n**2. City of Edmonton - Negotiated Request for Proposal - 939541 Waste Containers Supply and De**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04859`\n   Buyer: City of Edmonton\n   Category: Goods\n   Closing: 2026-07-28T16:00:00\n\n**3. City of St. Albert - Negotiated Request for Proposal - Janitorial Services at Jack Kraft a**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04848`\n   Buyer: City of St. Albert\n   Category: Services\n   Closing: 2026-07-28T14:00:00\n\n**4. City of St. Albert - Negotiated Request for Proposal - Janitorial Services at Fountain Par**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04780`\n   Buyer: City of St. Albert\n   Category: Services\n   Closing: 2026-07-23T14:00:00\n\n**5. City of Red Deer - Request for Quotes - Janitorial Services – Police Facilities**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04603`\n   Buyer: City of Red Deer\n   Category: Services\n   Closing: 2026-07-29T13:30:59\n\n**6. Calgary Public Library - Request for Proposal - RFP 26-0008 Genesis Centre Commons Custodi**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04599`\n   Buyer: Calgary Public Library\n   Category: Services\n   Closing: 2026-08-19T14:00:00\n\n**7. W6985-260328 Janitorial Services-Restricted-B**\n   Source: CanadaBuys\n   Reference: `WS5466200979-Doc5729107068`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-06-23T14:00:00\n\n**8. Municipal District of Wainwright No. 61 - Notice of Planned Procurement - Notice of Propos**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-00485`\n   Buyer: Municipal District of Wainwright No. 61\n   Category: Goods\n   Closing: None\n\n**9. City of Spruce Grove - Notice of Intent - Intent to use Buying Groups**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-00038`\n   Buyer: City of Spruce Grove\n   Category: Goods\n   Closing: None\n\n**10. Strathcona County - Notice of Intent - NOI#26.0005 Notice of Buying Group Participation 20**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2025-07877`\n   Buyer: Strathcona County\n   Category: Goods\n   Closing: None\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 594
+        },
+        {
+          "step": 2,
+          "thought": "Open details on the most relevant posting.",
+          "tool": "get_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-05017"
+          },
+          "arguments": {
+            "reference": "AB-2026-05017"
+          },
+          "result_text": "# Forestry and Parks - Request for Proposal - Janitorial Services\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-05017\n- **Solicitation:** 27TDROSB100\n- **Status:** OPEN\n- **Category:** Services\n- **Solicitation Type:** RFP\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** Forestry and Parks\n- **Posted:** 2026-07-10T07:31:55.322779\n- **Closing:** 2026-07-23T14:00:59\n\n## Region\nAlberta\n\n## Commodity Codes\n- 21101701 Mowers\n- 47000000 Cleaning Equipment and Supplies\n- 47120000 Janitorial equipment\n- 70150000 Forestry\n- 72101507 Building maintenance service\n- 72102901 Snow removal services\n- 76110000 Cleaning and janitorial services\n- 76121501 Garbage collection or destruction or processing or disposal\n- 77000000 Environmental Services\n\n## Description\nThe Ranger Stations and offices in Grande Cache, Fort Vermilion, Manning and Fox Creek, managed by Forestry and Parks (FP), serve as critical operational hubs for FP, other Government of Alberta (GoA) staff, and Albertans seeking frontline services. To maintain a safe and healthy workplace, new contracts for janitorial and maintenance services are essential, as the previous agreements have expired. These new contracts will ensure uninterrupted services, including internal cleaning, seasonal yard and lawn care, snow removal, and garbage disposal. Individual contracts will be established for each site to guarantee the proper maintenance and cleanliness of these facilities.\n\nProponents are not required to bid on all Service Locations included in this RFP. Proposals may be submitted for any individual location, any combination of locations, or all locations. The Province may, in its sole discretion, award Contracts on a location-by-location basis and is not obligated to award all locations to a single Proponent. \n\nSubmission of proposals for multiple locations will not provide any advantage in the evaluation process.\n\n\n## Submission\nRefer to RFP for submission details.\n\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/5017)",
+          "is_error": false,
+          "latency_ms": 375
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "get_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-07",
+      "persona": "Small IT services firm, St. Albert",
+      "prompt": "We're a 5-person IT support shop in St. Albert. Any government RFPs for IT support or managed services we could actually win?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search for IT support and managed services postings.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "IT support managed services",
+            "limit": 10
+          },
+          "arguments": {
+            "keywords": "IT support managed services",
+            "limit": 10
+          },
+          "result_text": "# Opportunities\n\nShowing 10 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. St Albert Public Library - Request for Proposal - Managed IT Services: Tier 1 & Tier 2 Sup**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05118`\n   Buyer: St Albert Public Library\n   Category: Services\n   Closing: 2026-08-17T16:00:00\n\n**2. Indigenous Programs and Services**\n   Source: CanadaBuys\n   Reference: `cb-328-26376633`\n   Buyer: Correctional Service of Canada (CSC)\n   Category: *SRV\n   Closing: 2026-06-29T14:00:00\n\n**3. Elder Helper Services**\n   Source: CanadaBuys\n   Reference: `cb-786-16033978`\n   Buyer: Correctional Service of Canada (CSC)\n   Category: *SRV\n   Closing: 2026-06-25T14:00:00\n\n**4. Request for Information (RFI) for a Cloud-Managed Site Network Solution**\n   Source: CanadaBuys\n   Reference: `SSC-26-00034042:T`\n   Buyer: Shared Services Canada\n   Category: *GD\n   Closing: 2026-06-29T15:00:00\n\n**5. Elder Services**\n   Source: CanadaBuys\n   Reference: `cb-389-97101477`\n   Buyer: Correctional Service of Canada (CSC)\n   Category: *SRV\n   Closing: 2026-06-23T14:00:00\n\n**6. NPP - Research and Advisory services in Information Management (IM) and Information Techno**\n   Source: CanadaBuys\n   Reference: `cb-906-51458544`\n   Buyer: Department of National Defence (DND)\n   Category: *SRV\n   Closing: 2026-06-25T14:00:00\n\n**7. Community Assessments & Parole Supervision (CAPS)**\n   Source: CanadaBuys\n   Reference: `cb-620-38092370`\n   Buyer: Correctional Service of Canada (CSC)\n   Category: *SRV\n   Closing: 2026-06-19T13:00:00\n\n**8. Local Internet Access Services (LIAS)**\n   Source: CanadaBuys\n   Reference: `SSC-26-00033828:T`\n   Buyer: Shared Services Canada\n   Category: *SRV\n   Closing: 2065-04-27T07:00:00\n\n**9. APN - RP OPS and CFHA Base Program - NCR**\n   Source: CanadaBuys\n   Reference: `MX-443949207929`\n   Buyer: Defence Construction Canada - National Capital Region\n   Category: *CNST\n   Closing: 2029-03-31T14:00:00\n\n**10. ADVANCE PROCUREMENT NOTICE, GANDER PROGRAM,  NL**\n   Source: CanadaBuys\n   Reference: `MX-443947358726`\n   Buyer: Defence Construction Canada - Atlantic Region\n   Category: *CNST\n   Closing: 2027-03-31T13:00:00\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 828
+        },
+        {
+          "step": 2,
+          "thought": "Summarize the Alberta landscape so the owner sees the shape of the market, not just one hit.",
+          "tool": "summarize_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "information technology"
+          },
+          "arguments": {},
+          "adaptation_notes": [
+            "dropped 'keywords' (not in schema)"
+          ],
+          "result_text": "# Alberta Purchasing Connection Summary\n\n**Open Opportunities:** 1524\n\n## By Category\n- **Services:** 763\n- **Goods:** 599\n- **Construction:** 162\n\nAPC includes Government of Alberta and Alberta public-sector buyers such as municipalities, school boards, health entities, and post-secondary institutions.",
+          "is_error": false,
+          "latency_ms": 1391
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "summarize_alberta_opportunities"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-08",
+      "persona": "Print shop owner, Airdrie",
+      "prompt": "Do municipalities tender printing work? We do signs, forms, and commercial printing in Airdrie.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search for printing and sign work.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "printing signs"
+          },
+          "arguments": {
+            "keywords": "printing signs"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 3 of 3 matching APC records.\n\n**1. Northern Alberta Institute of Technology (NAIT) - Negotiated Request for Proposal - SCM26-**\n   Reference: `AB-2026-05047`\n   Organization: Northern Alberta Institute of Technology (NAIT)\n   Category: Services | Type: NRFP\n   Closing: 2026-08-07T14:00:00\n\n**2. Municipal District of Wainwright No. 61 - Notice of Planned Procurement - Notice of Propos**\n   Reference: `AB-2026-00485`\n   Organization: Municipal District of Wainwright No. 61\n   Category: Goods | Type: NPP\n   Closing: \n\n**3. Municipal District of Wainwright No. 61 - Notice of Planned Procurement - Notice of Propos**\n   Reference: `AB-2025-04966`\n   Organization: Municipal District of Wainwright No. 61\n   Category: Goods | Type: NPP\n   Closing: \n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 421
+        },
+        {
+          "step": 2,
+          "thought": "Give a quick summary of what's open in Alberta overall for context.",
+          "tool": "summarize_alberta_opportunities",
+          "planned_arguments": {},
+          "arguments": {},
+          "result_text": "# Alberta Purchasing Connection Summary\n\n**Open Opportunities:** 1524\n\n## By Category\n- **Services:** 763\n- **Goods:** 599\n- **Construction:** 162\n\nAPC includes Government of Alberta and Alberta public-sector buyers such as municipalities, school boards, health entities, and post-secondary institutions.",
+          "is_error": false,
+          "latency_ms": 734
+        }
+      ],
+      "tools_used": [
+        "search_alberta_opportunities",
+        "summarize_alberta_opportunities"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-09",
+      "persona": "Security guard company, Calgary",
+      "prompt": "Security services contracts — and tell me straight: is the best one worth bidding or not?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Find security service postings.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "security guard services",
+            "province": "Alberta",
+            "limit": 8
+          },
+          "arguments": {
+            "keywords": "security guard services",
+            "province": "Alberta",
+            "limit": 8
+          },
+          "result_text": "# Opportunities\n\nShowing 8 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Strathcona County - Request for Qualification - RFPQ #26.0070 CITP Woodbridge Way and Siou**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05182`\n   Buyer: Strathcona County\n   Category: Construction\n   Closing: 2026-08-18T14:00:00\n\n**2. City of Lethbridge - Notice of Award - HVAC Upgrade Stan Siwik Pool**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05180`\n   Buyer: City of Lethbridge\n   Category: Services\n   Closing: None\n\n**3. Infrastructure - Invitation to Bid - BARRHEAD – PROVINCIAL BUILDING Replace Security Acces**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05177`\n   Buyer: Infrastructure\n   Category: Services\n   Closing: 2026-08-11T14:00:00\n\n**4. St Albert Public Library - Request for Proposal - Managed IT Services: Tier 1 & Tier 2 Sup**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05118`\n   Buyer: St Albert Public Library\n   Category: Services\n   Closing: 2026-08-17T16:00:00\n\n**5. ATB Financial - Request for Proposal - First-Line Penetration Testing Services**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05164`\n   Buyer: ATB Financial\n   Category: Services\n   Closing: 2026-08-11T14:00:59\n\n**6. University of Alberta - Request for Proposal - Security Compliance and Certification Advis**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05154`\n   Buyer: University of Alberta\n   Category: Services\n   Closing: 2026-07-30T14:00:00\n\n**7. City of Beaumont - Negotiated Request for Proposal - Security Systems Consulting Services**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05093`\n   Buyer: City of Beaumont\n   Category: Services\n   Closing: 2026-08-12T14:00:00\n\n**8. Transportation and Economic Corridors - Invitation to Bid - TND0023901 - Selective Grading**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05070`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-08-07T14:01:00\n\n## Warnings\n- Relevance fallback: no records matched all search tokens (security, guard, services); showing best partial matches ranked by coverage.\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 875
+        },
+        {
+          "step": 2,
+          "thought": "Run the bid/no-bid scorecard on the top match for a straight go/caution/no-go answer.",
+          "tool": "bid_no_bid_scorecard",
+          "planned_arguments": {
+            "reference": "AB-2026-05182"
+          },
+          "arguments": {
+            "reference": "AB-2026-05182"
+          },
+          "result_text": "# WorkspaceAlberta Pro required\n\nA WorkspaceAlberta Pro API key is required for this tool.\n\nAdd your key to the MCP server config as an `Authorization: Bearer wa_live_...` header, or subscribe at https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month).",
+          "is_error": false,
+          "latency_ms": 203
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "bid_no_bid_scorecard"
+      ],
+      "output": "",
+      "expected_outcome": "paywall",
+      "actual_outcome": "paywall",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-10",
+      "persona": "Electrician, Grande Prairie",
+      "prompt": "Master electrician in GP. What electrical work is closing in the next two weeks? I can mobilize fast.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "He needs the closing-soon list first, filtered tight to 14 days.",
+          "tool": "list_alberta_deadlines",
+          "planned_arguments": {
+            "days": 14,
+            "limit": 15
+          },
+          "arguments": {
+            "days": 14,
+            "limit": 15
+          },
+          "result_text": "# Alberta Opportunities Closing Within 14 Days\n\n**1. Special Areas Board - Request for Proposal - RE9239 - Apply a “Blow and Go” Type of Crack **\n   Reference: `AB-2026-04935`\n   Organization: Special Areas Board\n   Category: Services | Type: RFP\n   Closing: 2026-07-20T10:00:00\n\n**2. MacEwan University - Negotiated Request for Proposal - Compactor for School of Business**\n   Reference: `AB-2026-04918`\n   Organization: MacEwan University\n   Category: Goods | Type: NRFP\n   Closing: 2026-07-20T12:00:00\n\n**3. Red Deer Catholic Separate School Division - Request for Quotes - Request for Quote- Exter**\n   Reference: `AB-2026-04699`\n   Organization: Red Deer Catholic Separate School Division\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T12:00:00\n\n**4. Onion Lake Cree Nation - Request for Proposal - Wellness Centre – New Building**\n   Reference: `AB-2026-04849`\n   Organization: Onion Lake Cree Nation\n   Category: Construction | Type: RFP\n   Closing: 2026-07-20T12:00:59\n\n**5. Calgary Board of Education - Request for Quotes - For the Supply and Delivery of One (1) S**\n   Reference: `AB-2026-04743`\n   Organization: Calgary Board of Education\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T14:00:00\n\n**6. Calgary Board of Education - Invitation to Bid - General Contractor - MCC Panel Replacemen**\n   Reference: `AB-2026-04678`\n   Organization: Calgary Board of Education\n   Category: Services | Type: ITB\n   Closing: 2026-07-20T14:00:00\n\n**7. Workers' Compensation Board of Alberta - Request for Proposal - User Interface/User Experi**\n   Reference: `AB-2026-04470`\n   Organization: Workers' Compensation Board of Alberta\n   Category: Services | Type: RFP\n   Closing: 2026-07-20T14:00:00\n\n**8. Northern Alberta Institute of Technology (NAIT) - Request for Quotes - The Supply and Deli**\n   Reference: `AB-2026-04824`\n   Organization: Northern Alberta Institute of Technology (NAIT)\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T14:00:00\n\n**9. County of Wetaskiwin No. 10 - Request for Proposal - Range Road 12 Rehabilitation**\n   Reference: `AB-2026-04604`\n   Organization: County of Wetaskiwin No. 10\n   Category: Construction | Type: RFP\n   Closing: 2026-07-20T14:00:01\n\n**10. Alberta Energy Regulator - Request for Proposal - 336-RFP Integrated Workplace Management **\n   Reference: `AB-2026-04428`\n   Organization: Alberta Energy Regulator\n   Category: Services | Type: RFP\n   Closing: 2026-07-20T14:00:59\n\n**11. Public Safety and Emergency Services - Request for Quotes - CSD Double Convection Oven**\n   Reference: `AB-2026-05009`\n   Organization: Public Safety and Emergency Services\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T14:00:59\n\n**12. Service Alberta and Red Tape Reduction - Request for Quotes - COMPRESSOR (MOBILE)**\n   Reference: `AB-2026-04554`\n   Organization: Service Alberta and Red Tape Reduction\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T14:00:59\n\n**13. Forestry and Parks - Request for Proposal - Takyi Pine Trial Measurement**\n   Reference: `AB-2026-04889`\n   Organization: Forestry and Parks\n   Category: Services | Type: RFP\n   Closing: 2026-07-20T14:00:59\n\n**14. Lethbridge County - Invitation to Bid - Combined Road Rehabilitation**\n   Reference: `AB-2026-04897`\n   Organization: Lethbridge County\n   Category: Construction | Type: ITB\n   Closing: 2026-07-20T14:00:59\n\n**15. Keyano College - Request for Quotes - HEAVY EQUIPMENT RENTAL FOR HEAVY EQUIPMENT OPERATOR **\n   Reference: `AB-2026-04920`\n   Organization: Keyano College\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-20T16:00:00\n\n",
+          "is_error": false,
+          "latency_ms": 375
+        },
+        {
+          "step": 2,
+          "thought": "Then search specifically for electrical work to cross-check.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "electrical"
+          },
+          "arguments": {
+            "keywords": "electrical"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 10 of 69 matching APC records.\n\n**1. Transportation and Economic Corridors - Invitation to Bid - TND0021637 - Grading, Granular**\n   Reference: `AB-2026-05169`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-20T14:01:00\n\n**2. Infrastructure - Invitation to Bid - CALGARY Various - Alberta Innovates Facilities - Fume**\n   Reference: `AB-2026-05111`\n   Organization: Infrastructure\n   Category: Construction | Type: ITB\n   Closing: 2026-07-29T14:00:00\n\n**3. University of Alberta - Request for Proposal - Cameron Library Renovations **\n   Reference: `AB-2026-05112`\n   Organization: University of Alberta\n   Category: Construction | Type: RFP\n   Closing: 2026-08-04T14:00:00\n\n**4. Northern Lights School Division - Notice of Intent - Participation in Canoe Procurement**\n   Reference: `AB-2026-05105`\n   Organization: Northern Lights School Division\n   Category: Goods | Type: NOI\n   Closing: \n\n**5. Service Alberta and Red Tape Reduction - Request for Quotes - VIAVI CX300 Communication Se**\n   Reference: `AB-2026-05102`\n   Organization: Service Alberta and Red Tape Reduction\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-27T14:00:59\n\n**6. Transportation and Economic Corridors - Invitation to Bid - TND0025870 - BRIDGE REHABILITA**\n   Reference: `AB-2026-05082`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-18T14:01:00\n\n**7. Transportation and Economic Corridors - Invitation to Bid - TND0023901 - Selective Grading**\n   Reference: `AB-2026-05070`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-07T14:01:00\n\n**8. Red Deer Polytechnic - Negotiated Request for Proposal - High Voltage Study Consultant **\n   Reference: `AB-2026-05029`\n   Organization: Red Deer Polytechnic\n   Category: Services | Type: NRFP\n   Closing: 2026-07-21T12:33:00\n\n**9. City of Calgary - Request for Proposal - RFP 26-1580 Ramsay Elevated Guideway**\n   Reference: `AB-2026-05014`\n   Organization: City of Calgary\n   Category: Construction | Type: RFP\n   Closing: 2026-09-10T14:00:01\n\n**10. Infrastructure - Request for Quotes - Lamps, Lightbulbs, and Lamp Components**\n   Reference: `AB-2026-02208`\n   Organization: Infrastructure\n   Category: Goods | Type: RFQ\n   Closing: 2026-07-27T14:00:59\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 421
+        }
+      ],
+      "tools_used": [
+        "list_alberta_deadlines",
+        "search_alberta_opportunities"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-11",
+      "persona": "Fabrication shop owner, Edmonton — morning routine",
+      "prompt": "Give me my morning brief — what fits my shop and what's closing soon?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "The brief needs his profile on file first — he told us last week what he does; re-save to be safe.",
+          "tool": "set_business_profile",
+          "planned_arguments": {
+            "company_name": "Ironline Fabrication Ltd.",
+            "description": "Custom metal fabrication shop: structural steel, stairs, railings, platforms, CWB-certified welding, steel supply and install for commercial and light industrial projects. 12 employees, serving central Alberta.",
+            "location": "Edmonton, Alberta"
+          },
+          "arguments": {
+            "company_name": "Ironline Fabrication Ltd.",
+            "description": "Custom metal fabrication shop: structural steel, stairs, railings, platforms, CWB-certified welding, steel supply and install for commercial and light industrial projects. 12 employees, serving central Alberta.",
+            "location": "Edmonton, Alberta"
+          },
+          "result_text": "# Profile Saved!\n\n**Company:** Ironline Fabrication Ltd.\n**Location:** Edmonton, Alberta\n\n**Detected Industries:** steel\n**Keywords I'll search for:** steel, structural steel, metal fabrication, welding, custom, metal, fabrication, shop, structural, stairs\n\nUse `find_opportunities` to see matching contracts!",
+          "is_error": false,
+          "latency_ms": 407
+        },
+        {
+          "step": 2,
+          "thought": "Generate the free daily bid brief.",
+          "tool": "daily_bid_brief",
+          "planned_arguments": {
+            "days": 14,
+            "limit": 5
+          },
+          "arguments": {
+            "days": 14,
+            "limit": 5
+          },
+          "result_text": "# Daily Bid Brief for Ironline Fabrication Ltd.\n\nFree community brief. Build the habit first; pricing can wait until people rely on it.\n\n## Market Snapshot\n- **Federal CanadaBuys open notices:** 919\n- **Alberta APC open opportunities:** 1524\n- **Lookahead window:** 14 days\n\n## Best Fits\n**1. Transportation and Economic Corridors - Invitation to Bid - TND0012201 - Hwy 2:36 - Gradin**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04073`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-07-30T14:01:00\n   Score 91 | closes in 10 days\n   Reason: title matches: steel, structural steel, structural; description matches: fabrication, supply; commodity matches: install, light; delivers to alberta; closes in 10 days\n\n**2. Transportation and Economic Corridors - Invitation to Bid - TND0020252 - Grading, Granular**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04633`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-07-28T14:01:00\n   Score 54 | closes in 8 days\n   Reason: description matches: steel, supply, install; commodity matches: structural, install, light; delivers to alberta; closes in 8 days\n\n**3. City of Calgary - Request for Proposal - 26-1624 Butterfly Valve Supply for  North Calgary**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04509`\n   Buyer: City of Calgary\n   Category: Goods\n   Closing: 2026-07-22T16:00:01\n   Score 48 | closes in 2 days\n   Reason: title matches: supply; description matches: metal, fabrication, certified; commodity matches: industrial; delivers to alberta; closes in 2 days\n\n**4. Rural Municipalities of Alberta (RMA) - Request for Proposal - Fencing Materials and Produ**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04199`\n   Buyer: Rural Municipalities of Alberta (RMA)\n   Category: Goods\n   Closing: 2026-07-28T14:30:00\n   Score 46 | closes in 8 days\n   Reason: description matches: steel, railings, install; commodity matches: metal, structural; delivers to alberta; closes in 8 days\n\n**5. City of Calgary - Request for Proposal - 26-1524 - Supply and Delivery of Shop Supplies an**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04750`\n   Buyer: City of Calgary\n   Category: Goods\n   Closing: 2026-07-23T16:00:59\n   Score 43 | closes in 3 days\n   Reason: title matches: shop, supply; commodity matches: commercial; delivers to alberta; closes in 3 days\n\n## Closing Soon\n**1. Special Areas Board - Request for Proposal - RE9239 - Apply a “Blow and Go” Type of Crack **\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04935`\n   Buyer: Special Areas Board\n   Category: Services\n   Closing: 2026-07-20T10:00:00\n   Closes in -1 days\n\n**2. MacEwan University - Negotiated Request for Proposal - Compactor for School of Business**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04918`\n   Buyer: MacEwan University\n   Category: Goods\n   Closing: 2026-07-20T12:00:00\n   Closes in -1 days\n\n**3. Red Deer Catholic Separate School Division - Request for Quotes - Request for Quote- Exter**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04699`\n   Buyer: Red Deer Catholic Separate School Division\n   Category: Goods\n   Closing: 2026-07-20T12:00:00\n   Closes in -1 days\n\n**4. Onion Lake Cree Nation - Request for Proposal - Wellness Centre – New Building**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04849`\n   Buyer: Onion Lake Cree Nation\n   Category: Construction\n   Closing: 2026-07-20T12:00:59\n   Closes in -1 days\n\n**5. W857A-25YK01 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA Y**\n   Source: CanadaBuys\n   Reference: `WS5706888003-Doc5738192985`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T12:43:20\n   Closes in 0 days\n\n## Suggested Action\nOpen the top one or two matches, check mandatory requirements and documents, then make a bid/no-bid call.\n",
+          "is_error": false,
+          "latency_ms": 3905
+        }
+      ],
+      "tools_used": [
+        "set_business_profile",
+        "daily_bid_brief"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-12",
+      "persona": "Snow removal contractor, Canmore",
+      "prompt": "Winter's coming — any snow clearing contracts with towns or the province I should get in front of?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search for snow removal and ice control tenders.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "snow removal ice control",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "arguments": {
+            "keywords": "snow removal ice control",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "result_text": "# Opportunities\n\nShowing 1 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Kinetic GPO - Notice of Planned Procurement - NOI 2026**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2025-07386`\n   Buyer: Kinetic GPO\n   Category: Goods\n   Closing: None\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 733
+        },
+        {
+          "step": 2,
+          "thought": "Open the top result.",
+          "tool": "get_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2025-07386"
+          },
+          "arguments": {
+            "reference": "AB-2025-07386"
+          },
+          "result_text": "# Kinetic GPO - Notice of Planned Procurement - NOI 2026\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2025-07386\n- **Solicitation:** NOI 2026\n- **Status:** OPEN\n- **Category:** Goods\n- **Solicitation Type:** NPP\n- **Opportunity Type:** NOTICE\n- **Organization:** Kinetic GPO\n- **Posted:** 2025-11-28T16:00:00\n- **Closing:** 2026-12-31T14:00:00\n\n## Region\nAlberta\n\n## Commodity Codes\n- 20143300 Pipeline service equipment\n- 21101506 Graders or land levelers\n- 24102400 Waste material handling and recycling systems\n- 25101507 Light trucks or sport utility vehicles\n- 25101604 Delivery trucks\n- 25101700 Safety and rescue vehicles\n- 25101707 Fire fighting ladder truck\n- 25101708 Rescue truck\n- 25101914 Waste collection vehicle or garbage truck\n- 25101919 Road sweeper\n- 25101926 Snow plow truck\n- 26111603 Wind generators\n\n## Description\nNotice of Intent Closes – December 2026\n\nPlease note this is a Notice of Intent, not a Request for Standing Offer (RFSO). To remain compliant to the trade agreements, we are making this declaration that Kinetic GPO may potentially go out to competition for these categories. This is not a competition or an opportunity. Kinetic GPO reserves the right to make adjustments and/or changes.\n\nKinetic GPO wishes to advise prospective suppliers that we are adding to our “potential competition” list of non-binding RFSOs for 2026.\n\nLight Duty Vehicles\nExercise Equipment\nElectrical Mapping\nHeavy Construction Equipment\nGravel Crushing\nGrading\nLab Equipment\nLighting\nLeak Detection\nAmmunition, Police Gear\nFacility Solutions\nBidding Sites\nWater and Wastewater Valves\nStrategic Management Consulting Services\nPipelines, Relining\nTransformers\nPOS Systems\nTelephone Products and Services\nWater Meters\nRoadway Illumination\nCourier Services\nInformation Technology\nRubber Asphalt Seal Coating & Paving\nSchool Supplies and Related Items\nVehicle Rentals\nFire Trucks\nSafety Equipment Including Fire Safety\nSafety Training OH&S\nBuilding Automation\nMaintenance, Repair and Operations\nCable Running\nPest Control\nWind and solar farms\nAudio Visual, Scoreboards Digital Display\nAirport Runway and Emergency Equipment\nDigital Health Products\nWater Pumps\nFuels and Lubricants\nElevator Consulting Services\nAmbulance & Emergency Vehicles\nSnow & Ice Equipment\nOffice Supplies\nRoad Salt/Brine, Dust Control\nHotel\nWaste Management\nGeospatial Imagery\nMarketing Promotional Material\nTrailers\nEnergy Conservation Solutions & Related Services\nLearning Management System Software\nCulverts\nVirtual Reality Training\nWaste Management Solutions\nTravel Management\nDrug Management Systems\nBuilding Inspectors\n3rd party Commissioning\nGas Cylinders\nJob Order Contracting - Indefinite Quantity Indefinite Delivery Construction Contracting (IQCC)\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2025/7386)",
+          "is_error": false,
+          "latency_ms": 407
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "get_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-13",
+      "persona": "Concrete contractor, Red Deer",
+      "prompt": "Sidewalks, curbs, flatwork — what concrete tenders are out there in central Alberta?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search Alberta for concrete sidewalk and curb work.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "concrete sidewalk curb"
+          },
+          "arguments": {
+            "keywords": "concrete sidewalk curb"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 8 of 8 matching APC records.\n\n**1. Transportation and Economic Corridors - Invitation to Bid - TND0023901 - Selective Grading**\n   Reference: `AB-2026-05070`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-07T14:01:00\n\n**2. Thorhild County - Invitation to Bid - Asphalt Concrete Paving, Curb and Concrete Sidewalk,**\n   Reference: `AB-2026-05015`\n   Organization: Thorhild County\n   Category: Construction | Type: ITB\n   Closing: 2026-07-31T14:00:00\n\n**3. Town of Canmore - Request for Quotes - 2026 Streets and Drainage Improvements - RFQ for Va**\n   Reference: `AB-2026-04762`\n   Organization: Town of Canmore\n   Category: Construction | Type: RFQ\n   Closing: 2026-07-23T14:00:00\n\n**4. City of Edmonton - Invitation to Bid - 935742 - Active Modes #4 - 2622**\n   Reference: `AB-2026-04392`\n   Organization: City of Edmonton\n   Category: Construction | Type: ITB\n   Closing: 2026-07-22T16:00:00\n\n**5. City of Edmonton - Request for Qualification - 935686 Prequalification of Prime Contractor**\n   Reference: `AB-2026-01089`\n   Organization: City of Edmonton\n   Category: Construction | Type: RFQual\n   Closing: 2030-02-06T16:00:00\n\n**6. Infrastructure - Notice of Award - SOW #023587 STRUCTURAL AND CIVIL ENGINEERING SERVICES F**\n   Reference: `AB-2025-04435`\n   Organization: Infrastructure\n   Category: Services | Type: NOA\n   Closing: \n\n**7. Black Gold School Division - Notice of Award - LEDUC JUNIOR HIGH SCHOOL PARKING LOT AND VE**\n   Reference: `AB-2025-03695`\n   Organization: Black Gold School Division\n   Category: Construction | Type: NOA\n   Closing: \n\n**8. City of Edmonton - Request for Qualification - 935511-Request for Pre-Qualification of Pri**\n   Reference: `AB-2024-09451`\n   Organization: City of Edmonton\n   Category: Construction | Type: RFQual\n   Closing: 2028-11-30T16:00:00\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 405
+        },
+        {
+          "step": 2,
+          "thought": "Pull details on the best match.",
+          "tool": "get_alberta_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-05070"
+          },
+          "arguments": {
+            "reference": "AB-2026-05070"
+          },
+          "result_text": "# Transportation and Economic Corridors - Invitation to Bid - TND0023901 - Selective Grading, GBC, Full Depth Reclamation, Cold Milling, ACP, Culvert Replacement, Concrete Repairs, Milled Rumble Strips, Street Light Installation and Other Work\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-05070\n- **Solicitation:** TND0023901\n- **Status:** OPEN\n- **Category:** Construction\n- **Solicitation Type:** ITB\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** Transportation and Economic Corridors\n- **Posted:** 2026-07-13T18:51:01.819051\n- **Closing:** 2026-08-07T14:01:00\n\n## Region\nAlberta\n\n## Commodity Codes\n- 72101700 Concrete work\n- 72140000 Heavy construction services\n- 72141000 Highway and road construction services\n- 72141001 Highway and road new construction service\n- 72141002 Highway and road sign or guardrail construction and repair service\n- 72141003 Highway and road maintenance service\n- 72141103 Highway and road paving service\n- 72141104 Highway and road resurfacing service\n- 72141105 Sidewalk construction and repair service\n- 72141123 Manhole construction service\n- 72150000 Specialized trade construction and maintenance services\n- 72151306 Pavement marking service\n\n## Description\nTender available date: Monday, July 13, 2026.\nTender closing date: Friday, August 7, 2026.\n\nPre-Tender Meeting: Monday, July 27, 2026 at 1:30 p.m. MST virtually over MS Teams. \n\nProject Inquiries: Ikhtiyar Mammadov, Manager, Engineering Services Procurement, Alberta Transportation and Economic Corridors. E-mail: Ikhtiyar.Mammadov@gov.ab.ca.\n\nTENDERS will only be received by email at trans.tender@gov.ab.ca, before 2:01:00 P.M., for construction of the following work:\n\nTND0023901\n\nSelective Grading, Granular Base Course (GBC), Full Depth Reclamation, Cold Milling, Asphalt Concrete Pavement (ACP), Culvert Replacement, Concrete Repairs, Milled Rumble Strips, Street Light Installation and Other Work\n\n16:04 to 06, From 680m East of Rge Rd 185 to East of Rge Rd 170\nkilometre 45.995 to 49.551 (WBL)\nkilometre 0.000 to 15.300 (WBL)\n\n16:06, From West of Rge Rd 180 to McLeod River Bridge\nkilometre 4.800 to 17.300 (EBL)\n\n47:06, From South of West Fraser Lumber Mill to Highway 16 WB Ramps\nkilometre 57.600 to 58.635 (EBL,WBL,NBL,SBL)\n\nNORTH CENTRAL REGION\n\nAPPROXIMATE QUANTITIES:\n\n1 Lump Sum Traffic Accommodation\n164,520 Tonne Supply of Aggregate - No Option\n71,500 Cubic Metre Common Excavation\n10,400 Cubic Metre Borrow Excavation - Contractor Supplied\n174 Metre Smooth Wall Steel Pipe - Supply and Install (750 mm dia.)\n96,300 Square Metre Topsoil Placement\n3,300 Tonne Granular Fill Des. 6 Class 80\n34,600 Tonne Granular Base Course Des. 2 Class 25\n4,813 Metre Concrete Curb and Gutter - Remove and Dispose\n2,051 Square Metre Concrete Surface - Remove and Dispose\n4,564 Square Metre Asphalt Surface - Remove and Dispose\n2,660 Metre Curb and Gutter (150 mm Curb Height, 300 mm Gutter Width)\n2,153 Metre Monolithic Sidewalk, Curb and Gutter (1.8 m Width)\n1,410 Square Metre Solid Concrete Islands\n1,380 Square Metre Solid Concrete Medians\n151,600 Square Metre Cold Milling Asphalt Pavement - 50 mm Depth\n40,160 Square Metre Cold Milling Asphalt Pavement - 100 mm Depth\n65,280 Square Metre Cold Milling Asphalt Pavement - 180 mm Depth\n44,920 Square Metre Full Depth Reclamation\n17,000 Tonne Asphalt Concrete Pavement – EPS Mix Type S3 (PG 64-37P)\n108,200 Tonne Asphalt Concrete Pavement – EPS Mix Type H2 (PG 64-37P)\n32.21 Kilometre Roadway Lines - Supplying Paint and Painting\n1,950 Metre Strong Post W-Beam Guardrail - Supply and Install\n19 Unit Bridge Approach Rail Transition\n5 Unit Pre-Cast Concrete Street Light Base - Supply and Install\n5 Unit Street Light Standard - Supply and Install (13.1 m Davit)\n\nContractor to supply all materials.\nContract Completion Date: July 31, 2028.\n\n## Additional Requirements\nCertificate of Recognition (CoR)\n\n## Submission\nBidders may submit tenders by email only.\nEach tender must be accompanied by a bid bond in a digital format.\n\nHARD COPY SUBMISSIONS WILL NOT BE ACCEPTED.\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/5070)",
+          "is_error": false,
+          "latency_ms": 469
+        }
+      ],
+      "tools_used": [
+        "search_alberta_opportunities",
+        "get_alberta_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-14",
+      "persona": "Fence builder, rural Alberta",
+      "prompt": "I heard the Rural Municipalities of Alberta has a fencing RFP out. What are the details — materials only or install too?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Confirm the RMA fencing posting by searching.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "fencing",
+            "source": "alberta",
+            "limit": 8
+          },
+          "arguments": {
+            "keywords": "fencing",
+            "source": "alberta",
+            "limit": 8
+          },
+          "result_text": "# Opportunities\n\nShowing 8 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Municipal District of Opportunity No. 17 - Invitation to Bid - Wabasca Lagoon Gate **\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05123`\n   Buyer: Municipal District of Opportunity No. 17\n   Category: Construction\n   Closing: 2026-08-04T23:01:00\n\n**2. City of Edmonton - Negotiated Request for Proposal - 939531 Scaffolding and Fencing Servic**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05035`\n   Buyer: City of Edmonton\n   Category: Services\n   Closing: 2026-08-10T16:14:20\n\n**3. Special Areas Board - Request for Proposal - RE9242  - Contract Fencing for Sounding Creek**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05019`\n   Buyer: Special Areas Board\n   Category: Services\n   Closing: 2026-07-29T11:00:00\n\n**4. City of Grande Prairie - Invitation to Bid - Legion Field Upgrades**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04831`\n   Buyer: City of Grande Prairie\n   Category: Construction\n   Closing: 2026-08-06T14:00:00\n\n**5. City of Camrose - Lagoon Sani-Dump Fencing**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04899`\n   Buyer: City of Camrose\n   Category: Services\n   Closing: 2026-07-27T14:00:00\n\n**6. Kneehill County - Request for Proposal - South Gate Replacement, Kneehill County**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04916`\n   Buyer: Kneehill County\n   Category: Services\n   Closing: 2026-07-23T12:00:00\n\n**7. City of Calgary - Request for Quotes - 26-1007 East Calgary WMF - Construction of road, dr**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04871`\n   Buyer: City of Calgary\n   Category: Construction\n   Closing: 2026-07-28T14:00:59\n\n**8. City of Edmonton - Invitation to Bid - 935742 - Active Modes #4 - 2622**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04392`\n   Buyer: City of Edmonton\n   Category: Construction\n   Closing: 2026-07-22T16:00:00\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 358
+        },
+        {
+          "step": 2,
+          "thought": "Open the RMA fencing RFP details (ref seen earlier: AB-2026-04199 — verify against search results).",
+          "tool": "get_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-04199"
+          },
+          "arguments": {
+            "reference": "AB-2026-04199"
+          },
+          "result_text": "# Rural Municipalities of Alberta (RMA) - Request for Proposal - Fencing Materials and Products with Related Services\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-04199\n- **Solicitation:** 072826\n- **Status:** OPEN\n- **Category:** Goods\n- **Solicitation Type:** RFP\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** Rural Municipalities of Alberta (RMA)\n- **Posted:** 2026-06-09T14:30:00\n- **Closing:** 2026-07-28T14:30:00\n\n## Region\nAlberta\n\n## Commodity Codes\n- 30000000 Structures and Building and Construction and Manufacturing Components and Supplies\n- 30100000 Structural components and basic shapes\n- 30150000 Exterior finishing materials\n- 30152000 Fencing\n- 30152001 Metal fencing\n\n## Description\nCanoe Procurement Group of Canada is posting this notice of solicitation on behalf of CivicInfo BC, RMA, SARM, AMM, LAS, UMNB, NSFM, FPEIM, MNL, NWTAC, NAM, AYC and its current and potential Members and represented Associations and their Members, which includes all MASH/MUSH sectors, Provincial Governments, Federal Agencies, Crown Corporations, local Governmental and other not-for-profit organizations located in all provinces and territories in Canada including but not limited to British Columbia, Alberta, Saskatchewan, Manitoba, Ontario, Nova Scotia, New Brunswick, Prince Edward Island, Newfoundland and Labrador, Northwest Territories, Yukon Territories and Nunavut.  Request for Proposal (\"RFP\") to result in regional and/or national contract solutions under the rules and regulations of Canadian trade agreements (including Canadian Free Trade Agreement (CFTA) Chapter 5, Ontario-Quebec Trade and Cooperation Agreement, and Canada-European Union Comprehensive Economic and Trade Agreement (CETA) Chapter 19, New West Partnership Trade Agreement (NWPTA), Atlantic Trade and Procurement Partnership (ATPP) as applicable).\n\nSourcewell/Canoe are requesting proposals for Fencing Materials and Products with Related Services in a national contracting solution for use by its members.\n\nA full copy of the Request for Proposals can be found on the Sourcewell Procurement Portal [https://proportal.sourcewell-mn.gov].  Only proposals submitted through the Sourcewell Procurement Portal will be considered.  Proposals are due no later than July 28, 2026, 3:30 pm Central Time, and late proposals will not be considered.\n\nMembers include thousands of governmental, higher education, K-12 education, not-for-profit, tribal government, and other public agencies located in Canada.  A full copy of the Request for Proposals can be found on the Sourcewell Procurement Portal [https://proportal.sourcewell-mn.gov].  Only proposals submitted through the Sourcewell Procurement Portal will be considered.  Proposals are due no later than July 28, 2026 at 3:30 p.m. Central Time, and late proposals will not be considered.\n\nRequested Equipment, Products, or Services:\n\n1.\tSourcewell is seeking proposals for Fencing Materials and Products with Related Services, including but not limited to the following. Proposals offering installation services only may not be considered.\n\na.\tPerimeter Fencing;\ni.\tChain Link;\nii.\tWood;\niii.\tVinyl;\niv.\tComposite;\nv.\tOrnamental (steel, aluminum, wrought iron);\nvi.\tConcrete/Masonry\n\nb.\tSafety and Environmental Protection;\ni.\tSecurity fencing;\nii.\tBallistic-rated fencing;\niii.\tCrash-rated fencing;\niv.\tNoise reduction or sound attenuation fencing.\n\nc.\tTemporary Solutions;\ni.\tPortable fencing;\nii.\tPrivacy panels;\niii.\tRental fencing.\n\nIn addition to the primary solutions offered, proposers may offer complementary products and services directly related to the fencing solutions in a.-c. above including but not limited to: assembly, installation, clearing of existing \n\n## Submission\nA full copy of the Request for Proposals can be found on the Sourcewell Procurement Portal [https://proportal.sourcewell-mn.gov].  Only proposals submitted through the Sourcewell Procurement Portal will be considered.  Proposals are due no later than July 20, 2026, 3:30 pm Central Time, and late proposals will not be considered.\n\nProposer’s complete proposal must be submitted through the Sourcewell Procurement Portal no later than the date and time specified in the Solicitation Schedule. Any other form of proposal submission, whether electronic, paper, or otherwise, will not be considered by Sourcewell. Only complete proposals that are timely submitted through the Sourcewell Procurement Portal will be considered. Late proposals will not be considered. It is the Proposer’s sole responsibility to ensure that the proposal is received on time. \n\nAll proposals must be received through the Sourcewell Procurement Portal no later than the Proposal Due Date and time noted in the Solicitation Schedule above. It is recommended that Proposers allow sufficient time to upload the proposal and to resolve any issues that may arise.  The closing time and date is determined by the Sourcewell Procurement Portal web clock.\n\nIn the event of problems with the Sourcewell Procurement Portal, follow the instructions for technical support posted in the portal. It may take up to twenty-four (24) hours to respond to certain issues.  \n\nUpon successful submission of a proposal, the Sourcewell Procurement \nQuestions: Only questions submitted through the Sourcewell Procurement Portal will be considered.\nhttps://proportal.sourcewell-mn.gov/ \n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/4199)\n- [External posting](https://proportal.sourcewell-mn.gov/)",
+          "is_error": false,
+          "latency_ms": 421
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "get_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-15",
+      "persona": "Structural steel estimator, Edmonton",
+      "prompt": "That Hwy 2 bridge tender near Morinville (AB-2026-04073) — pull the details and have the AI review it for risks and requirements.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Get the full tender details first.",
+          "tool": "get_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-04073"
+          },
+          "arguments": {
+            "reference": "AB-2026-04073"
+          },
+          "result_text": "# Transportation and Economic Corridors - Invitation to Bid - TND0012201 - Hwy 2:36 - Grading, GBC, ACP, Street Light Installation, Construction of Structural Steel Girder Bridge, Construction of S.P.C.S.P. Culvert and Other Work\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-04073\n- **Solicitation:** TND0012201\n- **Status:** OPEN\n- **Category:** Construction\n- **Solicitation Type:** ITB\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** Transportation and Economic Corridors\n- **Posted:** 2026-05-27T16:56:03.5418\n- **Closing:** 2026-07-30T14:01:00\n\n## Region\nAlberta\n\n## Commodity Codes\n- 72101700 Concrete work\n- 72101704 Foundation or slab work\n- 72103003 Demolition services\n- 72140000 Heavy construction services\n- 72141000 Highway and road construction services\n- 72141001 Highway and road new construction service\n- 72141002 Highway and road sign or guardrail construction and repair service\n- 72141003 Highway and road maintenance service\n- 72141103 Highway and road paving service\n- 72141104 Highway and road resurfacing service\n- 72141107 Bridge construction and repair service\n- 72141123 Manhole construction service\n\n## Description\nTender available date: Wednesday, May 27, 2026.\nTender closing date: Thursday, July 30, 2026.\n\nPre-Tender Meeting: \n\nSession No. 1: June 10, 2026 at 10:00 am. Attendees may join the meeting via Microsoft Teams.\n\nSession No. 2: To Be Determined (TBD)\n\nProject Inquiries: Ikhtiyar Mammadov, Project Procurement Officer, Alberta Transportation and Economic Corridors. E-mail: Ikhtiyar.Mammadov@gov.ab.ca.\n\nTENDERS will only be received by email at trans.tender@gov.ab.ca, before 2:01:00 P.M., for construction of the following work:\n\nTND0012201\n\nGrading, Granular Base Course (GBC), Asphalt Concrete Pavement (ACP), Street Light Installation and Other Work\n\n2:36, Interchange Construction at Jct. Hwy. 2 and Cardiff Road/Twp. Rd. 554, S. of Morinville, AB\n\nConstruction of Structural Steel Girder Bridge, Construction of S.P.C.S.P. Culvert and Other Work\n\n2:36, B.F. 85214 - Carrying a Local Road (Cardiff Road/Twp. Rd. 554) over Hwy. 2, S. of Morinville, AB\n\nAsphalt Concrete Pavement (ACP) and Other Work\n\n2:36, 5 Km S. of Hwy 642 to Town of Morinville, AB\nkilometre 5.100 to 9.360 (NBL,SBL)\n\nB.F. 85220 - Canal Bridge Culvert\n\nNORTH CENTRAL REGION\n\nAPPROXIMATE QUANTITIES:\n\nRoadwork:\n\n279,400 Cubic Metre Common Excavation\n61,600 Cubic Metre Borrow Topsoil Excavation\n1,148,500 Cubic Metre Borrow Excavation\n270,000 Cubic Metre Rippable Rock Excavation - Premium\n610 Square Metre Mechanically Stabilized Earth Walls\n365 Metre Culverts - Supply and Install (600 mm dia. C.S.P.)\n345 Metre Culverts - Supply and Install (800 mm dia. C.S.P.)\n265 Metre Smooth Wall Steel Pipe - Supply and Install (750 mm dia.)\n180 Metre Smooth Wall Steel Pipe - Supply and Install (900 mm dia.)\n125,500 Square Metre Preparing Subgrade Surface (First Layer)\n107,100 Tonne Granular Base Course Des. 2 Class 25\n340,000 Square Metre Topsoil Placement\n40 Hectare Drill Seeding\n1,320 Metre Concrete Curb (125 mm Semi Mountable Curb) (Pin-On Type)\n1,070 Metre Curb and Gutter (125 mm Semi Mountable Curb and Gutter)\n1,750 Square Metre PCCP Concrete Truck Apron (240mm Thick)\n2,500 Square Metre Solid Concrete Medians\n90,000 Square Metre Cold Milling Asphalt Pavement - 50 mm Depth\n57,000 Tonne Asphalt Concrete Pavement - EPS Mix Type H2 (PG 58-28)\n732 Metre Strong Post W-Beam Guardrail - Supply and Install\n4,130 Metre Trenching and Backfilling\n3,550 Metre Secondary Cable - Supply and Install (4c #12 TECK 90)\n61 Unit Pre-Cast Concrete Street Light Base - Supply and Install\n51 Unit Street Light Standard - Supply and Install (15m x 2.5m Single Davit and Luminaire)\n2 Unit Distribution Enclosure - Supply and Install\n1 Lump Sum Traffic Signal System - Supply and Install (Hwy 2 & Cardiff Road Detour)\n\nBridge Culvert - BF 85220:\n\n1 Lump Sum Excavation - Structural (B.F. 85214)\n1 Lump Sum Backfill (B.F. 85214)\n1,642 Metre Supply of Piling - Plain Steel H-Pile - HP 310x110\n83 Pile Pile Set-up (Driven Piles) - HP 310x110\n62,667 Kilometre Plain Reinforcing Steel - Supply (B.F. 85214)\n95,377 Kilometre Stainless Reinforcing S\n\n## Additional Requirements\nCertificate of Recognition (CoR)\n\n## Submission\nBidders may submit tenders by email only.\nEach tender must be accompanied by a bid bond in a digital format.\n\nHARD COPY SUBMISSIONS WILL NOT BE ACCEPTED.\nQuestions: The Bidder is encouraged to submit questions as early as possible during the tendering period.\n\nThe Bidder must submit their inquiries no later than 4:30:00 p.m., five (5) business days prior to the tender Closing Date and Time identified on the cover page of the tender or as amended. Any inquiries received after this date may result in the inquiry not being responded to.\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/4073)",
+          "is_error": false,
+          "latency_ms": 516
+        },
+        {
+          "step": 2,
+          "thought": "Then run the Cohere AI review on the same reference.",
+          "tool": "analyze_contract_with_cohere",
+          "planned_arguments": {
+            "reference": "AB-2026-04073"
+          },
+          "arguments": {
+            "reference": "AB-2026-04073"
+          },
+          "result_text": "# WorkspaceAlberta Pro required\n\nA WorkspaceAlberta Pro API key is required for this tool.\n\nAdd your key to the MCP server config as an `Authorization: Bearer wa_live_...` header, or subscribe at https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month).",
+          "is_error": false,
+          "latency_ms": 202
+        }
+      ],
+      "tools_used": [
+        "get_opportunity_details",
+        "analyze_contract_with_cohere"
+      ],
+      "output": "",
+      "expected_outcome": "known-bug",
+      "actual_outcome": "paywall",
+      "expectation_met": false,
+      "notes": "Fresh-clone testing found analyze_contract_with_cohere dead-ends on Alberta references ('Contract not found'). Document actual behavior."
+    },
+    {
+      "id": "uc-16",
+      "persona": "GC owner, Calgary — weighing federal vs provincial",
+      "prompt": "Is there more construction work on the federal side or the Alberta side right now? Where should I focus?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Same keywords, both sources, to compare volume and fit.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "construction",
+            "source": "federal",
+            "limit": 10
+          },
+          "arguments": {
+            "keywords": "construction",
+            "source": "federal",
+            "limit": 10
+          },
+          "result_text": "# Opportunities\n\nShowing 10 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Open Construction Source List for CFB Halifax**\n   Source: CanadaBuys\n   Reference: `MX-443841357513`\n   Buyer: Defence Construction Canada - Atlantic Region\n   Category: *CNST\n   Closing: 2029-03-31T13:00:00\n\n**2. Open Construction Source List for 9 Wing Gander**\n   Source: CanadaBuys\n   Reference: `MX-443841357514`\n   Buyer: Defence Construction Canada - Atlantic Region\n   Category: *CNST\n   Closing: 2029-03-31T13:00:00\n\n**3. Open Construction Source List for 5 Wing Goose Bay**\n   Source: CanadaBuys\n   Reference: `MX-443841357515`\n   Buyer: Defence Construction Canada - Atlantic Region\n   Category: *CNST\n   Closing: 2029-03-31T13:00:00\n\n**4. Open Construction Source List for CDSB Gagetown and P.E.I.**\n   Source: CanadaBuys\n   Reference: `MX-443841876264`\n   Buyer: Defence Construction Canada - Atlantic Region\n   Category: *CNST\n   Closing: 2029-03-31T13:00:00\n\n**5. Open Construction Source List for 14 Wing Greenwood**\n   Source: CanadaBuys\n   Reference: `MX-443841876266`\n   Buyer: Defence Construction Canada - Atlantic Region\n   Category: *CNST\n   Closing: 2029-03-31T13:00:00\n\n**6. Open Construction Source List for CFB Esquimalt, BC**\n   Source: CanadaBuys\n   Reference: `MX-443840130570`\n   Buyer: Defence Construction Canada - Pacific Region\n   Category: *CNST\n   Closing: 2029-03-31T17:00:00\n\n**7. Open Construction Source List for 19 Wing Comox, BC**\n   Source: CanadaBuys\n   Reference: `MX-443840130685`\n   Buyer: Defence Construction Canada - Pacific Region\n   Category: *CNST\n   Closing: 2029-03-31T17:00:00\n\n**8. Open Construction Source List for ASU Chilliwack, BC**\n   Source: CanadaBuys\n   Reference: `MX-443840195575`\n   Buyer: Defence Construction Canada - Pacific Region\n   Category: *CNST\n   Closing: 2029-03-31T17:00:00\n\n**9. Open Construction Source List for CFB Wainwright**\n   Source: CanadaBuys\n   Reference: `MX-443840130559`\n   Buyer: Defence Construction Canada - Western Region\n   Category: *CNST\n   Closing: 2029-03-31T16:00:00\n\n**10. Open Construction Source List for 17 Wing Winnipeg**\n   Source: CanadaBuys\n   Reference: `MX-443840130560`\n   Buyer: Defence Construction Canada - Western Region\n   Category: *CNST\n   Closing: 2029-03-31T15:00:00\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 312
+        },
+        {
+          "step": 2,
+          "thought": "Now the Alberta side.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "construction",
+            "source": "alberta",
+            "limit": 10
+          },
+          "arguments": {
+            "keywords": "construction",
+            "source": "alberta",
+            "limit": 10
+          },
+          "result_text": "# Opportunities\n\nShowing 10 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Strathcona County - Request for Qualification - RFPQ #26.0070 CITP Woodbridge Way and Siou**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05182`\n   Buyer: Strathcona County\n   Category: Construction\n   Closing: 2026-08-18T14:00:00\n\n**2. Infrastructure - Invitation to Bid - Alberta Surgical Initiative Fort Saskatchewan Communi**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05179`\n   Buyer: Infrastructure\n   Category: Construction\n   Closing: 2026-08-06T14:00:00\n\n**3. City of Calgary - Request for Quotes - 26-1008 Calgary Transit 42Ave Lift Station Modifica**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05178`\n   Buyer: City of Calgary\n   Category: Construction\n   Closing: 2026-08-13T14:00:59\n\n**4. Municipal District of Greenview No. 16 - Negotiated Request for Proposal - Request for Pro**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05165`\n   Buyer: Municipal District of Greenview No. 16\n   Category: Goods\n   Closing: 2026-08-11T14:00:00\n\n**5. Municipal District of Greenview No. 16 - Negotiated Request for Proposal - Request for Pro**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05163`\n   Buyer: Municipal District of Greenview No. 16\n   Category: Goods\n   Closing: 2026-08-11T14:00:00\n\n**6. Forestry and Parks - Invitation to Bid - Construction Services for Bow River Pathway Refur**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05176`\n   Buyer: Forestry and Parks\n   Category: Construction\n   Closing: 2026-08-14T14:00:59\n\n**7. Transportation and Economic Corridors - Invitation to Bid - TND0025052 - Erosion Repair, S**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05171`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-08-19T14:01:00\n\n**8. Transportation and Economic Corridors - Invitation to Bid - TND0021637 - Grading, Granular**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05169`\n   Buyer: Transportation and Economic Corridors\n   Category: Construction\n   Closing: 2026-08-20T14:01:00\n\n**9. Infrastructure - Invitation to Bid - 024066B - Leduc Food Processing Development Centre-Re**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05167`\n   Buyer: Infrastructure\n   Category: Construction\n   Closing: 2026-08-13T14:00:00\n\n**10. City of Calgary - Invitation to Bid - SOR 24-2042-S09 2026 Watermain Replacement and Storm**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05161`\n   Buyer: City of Calgary\n   Category: Construction\n   Closing: 2026-07-30T14:00:59\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 437
+        }
+      ],
+      "tools_used": [
+        "search_opportunities"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-17",
+      "persona": "Fabrication owner tracking a tender",
+      "prompt": "Keep an eye on that bridge tender for me — I don't want to lose track of the closing date.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Add it to his persistent watchlist with a note.",
+          "tool": "watch_opportunity",
+          "planned_arguments": {
+            "reference": "AB-2026-04073",
+            "note": "Check bonding and CoR before 2026-07-30"
+          },
+          "arguments": {
+            "reference": "AB-2026-04073",
+            "note": "Check bonding and CoR before 2026-07-30"
+          },
+          "result_text": "# WorkspaceAlberta Pro required\n\nA WorkspaceAlberta Pro API key is required for this tool.\n\nAdd your key to the MCP server config as an `Authorization: Bearer wa_live_...` header, or subscribe at https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month).",
+          "is_error": false,
+          "latency_ms": 203
+        },
+        {
+          "step": 2,
+          "thought": "Show the watchlist back to confirm it's tracked.",
+          "tool": "list_watchlist",
+          "planned_arguments": {},
+          "arguments": {},
+          "result_text": "# WorkspaceAlberta Pro required\n\nA WorkspaceAlberta Pro API key is required for this tool.\n\nAdd your key to the MCP server config as an `Authorization: Bearer wa_live_...` header, or subscribe at https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month).",
+          "is_error": false,
+          "latency_ms": 203
+        }
+      ],
+      "tools_used": [
+        "watch_opportunity",
+        "list_watchlist"
+      ],
+      "output": "",
+      "expected_outcome": "paywall",
+      "actual_outcome": "paywall",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-18",
+      "persona": "Industrial supply reseller, Calgary",
+      "prompt": "The City of Calgary had an RFP for shop supplies (26-1524 I think). Is it still open and what are they buying?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search to confirm the posting.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "shop supplies",
+            "source": "alberta",
+            "limit": 8
+          },
+          "arguments": {
+            "keywords": "shop supplies",
+            "source": "alberta",
+            "limit": 8
+          },
+          "result_text": "# Opportunities\n\nShowing 3 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. Olds College - Request for Quotes - Bowl Cutter Machine**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05172`\n   Buyer: Olds College\n   Category: Goods\n   Closing: 2026-07-31T14:00:00\n\n**2. City of Lloydminster - Request for Proposal - Lloydminster Golf Course Operator Services**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05147`\n   Buyer: City of Lloydminster\n   Category: Services\n   Closing: 2026-09-09T14:00:00\n\n**3. City of Calgary - Request for Proposal - 26-1524 - Supply and Delivery of Shop Supplies an**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04750`\n   Buyer: City of Calgary\n   Category: Goods\n   Closing: 2026-07-23T16:00:59\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 500
+        },
+        {
+          "step": 2,
+          "thought": "Open the specific reference.",
+          "tool": "get_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-04750"
+          },
+          "arguments": {
+            "reference": "AB-2026-04750"
+          },
+          "result_text": "# City of Calgary - Request for Proposal - 26-1524 - Supply and Delivery of Shop Supplies and Fleet Parts \n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-04750\n- **Solicitation:** 26-1524\n- **Status:** OPEN\n- **Category:** Goods\n- **Solicitation Type:** RFP\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** City of Calgary\n- **Posted:** 2026-06-25T12:33:51.402536\n- **Closing:** 2026-07-23T16:00:59\n\n## Region\nAlberta\n\n## Commodity Codes\n- 25000000 Commercial and Military and Private Vehicles and their Accessories and Components\n\n## Description\nThe City of Calgary (“The City”) is seeking to purchase automotive parts, supplies, accessories, and small shop floor items for use in its facilities and working bays across various locations throughout the city.\nThere are eight (8) Schedules in this RFP: \nSchedule A – Filters\nSchedule B – Belts\nSchedule C – Wiper Blades \nSchedule D – Electrical\nSchedule E Clamps, Hoses, Fittings and Air Tools \nSchedule F – Caps & Fuel Components\nSchedule G – Ignition\nSchedule H – Shop Tools & Supplies\n\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/4750)\n- [External posting](https://portal.us.bn.cloud.ariba.com/dashboard/public/appext/comsapsbncdiscoveryui#/RfxEvent/preview/1110017010?anId=ANONYMOUS)",
+          "is_error": false,
+          "latency_ms": 358
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "get_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-19",
+      "persona": "Road builder, central Alberta",
+      "prompt": "What's Alberta Transportation tendering right now? Give me the lay of the land.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search Alberta for grading and highway work, which is how Transportation tenders read.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "grading highway"
+          },
+          "arguments": {
+            "keywords": "grading highway"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 5 of 5 matching APC records.\n\n**1. Transportation and Economic Corridors - Invitation to Bid - TND0021637 - Grading, Granular**\n   Reference: `AB-2026-05169`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-20T14:01:00\n\n**2. Transportation and Economic Corridors - Invitation to Bid - TND0023901 - Selective Grading**\n   Reference: `AB-2026-05070`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-07T14:01:00\n\n**3. Transportation and Economic Corridors - Invitation to Bid - TND0020252 - Grading, Granular**\n   Reference: `AB-2026-04633`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-07-28T14:01:00\n\n**4. Transportation and Economic Corridors - Request for Proposal - CON0025987 - HIGHWAY 2 SOUT**\n   Reference: `AB-2026-04318`\n   Organization: Transportation and Economic Corridors\n   Category: Services | Type: RFP\n   Closing: 2026-07-22T23:30:00\n\n**5. Transportation and Economic Corridors - Invitation to Bid - TND0012201 - Hwy 2:36 - Gradin**\n   Reference: `AB-2026-04073`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-07-30T14:01:00\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 1953
+        },
+        {
+          "step": 2,
+          "thought": "Summarize the Alberta market overall for the lay of the land.",
+          "tool": "summarize_alberta_opportunities",
+          "planned_arguments": {},
+          "arguments": {},
+          "result_text": "# Alberta Purchasing Connection Summary\n\n**Open Opportunities:** 1524\n\n## By Category\n- **Services:** 763\n- **Goods:** 599\n- **Construction:** 162\n\nAPC includes Government of Alberta and Alberta public-sector buyers such as municipalities, school boards, health entities, and post-secondary institutions.",
+          "is_error": false,
+          "latency_ms": 1702
+        }
+      ],
+      "tools_used": [
+        "search_alberta_opportunities",
+        "summarize_alberta_opportunities"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-20",
+      "persona": "Plumber, Lethbridge",
+      "prompt": "Any plumbing work in schools or hospitals out for tender? Journeyman plumber, small crew, Lethbridge.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search for plumbing tenders.",
+          "tool": "search_opportunities",
+          "planned_arguments": {
+            "keywords": "plumbing",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "arguments": {
+            "keywords": "plumbing",
+            "province": "Alberta",
+            "limit": 10
+          },
+          "result_text": "# Opportunities\n\nShowing 7 combined results from CanadaBuys and Alberta Purchasing Connection.\n\n**1. City of Edmonton - Negotiated Request for Proposal - Boiler and Heating System Chemical Su**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05109`\n   Buyer: City of Edmonton\n   Category: Services\n   Closing: 2026-08-10T16:00:00\n\n**2. City of Red Deer - Negotiated Request for Proposal - In-Line Condition Assessment of Criti**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-05077`\n   Buyer: City of Red Deer\n   Category: Services\n   Closing: 2026-08-11T13:30:59\n\n**3. Infrastructure - Invitation to Bid - EDSON - Tourist Information Centre Rest Area Replace **\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04989`\n   Buyer: Infrastructure\n   Category: Construction\n   Closing: 2026-07-28T14:00:00\n\n**4. Onion Lake Cree Nation - Request for Proposal - RFP - Pre-Qualification Consulting Service**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04815`\n   Buyer: Onion Lake Cree Nation\n   Category: Services\n   Closing: 2026-07-24T14:00:59\n\n**5. City of Calgary - Request for Proposal - 26-1630 Mechanical, Heating, Air Conditioning, Pl**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04542`\n   Buyer: City of Calgary\n   Category: Construction\n   Closing: 2026-07-23T16:00:59\n\n**6. W3723-25SD01 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA S**\n   Source: CanadaBuys\n   Reference: `WS5706735549-Doc5738930627`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T15:46:27\n\n**7. W857A-25WR02 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA W**\n   Source: CanadaBuys\n   Reference: `WS5706873105-Doc5741888282`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T15:25:23\n\n\nUse `get_opportunity_details` with a reference number for full details.",
+          "is_error": false,
+          "latency_ms": 532
+        },
+        {
+          "step": 2,
+          "thought": "Details on the top hit.",
+          "tool": "get_opportunity_details",
+          "planned_arguments": {
+            "reference": "AB-2026-05109"
+          },
+          "arguments": {
+            "reference": "AB-2026-05109"
+          },
+          "result_text": "# City of Edmonton - Negotiated Request for Proposal - Boiler and Heating System Chemical Supply and Service\n\n## Overview\n- **Source:** Alberta Purchasing Connection\n- **Reference:** AB-2026-05109\n- **Solicitation:** 939556\n- **Status:** OPEN\n- **Category:** Services\n- **Solicitation Type:** NRFP\n- **Opportunity Type:** OPEN-COMPETITIVE\n- **Organization:** City of Edmonton\n- **Posted:** 2026-07-15T10:11:33.779358\n- **Closing:** 2026-08-10T16:00:00\n\n## Region\nAlberta,Edmonton\n\n## Commodity Codes\n- 40000000 Distribution and Conditioning Systems and Equipment and Components\n- 40100000 Heating and ventilation and air circulation\n- 40101800 Heating equipment and parts and accessories\n- 40101833 Boiler or heater igniter\n- 40101851 Boiler parts and accessories\n- 40102000 Boilers\n- 72000000 Building and Facility Construction and Maintenance Services\n- 72100000 Building and facility maintenance and repair services\n- 72102300 Plumbing and heating and air conditioning\n- 72102301 Boiler installation or adjustment or maintenance or repair services\n- 72150000 Specialized trade construction and maintenance services\n- 72151000 Boiler and furnace construction and maintenance services\n\n## Description\nPre-Bid Meeting: \nscheduled on July 23, 2026 at 2Pm MDT. See Ariba link for more details.\n\nContract Term: \nThe initial Term of the Contract is 2 years, starting December 1, 2026. \nIn its sole discretion, the City may extend the Term on the same terms and conditions for up to 8 additional year(s). The length of any extension(s) is at the City’s sole discretion.\n\nDescription of Requirement:\nThis Contract involves the provision of all expertise, labour, materials, and equipment for the supply, delivery, inspection and testing of chemical boilers and heating systems equipment at City Facilities on an if, as and when required basis including but not limited to:\n- Boiler and heating systems chemicals, test kits and meters;\n- Winterization chemicals for irrigation lines, spray parks and swimming pools.\n- Provide expertise in chemical knowledge and testing procedure to help maintain boiler heating and cooling chemistry in all systems that require as such.\n\n\n## Links\n- [View on Alberta Purchasing Connection](https://purchasing.alberta.ca/opportunity/2026/5109)\n- [External posting](https://portal.us.bn.cloud.ariba.com/dashboard/public/appext/comsapsbncdiscoveryui#/RfxEvent/preview/1110018779?anId=ANONYMOUS)",
+          "is_error": false,
+          "latency_ms": 390
+        }
+      ],
+      "tools_used": [
+        "search_opportunities",
+        "get_opportunity_details"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-21",
+      "persona": "Any busy owner — deadline panic check",
+      "prompt": "What closes this week? I feel like I'm missing stuff.",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Pure deadline triage across both governments, 7-day window.",
+          "tool": "list_deadlines",
+          "planned_arguments": {
+            "days": 7,
+            "limit": 20,
+            "source": "all"
+          },
+          "arguments": {
+            "days": 7,
+            "limit": 20,
+            "source": "all"
+          },
+          "result_text": "# Opportunities Closing Within 7 Days\n\n**1. Special Areas Board - Request for Proposal - RE9239 - Apply a “Blow and Go” Type of Crack **\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04935`\n   Buyer: Special Areas Board\n   Category: Services\n   Closing: 2026-07-20T10:00:00\n   Closes in -1 days\n\n**2. MacEwan University - Negotiated Request for Proposal - Compactor for School of Business**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04918`\n   Buyer: MacEwan University\n   Category: Goods\n   Closing: 2026-07-20T12:00:00\n   Closes in -1 days\n\n**3. Red Deer Catholic Separate School Division - Request for Quotes - Request for Quote- Exter**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04699`\n   Buyer: Red Deer Catholic Separate School Division\n   Category: Goods\n   Closing: 2026-07-20T12:00:00\n   Closes in -1 days\n\n**4. Onion Lake Cree Nation - Request for Proposal - Wellness Centre – New Building**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04849`\n   Buyer: Onion Lake Cree Nation\n   Category: Construction\n   Closing: 2026-07-20T12:00:59\n   Closes in -1 days\n\n**5. W857A-25YK01 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA Y**\n   Source: CanadaBuys\n   Reference: `WS5706888003-Doc5738192985`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T12:43:20\n   Closes in 0 days\n\n**6. Market Research Services**\n   Source: CanadaBuys\n   Reference: `MX-444054722383`\n   Buyer: Export Development Canada - EDC\n   Category: *SRV\n   Closing: 2026-07-20T13:00:00\n   Closes in 0 days\n\n**7. Marine Mechanical Services**\n   Source: CanadaBuys\n   Reference: `MX-444058637489`\n   Buyer: Marine Atlantic\n   Category: *SRV\n   Closing: 2026-07-20T13:00:00\n   Closes in 0 days\n\n**8. M-10 Partial Exterior Envelope Replacement**\n   Source: CanadaBuys\n   Reference: `cb-837-18586699`\n   Buyer: National Research Council of Canada (NRC)\n   Category: *CNST\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**9. RFP - Enterprise Architecture Software as a Service (SaaS) Solution**\n   Source: CanadaBuys\n   Reference: `WS5683108202-Doc5683288139`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**10. Light Utility Vehicle Wheeled (LUVW) - Spare Parts - Miscellaneous Containers**\n   Source: CanadaBuys\n   Reference: `cb-553-25604722`\n   Buyer: Department of National Defence (DND)\n   Category: *GD\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**11. E60PR-26PATR RFSO Parkas and trousers**\n   Source: CanadaBuys\n   Reference: `WS5728595793-Doc5728695299`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *GD\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**12. W684Q-263996 - Grass Cutting Services**\n   Source: CanadaBuys\n   Reference: `WS5317751947-Doc5534510223`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**13. W0134-26R002 - Miscellaneous Groceries B – Cold Lake**\n   Source: CanadaBuys\n   Reference: `WS5163735091-Doc5742076213`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *GD\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**14. Buy Canadian Policy Survey**\n   Source: CanadaBuys\n   Reference: `WS5317751947-Doc5754040846`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**15. W857A-26DN01 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA D**\n   Source: CanadaBuys\n   Reference: `WS5705606391-Doc5754304151`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**16. W3707-25ES01 - STANDING OFFER - RESPONSIVE MAINTENANCE AND MINOR REPAIRS SERVICES - CFHA E**\n   Source: CanadaBuys\n   Reference: `WS5705627067-Doc5754304158`\n   Buyer: Department of Public Works and Government Services (PSPC)\n   Category: *SRV\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**17. Calgary Board of Education - Request for Quotes - For the Supply and Delivery of One (1) S**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04743`\n   Buyer: Calgary Board of Education\n   Category: Goods\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**18. Calgary Board of Education - Invitation to Bid - General Contractor - MCC Panel Replacemen**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04678`\n   Buyer: Calgary Board of Education\n   Category: Services\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**19. Workers' Compensation Board of Alberta - Request for Proposal - User Interface/User Experi**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04470`\n   Buyer: Workers' Compensation Board of Alberta\n   Category: Services\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n**20. Northern Alberta Institute of Technology (NAIT) - Request for Quotes - The Supply and Deli**\n   Source: Alberta Purchasing Connection\n   Reference: `AB-2026-04824`\n   Buyer: Northern Alberta Institute of Technology (NAIT)\n   Category: Goods\n   Closing: 2026-07-20T14:00:00\n   Closes in 0 days\n\n",
+          "is_error": false,
+          "latency_ms": 515
+        }
+      ],
+      "tools_used": [
+        "list_deadlines"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    },
+    {
+      "id": "uc-22",
+      "persona": "Paving company, Spruce Grove",
+      "prompt": "Asphalt paving contracts — parking lots, roads, anything. What's out there and is it worth our time?",
+      "steps": [
+        {
+          "step": 1,
+          "thought": "Search for asphalt and paving work.",
+          "tool": "search_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "asphalt paving"
+          },
+          "arguments": {
+            "keywords": "asphalt paving"
+          },
+          "result_text": "# Alberta Opportunities\n\nShowing 10 of 14 matching APC records.\n\n**1. Wheatland County - Invitation to Bid - Carseland Pathway Phase 2**\n   Reference: `AB-2026-05126`\n   Organization: Wheatland County\n   Category: Construction | Type: ITB\n   Closing: 2026-07-30T14:00:00\n\n**2. Strathcona County - RFI #26.0104 - Heavy Equipment Rentals**\n   Reference: `AB-2026-05084`\n   Organization: Strathcona County\n   Category: Goods | Type: APC-NA\n   Closing: 2026-07-29T14:00:00\n\n**3. Transportation and Economic Corridors - Invitation to Bid - TND0023901 - Selective Grading**\n   Reference: `AB-2026-05070`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-08-07T14:01:00\n\n**4. Thorhild County - Invitation to Bid - Asphalt Concrete Paving, Curb and Concrete Sidewalk,**\n   Reference: `AB-2026-05015`\n   Organization: Thorhild County\n   Category: Construction | Type: ITB\n   Closing: 2026-07-31T14:00:00\n\n**5. Kneehill County - Request for Proposal - Administration & FCSS Parking Lot Repairs, Kneehi**\n   Reference: `AB-2026-04911`\n   Organization: Kneehill County\n   Category: Construction | Type: RFP\n   Closing: 2026-07-23T12:00:00\n\n**6. City of Calgary - Request for Quotes - RFQ 26-1003 Franklin Station TOD Transit Loop **\n   Reference: `AB-2026-04835`\n   Organization: City of Calgary\n   Category: Construction | Type: RFQ\n   Closing: 2026-07-28T14:00:59\n\n**7. Leduc County - Request for Quotes - 2026 Asphalt Repairs**\n   Reference: `AB-2026-04790`\n   Organization: Leduc County\n   Category: Construction | Type: RFQ\n   Closing: 2026-07-28T14:00:00\n\n**8. Transportation and Economic Corridors - Invitation to Bid - TND0025091 - Asphalt Concrete **\n   Reference: `AB-2026-04468`\n   Organization: Transportation and Economic Corridors\n   Category: Construction | Type: ITB\n   Closing: 2026-07-21T14:01:00\n\n**9. City of Edmonton - Invitation to Bid - 935742 - Active Modes #4 - 2622**\n   Reference: `AB-2026-04392`\n   Organization: City of Edmonton\n   Category: Construction | Type: ITB\n   Closing: 2026-07-22T16:00:00\n\n**10. Transportation and Economic Corridors - Request for Proposal - CON0025987 - HIGHWAY 2 SOUT**\n   Reference: `AB-2026-04318`\n   Organization: Transportation and Economic Corridors\n   Category: Services | Type: RFP\n   Closing: 2026-07-22T23:30:00\n\nUse `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details.",
+          "is_error": false,
+          "latency_ms": 406
+        },
+        {
+          "step": 2,
+          "thought": "Summarize to judge whether the paving market is worth his estimating time.",
+          "tool": "summarize_alberta_opportunities",
+          "planned_arguments": {
+            "keywords": "asphalt"
+          },
+          "arguments": {},
+          "adaptation_notes": [
+            "dropped 'keywords' (not in schema)"
+          ],
+          "result_text": "# Alberta Purchasing Connection Summary\n\n**Open Opportunities:** 1524\n\n## By Category\n- **Services:** 763\n- **Goods:** 599\n- **Construction:** 162\n\nAPC includes Government of Alberta and Alberta public-sector buyers such as municipalities, school boards, health entities, and post-secondary institutions.",
+          "is_error": false,
+          "latency_ms": 780
+        }
+      ],
+      "tools_used": [
+        "search_alberta_opportunities",
+        "summarize_alberta_opportunities"
+      ],
+      "output": "",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "expectation_met": true
+    }
+  ]
+}
