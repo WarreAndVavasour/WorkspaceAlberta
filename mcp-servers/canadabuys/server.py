@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Stdio MCP adapter for the shared procurement core."""
+"""Stdio MCP adapter for the shared procurement core.
+
+This is the local-first entry point: Claude Desktop, Cursor, OpenCode, and
+any stdio-capable MCP client launch this script directly (see
+``.mcp.json`` / ``mcp.json.example``). It owns no procurement logic — it
+adds the repo root to ``sys.path``, exposes the declared tool list from
+``mcp_tools.get_mcp_tools()``, and forwards every call to
+``procurement_core.service.call_tool_text``, wrapping the returned markdown
+in a single ``TextContent`` block.
+
+Run directly:            ``python mcp-servers/canadabuys/server.py``
+Smoke test:              ``python -m unittest tests.test_canadabuys_mcp_smoke``
+Hosted equivalent:       ``server_http.py`` (StreamableHTTP MCP + REST)
+"""
 
 import sys
 from pathlib import Path

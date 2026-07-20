@@ -1,5 +1,29 @@
 #!/usr/bin/env python3
-"""Hosted MCP and REST/OpenAPI adapter for the shared procurement core."""
+"""Hosted MCP and REST/OpenAPI adapter for the shared procurement core.
+
+One FastAPI app, two protocols, identical behaviour:
+
+- **MCP over StreamableHTTP** at ``/mcp`` — for MCP-native agents. Session
+  management is handled by ``StreamableHTTPSessionManager`` (stateful, 30 min
+  idle timeout) running inside the app lifespan.
+- **REST/OpenAPI** — for everything that can't speak MCP. ``/tools`` lists
+  the same tool schemas the MCP side declares; ``POST /tools/{tool_name}``
+  calls any tool generically; and named convenience routes (``/search``,
+  ``/details/{reference}``, ``/deadlines``, ``/matches``, ``/brief``,
+  ``/bid-room/process``, ``/profile``, ``/cohere/analyze``) map one-to-one
+  onto the highest-value tools. Interactive docs at ``/docs``, schema at
+  ``/openapi.json``, liveness at ``/health`` (no upstream calls).
+
+Both paths dispatch into ``procurement_core.service.call_tool_text``, so a
+REST caller and an MCP agent always get byte-identical markdown for the same
+tool and arguments. The bid-room route is the one exception: it returns the
+full JSON artifact envelope from ``process_bid_room_artifact`` (sandbox id,
+artifact, rendered markdown) and maps payload errors to 400 and missing
+runtime dependencies (E2B/Cohere keys) to 503.
+
+Deploy: ``uvicorn server_http:app`` (see Dockerfile, Procfile, railway.json
+in this directory). Local run: ``python server_http.py`` serves on :8000.
+"""
 
 import contextlib
 import sys
@@ -7,7 +31,8 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from mcp.server import Server
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.types import TextContent, Tool
@@ -16,6 +41,16 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+from procurement_core import storage  # noqa: E402
+from procurement_core.auth import (  # noqa: E402
+    GateError,
+    PRO_TOOLS,
+    check_tool_access,
+    extract_bearer_key,
+    gate_enabled,
+    validate_key,
+)
+from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
 from procurement_core.service import TOOL_NAMES, call_tool_text, process_bid_room_artifact  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 
@@ -60,11 +95,31 @@ def serialize_tool(tool: Tool) -> dict[str, Any]:
     }
 
 
-async def run_tool(tool_name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Run a shared-core tool and return a REST-friendly envelope."""
+async def run_tool(
+    tool_name: str,
+    arguments: dict[str, Any] | None = None,
+    authorization: str | None = None,
+) -> dict[str, Any]:
+    """Run a shared-core tool and return a REST-friendly envelope.
+
+    Pro tools (see ``auth.PRO_TOOLS``) require a valid subscriber Bearer key
+    when the gate is enabled; the subscriber's key hash becomes the tenant
+    context so profile/watchlist reads hit their own row.
+    """
     if tool_name not in TOOL_NAMES:
         raise HTTPException(status_code=404, detail=f"Unknown tool: {tool_name}")
-    content = await call_tool_text(tool_name, arguments or {})
+
+    try:
+        record = check_tool_access(tool_name, authorization)
+    except GateError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    token = storage.set_tenant(record["key_hash"]) if record else None
+    try:
+        content = await call_tool_text(tool_name, arguments or {})
+    finally:
+        if token is not None:
+            storage.reset_tenant(token)
     return {
         "tool": tool_name,
         "content_type": "text/markdown",
@@ -78,10 +133,49 @@ async def list_tools() -> list[Tool]:
     return get_mcp_tools()
 
 
+def _mcp_authorization_header() -> str | None:
+    """Read the Authorization header from the current MCP request context."""
+    try:
+        ctx = mcp_server.request_context
+    except LookupError:
+        return None
+    request = getattr(ctx, "request", None)
+    headers = getattr(request, "headers", None)
+    if headers is None:
+        return None
+    return headers.get("authorization")
+
+
 @mcp_server.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
-    """Handle an MCP tool call through the shared procurement core."""
-    text = await call_tool_text(name, arguments)
+    """Handle an MCP tool call through the shared procurement core.
+
+    Applies the same Pro-tool gate as REST: the Bearer key is read from the
+    StreamableHTTP request headers via the MCP request context. Gate
+    failures return a readable message (MCP has no HTTP status per tool
+    call) telling the caller how to subscribe or configure their key.
+    """
+    try:
+        record = check_tool_access(name, _mcp_authorization_header())
+    except GateError as exc:
+        return [
+            TextContent(
+                type="text",
+                text=(
+                    f"# WorkspaceAlberta Pro required\n\n{exc}\n\n"
+                    "Add your key to the MCP server config as an "
+                    '`Authorization: Bearer wa_live_...` header, or subscribe at '
+                    "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month)."
+                ),
+            )
+        ]
+
+    token = storage.set_tenant(record["key_hash"]) if record else None
+    try:
+        text = await call_tool_text(name, arguments)
+    finally:
+        if token is not None:
+            storage.reset_tenant(token)
     return [TextContent(type="text", text=text)]
 
 
@@ -106,7 +200,47 @@ async def health() -> dict[str, Any]:
         "mcp": {"streamable_http": "/mcp"},
         "rest": {"openapi": "/openapi.json", "docs": "/docs"},
         "tools": len(TOOL_NAMES),
+        "gate": {
+            "enabled": gate_enabled(),
+            "pro_tools": sorted(PRO_TOOLS),
+        },
     }
+
+
+@app.get("/me", tags=["system"])
+async def me(request: Request) -> dict[str, Any]:
+    """Validate the caller's Bearer key and report subscription status."""
+    key = extract_bearer_key(request.headers.get("authorization"))
+    if not key:
+        raise HTTPException(status_code=401, detail="Send your key as `Authorization: Bearer wa_live_...`.")
+    try:
+        record = validate_key(key)
+    except GateError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    return {
+        "status": record.get("status"),
+        "plan": record.get("plan"),
+        "email": record.get("email", ""),
+        "pro_tools": sorted(PRO_TOOLS),
+    }
+
+
+@app.post("/stripe/webhook", tags=["billing"])
+async def stripe_webhook(request: Request) -> JSONResponse:
+    """Stripe webhook: provisions subscribers and revokes cancelled ones.
+
+    Verifies the ``Stripe-Signature`` header against
+    ``STRIPE_WEBHOOK_SECRET`` before touching anything. Handles
+    ``checkout.session.completed`` (issue key, upsert Supabase row, mirror
+    key into Stripe customer metadata) and ``customer.subscription.deleted``
+    (revoke). All other events are acknowledged and ignored.
+    """
+    payload = await request.body()
+    try:
+        result = process_webhook_event(payload, request.headers.get("stripe-signature"))
+    except WebhookError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    return JSONResponse(result)
 
 
 @app.get("/tools", tags=["system"])
@@ -115,72 +249,89 @@ async def tools() -> dict[str, Any]:
     return {"tools": [serialize_tool(tool) for tool in get_mcp_tools()]}
 
 
+def _auth(request: Request) -> str | None:
+    return request.headers.get("authorization")
+
+
 @app.post("/tools/{tool_name}", tags=["tools"])
 async def generic_tool(
     tool_name: str,
+    request: Request,
     arguments: dict[str, Any] | None = Body(default=None),
 ) -> dict[str, Any]:
     """Call any procurement tool by MCP tool name."""
-    return await run_tool(tool_name, arguments)
+    return await run_tool(tool_name, arguments, _auth(request))
 
 
 @app.post("/search", tags=["procurement"])
-async def search(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+async def search(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Search CanadaBuys and Alberta Purchasing Connection together."""
-    return await run_tool("search_opportunities", arguments)
+    return await run_tool("search_opportunities", arguments, _auth(request))
 
 
 @app.get("/details/{reference}", tags=["procurement"])
-async def details(reference: str) -> dict[str, Any]:
+async def details(reference: str, request: Request) -> dict[str, Any]:
     """Get details for a CanadaBuys or Alberta APC opportunity."""
-    return await run_tool("get_opportunity_details", {"reference": reference})
+    return await run_tool("get_opportunity_details", {"reference": reference}, _auth(request))
 
 
 @app.post("/deadlines", tags=["procurement"])
-async def deadlines(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+async def deadlines(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """List federal and Alberta opportunities closing soon."""
-    return await run_tool("list_deadlines", arguments)
+    return await run_tool("list_deadlines", arguments, _auth(request))
 
 
 @app.post("/matches", tags=["procurement"])
-async def matches(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+async def matches(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Rank opportunities against the saved business profile."""
-    return await run_tool("find_matching_opportunities", arguments)
+    return await run_tool("find_matching_opportunities", arguments, _auth(request))
 
 
 @app.post("/brief", tags=["procurement"])
-async def brief(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+async def brief(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Generate the daily bid brief."""
-    return await run_tool("daily_bid_brief", arguments)
+    return await run_tool("daily_bid_brief", arguments, _auth(request))
 
 
 @app.post("/bid-room/process", tags=["bid-room"])
-async def bid_room_process(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
-    """Process a bid room in E2B and analyze it with Cohere inside the sandbox."""
+async def bid_room_process(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Process a bid room in E2B and analyze it with Cohere inside the sandbox.
+
+    Pro-gated: requires a valid subscriber Bearer key when the gate is on.
+    """
+    try:
+        record = check_tool_access("process_bid_room", _auth(request))
+    except GateError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    token = storage.set_tenant(record["key_hash"]) if record else None
     try:
         return process_bid_room_artifact(arguments or {})
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    finally:
+        if token is not None:
+            storage.reset_tenant(token)
 
 
 @app.post("/profile", tags=["profile"])
-async def set_profile(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+async def set_profile(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Set the business profile used for opportunity matching."""
-    return await run_tool("set_business_profile", arguments)
+    return await run_tool("set_business_profile", arguments, _auth(request))
 
 
 @app.get("/profile", tags=["profile"])
-async def get_profile() -> dict[str, Any]:
+async def get_profile(request: Request) -> dict[str, Any]:
     """Return the saved business profile."""
-    return await run_tool("get_my_profile", {})
+    return await run_tool("get_my_profile", {}, _auth(request))
 
 
 @app.post("/cohere/analyze", tags=["analysis"])
-async def cohere_analyze(arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+async def cohere_analyze(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Analyze a CanadaBuys tender with Cohere Command A+ when configured."""
-    return await run_tool("analyze_contract_with_cohere", arguments)
+    return await run_tool("analyze_contract_with_cohere", arguments, _auth(request))
 
 
 if __name__ == "__main__":

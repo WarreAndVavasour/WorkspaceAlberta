@@ -1,10 +1,40 @@
-"""MCP Tool definitions for the procurement adapters."""
+"""MCP Tool definitions for the procurement adapters.
+
+This module declares the public tool surface — names, descriptions, and JSON
+input schemas — shared by both MCP adapters (stdio and StreamableHTTP) and
+mirrored by the REST ``/tools`` endpoint. It contains no logic: every tool
+name here must have a matching async handler in
+``procurement_core.service`` and appear in ``service.TOOL_NAMES``, or calls
+will fail at dispatch.
+
+Tool groups, in declaration order:
+
+- **Legacy CanadaBuys tools** (``search_contracts``, ``get_contract_details``,
+  ``list_upcoming_deadlines``, ``summarize_contracts``, ``refresh_data``):
+  federal-only tools kept for backwards compatibility.
+- **Business profile tools** (``set_business_profile``,
+  ``find_opportunities``, ``get_my_profile``): save and use the owner's
+  capability profile for scoring.
+- **Unified tools** (``search_opportunities``, ``get_opportunity_details``,
+  ``list_deadlines``, ``find_matching_opportunities``, ``daily_bid_brief``):
+  the primary surface — CanadaBuys and Alberta APC together.
+- **Alberta APC tools** (``search_alberta_opportunities``, etc.):
+  Alberta-only variants for targeted provincial work.
+- **Sandbox & model tools** (``process_bid_room``, ``check_cohere_status``,
+  ``analyze_contract_with_cohere``): E2B bid-room processing and optional
+  Cohere Command A+ review.
+
+When adding a tool: add the ``Tool`` entry here, implement the async handler
+in ``procurement_core/service.py``, add the name to ``TOOL_NAMES``, and cover
+it in ``tests/``. Keep descriptions user-facing and concrete — they are what
+the calling model sees when choosing tools.
+"""
 
 from mcp.types import Tool
 
 
 def get_mcp_tools() -> list[Tool]:
-    """List available tools."""
+    """Return the full declared tool list in stable order."""
     return [
         Tool(
             name="search_contracts",
@@ -397,6 +427,61 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum model response tokens (default 1200, max 2000)",
                         "default": 1200
+                    }
+                },
+                "required": ["reference"]
+            }
+        ),
+        # ===== Extension Tools (watchlist + scorecard) =====
+        Tool(
+            name="watch_opportunity",
+            description="Add a CanadaBuys or Alberta APC opportunity to your persistent watchlist, with an optional note.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "Reference number to track"
+                    },
+                    "note": {
+                        "type": "string",
+                        "description": "Optional note, e.g. 'waiting on bonding quote'"
+                    }
+                },
+                "required": ["reference"]
+            }
+        ),
+        Tool(
+            name="list_watchlist",
+            description="List watched opportunities sorted by closing date, with days remaining and notes.",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        Tool(
+            name="unwatch_opportunity",
+            description="Remove an opportunity from the watchlist by reference number.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "Reference number to stop tracking"
+                    }
+                },
+                "required": ["reference"]
+            }
+        ),
+        Tool(
+            name="bid_no_bid_scorecard",
+            description="Fast deterministic bid/no-bid checklist for one opportunity: profile fit, runway to closing, region match, and a go/caution/no-go verdict with reasons. No model call.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "CanadaBuys or Alberta APC reference number"
                     }
                 },
                 "required": ["reference"]

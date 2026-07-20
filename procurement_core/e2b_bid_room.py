@@ -1,4 +1,47 @@
-"""E2B-backed bid room processing for isolated tender package work."""
+"""E2B-backed bid room processing for isolated tender package work.
+
+The "bid room" is the heaviest tool in WorkspaceAlberta: it opens a tender's
+attachment package (PDFs, DOCX, XLSX, ZIPs), extracts compliance-relevant
+text, and runs a structured Cohere Command A+ review — all inside a
+short-lived E2B sandbox so unknown user-facing files never touch the
+always-on MCP service.
+
+How it works, end to end:
+
+1.  **Payload build (host side).** :func:`build_canadabuys_bid_room_payload`
+    or :func:`build_apc_bid_room_payload` turns a cached CanadaBuys row or a
+    live APC detail response plus the saved business profile into a JSON
+    payload: opportunity metadata, attachment URLs (capped at
+    ``MAX_ATTACHMENTS``), profile context, and processing limits.
+2.  **Sandbox execution.** :func:`run_live_bid_room_process` boots an E2B
+    sandbox, injects ``SANDBOX_PROCESSOR`` (a self-contained Python script,
+    stored as a raw string in this module) with the payload substituted in,
+    and runs it under a command timeout. The processor downloads attachments,
+    extracts text (pdfminer/python-docx/openpyxl installed on demand via
+    :func:`ensure_package`), walks ZIPs up to ``MAX_ZIP_MEMBERS``, and builds
+    an evidence bundle of normalized document text.
+3.  **In-sandbox Cohere review.** ``call_cohere`` (inside the processor) calls
+    Command A+ with read-only evidence tools (``search_extracted_documents``,
+    ``get_bid_evidence``) and a strict JSON schema
+    (``COHERE_RESPONSE_SCHEMA``). The model must ground its answer in
+    extracted text; responses are validated by ``validate_cohere_analysis``
+    against ``REQUIRED_COHERE_FIELDS`` (bid recommendation, fit score,
+    requirements, risks, missing info, deadlines, questions, next actions).
+4.  **Artifact return.** The processor prints a single JSON artifact to
+    stdout; :func:`parse_artifact` recovers it, ``validate_bid_room_artifact``
+    checks its shape, and :func:`render_bid_room_markdown` formats the
+    :class:`BidRoomSandboxResult` for chat display. The sandbox is killed
+    unless ``keep_alive`` was requested.
+
+Safety limits: ``MAX_FILE_BYTES`` (25 MB per file), ``MAX_COHERE_CHARS``
+(80k prompt chars), ``MAX_ATTACHMENTS`` (5), and per-command timeouts. All
+are enforced inside the sandbox as well as on the host.
+
+Requires ``E2B_API_KEY``; Cohere analysis inside the sandbox additionally
+requires ``COHERE_API_KEY`` (see :func:`has_e2b_api_key` /
+:func:`has_cohere_api_key`). Without a Cohere key the sandbox still extracts
+and returns document evidence — only the model review is skipped.
+"""
 
 from __future__ import annotations
 
