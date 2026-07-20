@@ -104,6 +104,10 @@ The core tools are:
 - `daily_bid_brief` for the daily owner/operator summary
 - `analyze_contract_with_cohere` for optional Cohere Command A+ tender review
 - `process_bid_room` for live E2B attachment extraction and Cohere tool-assisted bid review
+- `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
+- `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
+
+The full tool and REST reference lives in [`docs/mcp-tool-reference.md`](docs/mcp-tool-reference.md); the architecture walkthrough is [`docs/architecture.md`](docs/architecture.md).
 
 MCP is the first-class interface because this is meant to be used by agents. The same procurement core also exposes REST/OpenAPI so other AI tools can hook into the same contract intelligence without needing native MCP support.
 
@@ -113,20 +117,29 @@ E2B sandboxes are the isolated compute layer for heavier bid-room work: opening 
 
 ---
 
-## Free First
+## Free Brief, Paid Bid Work
 
-The daily bid brief should be free while the habit is forming.
+The daily bid brief is free, permanently. Canadian businesses should see Canadian public demand every day — that habit is the foundation, and it stays free while it forms and after.
 
-A $12/month weekly update might make sense later, but charging too early would slow down the more important goal: getting Canadian businesses used to checking public demand every day with an assistant that understands their capabilities.
+**WorkspaceAlberta Pro** is $85 CAD/month, and it starts where browsing stops: the moment an owner decides to actually bid.
 
-The sequence is:
+Pro unlocks the tools that do estimator work:
 
-1. Build trust.
+- **Bid rooms** — sandboxed E2B analysis of full tender packages: PDFs, submission forms, drawings lists
+- **Cohere Command A+ review** — requirements, risks, missing information, and a fit score grounded in the actual documents
+- **Watchlist** with closing-date tracking and notes
+- **Bid/no-bid scorecards** on demand
+
+Why charge at all? "Free MCP server" tells a business owner nothing — it reads as a toy. $85/month is a claim: this pays for itself on the first tender you would otherwise have missed, or the first afternoon an estimator doesn't spend digging through a 140-page RFP.
+
+Subscribe at [`subscribe.html`](subscribe.html) or directly via [Stripe checkout](https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a). Pricing details and provisioning plan: [`docs/pricing-and-subscription.md`](docs/pricing-and-subscription.md).
+
+The sequence still holds:
+
+1. Build trust with the free brief.
 2. Build the community.
 3. Prove the brief saves time.
-4. Price only when people already rely on it.
-
-Adoption comes before monetization.
+4. Charge for the bid work, never for the visibility.
 
 ---
 
@@ -158,16 +171,6 @@ Any tool that helps a fabricator **create demand**, a mill **manufacture more ef
 - **$988 million** in tax revenue flowing back to the province
 
 More contracts won. More jobs kept. More skill developed. More value staying here at home.
-
----
-
-## Built for Trades, Not Tech
-
-This is not another SaaS dashboard.
-
-There is no new portal to babysit, no CRM ceremony, and no "AI transformation" theatre. The workspace runs locally, reads only what you authorize, and exposes practical procurement tools to the agent surface.
-
-The owner should not have to care whether the answer came from a CSV, an API, a model endpoint, or an MCP tool. They should care that the right opportunities are visible before the deadline, the requirements are easier to understand, and the next action is clear.
 
 ---
 
