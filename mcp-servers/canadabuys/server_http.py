@@ -15,6 +15,11 @@ One FastAPI app, two protocols, identical behaviour:
   onto the highest-value tools. Interactive docs at ``/docs``, schema at
   ``/openapi.json``, liveness at ``/health`` (no upstream calls).
 
+Agent-discovery documents are served under ``/.well-known`` (A2A agent card,
+RFC 9728 protected-resource metadata, RFC 8414 auth-server metadata, and an
+``mcp.json`` mirroring the registry entry) because registries and scanners
+crawl those paths as soon as the endpoint is listed.
+
 Both paths dispatch into ``procurement_core.service.call_tool_text``, so a
 REST caller and an MCP agent always get byte-identical markdown for the same
 tool and arguments. The bid-room route is the one exception: it returns the
@@ -267,6 +272,9 @@ in the same config block, and can check it at <a href="/me">/me</a>.</p>
 <p>The same tools are exposed over REST/OpenAPI:
 <a href="/docs">interactive docs</a> &middot; <a href="/openapi.json">openapi.json</a> &middot;
 <a href="/tools">tool schemas</a> &middot; <a href="/health">health</a></p>
+<p>Agent registries: <a href="/.well-known/agent.json">agent card (A2A)</a> &middot;
+<a href="/.well-known/mcp.json">mcp.json</a> &middot;
+<a href="/.well-known/oauth-protected-resource">protected-resource metadata</a></p>
 <p>Always open and verify the original tender documents before bidding. This tool triages
 and summarizes; it does not replace the source posting.</p>
 <p><a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation on GitHub</a></p>
@@ -314,6 +322,181 @@ async def me(request: Request) -> dict[str, Any]:
         "email": record.get("email", ""),
         "pro_tools": sorted(PRO_TOOLS),
     }
+
+
+# ---------------------------------------------------------------------------
+# Agent-discovery documents.
+#
+# Agent registries and security scanners crawl these well-known paths within
+# hours of an MCP registry publish (observed in production access logs). All
+# are derived from request.base_url so they stay correct on any host.
+# ---------------------------------------------------------------------------
+
+STRIPE_SUBSCRIBE_URL = "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a"
+REPO_URL = "https://github.com/HarleyCoops/WorkspaceAlberta"
+
+
+def _base_url(request: Request) -> str:
+    return str(request.base_url).rstrip("/")
+
+
+def _agent_card(base: str) -> dict[str, Any]:
+    """Build an A2A agent card from the live tool list.
+
+    Skills mirror the MCP tools exactly, so the card can never drift from
+    what the server actually exposes. Pro tools are tagged, not hidden —
+    anonymous callers can still use every free tool.
+    """
+    skills = []
+    for tool in get_mcp_tools():
+        tags = ["procurement", "canada"]
+        if "alberta" in tool.name:
+            tags.append("alberta")
+        if tool.name in PRO_TOOLS:
+            tags.append("pro")
+        description = (tool.description or "").strip().splitlines()[0] if tool.description else ""
+        skills.append(
+            {
+                "id": tool.name,
+                "name": tool.name.replace("_", " ").title(),
+                "description": description[:300],
+                "tags": tags,
+            }
+        )
+    return {
+        "name": "WorkspaceAlberta Procurement",
+        "description": (
+            "Canadian procurement intelligence over MCP: search CanadaBuys and "
+            "Alberta Purchasing Connection tenders, list closing deadlines, rank "
+            "opportunities against a business profile, and generate daily bid briefs."
+        ),
+        "url": f"{base}/mcp",
+        "provider": {"organization": "Warre and Vavasour", "url": "https://warreandvavasour.com"},
+        "version": app.version,
+        "documentationUrl": REPO_URL,
+        "capabilities": {
+            "streaming": False,
+            "pushNotifications": False,
+            "stateTransitionHistory": False,
+        },
+        # Legacy A2A drafts read `authentication`; current drafts read
+        # `securitySchemes`/`security`. Serve both so any crawler version
+        # understands the Pro-tool gate.
+        "authentication": {
+            "schemes": ["Bearer"],
+            "credentials": (
+                "Pro tools require a subscriber key sent as "
+                "`Authorization: Bearer wa_live_...`. Search, deadline, and "
+                "brief tools are free without a key."
+            ),
+        },
+        "securitySchemes": {
+            "bearer": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "Subscriber key (wa_live_...) for Pro tools.",
+            }
+        },
+        "security": [{"bearer": []}],
+        "defaultInputModes": ["application/json"],
+        "defaultOutputModes": ["text/markdown"],
+        "skills": skills,
+    }
+
+
+@app.get("/.well-known/agent.json", include_in_schema=False)
+@app.get("/.well-known/agent-card.json", include_in_schema=False)
+@app.get("/agents/.well-known/agent-card.json", include_in_schema=False)
+@app.get("/mcp/.well-known/agent-card.json", include_in_schema=False)
+async def agent_card(request: Request) -> JSONResponse:
+    """A2A agent card at every location crawlers have asked for."""
+    return JSONResponse(_agent_card(_base_url(request)))
+
+
+@app.get("/agent/authenticatedExtendedCard", include_in_schema=False)
+async def authenticated_extended_card(request: Request) -> JSONResponse:
+    """A2A extended card: 401 without a key, subscriber view with one."""
+    key = extract_bearer_key(request.headers.get("authorization"))
+    if not key:
+        return JSONResponse(
+            {"error": "Send `Authorization: Bearer wa_live_...` for the extended card."},
+            status_code=401,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        validate_key(key)
+    except GateError as exc:
+        return JSONResponse(
+            {"error": str(exc)},
+            status_code=exc.status_code,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    card = _agent_card(_base_url(request))
+    card["authenticated"] = True
+    card["proTools"] = sorted(PRO_TOOLS)
+    return JSONResponse(card)
+
+
+@app.get("/.well-known/oauth-protected-resource", include_in_schema=False)
+async def oauth_protected_resource(request: Request) -> JSONResponse:
+    """RFC 9728 protected-resource metadata for the MCP endpoint."""
+    base = _base_url(request)
+    return JSONResponse(
+        {
+            "resource": f"{base}/mcp",
+            "authorization_servers": [base],
+            "bearer_methods_supported": ["header"],
+            "resource_documentation": REPO_URL,
+        }
+    )
+
+
+@app.get("/.well-known/oauth-authorization-server", include_in_schema=False)
+async def oauth_authorization_server(request: Request) -> JSONResponse:
+    """RFC 8414 metadata.
+
+    This server is not a real OAuth authorization server: subscriber keys are
+    issued through Stripe checkout and validated per request, so the grant
+    and response type lists are honestly empty. Extra members are permitted
+    by RFC 8414; ``subscription_key_registration`` tells crawlers where a
+    human actually gets a key.
+    """
+    base = _base_url(request)
+    return JSONResponse(
+        {
+            "issuer": base,
+            "grant_types_supported": [],
+            "response_types_supported": [],
+            "token_endpoint_auth_methods_supported": [],
+            "service_documentation": REPO_URL,
+            "op_policy_uri": f"{base}/",
+            "subscription_key_registration": STRIPE_SUBSCRIBE_URL,
+        }
+    )
+
+
+@app.get("/.well-known/mcp.json", include_in_schema=False)
+async def mcp_well_known(request: Request) -> JSONResponse:
+    """MCP server-discovery document mirroring the registry server.json.
+
+    Values duplicate the repo-root server.json on purpose: the Docker image
+    only ships procurement_core and mcp-servers/canadabuys, so the registry
+    file is not readable at runtime. Keep both in sync when bumping.
+    """
+    base = _base_url(request)
+    return JSONResponse(
+        {
+            "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+            "name": "io.github.HarleyCoops/workspace-alberta",
+            "description": (
+                "Canadian procurement intelligence: CanadaBuys and Alberta "
+                "tenders, ranked for your shop."
+            ),
+            "version": app.version,
+            "repository": {"url": REPO_URL, "source": "github"},
+            "remotes": [{"type": "streamable-http", "url": f"{base}/mcp"}],
+        }
+    )
 
 
 @app.post("/stripe/webhook", tags=["billing"])

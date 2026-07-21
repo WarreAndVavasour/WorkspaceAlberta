@@ -107,6 +107,46 @@ class ProcurementHttpAppTest(unittest.TestCase):
         tool_names = {tool["name"] for tool in tools.json()["result"]["tools"]}
         self.assertIn("search_opportunities", tool_names)
 
+    def test_discovery_endpoints(self) -> None:
+        # A2A agent card at every location crawlers have probed.
+        for path in (
+            "/.well-known/agent.json",
+            "/.well-known/agent-card.json",
+            "/agents/.well-known/agent-card.json",
+            "/mcp/.well-known/agent-card.json",
+        ):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200, path)
+            card = response.json()
+            self.assertEqual(card["name"], "WorkspaceAlberta Procurement")
+            self.assertTrue(card["url"].endswith("/mcp"), path)
+            skill_ids = {skill["id"] for skill in card["skills"]}
+            self.assertIn("search_opportunities", skill_ids)
+            self.assertIn("daily_bid_brief", skill_ids)
+
+        # Extended card is spec-correct: 401 + challenge without a key.
+        extended = self.client.get("/agent/authenticatedExtendedCard")
+        self.assertEqual(extended.status_code, 401)
+        self.assertEqual(extended.headers["www-authenticate"], "Bearer")
+
+        # RFC 9728 protected-resource metadata.
+        prm = self.client.get("/.well-known/oauth-protected-resource")
+        self.assertEqual(prm.status_code, 200)
+        self.assertTrue(prm.json()["resource"].endswith("/mcp"))
+        self.assertEqual(prm.json()["bearer_methods_supported"], ["header"])
+
+        # RFC 8414 auth-server metadata: honestly not an OAuth AS.
+        as_meta = self.client.get("/.well-known/oauth-authorization-server")
+        self.assertEqual(as_meta.status_code, 200)
+        self.assertIn("issuer", as_meta.json())
+        self.assertEqual(as_meta.json()["grant_types_supported"], [])
+
+        # MCP discovery mirrors the registry entry.
+        mcp_meta = self.client.get("/.well-known/mcp.json")
+        self.assertEqual(mcp_meta.status_code, 200)
+        self.assertEqual(mcp_meta.json()["name"], "io.github.HarleyCoops/workspace-alberta")
+        self.assertTrue(mcp_meta.json()["remotes"][0]["url"].endswith("/mcp"))
+
 
 class InlineProfileTest(unittest.TestCase):
     def test_inline_profile_resolves(self) -> None:
