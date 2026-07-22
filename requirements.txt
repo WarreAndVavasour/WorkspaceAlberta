@@ -1,5 +1,5 @@
-mcp>=1.0.0
-fastapi>=0.111.0
-uvicorn>=0.23.0
-e2b>=2.21.1
-duckdb>=0.10.0
+mcp>=1.28.1
+fastapi>=0.139.2
+uvicorn>=0.51.0
+e2b>=2.34.0
+duckdb>=1.5.4
