@@ -11,7 +11,17 @@ jobs:
           python-version: '3.x'
       - name: pip install
         if: ${{ hashFiles('requirements.txt') != '' }}
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -r mcp-servers/canadabuys/requirements.txt
+      - name: unit tests
+        if: ${{ hashFiles('requirements.txt') != '' }}
+        # Local-only suites; test_cohere_alberta and test_e2b_bid_room need
+        # live API keys and are excluded on purpose.
+        run: |
+          python -m unittest -v \
+            tests.test_procurement_http_app \
+            tests.test_canadabuys_mcp_smoke \
+            tests.test_search_relevance \
+            tests.test_production_hardening
       - name: pip install (pyproject)
         if: ${{ hashFiles('requirements.txt') == '' && hashFiles('pyproject.toml') != '' }}
         run: pip install .

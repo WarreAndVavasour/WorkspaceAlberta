@@ -50,6 +50,7 @@ Configuration (environment variables):
     ALBERTA_APC_API_BASE / _APP_BASE       APC endpoint overrides
 """
 
+import asyncio
 import csv
 import gzip
 import json
@@ -1469,8 +1470,16 @@ async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> 
     if not handler:
         return f"Unknown tool: {name}"
 
+    # Handlers are async-signatured but internally synchronous: they block on
+    # urlopen to CanadaBuys/Alberta APC/Cohere for up to 120s. Run each call
+    # in a worker thread so one slow fetch cannot freeze the event loop (and
+    # with it every concurrent request, including /health). asyncio.to_thread
+    # copies contextvars, so the storage tenant binding propagates.
+    def _run_in_thread() -> str:
+        return asyncio.run(handler(args))
+
     try:
-        return await handler(args)
+        return await asyncio.to_thread(_run_in_thread)
     except Exception as exc:
         return f"Error: {exc}"
 

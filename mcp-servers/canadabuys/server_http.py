@@ -31,6 +31,7 @@ Deploy: ``uvicorn server_http:app`` (see Dockerfile, Procfile, railway.json
 in this directory). Local run: ``python server_http.py`` serves on :8000.
 """
 
+import asyncio
 import contextlib
 import sys
 from collections.abc import AsyncIterator
@@ -134,7 +135,9 @@ async def run_tool(
         raise HTTPException(status_code=404, detail=f"Unknown tool: {tool_name}")
 
     try:
-        record = check_tool_access(tool_name, authorization)
+        # Key validation hits Supabase/Stripe with blocking urlopen on cache
+        # misses; keep it off the event loop.
+        record = await asyncio.to_thread(check_tool_access, tool_name, authorization)
     except GateError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
@@ -180,7 +183,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     call) telling the caller how to subscribe or configure their key.
     """
     try:
-        record = check_tool_access(name, _mcp_authorization_header())
+        record = await asyncio.to_thread(check_tool_access, name, _mcp_authorization_header())
     except GateError as exc:
         return [
             TextContent(
@@ -313,7 +316,7 @@ async def me(request: Request) -> dict[str, Any]:
     if not key:
         raise HTTPException(status_code=401, detail="Send your key as `Authorization: Bearer wa_live_...`.")
     try:
-        record = validate_key(key)
+        record = await asyncio.to_thread(validate_key, key)
     except GateError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     return {
@@ -511,7 +514,10 @@ async def stripe_webhook(request: Request) -> JSONResponse:
     """
     payload = await request.body()
     try:
-        result = process_webhook_event(payload, request.headers.get("stripe-signature"))
+        # Provisioning does several blocking Supabase/Stripe round-trips.
+        result = await asyncio.to_thread(
+            process_webhook_event, payload, request.headers.get("stripe-signature")
+        )
     except WebhookError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     return JSONResponse(result)
@@ -574,13 +580,14 @@ async def bid_room_process(request: Request, arguments: dict[str, Any] | None = 
     Pro-gated: requires a valid subscriber Bearer key when the gate is on.
     """
     try:
-        record = check_tool_access("process_bid_room", _auth(request))
+        record = await asyncio.to_thread(check_tool_access, "process_bid_room", _auth(request))
     except GateError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     token = storage.set_tenant(record["key_hash"]) if record else None
     try:
-        return process_bid_room_artifact(arguments or {})
+        # E2B sandbox processing blocks for minutes; keep it off the event loop.
+        return await asyncio.to_thread(process_bid_room_artifact, arguments or {})
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:

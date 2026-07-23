@@ -43,6 +43,9 @@ from urllib.request import Request, urlopen
 
 KEY_PREFIX = "wa_live_"
 CACHE_TTL_SECONDS = 300
+# Unknown keys are cached too (to amortize lookups), so without a bound a
+# flood of random wa_live_* keys would grow this dict without limit.
+MAX_CACHE_ENTRIES = 4096
 
 #: Tools that require an active subscription on the hosted server.
 PRO_TOOLS = frozenset(
@@ -209,7 +212,7 @@ def validate_key(key: str) -> dict[str, Any]:
             record = _stripe_lookup(key_hash)
         else:
             raise GateError(503, "Subscription validation is not configured on this server.")
-        _cache[key_hash] = (now, record)
+        _cache_put(key_hash, record, now)
 
     if record is None:
         raise GateError(401, "Unknown API key. Check the key from your subscription email.")
@@ -249,6 +252,20 @@ def check_tool_access(tool_name: str, authorization_header: str | None) -> dict[
         if is_pro:
             raise
         return None
+
+
+def _cache_put(key_hash: str, record: dict[str, Any] | None, now: float) -> None:
+    """Insert a validation result, keeping the cache bounded."""
+    if len(_cache) >= MAX_CACHE_ENTRIES:
+        expired = [k for k, (ts, _) in _cache.items() if now - ts >= CACHE_TTL_SECONDS]
+        for stale in expired:
+            _cache.pop(stale, None)
+        if len(_cache) >= MAX_CACHE_ENTRIES:
+            # Still full of fresh entries (e.g. a key-guessing flood): drop
+            # the oldest half rather than refusing to cache real subscribers.
+            for stale in sorted(_cache, key=lambda k: _cache[k][0])[: MAX_CACHE_ENTRIES // 2]:
+                _cache.pop(stale, None)
+    _cache[key_hash] = (now, record)
 
 
 def clear_cache() -> None:
