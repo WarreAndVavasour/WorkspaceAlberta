@@ -302,6 +302,10 @@ async def landing(request: Request) -> HTMLResponse:
     """Human-friendly landing page with MCP connect instructions."""
     telemetry.capture("landing_page_viewed", properties={"source": "direct"})
     base = str(request.base_url).rstrip("/")
+    # Cloud Run terminates TLS at the proxy, so the app sees http; the
+    # public URL a client must paste is always https (localhost excepted).
+    if base.startswith("http://") and "localhost" not in base and "127.0.0.1" not in base:
+        base = "https://" + base[len("http://"):]
     return HTMLResponse(LANDING_PAGE_TEMPLATE.format(mcp_url=f"{base}/mcp"))
 
 
