@@ -29,7 +29,7 @@ BASE = Path(__file__).resolve().parent
 USECASES_PATH = BASE / "usecases.json"
 DATASET_PATH = BASE / "alberta-usecase-traces.json"
 SCHEMAS_PATH = BASE / "tool_schemas.json"
-ENDPOINT = "https://workspacealberta-719334491060.northamerica-northeast1.run.app/mcp"
+ENDPOINT = "https://elbowsupknivesout.warreandvavasour.com/mcp"
 PER_CALL_TIMEOUT = 120  # seconds, per tool call
 
 # Alias map: planned arg -> candidate real arg names (first match in schema wins)
