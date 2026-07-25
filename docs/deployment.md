@@ -9,7 +9,7 @@ How to run the WorkspaceAlberta procurement server locally, in Docker, and in pr
 | Local stdio | `python mcp-servers/canadabuys/server.py` | MCP over stdio | Claude Desktop, Cursor, OpenCode |
 | Local HTTP | `python mcp-servers/canadabuys/server_http.py` | StreamableHTTP MCP + REST on :8000 | Development, REST testing |
 | Docker | root `Dockerfile` → uvicorn on :8080 | Same as local HTTP | Any container host |
-| Cloud Run (production) | container above | HTTPS | project `workspacealberta-prod` (org 63434412699), `https://workspacealberta-983058968342.northamerica-northeast1.run.app/mcp`, region `northamerica-northeast1` (Montréal), fronted by `elbowsupknivesout.warreandvavasour.com` (Cloudflare Worker `elbows-mcp`). NOTE: the worker currently still points at the outgoing backend in project `n8n-automation-project-459922` (`…-719334491060-…`) pending manual cutover — see "Cloudflare cutover" below |
+| Cloud Run (production) | container above | HTTPS | project `workspacealberta-prod` (org 63434412699), `https://workspacealberta-983058968342.northamerica-northeast1.run.app/mcp`, region `northamerica-northeast1` (Montréal), fronted by `elbowsupknivesout.warreandvavasour.com` (Cloudflare Worker `elbows-mcp`, cut over to this backend 2026-07-25) |
 | Railway (alternative) | `railway.json` + `Procfile` | HTTPS | Dockerfile build, `/health` healthcheck |
 
 ## Environment Variables
@@ -78,20 +78,23 @@ gcloud run deploy workspacealberta \
 
 Do not pass `--set-secrets` on redeploys: the new revision inherits the service's existing env/secret wiring. The service is public (`--allow-unauthenticated` already set); do not change ingress/auth settings.
 
-> Migration note (2026-07-20): production previously ran in project `n8n-automation-project-459922` at `https://workspacealberta-719334491060.northamerica-northeast1.run.app`. That project is the **outgoing backend** — keep its service running until the Cloudflare worker cutover below is confirmed, then delete it.
+> Migration note (2026-07-20, updated 2026-07-25): production previously ran in project `n8n-automation-project-459922` at `https://workspacealberta-719334491060.northamerica-northeast1.run.app`. The Cloudflare worker cutover below is done and verified, so that project is the **retired backend** — its service is still running and can now be deleted.
 
 Montréal region keeps traffic on Canadian infrastructure, consistent with the project's sovereignty positioning. Cloud Run instances are ephemeral: the tender cache re-downloads on cold start (self-healing), but the saved business profile also resets — this is acceptable single-tenant, and is the main operational driver for the multi-user persistence work in `docs/tooling-roadmap.md`.
 
-## Cloudflare cutover (manual step — owner action required)
+## Cloudflare cutover (done 2026-07-25)
 
-The Cloudflare Worker `elbows-mcp` (which serves `elbowsupknivesout.warreandvavasour.com`) still fronts the **outgoing** n8n-project backend. To complete the migration:
+The Cloudflare Worker `elbows-mcp` (which serves `elbowsupknivesout.warreandvavasour.com`) now rewrites every request to `https://workspacealberta-983058968342.northamerica-northeast1.run.app`. Verified after the flip: `/health` is byte-identical through the custom domain and the Cloud Run origin (25 tools, Pro gate enabled), and `tools/list` over `POST https://elbowsupknivesout.warreandvavasour.com/mcp` returns 25 tools.
 
-1. Cloudflare dashboard → Workers & Pages → `elbows-mcp` → edit the upstream/origin URL from `https://workspacealberta-719334491060.northamerica-northeast1.run.app` to `https://workspacealberta-983058968342.northamerica-northeast1.run.app`.
-2. Deploy the worker.
-3. Verify: `curl https://elbowsupknivesout.warreandvavasour.com/health` returns the same payload as `curl https://workspacealberta-983058968342.northamerica-northeast1.run.app/health`, and an MCP `tools/list` over `https://elbowsupknivesout.warreandvavasour.com/mcp` works.
-4. Only after that verification: delete the old service with `gcloud run services delete workspacealberta --project n8n-automation-project-459922 --region northamerica-northeast1`.
+The worker was dashboard-only; its source and `wrangler.jsonc` (custom-domain trigger, no bindings) now live in the Daily repo at `Projects/elbows-mcp/`. Redeploy it from there with `npx wrangler deploy`, not the dashboard editor, so the origin stays in version control.
 
-**The n8n-project service deletion is HELD until the owner confirms the worker cutover is done and verified.**
+Remaining step — delete the retired backend:
+
+```bash
+gcloud run services delete workspacealberta --project n8n-automation-project-459922 --region northamerica-northeast1
+```
+
+**Still HELD at the owner's request** (2026-07-25) even though the cutover is verified.
 
 ## Health & Smoke Checks
 
