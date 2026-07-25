@@ -125,6 +125,9 @@ No environment variables are required for local use.
 
 Optional:
 
+- `POSTHOG_API_KEY`: enable server-side PostHog telemetry on the hosted endpoint (`tool_called`, `pro_tool_denied`, `landing_page_viewed`, `subscription_started`, `subscription_cancelled`); off when unset, and the stdio server never emits events
+- `POSTHOG_HOST`: PostHog ingestion host, default `https://us.i.posthog.com`
+- `WA_ENVIRONMENT`: environment tag on telemetry events, default `prod`
 - `CANADABUYS_DATA_DIR`: override the default cache directory
 - `ALBERTA_APC_API_BASE`: override the Alberta Purchasing Connection API base, currently `https://purchasing.alberta.ca/api`
 - `ALBERTA_APC_APP_BASE`: override the Alberta Purchasing Connection app base, currently `https://purchasing.alberta.ca`

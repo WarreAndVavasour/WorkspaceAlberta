@@ -34,6 +34,7 @@ in this directory). Local run: ``python server_http.py`` serves on :8000.
 import asyncio
 import contextlib
 import sys
+import time
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
@@ -49,7 +50,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from procurement_core import storage  # noqa: E402
+from procurement_core import storage, telemetry  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
     GateError,
     PRO_TOOLS,
@@ -139,14 +140,19 @@ async def run_tool(
         # misses; keep it off the event loop.
         record = await asyncio.to_thread(check_tool_access, tool_name, authorization)
     except GateError as exc:
+        telemetry.capture_gate_denied(tool_name, "rest", exc.status_code)
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     token = storage.set_tenant(record["key_hash"]) if record else None
+    started = time.monotonic()
     try:
         content = await call_tool_text(tool_name, arguments or {})
     finally:
         if token is not None:
             storage.reset_tenant(token)
+    telemetry.capture_tool_call(
+        tool_name, "rest", record, arguments, content, int((time.monotonic() - started) * 1000)
+    )
     return {
         "tool": tool_name,
         "content_type": "text/markdown",
@@ -185,6 +191,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     try:
         record = await asyncio.to_thread(check_tool_access, name, _mcp_authorization_header())
     except GateError as exc:
+        telemetry.capture_gate_denied(name, "mcp", exc.status_code)
         return [
             TextContent(
                 type="text",
@@ -198,11 +205,15 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         ]
 
     token = storage.set_tenant(record["key_hash"]) if record else None
+    started = time.monotonic()
     try:
         text = await call_tool_text(name, arguments)
     finally:
         if token is not None:
             storage.reset_tenant(token)
+    telemetry.capture_tool_call(
+        name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000)
+    )
     return [TextContent(type="text", text=text)]
 
 
@@ -289,6 +300,7 @@ and summarizes; it does not replace the source posting.</p>
 @app.get("/", include_in_schema=False)
 async def landing(request: Request) -> HTMLResponse:
     """Human-friendly landing page with MCP connect instructions."""
+    telemetry.capture("landing_page_viewed", properties={"source": "direct"})
     base = str(request.base_url).rstrip("/")
     return HTMLResponse(LANDING_PAGE_TEMPLATE.format(mcp_url=f"{base}/mcp"))
 
@@ -520,6 +532,10 @@ async def stripe_webhook(request: Request) -> JSONResponse:
         )
     except WebhookError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    if result.get("provisioned"):
+        telemetry.capture("subscription_started", properties={"plan": "pro"})
+    elif result.get("revoked"):
+        telemetry.capture("subscription_cancelled", properties={"plan": "pro"})
     return JSONResponse(result)
 
 

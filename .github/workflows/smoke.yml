@@ -21,7 +21,8 @@ jobs:
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \
             tests.test_search_relevance \
-            tests.test_production_hardening
+            tests.test_production_hardening \
+            tests.test_telemetry
       - name: pip install (pyproject)
         if: ${{ hashFiles('requirements.txt') == '' && hashFiles('pyproject.toml') != '' }}
         run: pip install .
