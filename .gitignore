@@ -39,6 +39,7 @@ output/canadabuys/attachments/
 # Scratch and local tooling
 .tmp/
 .bin-shims/
+.worktrees/
 research/
 
 # Probe and spec-extraction output
