@@ -4,10 +4,15 @@ Operational runbooks for leased WorkspaceAlberta terminals deployed to customer 
 
 The deployment model assumes WorkspaceAlberta owns the equipment. Customers pay for setup, onboarding, monthly service, and continued access. If the subscription ends, the equipment is returned, wiped, refurbished, and redeployed.
 
+## Start Here
+
+**[pi-out-of-box-setup.md](pi-out-of-box-setup.md)** — Master guide for first-time Raspberry Pi setup. Covers everything from unboxing to a working CEO stack. Start here if you are new to Raspberry Pi.
+
 ## Files
 
+- [pi-out-of-box-setup.md](pi-out-of-box-setup.md): master out-of-box guide — hardware checklist, flashing the OS, first boot, and running the installer.
+- [ceo-pi-setup.md](ceo-pi-setup.md): software installer reference for CEO productivity terminals (Codex, ChatGPT Desktop, OpenCode, Tailscale). Assumes the OS is already installed.
 - [tailscale-pi-remote-support.md](tailscale-pi-remote-support.md): how to prepare Raspberry Pi terminals before deployment and connect later with Tailscale SSH + tmux.
-- [ceo-pi-setup.md](ceo-pi-setup.md): first-boot setup for CEO productivity terminals (Codex, ChatGPT Desktop, OpenCode, Tailscale).
 - [commercial-licensing-notes.md](commercial-licensing-notes.md): practical licensing notes for Hermes Agent and Cohere in a commercial WorkspaceAlberta subscription.
 
 ## Operating principle
