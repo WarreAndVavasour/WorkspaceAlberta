@@ -4,6 +4,10 @@ set -euo pipefail
 # WorkspaceAlberta CEO productivity terminal first-boot installer.
 # Run on Raspberry Pi 5 16GB with Raspberry Pi OS / Ubuntu 24.04+.
 #
+# New to Raspberry Pi? See docs/deployment-ops/pi-out-of-box-setup.md for
+# the complete beginner's guide: hardware checklist, flashing the OS, and
+# first boot before running this script.
+#
 # This installer sets up the hyperproductive CEO stack:
 # - Tailscale for remote support
 # - Codex CLI + ChatGPT desktop for AI-assisted work

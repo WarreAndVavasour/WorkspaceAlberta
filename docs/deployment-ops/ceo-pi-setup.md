@@ -1,5 +1,7 @@
 # CEO Productivity Terminal Setup
 
+> **New to Raspberry Pi?** Start with [pi-out-of-box-setup.md](pi-out-of-box-setup.md) for the complete beginner's guide — hardware checklist, flashing the OS, and first boot. This document covers the software installer only.
+
 This runbook covers first-boot setup for WorkspaceAlberta CEO productivity terminals built on Raspberry Pi 5 16GB.
 
 The CEO stack focuses on hyperproductive AI-assisted workflows:

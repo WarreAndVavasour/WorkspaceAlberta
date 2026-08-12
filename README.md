@@ -230,6 +230,12 @@ Configuration:
 - [`docs/codex-setup.md`](docs/codex-setup.md) for local setup notes
 - [`docs/workspace-alberta-hermes-install.md`](docs/workspace-alberta-hermes-install.md) for the branded Hermes / Raspberry Pi setup draft
 
+Raspberry Pi terminal setup:
+
+- [`docs/deployment-ops/pi-out-of-box-setup.md`](docs/deployment-ops/pi-out-of-box-setup.md) — **start here** for new Pi setups, from sealed box to working CEO stack
+- [`docs/deployment-ops/ceo-pi-setup.md`](docs/deployment-ops/ceo-pi-setup.md) — software installer reference (assumes OS already installed)
+- [`docs/deployment-ops/tailscale-pi-remote-support.md`](docs/deployment-ops/tailscale-pi-remote-support.md) — remote support via Tailscale
+
 Data and model sources:
 
 - CanadaBuys open tender notices
