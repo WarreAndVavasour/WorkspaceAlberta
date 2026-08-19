@@ -1,4 +1,4 @@
-/** Product chrome for WorkspaceAlberta Box. Keep DeepSeek out of these strings. */
+/** Product chrome for WorkspaceAlberta Box. Keep third-party wordmarks out of these strings. */
 
 export const APP_NAME = "WorkspaceAlberta Box";
 export const APP_SHORT_NAME = "WA Box";
