@@ -40,7 +40,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="opera_auth_status",
             description="Check OPERA Cloud configuration: whether settings are present, whether mock mode is on, and whether an OAuth token can be obtained. Never displays secrets.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {},
             },
@@ -48,7 +48,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="list_subject_areas",
             description="List available OPERA Reporting & Analytics subject areas (Financial, Statistics, Rates, Profiles, Bookings, and more) grouped by category.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {},
             },
@@ -56,7 +56,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="describe_subject_area",
             description="Show the fields, filter inputs, and an example GraphQL query for one OPERA subject area.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {
                     "name": {
@@ -70,7 +70,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="run_graphql_query",
             description="Run a raw read-only GraphQL query against OPERA R&A. Prefer query_subject_area for validated queries; use this for custom queries.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {
                     "query": {
@@ -88,7 +88,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="query_subject_area",
             description="Query an OPERA subject area safely: fields are validated against the catalog, dates filter the results, and the generated GraphQL is shown. Unknown fields are rejected with the valid list.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {
                     "subject_area": {
@@ -116,7 +116,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="export_to_csv",
             description="Query an OPERA subject area and save the rows to a local CSV file. Returns the file path.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {
                     "subject_area": {
@@ -148,7 +148,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="sync_subject_area",
             description="Query an OPERA subject area and sync the rows into a local table you can analyze offline with query_local_data.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {
                     "subject_area": {
@@ -185,7 +185,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="list_local_tables",
             description="List local tables created by sync_subject_area, with row counts.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {},
             },
@@ -193,7 +193,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="query_local_data",
             description="Run read-only SQL (select) against local tables created by sync_subject_area. Returns a markdown table capped at 100 rows.",
-            inputSchema={
+            input_schema={
                 "type": "object",
                 "properties": {
                     "sql": {
