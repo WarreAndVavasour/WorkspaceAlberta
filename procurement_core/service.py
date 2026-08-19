@@ -48,6 +48,7 @@ Configuration (environment variables):
     CANADABUYS_COHERE_MODEL                Default ``command-a-plus-05-2026``
     CANADABUYS_COHERE_REASONING_EFFORT     Only sent when explicitly set
     ALBERTA_APC_API_BASE / _APP_BASE       APC endpoint overrides
+    PROCUREMENT_FIXTURE_DIR                Offline CanadaBuys CSV + APC JSON fixtures
 """
 
 import asyncio
@@ -61,6 +62,8 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+from . import fixtures
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -171,7 +174,11 @@ def parse_date(value: str) -> datetime | None:
 
 
 def fetch_all_contracts() -> list[dict]:
-    """Fetch all contracts from CanadaBuys."""
+    """Fetch all contracts from CanadaBuys, or from fixtures when configured."""
+    fixture_rows = fixtures.load_canadabuys_rows()
+    if fixture_rows is not None:
+        return fixture_rows
+
     request = Request(OPEN_TENDERS_URL, headers=REQUEST_HEADERS)
 
     with urlopen(request, timeout=120) as response:
@@ -181,16 +188,8 @@ def fetch_all_contracts() -> list[dict]:
         if raw_data[:2] == b'\x1f\x8b':
             raw_data = gzip.decompress(raw_data)
 
-        # Decode
         text_data = raw_data.decode("utf-8-sig")
-
-        # Parse CSV - handle potential BOM and empty lines
-        lines = [line for line in text_data.split('\n') if line.strip()]
-        if not lines:
-            return []
-
-        reader = csv.DictReader(lines)
-        return list(reader)
+        return fixtures.parse_canadabuys_csv_text(text_data)
 
 
 def save_contracts(contracts: list[dict]) -> Path:
@@ -599,6 +598,15 @@ def search_alberta_api(
     """Search Alberta Purchasing Connection opportunities."""
     limit = clamp_int(limit, default=10, minimum=1, maximum=100)
     offset = clamp_int(offset, default=0, minimum=0, maximum=100)
+    fixture_payload = fixtures.load_apc_search_payload()
+    if fixture_payload is not None:
+        return fixtures.filter_apc_search_payload(
+            fixture_payload,
+            query=query,
+            status=status,
+            category=category,
+            limit=limit,
+        )
     payload = {
         "query": query or "",
         "queryMode": "standard",
@@ -1056,6 +1064,10 @@ def is_alberta_reference(reference: str) -> bool:
 
 def load_contracts_for_unified() -> tuple[list[dict], list[str]]:
     """Load CanadaBuys contracts, refreshing once when no cache exists."""
+    fixture_rows = fixtures.load_canadabuys_rows()
+    if fixture_rows is not None:
+        return fixture_rows, []
+
     warnings = []
     contracts = load_contracts()
     if contracts:

@@ -1,0 +1,50 @@
+{
+  "totalCount": 3,
+  "values": [
+    {
+      "referenceNumber": "AB-2026-04112",
+      "solicitationNumber": "RD-2026-WELD-07",
+      "title": "CWB Welding Shop Fit-Up - City of Red Deer",
+      "shortTitle": "Red Deer welding shop",
+      "contractingOrganization": "City of Red Deer",
+      "statusCode": "OPEN",
+      "categoryCode": "GD",
+      "postDateTime": "2026-07-10T09:00:00Z",
+      "closeDateTime": "2026-09-22T16:00:00Z",
+      "regionOfDelivery": ["Red Deer", "Central Alberta"],
+      "projectDescription": "Supply and install CWB-certified welding shop equipment for the City of Red Deer municipal works yard.",
+      "commodityCodeTitles": ["Welding equipment", "Shop tools"],
+      "externalOriginLink": "https://purchasing.alberta.ca/opportunity/2026/4112"
+    },
+    {
+      "referenceNumber": "AB-2026-03801",
+      "solicitationNumber": "CGY-2026-CATER-02",
+      "title": "Hotel Catering Services - Calgary",
+      "shortTitle": "Calgary hospitality catering",
+      "contractingOrganization": "Calgary Exhibition and Stampede",
+      "statusCode": "OPEN",
+      "categoryCode": "SRV",
+      "postDateTime": "2026-07-12T09:00:00Z",
+      "closeDateTime": "2026-09-05T16:00:00Z",
+      "regionOfDelivery": ["Calgary"],
+      "projectDescription": "Banquet catering and hospitality food service for a civic event. Not a welding or shop tender.",
+      "commodityCodeTitles": ["Catering", "Food services"],
+      "externalOriginLink": "https://purchasing.alberta.ca/opportunity/2026/3801"
+    },
+    {
+      "referenceNumber": "AB-2026-03990",
+      "solicitationNumber": "GP-2026-WELD-03",
+      "title": "Welding Shop Services - Grande Prairie",
+      "shortTitle": "Grande Prairie welding shop",
+      "contractingOrganization": "City of Grande Prairie",
+      "statusCode": "OPEN",
+      "categoryCode": "SRV",
+      "postDateTime": "2026-06-18T09:00:00Z",
+      "closeDateTime": "2026-08-30T16:00:00Z",
+      "regionOfDelivery": ["Grande Prairie"],
+      "projectDescription": "On-call welding shop fabrication in Grande Prairie. Central-Alberta shops are out of scope.",
+      "commodityCodeTitles": ["Welding"],
+      "externalOriginLink": "https://purchasing.alberta.ca/opportunity/2026/3990"
+    }
+  ]
+}

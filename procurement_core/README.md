@@ -5,6 +5,7 @@ The engine. Pure Python, no MCP dependency — every adapter (stdio MCP, Streama
 | File | Role |
 |---|---|
 | `service.py` | All 21 tool handlers, `TOOL_NAMES` registry, `call_tool_text()` dispatch, CanadaBuys CSV client + cache, Alberta APC API client, unified normalizer, deterministic profile scoring, Cohere model routing with key failover |
+| `fixtures.py` | Offline CanadaBuys CSV + APC JSON ingest when `PROCUREMENT_FIXTURE_DIR` is set (tests only; hosted MCP stays live) |
 | `e2b_bid_room.py` | E2B sandbox bid-room processing: payload builders, self-contained sandbox processor script, in-sandbox Cohere structured review, artifact validation and rendering |
 
 ## Contract for adding a tool
