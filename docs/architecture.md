@@ -58,7 +58,7 @@ A single pure-Python procurement core (`procurement_core/`) does all the work; t
 
 ## Data Flow Examples
 
-**`search_opportunities` (unified search).** Load CanadaBuys cache (refresh once if empty) → filter rows by keyword/province/category → live `POST /api/opportunity/search` to APC → normalize both → sort by post date → render markdown listing with warnings for any degraded source.
+**`search_opportunities` (unified search).** Load CanadaBuys cache (refresh once if empty) → filter rows by keyword/province/category → live `POST /api/opportunity/search` to APC → normalize both → sort by post date → render markdown listing with warnings for any degraded source. Set `PROCUREMENT_FIXTURE_DIR` to `tests/fixtures/procurement` to ingest the checked-in CanadaBuys CSV and APC JSON instead of the live sites; the hosted MCP URL is unchanged.
 
 **`daily_bid_brief`.** Market snapshot (federal cache count + APC total) → profile-scored matches within lookahead window → closing-soon list → suggested action. Sources degrade independently: if APC is down, the brief still ships with a warning line.
 
