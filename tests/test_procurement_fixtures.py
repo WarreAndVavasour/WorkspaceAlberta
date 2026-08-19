@@ -117,6 +117,53 @@ class ProcurementFixtureIngestTest(unittest.TestCase):
         self.assertNotIn("CanadaBuys data unavailable", output)
         self.assertNotIn("Alberta APC unavailable", output)
 
+    def test_structured_output_carries_normalized_opportunities(self) -> None:
+        with mock.patch.object(service, "urlopen", side_effect=AssertionError("network")):
+            text, structured = asyncio.run(
+                service.call_tool_text_and_structured("search_opportunities", {"keywords": SHOP_QUERY})
+            )
+
+        self.assertIn(FEDERAL_TITLE, text)
+        self.assertIn(APC_TITLE, text)
+        self.assertIsNotNone(structured)
+        assert structured is not None
+        self.assertEqual(structured["kind"], "opportunities")
+        self.assertEqual(structured["count"], len(structured["opportunities"]))
+        titles = {row["title"] for row in structured["opportunities"]}
+        self.assertIn(FEDERAL_TITLE, titles)
+        self.assertIn(APC_TITLE, titles)
+        sources = {row["source"] for row in structured["opportunities"]}
+        self.assertIn("CanadaBuys", sources)
+        self.assertIn("Alberta Purchasing Connection", sources)
+        for row in structured["opportunities"]:
+            self.assertIn("reference", row)
+            self.assertIn("closing", row)
+
+    def test_matches_structured_output_has_score_and_reasons_shape(self) -> None:
+        with mock.patch.object(service, "urlopen", side_effect=AssertionError("network")):
+            text, structured = asyncio.run(
+                service.call_tool_text_and_structured(
+                    "find_matching_opportunities",
+                    {
+                        "profile": {
+                            "company_name": "Red Deer Welding",
+                            "location": "Red Deer, Alberta",
+                            "description": "structural steel fabrication and welding",
+                        }
+                    },
+                )
+            )
+
+        self.assertIsNotNone(structured)
+        assert structured is not None
+        self.assertEqual(structured["kind"], "matches")
+        self.assertEqual(structured["count"], len(structured["matches"]))
+        for match in structured["matches"]:
+            self.assertIn("score", match)
+            self.assertIn("days_until", match)
+            self.assertIn("reasons", match)
+            self.assertIn("reference", match)
+
 
 if __name__ == "__main__":
     unittest.main()
