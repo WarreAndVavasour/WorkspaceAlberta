@@ -4,3 +4,8 @@
 
 dashboard:
   theme: workspace-alberta
+
+# Headless Chromium CDP endpoint for the Browser Use automation backend (browser_exec).
+# Leave backend unset so Browser Use stays the default when the browser-use CLI is runnable.
+browser:
+  cdp_url: http://127.0.0.1:9225

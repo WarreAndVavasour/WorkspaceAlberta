@@ -296,6 +296,65 @@ If the command form changes, keep this document in sync with the working `.curso
 
 ---
 
+## Browser Use automation backend (`browser_exec`)
+
+Hermes's default browser backend is **Browser Use**, which exposes a single `browser_exec` tool that drives a real Chromium over CDP. On the Pi it runs against a dedicated headless Chromium user service bound to loopback only.
+
+### 1. Browser Use CLI
+
+The official Hermes installer provisions this into the Hermes-managed bin dir:
+
+```bash
+~/.hermes/bin/uv tool install browser-use   # binary lands at ~/.hermes/bin/browser-use
+~/.hermes/bin/browser-use --version         # CLI version string
+~/.hermes/bin/uv tool list                  # package version (browser-use)
+```
+
+### 2. Headless Chromium CDP service
+
+A systemd **user** service runs a dedicated, headless Chromium with remote debugging on `127.0.0.1:9225`:
+
+```bash
+systemctl --user enable --now hermes-browser-cdp.service
+systemctl --user status hermes-browser-cdp.service
+loginctl enable-linger "$USER"   # start at boot without a login session
+```
+
+The unit (`~/.config/systemd/user/hermes-browser-cdp.service`) launches Chromium with:
+
+```text
+--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu
+--remote-debugging-address=127.0.0.1 --remote-debugging-port=9225
+--user-data-dir=~/.hermes/chrome-debug-browser-use
+--no-first-run --no-default-browser-check
+```
+
+`--no-sandbox` is required on Ubuntu 24.04 because unprivileged user namespaces are AppArmor-restricted. A dedicated `--user-data-dir` keeps the debug port open even when a desktop Chromium is already running with the normal profile.
+
+### 3. Wire Hermes to the CDP endpoint
+
+```bash
+hermes config set browser.cdp_url http://127.0.0.1:9225
+# leave browser.backend unset so Browser Use (browser_exec) stays the default
+```
+
+### 4. Verify
+
+```bash
+curl -fsS http://127.0.0.1:9225/json/version   # real browser + webSocketDebuggerUrl
+BU_CDP_URL=http://127.0.0.1:9225 ~/.hermes/bin/browser-use <<'PY'
+ensure_real_tab()
+goto_url("https://example.com")
+wait_for_load()
+print(page_info())
+PY
+# expect {'url': 'https://example.com/', 'title': 'Example Domain', ...}
+```
+
+Keep CDP bound to `127.0.0.1` only. Do not expose port 9225 on the LAN or Tailscale.
+
+---
+
 ## Secrets and local credentials
 
 Do not commit secrets to this repository.
