@@ -20,6 +20,7 @@ jobs:
           python -m unittest -v \
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \
+            tests.test_procurement_fixtures \
             tests.test_search_relevance \
             tests.test_production_hardening \
             tests.test_telemetry
