@@ -42,9 +42,9 @@ from typing import Any
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
-from mcp.server import Server
+from mcp.server import Server, ServerRequestContext
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
-from mcp.types import TextContent, Tool
+from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent, Tool
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
@@ -60,10 +60,74 @@ from procurement_core.auth import (  # noqa: E402
     validate_key,
 )
 from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
-from procurement_core.service import TOOL_NAMES, call_tool_text, process_bid_room_artifact  # noqa: E402
+from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 
-mcp_server = Server("canadabuys")
+def _mcp_authorization_header(ctx: ServerRequestContext) -> str | None:
+    """Read the Authorization header from the current MCP request context."""
+    request = getattr(ctx, "request", None)
+    headers = getattr(request, "headers", None)
+    if headers is None:
+        return None
+    return headers.get("authorization")
+
+
+async def handle_list_tools(ctx: ServerRequestContext, params) -> ListToolsResult:
+    """List available procurement MCP tools."""
+    return ListToolsResult(tools=get_mcp_tools())
+
+
+async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestParams) -> CallToolResult:
+    """Handle an MCP tool call through the shared procurement core.
+
+    Applies the same Pro-tool gate as REST: the Bearer key is read from the
+    StreamableHTTP request headers via the MCP request context. Gate
+    failures return a readable message (MCP has no HTTP status per tool
+    call) telling the caller how to subscribe or configure their key.
+    """
+    name = params.name
+    arguments = params.arguments or {}
+    try:
+        record = await asyncio.to_thread(check_tool_access, name, _mcp_authorization_header(ctx))
+    except GateError as exc:
+        telemetry.capture_gate_denied(name, "mcp", exc.status_code)
+        return CallToolResult(
+            content=[
+                TextContent(
+                    type="text",
+                    text=(
+                        f"# WorkspaceAlberta Pro required\n\n{exc}\n\n"
+                        "Add your key to the MCP server config as an "
+                        '`Authorization: Bearer wa_live_...` header, or subscribe at '
+                        "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month)."
+                    ),
+                )
+            ],
+            is_error=False,
+        )
+
+    token = storage.set_tenant(record["key_hash"]) if record else None
+    started = time.monotonic()
+    try:
+        text, structured = await call_tool_text_and_structured(name, arguments)
+    finally:
+        if token is not None:
+            storage.reset_tenant(token)
+    telemetry.capture_tool_call(
+        name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000)
+    )
+    return CallToolResult(
+        content=[TextContent(type="text", text=text)],
+        structured_content=structured,
+        is_error=False,
+    )
+
+
+mcp_server = Server(
+    "canadabuys",
+    on_list_tools=handle_list_tools,
+    on_call_tool=handle_call_tool,
+)
 session_manager: StreamableHTTPSessionManager | None = None
 
 
@@ -109,16 +173,8 @@ app.add_middleware(
 
 
 def serialize_tool(tool: Tool) -> dict[str, Any]:
-    """Return a JSON-safe representation of an MCP Tool."""
-    if hasattr(tool, "model_dump"):
-        return tool.model_dump()
-    if hasattr(tool, "dict"):
-        return tool.dict()
-    return {
-        "name": tool.name,
-        "description": tool.description,
-        "inputSchema": tool.inputSchema,
-    }
+    """Return a JSON-safe representation of an MCP Tool with wire-case keys."""
+    return tool.model_dump(by_alias=True, exclude_none=True)
 
 
 async def run_tool(
@@ -158,63 +214,6 @@ async def run_tool(
         "content_type": "text/markdown",
         "content": content,
     }
-
-
-@mcp_server.list_tools()
-async def list_tools() -> list[Tool]:
-    """List available procurement MCP tools."""
-    return get_mcp_tools()
-
-
-def _mcp_authorization_header() -> str | None:
-    """Read the Authorization header from the current MCP request context."""
-    try:
-        ctx = mcp_server.request_context
-    except LookupError:
-        return None
-    request = getattr(ctx, "request", None)
-    headers = getattr(request, "headers", None)
-    if headers is None:
-        return None
-    return headers.get("authorization")
-
-
-@mcp_server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
-    """Handle an MCP tool call through the shared procurement core.
-
-    Applies the same Pro-tool gate as REST: the Bearer key is read from the
-    StreamableHTTP request headers via the MCP request context. Gate
-    failures return a readable message (MCP has no HTTP status per tool
-    call) telling the caller how to subscribe or configure their key.
-    """
-    try:
-        record = await asyncio.to_thread(check_tool_access, name, _mcp_authorization_header())
-    except GateError as exc:
-        telemetry.capture_gate_denied(name, "mcp", exc.status_code)
-        return [
-            TextContent(
-                type="text",
-                text=(
-                    f"# WorkspaceAlberta Pro required\n\n{exc}\n\n"
-                    "Add your key to the MCP server config as an "
-                    '`Authorization: Bearer wa_live_...` header, or subscribe at '
-                    "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month)."
-                ),
-            )
-        ]
-
-    token = storage.set_tenant(record["key_hash"]) if record else None
-    started = time.monotonic()
-    try:
-        text = await call_tool_text(name, arguments)
-    finally:
-        if token is not None:
-            storage.reset_tenant(token)
-    telemetry.capture_tool_call(
-        name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000)
-    )
-    return [TextContent(type="text", text=text)]
 
 
 class MCPStreamableHTTPApp:

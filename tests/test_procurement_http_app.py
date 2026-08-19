@@ -177,7 +177,7 @@ class InlineProfileTest(unittest.TestCase):
             "process_bid_room",
             "analyze_contract_with_cohere",
         ):
-            self.assertIn("profile", by_name[name].inputSchema["properties"], name)
+            self.assertIn("profile", by_name[name].input_schema["properties"], name)
 
 
 if __name__ == "__main__":

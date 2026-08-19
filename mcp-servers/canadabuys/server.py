@@ -16,33 +16,34 @@ Hosted equivalent:       ``server_http.py`` (StreamableHTTP MCP + REST)
 
 import sys
 from pathlib import Path
-from typing import Any
 
-from mcp.server import Server
+from mcp.server import Server, ServerRequestContext
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
+from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from procurement_core.service import call_tool_text  # noqa: E402
+from procurement_core.service import call_tool_text_and_structured  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 
-server = Server("canadabuys")
-
-
-@server.list_tools()
-async def list_tools() -> list[Tool]:
+async def handle_list_tools(ctx: ServerRequestContext, params) -> ListToolsResult:
     """List available procurement tools."""
-    return get_mcp_tools()
+    return ListToolsResult(tools=get_mcp_tools())
 
 
-@server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestParams) -> CallToolResult:
     """Handle an MCP tool call through the shared procurement core."""
-    text = await call_tool_text(name, arguments)
-    return [TextContent(type="text", text=text)]
+    text, structured = await call_tool_text_and_structured(params.name, params.arguments or {})
+    return CallToolResult(
+        content=[TextContent(type="text", text=text)],
+        structured_content=structured,
+        is_error=False,
+    )
+
+
+server = Server("canadabuys", on_list_tools=handle_list_tools, on_call_tool=handle_call_tool)
 
 
 async def main() -> None:

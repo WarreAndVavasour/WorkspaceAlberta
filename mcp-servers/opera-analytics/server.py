@@ -15,11 +15,10 @@ Mock mode (no credentials): set ``OPERA_MOCK=1`` in the environment.
 
 import sys
 from pathlib import Path
-from typing import Any
 
-from mcp.server import Server
+from mcp.server import Server, ServerRequestContext
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
+from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
@@ -28,20 +27,18 @@ if str(ROOT_DIR) not in sys.path:
 from opera_core.service import call_tool_text  # noqa: E402
 from opera_core.mcp_tools import get_mcp_tools  # noqa: E402
 
-server = Server("opera-analytics")
-
-
-@server.list_tools()
-async def list_tools() -> list[Tool]:
+async def handle_list_tools(ctx: ServerRequestContext, params) -> ListToolsResult:
     """List available OPERA analytics tools."""
-    return get_mcp_tools()
+    return ListToolsResult(tools=get_mcp_tools())
 
 
-@server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestParams) -> CallToolResult:
     """Handle an MCP tool call through the shared OPERA core."""
-    text = await call_tool_text(name, arguments)
-    return [TextContent(type="text", text=text)]
+    text = await call_tool_text(params.name, params.arguments or {})
+    return CallToolResult(content=[TextContent(type="text", text=text)], is_error=False)
+
+
+server = Server("opera-analytics", on_list_tools=handle_list_tools, on_call_tool=handle_call_tool)
 
 
 async def main() -> None:

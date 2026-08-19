@@ -48,14 +48,14 @@ class OperaAnalyticsMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
             async with stdio_client(params) as (read_stream, write_stream):
                 async with ClientSession(read_stream, write_stream) as session:
                     initialize_result = await session.initialize()
-                    self.assertEqual(initialize_result.serverInfo.name, "opera-analytics")
+                    self.assertEqual(initialize_result.server_info.name, "opera-analytics")
 
                     tools_result = await session.list_tools()
                     tool_names = {tool.name for tool in tools_result.tools}
                     self.assertEqual(tool_names, EXPECTED_TOOLS)
 
                     areas_result = await session.call_tool("list_subject_areas", {})
-                    self.assertFalse(areas_result.isError)
+                    self.assertFalse(areas_result.is_error)
 
                     areas_chunks = [
                         content.text
@@ -66,7 +66,7 @@ class OperaAnalyticsMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                     self.assertIn("Subject Areas", areas_chunks[0])
 
                     status_result = await session.call_tool("opera_auth_status", {})
-                    self.assertFalse(status_result.isError)
+                    self.assertFalse(status_result.is_error)
 
                     status_chunks = [
                         content.text

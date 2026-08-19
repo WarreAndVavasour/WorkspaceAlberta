@@ -75,8 +75,8 @@ class TestToolSurface(OperaServiceTestBase):
 
     def test_tool_schemas_are_objects(self) -> None:
         for tool in get_mcp_tools():
-            self.assertEqual(tool.inputSchema.get("type"), "object", tool.name)
-            self.assertIn("properties", tool.inputSchema, tool.name)
+            self.assertEqual(tool.input_schema.get("type"), "object", tool.name)
+            self.assertIn("properties", tool.input_schema, tool.name)
 
     async def test_unknown_tool_lists_available_tools(self) -> None:
         result = await service.call_tool_text("not_a_real_tool", {})
