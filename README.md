@@ -55,6 +55,8 @@ python mcp-servers/canadabuys/server.py
 
 Smoke test: `python -m unittest tests.test_canadabuys_mcp_smoke`. Client config variants live in [`mcp.json.example`](mcp.json.example); full tool and REST reference in [`docs/mcp-tool-reference.md`](docs/mcp-tool-reference.md).
 
+**WorkspaceAlberta Box** is the Warre & Vavasour desktop MCP client in [`box/`](box/README.md). It handshakes with the local or hosted `/mcp` endpoint. Official DSH and other tools get added later; this is not a third-party Harness reskin.
+
 ---
 
 ## Canadian AI Security Is Canadian National Security
@@ -229,6 +231,7 @@ Configuration:
 - [`docs/setup-productization-track.md`](docs/setup-productization-track.md) for the combined WorkspaceAlberta + private `wvsetup` setup track
 - [`docs/codex-setup.md`](docs/codex-setup.md) for local setup notes
 - [`docs/workspace-alberta-hermes-install.md`](docs/workspace-alberta-hermes-install.md) for the branded Hermes / Raspberry Pi setup draft
+- [`box/README.md`](box/README.md) for WorkspaceAlberta Box, the desktop MCP client
 
 Raspberry Pi terminal setup:
 

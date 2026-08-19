@@ -23,14 +23,17 @@ jobs:
             tests.test_procurement_fixtures \
             tests.test_search_relevance \
             tests.test_production_hardening \
-            tests.test_telemetry
+            tests.test_telemetry \
+            tests.test_box_source_guard \
+            tests.test_box_mcp_handshake
       - name: pip install (pyproject)
         if: ${{ hashFiles('requirements.txt') == '' && hashFiles('pyproject.toml') != '' }}
         run: pip install .
       - uses: actions/setup-node@v4
-        if: ${{ hashFiles('package.json') != '' }}
         with:
           node-version: 'lts/*'
+      - name: box unit tests
+        run: node --test box/test/*.test.mjs
       - name: npm install + build
         if: ${{ hashFiles('package.json') != '' }}
         run: |

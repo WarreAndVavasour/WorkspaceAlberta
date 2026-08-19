@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WorkspaceAlberta Box</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="/icons/wa-mark.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="masthead">
+    <img class="mark" src="/icons/wa-mark.svg" alt="">
+    <div>
+      <h1>WorkspaceAlberta Box</h1>
+      <p class="sub">A product of Warre &amp; Vavasour. Official DSH and other tools get added later.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="connection">
+      <h2>MCP connection</h2>
+      <p>This box talks official Streamable HTTP MCP to the WorkspaceAlberta procurement server already in this repo. No model key is required to connect.</p>
+      <label for="mcp-url">Endpoint</label>
+      <div class="row">
+        <select id="preset" aria-label="Saved endpoints"></select>
+        <input id="mcp-url" type="url" spellcheck="false" autocomplete="off">
+      </div>
+      <div class="row">
+        <button id="connect" type="button">Connect</button>
+        <p id="status" class="status" role="status">Not connected</p>
+      </div>
+    </section>
+
+    <section class="panel" id="tools-panel" hidden>
+      <h2>Tools</h2>
+      <ul id="tools"></ul>
+      <label for="tool-name">Call a tool</label>
+      <div class="row">
+        <select id="tool-name"></select>
+        <input id="tool-args" type="text" value="{}" spellcheck="false" aria-label="JSON arguments">
+        <button id="call" type="button">Call</button>
+      </div>
+      <pre id="result" hidden></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Model provider</h2>
+      <p>Empty on purpose. Add an OpenAI-compatible base URL later (Cohere or another vendor). First run is the MCP connection, not a model-key prompt.</p>
+      <label for="provider-url">OpenAI-compatible base URL</label>
+      <input id="provider-url" type="url" placeholder="not set" spellcheck="false">
+      <label for="provider-model">Model</label>
+      <input id="provider-model" type="text" placeholder="not set">
+    </section>
+
+    <section class="panel">
+      <h2>Updates</h2>
+      <p id="updates">Update checks are off. When they are turned on they will use GitHub Releases for HarleyCoops/WorkspaceAlberta — never a third-party download host.</p>
+    </section>
+
+    <section class="panel" id="about">
+      <h2>About</h2>
+      <p id="about-body"></p>
+    </section>
+  </main>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

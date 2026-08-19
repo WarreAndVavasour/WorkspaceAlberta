@@ -1,0 +1,116 @@
+:root {
+  --paper: #fffdf8;
+  --page: #f6f1e8;
+  --ink: #1c1916;
+  --muted: #5c564c;
+  --line: #d7cfc0;
+  --brass: #8a6a2f;
+  --steel: #2f4a63;
+  --ok: #2d5a3d;
+  --bad: #8a2f2f;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+.masthead {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0.5rem;
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+.mark {
+  width: 48px;
+  height: 48px;
+}
+
+h1, h2 {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+h1 { margin: 0; font-size: 1.6rem; }
+h2 { margin: 0 0 0.6rem; font-size: 1.1rem; color: var(--steel); }
+.sub { margin: 0.2rem 0 0; color: var(--muted); }
+
+main {
+  max-width: 46rem;
+  margin: 0 auto 3rem;
+  padding: 0 1.5rem;
+}
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.1rem 1.15rem;
+  margin-top: 1rem;
+}
+
+label {
+  display: block;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0.7rem 0 0.3rem;
+}
+
+input, select, button, pre {
+  font: 15px/1.4 "Avenir Next", "Segoe UI", sans-serif;
+}
+
+input, select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+  border-radius: 5px;
+  color: var(--ink);
+}
+
+.row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.row input, .row select { flex: 1; }
+
+button {
+  background: var(--steel);
+  color: #fff;
+  border: 0;
+  border-radius: 5px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+
+button:hover { background: #24394d; }
+
+.status { margin: 0; color: var(--muted); }
+.status.ok { color: var(--ok); }
+.status.bad { color: var(--bad); }
+
+ul {
+  padding-left: 1.1rem;
+  margin: 0 0 0.8rem;
+}
+
+pre {
+  background: #f4f4f4;
+  border-radius: 6px;
+  padding: 0.8rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}

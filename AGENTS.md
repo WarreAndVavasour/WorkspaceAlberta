@@ -12,6 +12,7 @@ The repo is intentionally narrow:
 - one Cursor workspace config
 - one OpenCode project config
 - one smoke test for the MCP server
+- one WorkspaceAlberta Box desktop MCP client
 
 This is not a workspace generator, profile builder, or catalog of business tools.
 
@@ -42,6 +43,7 @@ If you are changing OpenAI- or Codex-related setup in this repo:
 - [tests/test_canadabuys_mcp_smoke.py](C:\Users\chris\WorkspaceAlberta\tests\test_canadabuys_mcp_smoke.py): startup and response smoke test
 - [mcp-servers/opera-analytics/server.py](C:\Users\chris\WorkspaceAlberta\mcp-servers\opera-analytics\server.py): OPERA Cloud analytics stdio MCP server
 - [tests/test_opera_analytics_smoke.py](C:\Users\chris\WorkspaceAlberta\tests\test_opera_analytics_smoke.py): OPERA analytics startup and response smoke test
+- [box/](C:\Users\chris\WorkspaceAlberta\box): WorkspaceAlberta Box, a Warre & Vavasour desktop MCP client (not DSH, not gbrain)
 
 ## Key Commands
 
@@ -61,6 +63,12 @@ Run the smoke test:
 
 ```bash
 python -m unittest tests.test_canadabuys_mcp_smoke
+```
+
+Run the Box client handshake and source guard:
+
+```bash
+python -m unittest tests.test_box_source_guard tests.test_box_mcp_handshake
 ```
 
 Run the offline CanadaBuys + APC fixture ingest tests (no network):

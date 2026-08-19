@@ -1,0 +1,28 @@
+{
+  "name": "@warreandvavasour/workspacealberta-box",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WorkspaceAlberta Box — a Warre & Vavasour desktop MCP client for Canadian procurement.",
+  "type": "module",
+  "productName": "WorkspaceAlberta Box",
+  "author": "Warre & Vavasour",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HarleyCoops/WorkspaceAlberta.git",
+    "directory": "box"
+  },
+  "bin": {
+    "wa-box": "src/cli.mjs"
+  },
+  "scripts": {
+    "start": "node src/cli.mjs serve",
+    "handshake": "node src/cli.mjs handshake",
+    "about": "node src/cli.mjs about",
+    "desktop": "npx --yes electron src/electron-main.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -11,6 +11,7 @@ A single pure-Python procurement core (`procurement_core/`) does all the work; t
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │  Clients                                                       │
+│  WorkspaceAlberta Box (Streamable HTTP MCP)                    │
 │  Claude Desktop / Cursor / OpenCode (stdio MCP)                │
 │  MCP-native agents over HTTP  ·  Any HTTP client (REST)        │
 └───────────────┬───────────────────────────┬────────────────────┘

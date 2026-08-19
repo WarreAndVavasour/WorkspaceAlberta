@@ -6,6 +6,8 @@
 | `test_procurement_fixtures.py` | Offline CanadaBuys + APC fixture ingest; shop-in-Red-Deer query returns structured rows (title, close date, source) with no network |
 | `test_procurement_http_app.py` | Hosted FastAPI app: routes, tool dispatch, error envelopes |
 | `test_e2b_bid_room.py` | Bid-room payload builders, artifact parsing/validation, markdown rendering (no live sandbox) |
+| `test_box_source_guard.py` | Shipped Box source must not contain the known China update hosts or the default vendor API host |
+| `test_box_mcp_handshake.py` | WorkspaceAlberta Box CLI initialize + tools/list against the local WA HTTP server |
 
 Run everything:
 

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="WorkspaceAlberta Box">
+  <rect x="2" y="2" width="60" height="60" rx="6" fill="#2f4a63"/>
+  <rect x="8" y="8" width="48" height="48" rx="3" fill="#f6f1e8"/>
+  <path d="M16 44 V20 L24 36 L32 20 V44" fill="none" stroke="#8a6a2f" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M36 44 V20 H50 M36 32 H47" fill="none" stroke="#8a6a2f" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="square"/>
+</svg>
