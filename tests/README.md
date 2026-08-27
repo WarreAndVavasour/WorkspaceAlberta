@@ -6,6 +6,7 @@
 | `test_procurement_fixtures.py` | Offline CanadaBuys + APC fixture ingest; shop-in-Red-Deer query returns structured rows (title, close date, source) with no network |
 | `test_procurement_http_app.py` | Hosted FastAPI app: routes, tool dispatch, error envelopes |
 | `test_e2b_bid_room.py` | Bid-room payload builders, artifact parsing/validation, markdown rendering (no live sandbox) |
+| `test_cohere_parse.py` | Cohere Parse request shape, mocked `POST /v2/parse`, fallback policy (no live Cohere credits) |
 
 Run everything:
 

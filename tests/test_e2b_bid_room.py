@@ -8,8 +8,10 @@ from procurement_core.e2b_bid_room import (
     build_sandbox_command,
     collect_canadabuys_attachment_urls,
     parse_artifact,
+    render_bid_room_markdown,
     validate_bid_room_artifact,
     validate_cohere_analysis,
+    BidRoomSandboxResult,
 )
 
 
@@ -27,6 +29,13 @@ class E2BBidRoomTest(unittest.TestCase):
         command = build_sandbox_command(payload)
         self.assertIn("workspacealberta-e2b-bid-room-v1", command)
         self.assertIn("python3 - <<'PY'", command)
+        self.assertEqual(payload["parse"]["model"], "parse-v5.0")
+        self.assertEqual(payload["parse"]["endpoint"], "https://api.cohere.com/v2/parse")
+        self.assertTrue(payload["parse"]["enabled"])
+        self.assertIn("https://api.cohere.com/v2/parse", command)
+        self.assertIn("parse-v5.0", command)
+        self.assertIn("run_parse_or_fallback", command)
+        self.assertIn('"type": "image_url"', command)
 
         artifact = {
             "processor": "workspacealberta-e2b-bid-room-v1",
@@ -118,6 +127,40 @@ class E2BBidRoomTest(unittest.TestCase):
         validated = validate_bid_room_artifact(artifact, require_cohere=True)
         self.assertEqual(validated["cohere_tool_calls"][0]["result_count"], 2)
 
+    def test_artifact_surfaces_parse_vs_fallback(self) -> None:
+        artifact = {
+            "processor": "workspacealberta-e2b-bid-room-v1",
+            "opportunity": {"reference": "TEST-PARSE", "source": "sample", "title": "Steel"},
+            "profile": {},
+            "documents": [
+                {"name": "specs.pdf", "status": "extracted", "bytes": 12, "text_length": 40, "extract_method": "parse-v5.0"},
+                {"name": "prices.xlsx", "status": "extracted", "bytes": 8, "text_length": 20, "extract_method": "fallback", "parse_error": "unsupported_mime"},
+            ],
+            "evidence": {},
+            "parse": {
+                "model": "parse-v5.0",
+                "files_used_parse": ["specs.pdf"],
+                "files_used_fallback": ["prices.xlsx"],
+            },
+        }
+        validated = validate_bid_room_artifact(artifact)
+        self.assertEqual(validated["parse"]["files_used_parse"], ["specs.pdf"])
+        markdown = render_bid_room_markdown(
+            BidRoomSandboxResult(
+                sandbox_id="sbx-test",
+                killed=True,
+                artifact=validated,
+                stdout="",
+                stderr="",
+            )
+        )
+        self.assertIn("Document layer", markdown)
+        self.assertIn("specs.pdf", markdown)
+        self.assertIn("prices.xlsx", markdown)
+        self.assertIn("[parse-v5.0]", markdown)
+        self.assertIn("[fallback]", markdown)
+
 
 if __name__ == "__main__":
     unittest.main()
+

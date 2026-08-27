@@ -16,10 +16,14 @@ How it works, end to end:
 2.  **Sandbox execution.** :func:`run_live_bid_room_process` boots an E2B
     sandbox, injects ``SANDBOX_PROCESSOR`` (a self-contained Python script,
     stored as a raw string in this module) with the payload substituted in,
-    and runs it under a command timeout. The processor downloads attachments,
-    extracts text (pdfminer/python-docx/openpyxl installed on demand via
-    :func:`ensure_package`), walks ZIPs up to ``MAX_ZIP_MEMBERS``, and builds
-    an evidence bundle of normalized document text.
+    and runs it under a command timeout. The processor downloads attachments
+    and prefers Cohere Parse (``parse-v5.0``, ``POST /v2/parse``) for PDF
+    pages and images so tables, forms, and drawings become markdown. The
+    official Parse API accepts ``document.type = image_url`` only, so PDFs
+    are rasterized to JPEG pages first. DOCX/XLSX and Parse failures stay
+    on the deterministic extractors (pypdf/python-docx/openpyxl). ZIPs are
+    walked up to ``MAX_ZIP_MEMBERS``. The artifact records which files used
+    Parse vs fallback.
 3.  **In-sandbox Cohere review.** ``call_cohere`` (inside the processor) calls
     Command A+ with read-only evidence tools (``search_extracted_documents``,
     ``get_bid_evidence``) and a strict JSON schema
@@ -53,10 +57,21 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlparse
 
+from procurement_core.cohere_parse import (
+    EXTRACT_FALLBACK,
+    PARSE_DEFAULT_MAX_PAGES,
+    PARSE_DEFAULT_TIMEOUT,
+    PARSE_MODEL_DEFAULT,
+    PARSE_URL,
+    summarize_extract_methods,
+)
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
 COHERE_MODEL = "command-a-plus-05-2026"
 COHERE_CHAT_URL = "https://api.cohere.com/v2/chat"
+COHERE_PARSE_MODEL = PARSE_MODEL_DEFAULT
+COHERE_PARSE_URL = PARSE_URL
 MAX_ATTACHMENTS = 5
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_COHERE_CHARS = 80_000
@@ -136,6 +151,8 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urlparse
 from urllib.request import Request, urlopen
+
+__COHERE_PARSE_HELPERS__
 
 payload = json.loads(__PAYLOAD_JSON__)
 work_dir = Path("/tmp/workspacealberta-bid-room")
@@ -290,6 +307,7 @@ def extract_from_path(path, content_type=""):
 
 def extract_zip(path):
     outputs = []
+    methods = []
     with zipfile.ZipFile(path) as archive:
         for member in archive.infolist()[:MAX_ZIP_MEMBERS]:
             if member.is_dir() or member.file_size > MAX_FILE_BYTES:
@@ -299,18 +317,113 @@ def extract_zip(path):
             with archive.open(member) as source:
                 target.write_bytes(source.read(MAX_FILE_BYTES + 1))
             try:
-                text = extract_from_path(target)
+                text, method, _error = extract_document_with_parse(target)
+                methods.append(method)
                 if text.strip():
                     outputs.append(f"--- {member.filename} ---\n{text[:MAX_DOC_CHARS]}")
             except Exception as exc:
+                methods.append("fallback")
                 outputs.append(f"--- {member.filename} ---\n[Extraction failed: {exc}]")
-    return "\n\n".join(outputs)
+    parse_model = str((payload.get("parse") or {}).get("model") or PARSE_MODEL_DEFAULT)
+    method = parse_model if parse_model in methods else "fallback"
+    return "\n\n".join(outputs), method
 
 
 def extract_document_text(path, content_type=""):
     if path.suffix.lower() == ".zip" or "zip" in content_type:
-        return extract_zip(path)
+        text, _method = extract_zip(path)
+        return text
     return extract_from_path(path, content_type)
+
+
+def rasterize_pdf_pages(path, max_pages=16, max_bytes=20 * 1024 * 1024):
+    ensure_package("pypdfium2")
+    ensure_package("PIL", "Pillow")
+    import pypdfium2 as pdfium
+    from io import BytesIO
+
+    pdf = pdfium.PdfDocument(str(path))
+    try:
+        page_count = len(pdf)
+        if page_count > max_pages:
+            warnings.append(
+                f"{path.name}: Parse rendered {max_pages} of {page_count} PDF pages"
+            )
+        images = []
+        for index in range(min(page_count, max_pages)):
+            page = pdf[index]
+            data = None
+            for attempt_scale in (2.0, 1.5, 1.0):
+                bitmap = page.render(scale=attempt_scale)
+                pil = bitmap.to_pil()
+                if pil.mode != "RGB":
+                    pil = pil.convert("RGB")
+                buf = BytesIO()
+                pil.save(buf, format="JPEG", quality=80, optimize=True)
+                data = buf.getvalue()
+                if len(data) <= max_bytes:
+                    break
+            if not data or len(data) > max_bytes:
+                raise RuntimeError(f"parse_page_too_large:{index}")
+            images.append(data)
+    finally:
+        close = getattr(pdf, "close", None)
+        if close:
+            close()
+    if not images:
+        raise RuntimeError("parse_rasterize_empty")
+    return images
+
+
+def parse_file_markdown(path, content_type, kind):
+    parse_cfg = payload.get("parse") or {}
+    model = str(parse_cfg.get("model") or PARSE_MODEL_DEFAULT)
+    endpoint = str(parse_cfg.get("endpoint") or PARSE_URL)
+    timeout = int(parse_cfg.get("timeout_seconds") or PARSE_DEFAULT_TIMEOUT)
+    max_pages = int(parse_cfg.get("max_pages") or PARSE_DEFAULT_MAX_PAGES)
+    api_key = os.environ.get("COHERE_API_KEY", "").strip()
+    if kind == "image":
+        result = call_cohere_parse(
+            path.read_bytes(),
+            image_mime(path.name, content_type),
+            api_key,
+            model=model,
+            endpoint=endpoint,
+            timeout=timeout,
+        )
+        return markdown_from_parse_response(result)
+    page_images = rasterize_pdf_pages(path, max_pages=max_pages)
+    parts = []
+    for image_data in page_images:
+        result = call_cohere_parse(
+            image_data,
+            "image/jpeg",
+            api_key,
+            model=model,
+            endpoint=endpoint,
+            timeout=timeout,
+        )
+        parts.append(markdown_from_parse_response(result))
+    return "\n\n".join(parts)
+
+
+def extract_document_with_parse(path, content_type=""):
+    parse_cfg = payload.get("parse") or {}
+    parse_enabled = bool(parse_cfg.get("enabled", True))
+    api_key = os.environ.get("COHERE_API_KEY", "").strip()
+    model = str(parse_cfg.get("model") or PARSE_MODEL_DEFAULT)
+    if path.suffix.lower() == ".zip" or "zip" in content_type:
+        text, method = extract_zip(path)
+        return text, method, ""
+    kind = parse_kind(path.name, content_type)
+    return run_parse_or_fallback(
+        kind,
+        parse_enabled,
+        api_key,
+        lambda: parse_file_markdown(path, content_type, kind),
+        lambda: extract_from_path(path, content_type),
+        model=model,
+    )
 
 
 def normalize_line(text):
@@ -985,6 +1098,8 @@ for inline in payload.get("documents", []):
         "text": text[:MAX_DOC_CHARS],
         "text_length": len(text),
         "error": "",
+        "extract_method": EXTRACT_INLINE,
+        "parse_error": "",
     })
 
 for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.get("limits", {}).get("max_attachments", 5))], 1):
@@ -1000,6 +1115,8 @@ for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.
         "text": "",
         "text_length": 0,
         "error": "",
+        "extract_method": EXTRACT_FALLBACK,
+        "parse_error": "",
     }
     data, headers, error = read_url(url)
     if error:
@@ -1012,9 +1129,13 @@ for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.
     path = download_dir / safe_name(name or url, f"attachment-{index}")
     path.write_bytes(data)
     try:
-        text = extract_document_text(path, str(headers.get("Content-Type", "")))
+        text, extract_method, parse_error = extract_document_with_parse(
+            path, str(headers.get("Content-Type", ""))
+        )
         record["text"] = text[:MAX_DOC_CHARS]
         record["text_length"] = len(text)
+        record["extract_method"] = extract_method
+        record["parse_error"] = parse_error
         record["status"] = "extracted" if text.strip() else "empty"
     except Exception as exc:
         record["status"] = "extract_failed"
@@ -1028,9 +1149,16 @@ text_documents = [
 ]
 evidence = extract_evidence(text_documents, payload.get("profile", {}))
 document_summaries = [
-    {key: item.get(key) for key in ("name", "source", "url", "bytes", "sha256", "status", "text_length", "error")}
+    {key: item.get(key) for key in (
+        "name", "source", "url", "bytes", "sha256", "status",
+        "text_length", "error", "extract_method", "parse_error",
+    )}
     for item in documents
 ]
+parse_summary = summarize_extract_methods(
+    documents,
+    str((payload.get("parse") or {}).get("model") or PARSE_MODEL_DEFAULT),
+)
 evidence_bundle = {
     "opportunity": payload.get("opportunity", {}),
     "profile": payload.get("profile", {}),
@@ -1062,6 +1190,7 @@ artifact = {
     },
     "cohere_analysis": cohere_analysis,
     "cohere_tool_calls": cohere_tool_calls,
+    "parse": parse_summary,
     "warnings": warnings,
 }
 
@@ -1107,6 +1236,12 @@ def has_cohere_api_key() -> bool:
     """Return true when the non-prod Cohere key is available."""
     load_local_env()
     return bool(os.environ.get("COHERE_API_KEY", "").strip())
+
+
+def parse_model_name() -> str:
+    """Return the Parse model id, honoring optional ``COHERE_PARSE_MODEL``."""
+    load_local_env()
+    return os.environ.get("COHERE_PARSE_MODEL", PARSE_MODEL_DEFAULT).strip() or PARSE_MODEL_DEFAULT
 
 
 def _field(row: dict[str, Any], *names: str) -> str:
@@ -1307,6 +1442,13 @@ def build_process_payload(
             "max_tokens": 2400,
             "response_format": COHERE_RESPONSE_FORMAT,
         },
+        "parse": {
+            "enabled": True,
+            "model": parse_model_name(),
+            "endpoint": COHERE_PARSE_URL,
+            "max_pages": PARSE_DEFAULT_MAX_PAGES,
+            "timeout_seconds": PARSE_DEFAULT_TIMEOUT,
+        },
     }
 
 
@@ -1348,7 +1490,9 @@ def build_sample_payload(*, cohere_enabled: bool = False) -> dict[str, Any]:
 
 def build_sandbox_command(payload: dict[str, Any]) -> str:
     """Build a Python command that processes a bid package inside E2B."""
-    script = SANDBOX_PROCESSOR.replace("__PAYLOAD_JSON__", repr(json.dumps(payload)))
+    helpers = (Path(__file__).resolve().parent / "cohere_parse.py").read_text(encoding="utf-8")
+    script = SANDBOX_PROCESSOR.replace("__COHERE_PARSE_HELPERS__", helpers, 1)
+    script = script.replace("__PAYLOAD_JSON__", repr(json.dumps(payload)))
     return "python3 - <<'PY'\n" + script + "\nPY"
 
 
@@ -1408,6 +1552,19 @@ def validate_bid_room_artifact(
         raise ValueError("Bid room artifact is missing Cohere tool-call trace.")
     if tool_calls is not None and not isinstance(tool_calls, list):
         raise ValueError("Bid room artifact Cohere tool-call trace must be a list.")
+    parse_info = artifact.get("parse")
+    if parse_info is not None:
+        if not isinstance(parse_info, dict):
+            raise ValueError("Bid room artifact parse summary must be an object.")
+        for field in ("files_used_parse", "files_used_fallback"):
+            if field in parse_info and not isinstance(parse_info[field], list):
+                raise ValueError(f"Bid room artifact parse.{field} must be a list.")
+        for document in artifact["documents"]:
+            if not isinstance(document, dict):
+                continue
+            method = document.get("extract_method")
+            if method is not None and not isinstance(method, str):
+                raise ValueError("Bid room document extract_method must be a string.")
     return artifact
 
 
@@ -1428,10 +1585,10 @@ def _run_e2b_payload(
     if not os.environ.get("E2B_API_KEY", "").strip():
         raise RuntimeError("E2B_API_KEY is not configured.")
     envs = {}
-    if payload.get("cohere", {}).get("enabled"):
-        cohere_key = os.environ.get("COHERE_API_KEY", "").strip()
-        if not cohere_key:
-            raise RuntimeError("COHERE_API_KEY is not configured. The prod Cohere key is not used for E2B bid-room processing.")
+    cohere_key = os.environ.get("COHERE_API_KEY", "").strip()
+    if payload.get("cohere", {}).get("enabled") and not cohere_key:
+        raise RuntimeError("COHERE_API_KEY is not configured. The prod Cohere key is not used for E2B bid-room processing.")
+    if cohere_key:
         envs["COHERE_API_KEY"] = cohere_key
 
     try:
@@ -1560,6 +1717,22 @@ def render_bid_room_markdown(result: BidRoomSandboxResult) -> str:
     output += f"- **Requirement-like lines:** {len(evidence.get('requirements', []))}\n"
     output += f"- **Deadline-like lines:** {len(evidence.get('deadlines', []))}\n"
     output += f"- **Characters sent to model:** {evidence.get('text_characters_sent_to_model', 0)}\n\n"
+    parse_info = artifact.get("parse") or summarize_extract_methods(
+        artifact.get("documents", []),
+        str((artifact.get("parse") or {}).get("model") or parse_model_name()),
+    )
+    output += "## Document layer\n"
+    output += f"- **Parse model:** `{parse_info.get('model') or parse_model_name()}`\n"
+    output += (
+        "- **Parsed with Parse:** "
+        + (", ".join(parse_info.get("files_used_parse") or []) or "None")
+        + "\n"
+    )
+    output += (
+        "- **Fallback extract:** "
+        + (", ".join(parse_info.get("files_used_fallback") or []) or "None")
+        + "\n\n"
+    )
     output += "## Cohere Tool Calls\n"
     tool_calls = artifact.get("cohere_tool_calls") or []
     if tool_calls:
@@ -1577,10 +1750,14 @@ def render_bid_room_markdown(result: BidRoomSandboxResult) -> str:
     output += "\n"
     output += "## Document Status\n"
     for document in artifact.get("documents", [])[:12]:
+        method = document.get("extract_method") or EXTRACT_FALLBACK
         output += (
             f"- `{document.get('name', '')}`: {document.get('status', '')}, "
-            f"{document.get('bytes', 0)} bytes, {document.get('text_length', 0)} text chars"
+            f"{document.get('bytes', 0)} bytes, {document.get('text_length', 0)} text chars "
+            f"[{method}]"
         )
+        if document.get("parse_error"):
+            output += f" (parse: {document.get('parse_error')})"
         if document.get("error"):
             output += f" ({document.get('error')})"
         output += "\n"
