@@ -143,7 +143,7 @@ The core tools are:
 - `find_matching_opportunities` for profile-based ranking
 - `daily_bid_brief` for the daily owner/operator summary
 - `analyze_contract_with_cohere` for optional Cohere Command A+ tender review
-- `process_bid_room` for live E2B attachment extraction and Cohere tool-assisted bid review
+- `process_bid_room` for live E2B attachment processing: Cohere Parse turns tender PDFs and images into markdown, then Command A+ reviews the evidence
 - `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
 - `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
 
@@ -153,7 +153,7 @@ MCP is the first-class interface because this is meant to be used by agents. The
 
 Underneath the endpoint is pure Python procurement logic. The data processing, filtering, matching, deadline ranking, and brief generation do not require an LLM. The model layer is added only where judgment helps: risk review, requirements explanation, and bid/no-bid reasoning.
 
-E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, parsing attachments, extracting compliance requirements, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Command A+ runs inside the short-lived sandbox with read-only evidence tools over the extracted documents. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md), and the business-owner operating diagram lives in [`docs/bid-room-operating-diagram.md`](docs/bid-room-operating-diagram.md).
+E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, turning attachments into evidence, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Parse is the document layer — it converts PDF pages and images into structured markdown (tables, forms, drawings) before review. Command A+ is the review layer: it runs inside the short-lived sandbox with read-only evidence tools over that markdown. If Parse is unset, times out, or rejects a file, the existing pdfminer/python-docx/openpyxl extractors stay as fallback. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md), and the business-owner operating diagram lives in [`docs/bid-room-operating-diagram.md`](docs/bid-room-operating-diagram.md).
 
 <p align="center">
   <img src="docs/assets/machinist-canada-oil-tool-calgary-1963.jpg" alt="A machinist at Canada Oil Tool Manufacturing, Calgary, 1963." width="55%">
@@ -229,6 +229,12 @@ Configuration:
 - [`docs/setup-productization-track.md`](docs/setup-productization-track.md) for the combined WorkspaceAlberta + private `wvsetup` setup track
 - [`docs/codex-setup.md`](docs/codex-setup.md) for local setup notes
 - [`docs/workspace-alberta-hermes-install.md`](docs/workspace-alberta-hermes-install.md) for the branded Hermes / Raspberry Pi setup draft
+
+Raspberry Pi terminal setup:
+
+- [`docs/deployment-ops/pi-out-of-box-setup.md`](docs/deployment-ops/pi-out-of-box-setup.md) — **start here** for new Pi setups, from sealed box to working CEO stack
+- [`docs/deployment-ops/ceo-pi-setup.md`](docs/deployment-ops/ceo-pi-setup.md) — software installer reference (assumes OS already installed)
+- [`docs/deployment-ops/tailscale-pi-remote-support.md`](docs/deployment-ops/tailscale-pi-remote-support.md) — remote support via Tailscale
 
 Data and model sources:
 

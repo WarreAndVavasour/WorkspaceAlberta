@@ -63,6 +63,12 @@ Run the smoke test:
 python -m unittest tests.test_canadabuys_mcp_smoke
 ```
 
+Run the offline CanadaBuys + APC fixture ingest tests (no network):
+
+```bash
+python -m unittest tests.test_procurement_fixtures
+```
+
 ## Build Canada MCP Guidance
 
 Use the Build Canada tools for:

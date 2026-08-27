@@ -5,7 +5,9 @@ The engine. Pure Python, no MCP dependency — every adapter (stdio MCP, Streama
 | File | Role |
 |---|---|
 | `service.py` | All 21 tool handlers, `TOOL_NAMES` registry, `call_tool_text()` dispatch, CanadaBuys CSV client + cache, Alberta APC API client, unified normalizer, deterministic profile scoring, Cohere model routing with key failover |
-| `e2b_bid_room.py` | E2B sandbox bid-room processing: payload builders, self-contained sandbox processor script, in-sandbox Cohere structured review, artifact validation and rendering |
+| `fixtures.py` | Offline CanadaBuys CSV + APC JSON ingest when `PROCUREMENT_FIXTURE_DIR` is set (tests only; hosted MCP stays live) |
+| `e2b_bid_room.py` | E2B sandbox bid-room processing: payload builders, self-contained sandbox processor script, Cohere Parse document layer, in-sandbox Command A+ review, artifact validation and rendering |
+| `cohere_parse.py` | Official Cohere Parse helpers (`POST /v2/parse`, `parse-v5.0`, `image_url` documents only). Injected into the sandbox processor; unit-tested with a mocked HTTP call |
 
 ## Contract for adding a tool
 
@@ -16,7 +18,7 @@ The engine. Pure Python, no MCP dependency — every adapter (stdio MCP, Streama
 
 ## Principles
 
-- Deterministic logic first; the model layer (Cohere Command A+) is only for judgment tools.
+- Deterministic logic first. Cohere Parse is the bid-room document layer (PDF/image → markdown). Command A+ is only for judgment tools.
 - Sources degrade independently — a failing upstream produces a warning line, not a failed tool call.
 - Untrusted tender attachments are only ever opened inside an E2B sandbox with hard size/count/timeout limits.
 - User-provided integers are clamped (`clamp_int`), never trusted.

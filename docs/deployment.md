@@ -24,6 +24,7 @@ How to run the WorkspaceAlberta procurement server locally, in Docker, and in pr
 | `CANADABUYS_COHERE_MODEL` | — | Default `command-a-plus-05-2026` |
 | `CANADABUYS_LOAD_ENV_FILE` | — | Set `0` to disable repo-local `.env` loading (recommended in production) |
 | `ALBERTA_APC_API_BASE` / `ALBERTA_APC_APP_BASE` | — | APC endpoint overrides |
+| `PROCUREMENT_FIXTURE_DIR` | Offline tests | Directory with `canadabuys-open-tenders.csv` and `alberta-apc-search.json`. Unset in production. |
 | `SUPABASE_URL` | Pro gate + multi-tenant storage | `https://<ref>.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Pro gate + multi-tenant storage | Service-role secret; server-side only |
 | `STRIPE_WEBHOOK_SECRET` | `/stripe/webhook` | Signing secret from the Stripe webhook endpoint |

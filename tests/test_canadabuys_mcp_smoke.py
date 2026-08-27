@@ -51,14 +51,14 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
             async with stdio_client(params) as (read_stream, write_stream):
                 async with ClientSession(read_stream, write_stream) as session:
                     initialize_result = await session.initialize()
-                    self.assertTrue(initialize_result.serverInfo.name)
+                    self.assertTrue(initialize_result.server_info.name)
 
                     tools_result = await session.list_tools()
                     tool_names = {tool.name for tool in tools_result.tools}
                     self.assertTrue(EXPECTED_TOOLS.issubset(tool_names))
 
                     tool_result = await session.call_tool("get_my_profile", {})
-                    self.assertFalse(tool_result.isError)
+                    self.assertFalse(tool_result.is_error)
 
                     text_chunks = [
                         content.text
@@ -68,7 +68,7 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                     self.assertTrue(text_chunks)
 
                     status_result = await session.call_tool("check_cohere_status", {})
-                    self.assertFalse(status_result.isError)
+                    self.assertFalse(status_result.is_error)
 
                     status_chunks = [
                         content.text
@@ -77,6 +77,35 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                     ]
                     self.assertTrue(status_chunks)
                     self.assertIn("This status check does not call the model", status_chunks[0])
+
+    async def test_search_returns_structured_content(self) -> None:
+        fixture_dir = ROOT / "tests" / "fixtures" / "procurement"
+        with tempfile.TemporaryDirectory() as data_dir:
+            params = StdioServerParameters(
+                command=sys.executable,
+                args=[str(SERVER_PATH)],
+                cwd=str(ROOT),
+                env={
+                    **os.environ,
+                    "CANADABUYS_DATA_DIR": data_dir,
+                    "PROCUREMENT_FIXTURE_DIR": str(fixture_dir),
+                },
+            )
+
+            async with stdio_client(params) as (read_stream, write_stream):
+                async with ClientSession(read_stream, write_stream) as session:
+                    await session.initialize()
+                    result = await session.call_tool(
+                        "search_opportunities",
+                        {"keywords": "welding shop Red Deer", "source": "all"},
+                    )
+                    self.assertFalse(result.is_error)
+                    self.assertIsNotNone(result.structured_content)
+                    structured = result.structured_content
+                    self.assertEqual(structured["kind"], "opportunities")
+                    titles = {row["title"] for row in structured["opportunities"]}
+                    self.assertIn("Mobile Welding Shop Services - Red Deer, Alberta", titles)
+                    self.assertIn("CWB Welding Shop Fit-Up - City of Red Deer", titles)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,40 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "enabled_providers": ["openai"],
+  "enabled_providers": ["zai", "huggingface", "deepseek", "cohere"],
+  "disabled_providers": ["openai"],
   "instructions": ["AGENTS.md", ".cursor/rules/*.mdc"],
   "default_agent": "procurement",
+  "provider": {
+    "zai": {
+      "options": {
+        "apiKey": "{env:ZAI_API_KEY}"
+      }
+    },
+    "huggingface": {
+      "options": {
+        "apiKey": "{env:HF_TOKEN}"
+      }
+    },
+    "deepseek": {
+      "options": {
+        "timeout": 600000,
+        "apiKey": "{env:DEEPSEEK_API_KEY}"
+      }
+    },
+    "cohere": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Cohere",
+      "options": {
+        "baseURL": "https://api.cohere.ai/compatibility/v1",
+        "apiKey": "{env:COHERE_API_KEY}"
+      },
+      "models": {
+        "command-a-plus-05-2026": {
+          "name": "Command A+"
+        }
+      }
+    }
+  },
   "mcp": {
     "buildcanada": {
       "type": "local",
@@ -24,7 +56,7 @@
   },
   "agent": {
     "procurement": {
-      "description": "Primary agent for Build Canada procurement work, MCP maintenance, and Codex/OpenAI integration tasks in this repo.",
+      "description": "Primary agent for Build Canada procurement work, MCP maintenance, and open-model (GLM, DeepSeek, Cohere, Hugging Face) integration in this repo.",
       "mode": "primary",
       "prompt": "{file:.opencode/agents/procurement.md}",
       "permission": {

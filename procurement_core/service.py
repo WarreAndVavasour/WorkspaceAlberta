@@ -48,6 +48,7 @@ Configuration (environment variables):
     CANADABUYS_COHERE_MODEL                Default ``command-a-plus-05-2026``
     CANADABUYS_COHERE_REASONING_EFFORT     Only sent when explicitly set
     ALBERTA_APC_API_BASE / _APP_BASE       APC endpoint overrides
+    PROCUREMENT_FIXTURE_DIR                Offline CanadaBuys CSV + APC JSON fixtures
 """
 
 import asyncio
@@ -61,6 +62,8 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+from . import fixtures
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -171,7 +174,11 @@ def parse_date(value: str) -> datetime | None:
 
 
 def fetch_all_contracts() -> list[dict]:
-    """Fetch all contracts from CanadaBuys."""
+    """Fetch all contracts from CanadaBuys, or from fixtures when configured."""
+    fixture_rows = fixtures.load_canadabuys_rows()
+    if fixture_rows is not None:
+        return fixture_rows
+
     request = Request(OPEN_TENDERS_URL, headers=REQUEST_HEADERS)
 
     with urlopen(request, timeout=120) as response:
@@ -181,16 +188,8 @@ def fetch_all_contracts() -> list[dict]:
         if raw_data[:2] == b'\x1f\x8b':
             raw_data = gzip.decompress(raw_data)
 
-        # Decode
         text_data = raw_data.decode("utf-8-sig")
-
-        # Parse CSV - handle potential BOM and empty lines
-        lines = [line for line in text_data.split('\n') if line.strip()]
-        if not lines:
-            return []
-
-        reader = csv.DictReader(lines)
-        return list(reader)
+        return fixtures.parse_canadabuys_csv_text(text_data)
 
 
 def save_contracts(contracts: list[dict]) -> Path:
@@ -599,6 +598,15 @@ def search_alberta_api(
     """Search Alberta Purchasing Connection opportunities."""
     limit = clamp_int(limit, default=10, minimum=1, maximum=100)
     offset = clamp_int(offset, default=0, minimum=0, maximum=100)
+    fixture_payload = fixtures.load_apc_search_payload()
+    if fixture_payload is not None:
+        return fixtures.filter_apc_search_payload(
+            fixture_payload,
+            query=query,
+            status=status,
+            category=category,
+            limit=limit,
+        )
     payload = {
         "query": query or "",
         "queryMode": "standard",
@@ -1056,6 +1064,10 @@ def is_alberta_reference(reference: str) -> bool:
 
 def load_contracts_for_unified() -> tuple[list[dict], list[str]]:
     """Load CanadaBuys contracts, refreshing once when no cache exists."""
+    fixture_rows = fixtures.load_canadabuys_rows()
+    if fixture_rows is not None:
+        return fixture_rows, []
+
     warnings = []
     contracts = load_contracts()
     if contracts:
@@ -1484,6 +1496,174 @@ async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> 
         return f"Error: {exc}"
 
 
+def _opportunity_record(opportunity: dict) -> dict[str, Any]:
+    """Return a JSON-safe normalized opportunity record for structured output."""
+    return {
+        "title": str(opportunity.get("title") or ""),
+        "source": str(opportunity.get("source") or ""),
+        "reference": str(opportunity.get("reference") or ""),
+        "buyer": str(opportunity.get("buyer") or ""),
+        "category": str(opportunity.get("category") or ""),
+        "closing": str(opportunity.get("closing") or ""),
+        "region": str(opportunity.get("region") or ""),
+        "solicitation": str(opportunity.get("solicitation") or ""),
+    }
+
+
+def _search_structured(opportunities: list[dict], warnings: list[str]) -> dict[str, Any]:
+    """Build the machine-readable payload for search/deadline listings."""
+    return {
+        "kind": "opportunities",
+        "count": len(opportunities),
+        "warnings": list(warnings),
+        "opportunities": [_opportunity_record(o) for o in opportunities],
+    }
+
+
+def _matches_structured(
+    scored: list[tuple[int, int, dict, list[str]]], warnings: list[str], limit: int
+) -> dict[str, Any]:
+    """Build the machine-readable payload for ranked matches."""
+    matches = [
+        {
+            **_opportunity_record(opportunity),
+            "score": score,
+            "days_until": None if days_until == 9999 else days_until,
+            "reasons": list(reasons),
+        }
+        for (score, days_until, opportunity, reasons) in scored[:limit]
+    ]
+    return {"kind": "matches", "count": len(matches), "warnings": list(warnings[:5]), "matches": matches}
+
+
+def _render_search_markdown(opportunities: list[dict], warnings: list[str]) -> str:
+    """Render the unified search listing (single source for the handler + MCP)."""
+    if not opportunities:
+        output = "No opportunities found matching criteria."
+        if warnings:
+            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
+        return output
+
+    output = "# Opportunities\n\n"
+    output += f"Showing {len(opportunities)} combined results from CanadaBuys and Alberta Purchasing Connection.\n\n"
+    for i, opportunity in enumerate(opportunities, 1):
+        output += render_unified_opportunity_line(opportunity, i) + "\n"
+
+    if warnings:
+        output += "## Warnings\n"
+        for warning in warnings:
+            output += f"- {warning}\n"
+
+    output += "\nUse `get_opportunity_details` with a reference number for full details."
+    return output
+
+
+def _render_deadlines_markdown(opportunities: list[dict], warnings: list[str], days: int) -> str:
+    """Render the closing-soon listing (single source for the handler + MCP)."""
+    if not opportunities:
+        output = f"No opportunities closing within {days} days."
+        if warnings:
+            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
+        return output
+
+    now = datetime.now(timezone.utc)
+    output = f"# Opportunities Closing Within {days} Days\n\n"
+    for i, opportunity in enumerate(opportunities, 1):
+        closing = opportunity_date(opportunity, "closing")
+        days_until = ""
+        if closing != datetime.max.replace(tzinfo=timezone.utc):
+            days_until = f"Closes in {(closing - now).days} days"
+        output += render_unified_opportunity_line(opportunity, i, days_until) + "\n"
+
+    if warnings:
+        output += "## Warnings\n"
+        for warning in warnings:
+            output += f"- {warning}\n"
+
+    return output
+
+
+def _render_matches_markdown(
+    scored: list[tuple[int, int, dict, list[str]]],
+    warnings: list[str],
+    profile: dict,
+    days: int,
+    limit: int,
+) -> str:
+    """Render the ranked matches listing (single source for the handler + MCP)."""
+    if not scored:
+        output = f"No matching opportunities found in the next {days} days."
+        if warnings:
+            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings[:5])
+        return output
+
+    company = profile.get("company_name", "Your Business")
+    output = f"# Matching Opportunities for {company}\n\n"
+    output += f"Found **{len(scored)}** ranked opportunities across CanadaBuys and Alberta APC.\n\n"
+
+    for i, (score, days_until, opportunity, reasons) in enumerate(scored[:limit], 1):
+        extra = f"Match Score: {score}"
+        if days_until != 9999:
+            extra += f" | Closes in {days_until} days"
+        output += render_unified_opportunity_line(opportunity, i, extra)
+        output += f"   Why it matches: {'; '.join(reasons)}\n\n"
+
+    if warnings:
+        output += "## Warnings\n"
+        for warning in warnings[:5]:
+            output += f"- {warning}\n"
+
+    return output
+
+
+STRUCTURED_TOOLS = frozenset({"search_opportunities", "list_deadlines", "find_matching_opportunities"})
+
+
+async def call_tool_text_and_structured(
+    name: str, arguments: dict[str, Any] | None = None
+) -> tuple[str, dict[str, Any] | None]:
+    """Run a tool and return (markdown, structured) in a single pass.
+
+    The primary search/match tools also produce a machine-readable
+    ``structured`` payload for MCP ``structured_content``; every other tool
+    returns ``(text, None)``. Collecting once keeps the markdown and the
+    structured payload consistent and avoids a second upstream fetch.
+    """
+    args = arguments or {}
+    handlers = {tool_name: globals()[tool_name] for tool_name in TOOL_NAMES}
+    handler = handlers.get(name)
+    if not handler:
+        return f"Unknown tool: {name}", None
+
+    if name not in STRUCTURED_TOOLS:
+        return await call_tool_text(name, args), None
+
+    def _run() -> tuple[str, dict[str, Any] | None]:
+        if name == "search_opportunities":
+            opportunities, warnings = collect_unified_search(args)
+            return _render_search_markdown(opportunities, warnings), _search_structured(opportunities, warnings)
+        if name == "list_deadlines":
+            days = clamp_int(args.get("days"), default=30, minimum=1, maximum=365)
+            opportunities, warnings = collect_unified_deadlines(args)
+            return _render_deadlines_markdown(opportunities, warnings, days), _search_structured(opportunities, warnings)
+        # find_matching_opportunities
+        profile = resolve_profile(args)
+        if not profile:
+            return NO_PROFILE_MESSAGE, None
+        days = clamp_int(args.get("days"), default=60, minimum=1, maximum=365)
+        limit = clamp_int(args.get("limit"), default=15, minimum=1, maximum=30)
+        scored, warnings = collect_unified_matches(profile, days, limit)
+        return (
+            _render_matches_markdown(scored, warnings, profile, days, limit),
+            _matches_structured(scored, warnings, limit),
+        )
+
+    try:
+        return await asyncio.to_thread(_run)
+    except Exception as exc:
+        return f"Error: {exc}", None
+
+
 async def search_contracts(args: dict) -> str:
     """Search contracts."""
     contracts = load_contracts()
@@ -1735,24 +1915,7 @@ async def get_my_profile(args: dict) -> str:
 async def search_opportunities(args: dict) -> str:
     """Search across federal and Alberta opportunity sources."""
     opportunities, warnings = collect_unified_search(args)
-    if not opportunities:
-        output = "No opportunities found matching criteria."
-        if warnings:
-            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
-        return output
-
-    output = "# Opportunities\n\n"
-    output += f"Showing {len(opportunities)} combined results from CanadaBuys and Alberta Purchasing Connection.\n\n"
-    for i, opportunity in enumerate(opportunities, 1):
-        output += render_unified_opportunity_line(opportunity, i) + "\n"
-
-    if warnings:
-        output += "## Warnings\n"
-        for warning in warnings:
-            output += f"- {warning}\n"
-
-    output += "\nUse `get_opportunity_details` with a reference number for full details."
-    return output
+    return _render_search_markdown(opportunities, warnings)
 
 
 async def get_opportunity_details(args: dict) -> str:
@@ -1782,27 +1945,7 @@ async def list_deadlines(args: dict) -> str:
     """List closing-soon opportunities across sources."""
     days = clamp_int(args.get("days"), default=30, minimum=1, maximum=365)
     opportunities, warnings = collect_unified_deadlines(args)
-    if not opportunities:
-        output = f"No opportunities closing within {days} days."
-        if warnings:
-            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
-        return output
-
-    now = datetime.now(timezone.utc)
-    output = f"# Opportunities Closing Within {days} Days\n\n"
-    for i, opportunity in enumerate(opportunities, 1):
-        closing = opportunity_date(opportunity, "closing")
-        days_until = ""
-        if closing != datetime.max.replace(tzinfo=timezone.utc):
-            days_until = f"Closes in {(closing - now).days} days"
-        output += render_unified_opportunity_line(opportunity, i, days_until) + "\n"
-
-    if warnings:
-        output += "## Warnings\n"
-        for warning in warnings:
-            output += f"- {warning}\n"
-
-    return output
+    return _render_deadlines_markdown(opportunities, warnings, days)
 
 
 async def find_matching_opportunities(args: dict) -> str:
@@ -1814,30 +1957,7 @@ async def find_matching_opportunities(args: dict) -> str:
     days = clamp_int(args.get("days"), default=60, minimum=1, maximum=365)
     limit = clamp_int(args.get("limit"), default=15, minimum=1, maximum=30)
     scored, warnings = collect_unified_matches(profile, days, limit)
-
-    if not scored:
-        output = f"No matching opportunities found in the next {days} days."
-        if warnings:
-            output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings[:5])
-        return output
-
-    company = profile.get("company_name", "Your Business")
-    output = f"# Matching Opportunities for {company}\n\n"
-    output += f"Found **{len(scored)}** ranked opportunities across CanadaBuys and Alberta APC.\n\n"
-
-    for i, (score, days_until, opportunity, reasons) in enumerate(scored[:limit], 1):
-        extra = f"Match Score: {score}"
-        if days_until != 9999:
-            extra += f" | Closes in {days_until} days"
-        output += render_unified_opportunity_line(opportunity, i, extra)
-        output += f"   Why it matches: {'; '.join(reasons)}\n\n"
-
-    if warnings:
-        output += "## Warnings\n"
-        for warning in warnings[:5]:
-            output += f"- {warning}\n"
-
-    return output
+    return _render_matches_markdown(scored, warnings, profile, days, limit)
 
 
 async def daily_bid_brief(args: dict) -> str:
