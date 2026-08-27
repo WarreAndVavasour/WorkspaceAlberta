@@ -35,7 +35,7 @@ For a real opportunity plus Cohere review:
 python scripts/e2b_bid_room_smoke.py --reference cb-576-54577723 --max-attachments 1 --json
 ```
 
-This path injects only `COHERE_API_KEY` into the sandbox. It does not pass the Cohere prod key, Hugging Face token, OpenAI key, or other repo secrets.
+This path injects only `COHERE_API_KEY` into the sandbox (same key for Cohere Parse and Command A+). It does not pass the Cohere prod key, Hugging Face token, OpenAI key, or other repo secrets.
 
 ### Slice 2: Tender Package Processor
 
@@ -49,7 +49,7 @@ Sandbox work:
 
 - create an isolated workspace
 - download direct public tender attachments
-- extract text and tables from PDF, HTML, TXT, DOCX, XLSX, and ZIP-contained supported files
+- prefer Cohere Parse (`parse-v5.0`, `POST /v2/parse`) for PDF pages and images so tables, forms, and drawings become markdown. The official API accepts `document.type = image_url` only, so the sandbox rasterizes PDF pages to JPEG first. DOCX/XLSX stay on the deterministic extractors. Fallback also runs when Parse is unset, times out, or returns 4xx/5xx
 - identify mandatory requirements
 - identify deadlines and site meetings
 - identify insurance, bonding, certification, safety, and submission requirements
@@ -77,7 +77,12 @@ Output:
     "questions_to_ask": [],
     "next_actions": []
   },
-  "cohere_tool_calls": []
+  "cohere_tool_calls": [],
+  "parse": {
+    "model": "parse-v5.0",
+    "files_used_parse": [],
+    "files_used_fallback": []
+  }
 }
 ```
 
@@ -91,7 +96,7 @@ The REST equivalent is `POST /bid-room/process`.
 
 ### Slice 3A: Cohere Tool Loop
 
-Cohere runs inside E2B through the native v2 Chat API. The model is allowed to think and use tools, but the tools are constrained to read-only evidence access:
+Parse is the document layer; Command A+ is the review layer. Command A+ runs inside E2B through the native v2 Chat API. The model is allowed to think and use tools, but the tools are constrained to read-only evidence access:
 
 - `search_extracted_documents(query, top_k)` searches snippets from extracted tender text
 - `get_bid_evidence(section, top_k)` returns deterministic requirements, deadlines, matched terms, document summaries, opportunity metadata, or profile metadata
@@ -120,8 +125,8 @@ Use concurrent E2B sandboxes to pre-process the highest-value daily opportunitie
 
 - Do not run the always-on MCP/REST endpoint inside E2B.
 - Do use E2B for temporary, isolated, file-heavy tender work.
-- Do keep all tender download, parsing, hashing, and extraction deterministic in Python.
-- Do use Cohere for bid reasoning over extracted evidence and read-only evidence tools.
+- Do keep tender download, hashing, and fallback extraction deterministic in Python.
+- Do use Cohere Parse as the document layer for PDF/image attachments, then Command A+ for bid reasoning over that evidence and read-only evidence tools.
 - Add auth and per-user profile storage before exposing profile-backed E2B jobs publicly.
 - Keep raw tender attachments and user documents out of git.
 - Shut sandboxes down by default unless a debugging run explicitly uses `--keep-alive`.

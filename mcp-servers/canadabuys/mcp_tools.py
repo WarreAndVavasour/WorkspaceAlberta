@@ -447,7 +447,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="process_bid_room",
-            description="Use an E2B sandbox to process tender attachments and call Cohere Command A+ inside the sandbox for bid-room analysis.",
+            description="Use an E2B sandbox to process tender attachments: Cohere Parse turns PDF/image files into markdown, then Command A+ reviews the evidence inside the sandbox.",
             input_schema={
                 "type": "object",
                 "properties": {
