@@ -86,10 +86,10 @@ Wiring up the places where the work lives usually costs money, time, and technic
 **WorkspaceAlberta solves the last mile** by giving an AI assistant the wiring it needs to search, compare, summarize, and brief public procurement opportunities from inside the workspace where the owner is already working.
 
 <p align="center">
-  <img src="docs/assets/high-level-bridge-edmonton-1909.jpg" alt="The High Level Bridge between Edmonton and Strathcona under construction, circa 1909." width="100%">
+  <img src="docs/assets/five-soldiers-korea-1951.jpg" alt="Five Canadian soldiers on observation duty in Korea, 3 June 1951." width="100%">
 </p>
 
-<p align="center"><em>The High Level Bridge under construction, Edmonton, c. 1909 — Alberta steel, riveted by hand. City of Edmonton Archives, EA-500-4 (public domain).</em></p>
+<p align="center"><em>Canadian soldiers on observation duty in Korea, 3 June 1951 — Sgt. Bill Olson / Department of National Defence / Library and Archives Canada, e011502811 (Crown copyright expired).</em></p>
 
 ---
 
@@ -197,11 +197,11 @@ Any tool that helps a fabricator **create demand**, a mill **manufacture more ef
 - **$988 million** in tax revenue flowing back to the province
 
 <p align="center">
-  <img src="docs/assets/walters-saw-mill-edmonton-1908.jpg" alt="Walter's Saw Mill, Edmonton, 1908." width="49%">
-  <img src="docs/assets/alberta-lumber-co-factory-1908.jpg" alt="Alberta Lumber Co.'s Factory, Edmonton, 1908." width="49%">
+  <img src="docs/assets/clothing-salvage-geco.jpg" alt="Clothing salvage centre at the General Engineering Company munitions factory, Scarborough, circa 1943." width="49%">
+  <img src="docs/assets/children-collecting-rubber-rosemont.jpg" alt="Two boys collecting scrap rubber for a wartime salvage drive in Rosemont, Montreal, 29 April 1942." width="49%">
 </p>
 
-<p align="center"><em>Walter's Saw Mill (1908) and the Alberta Lumber Co.'s Factory (1908), Edmonton — value-added Alberta manufacturing, first edition. City of Edmonton Archives, EA-500-205 and EA-500-290 (public domain).</em></p>
+<p align="center"><em>Home-front salvage: a clothing depot at the GECO munitions works, Scarborough, c. 1943 (Archives of Ontario, I0004928, public domain); boys collecting scrap rubber in Rosemont, Montréal, 29 April 1942 (Conrad Poirier / BAnQ, P48,S1,P7495, public domain).</em></p>
 
 More contracts won. More jobs kept. More skill developed. More value staying here at home.
 
@@ -246,10 +246,10 @@ Data and model sources:
 Image source notes live in [`docs/imagery-sources.md`](docs/imagery-sources.md).
 
 <p align="center">
-  <img src="docs/assets/collage-museum-wall.jpg" alt="A museum wall of Canadian industrial photography: steel, foundries, machine shops, and mills from 1870 to 1957." width="100%">
+  <img src="docs/assets/collage-museum-wall.jpg" alt="A museum wall of Canadian industrial and home-front photography: munitions, victory gardens, salvage drives, and shops." width="100%">
 </p>
 
-<p align="center"><em>The museum wall. Top row: crucible pour, Stelco, Hamilton, 1957 (Herb Taylor / Library and Archives Canada, CC BY 2.0); Norwood Foundry crew, Edmonton, 1935 (Provincial Archives of Alberta, A6237); Bawden Machine Co. blacksmith shop, Toronto, c. 1918 (LAC, CC BY 2.0); machinist, Alberta Foundry &amp; Machine Shop, Medicine Hat, c. 1940s (PAA, A10335). Bottom row: grading lumber by hand (Nicholas Morant / LAC, CC BY 4.0); mill interior, Maberly, Ontario, c. 1870 (LAC, CC BY 2.0); Manitoba Bridge &amp; Iron Works, Winnipeg, c. 1914–18 (LAC, CC BY 2.0); Alberta Foundry &amp; Machine Co. lineup, Medicine Hat, c. 1915 (PAA, A10587).</em></p>
+<p align="center"><em>The museum wall. Top row: inspecting ammunition at GECO, Scarborough, c. 1943 (Archives of Ontario, I0058215, public domain); victory garden, A.J. Denne, Toronto, 5 June 1943 (City of Toronto Archives, fonds 1266, CC BY 2.0); cutting cloth for military uniforms at Tip Top Tailors, Toronto, 1939–45 (Gordon W. Powley / Archives of Ontario, C 109-2-0-18, copyright expired); Rosemont children's rubber salvage brigade, Montréal, 29 April 1942 (Conrad Poirier / BAnQ, P48,S1,P7493, public domain). Bottom row: a machinist laughing at Small Arms Limited, 26 May 1942 (Nicholas Morant / LAC, e000760725, CC BY 2.0); welding Bren-gun magazine clips at John Inglis, April 1944 (Ronny Jaques / LAC, e000762114, CC BY 2.0); packing crates at GECO, c. 1943 (Archives of Ontario, I0004900, public domain); newspaper salvage, Montréal, 12 November 1943 (Conrad Poirier / BAnQ, P48,S1,P9360, public domain).</em></p>
 
 ---
 
