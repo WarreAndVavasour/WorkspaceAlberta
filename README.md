@@ -86,10 +86,10 @@ Wiring up the places where the work lives usually costs money, time, and technic
 **WorkspaceAlberta solves the last mile** by giving an AI assistant the wiring it needs to search, compare, summarize, and brief public procurement opportunities from inside the workspace where the owner is already working.
 
 <p align="center">
-  <img src="docs/assets/five-soldiers-korea-1951.jpg" alt="Five Canadian soldiers on observation duty in Korea, 3 June 1951." width="100%">
+  <img src="docs/assets/helene-lalonde-textile.jpg" alt="Hélène Lalonde drawing in ends at a loom, Montreal Cottons, Valleyfield." width="100%">
 </p>
 
-<p align="center"><em>Canadian soldiers on observation duty in Korea, 3 June 1951 — Sgt. Bill Olson / Department of National Defence / Library and Archives Canada, e011502811 (Crown copyright expired).</em></p>
+<p align="center"><em>Hélène Lalonde drawing in ends at Montreal Cottons, Valleyfield — Nicholas Morant / National Film Board of Canada. Photothèque / Library and Archives Canada, PA-160566 (copyright expired).</em></p>
 
 ---
 
@@ -198,10 +198,10 @@ Any tool that helps a fabricator **create demand**, a mill **manufacture more ef
 
 <p align="center">
   <img src="docs/assets/clothing-salvage-geco.jpg" alt="Clothing salvage centre at the General Engineering Company munitions factory, Scarborough, circa 1943." width="49%">
-  <img src="docs/assets/children-collecting-rubber-rosemont.jpg" alt="Two boys collecting scrap rubber for a wartime salvage drive in Rosemont, Montreal, 29 April 1942." width="49%">
+  <img src="docs/assets/victory-gardens-toronto-1943.jpg" alt="A.J. Denne tending a V-shaped victory garden at 15 Pine Crescent, Toronto, 5 June 1943." width="49%">
 </p>
 
-<p align="center"><em>Home-front salvage: a clothing depot at the GECO munitions works, Scarborough, c. 1943 (Archives of Ontario, I0004928, public domain); boys collecting scrap rubber in Rosemont, Montréal, 29 April 1942 (Conrad Poirier / BAnQ, P48,S1,P7495, public domain).</em></p>
+<p align="center"><em>Home-front salvage and food: a clothing depot at the GECO munitions works, Scarborough, c. 1943 (Archives of Ontario, I0004928, public domain); A.J. Denne's victory garden, Toronto, 5 June 1943 (City of Toronto Archives, fonds 1266, CC BY 2.0).</em></p>
 
 More contracts won. More jobs kept. More skill developed. More value staying here at home.
 
@@ -246,10 +246,10 @@ Data and model sources:
 Image source notes live in [`docs/imagery-sources.md`](docs/imagery-sources.md).
 
 <p align="center">
-  <img src="docs/assets/collage-museum-wall.jpg" alt="A museum wall of Canadian industrial and home-front photography: munitions, victory gardens, salvage drives, and shops." width="100%">
+  <img src="docs/assets/collage-museum-wall.jpg" alt="A museum wall of Canadian industrial and home-front photography: munitions, victory gardens, synthetic rubber, and shops." width="100%">
 </p>
 
-<p align="center"><em>The museum wall. Top row: inspecting ammunition at GECO, Scarborough, c. 1943 (Archives of Ontario, I0058215, public domain); victory garden, A.J. Denne, Toronto, 5 June 1943 (City of Toronto Archives, fonds 1266, CC BY 2.0); cutting cloth for military uniforms at Tip Top Tailors, Toronto, 1939–45 (Gordon W. Powley / Archives of Ontario, C 109-2-0-18, copyright expired); Rosemont children's rubber salvage brigade, Montréal, 29 April 1942 (Conrad Poirier / BAnQ, P48,S1,P7493, public domain). Bottom row: a machinist laughing at Small Arms Limited, 26 May 1942 (Nicholas Morant / LAC, e000760725, CC BY 2.0); welding Bren-gun magazine clips at John Inglis, April 1944 (Ronny Jaques / LAC, e000762114, CC BY 2.0); packing crates at GECO, c. 1943 (Archives of Ontario, I0004900, public domain); newspaper salvage, Montréal, 12 November 1943 (Conrad Poirier / BAnQ, P48,S1,P9360, public domain).</em></p>
+<p align="center"><em>The museum wall. Top row: inspecting ammunition at GECO, Scarborough, c. 1943 (Archives of Ontario, I0058215, public domain); the Perry sisters in the plant vegetable garden, Dominion Arsenals, 24 August 1942 (Harry Rowed / NFB Photothèque / LAC, CC BY 2.0); cutting cloth for military uniforms at Tip Top Tailors, Toronto, 1939–45 (Gordon W. Powley / Archives of Ontario, C 109-2-0-18, copyright expired); assembling a coal-pulverizing mill at Polymer Rubber, Sarnia, October 1943 (Harry Rowed / NFB Photothèque / LAC, e000761792, copyright expired). Bottom row: a machinist laughing at Small Arms Limited, 26 May 1942 (Nicholas Morant / LAC, e000760725, CC BY 2.0); welding Bren-gun magazine clips at John Inglis, April 1944 (Ronny Jaques / LAC, e000762114, CC BY 2.0); packing crates at GECO, c. 1943 (Archives of Ontario, I0004900, public domain); assembling a Bren-gun blank at John Inglis, 10 May 1941 (NFB Photothèque / LAC, e000760439, copyright expired).</em></p>
 
 ---
 

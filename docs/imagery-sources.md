@@ -2,6 +2,8 @@
 
 The README uses official Canadian archival photographs. Every file below was checked for watermarks. Search-preview thumbs and City of Edmonton Archives overlay marks were replaced. Prefer the official item or the archive's own Flickr Commons original over a third-party mirror.
 
+**License rule:** do not use LAC Department of National Defence / Special Force photographs that still carry `Copyright: Government of Canada`, even when Restrictions on use are `Nil`. Those are Crown copyright, not an open citation license for this README. Prefer NFB Photothèque stills marked Copyright `Expired`, LAC Flickr Commons `CC BY 2.0`, Provincial Archives of Alberta expired / no known restrictions, City of Edmonton Archives public domain, or another official Canadian archive with an explicit open citation license.
+
 ## README feature images
 
 1. `docs/assets/women-workers-small-arms.jpg` — **kept** (clean official LAC download, no watermark)
@@ -28,17 +30,17 @@ The README uses official Canadian archival photographs. Every file below was che
 - License / restrictions: Restrictions on use `nil`; Copyright `Expired`
 - README credit: pair credit with item 1
 
-3. `docs/assets/five-soldiers-korea-1951.jpg` — **added** (replaces watermarked `high-level-bridge-edmonton-1909.jpg`)
+3. `docs/assets/helene-lalonde-textile.jpg` — **promoted** (replaces the withdrawn Crown-copyright Korea still)
 
-- Title: `[Five Canadian soldiers in Korea]`
-- Date: `3 June 1951`
-- Creator: Sgt. Bill Olson, 25 PRU (Canadian Public Relations Unit)
-- Archive: Library and Archives Canada, Department of National Defence fonds / Canadian Forces Joint Imagery Centre
-- Reference: Item ID `6266417`; SF-1789; ecopy `e011502811`
-- Official record: `https://recherche-collection-search.bac-lac.gc.ca/eng/home/record?app=fonandcol&ecopy=e011502811&idnumber=6266417`
-- Download URL used: `https://central.bac-lac.gc.ca/.item?id=e011502811&op=img&app=fonandcol`
-- License / restrictions: Official DND photograph. Crown copyright expired (first published 1951; Crown term is the remainder of the calendar year of publication plus 50 years). Credit required.
-- README credit: `Sgt. Bill Olson / Department of National Defence / Library and Archives Canada, e011502811 (Crown copyright expired).`
+- Title: `Helene Lalonde, woman worker at the Montreal Cottons Textile factory, operates a loom`
+- Date: wartime NFB still (WRM 1595)
+- Creator: Nicholas Morant
+- Archive: Library and Archives Canada / National Film Board of Canada. Photothèque
+- Reference: `PA-160566` / WRM 1595 / Item `3192151` / ecopy `a160566`
+- Official record: `https://recherche-collection-search.bac-lac.gc.ca/eng/home/record?app=FonAndCol&ecopy=a160566&idnumber=3192151`
+- Download URL used: existing repo file from the official LAC item endpoint (3204×2400)
+- License / restrictions: Restrictions on use `nil`; Copyright `Expired`
+- README credit: `Nicholas Morant / National Film Board of Canada. Photothèque / Library and Archives Canada, PA-160566 (copyright expired).`
 
 4. `docs/assets/welder-robin-nodwell-calgary-1963.jpg` — **replaced file** (same slot; higher-res PAA Flickr Commons original)
 
@@ -104,17 +106,16 @@ The README uses official Canadian archival photographs. Every file below was che
 - License / restrictions: `Public domain` (Archives of Ontario GLAM upload)
 - README credit: `Archives of Ontario, I0004928, public domain`
 
-8. `docs/assets/children-collecting-rubber-rosemont.jpg` — **added** (replaces watermarked `alberta-lumber-co-factory-1908.jpg`)
+8. `docs/assets/victory-gardens-toronto-1943.jpg` — **promoted to the pair slot** (food / victory garden)
 
-- Title: `Children collecting rubber` / two boys in Rosemont gathering scrap rubber for the armed forces
-- Date: `29 April 1942`
-- Creator: Conrad Poirier (1912–1968)
-- Archive: Bibliothèque et Archives nationales du Québec, Fonds Conrad Poirier
-- Reference: `P48,S1,P7495`
-- Official record: `http://pistard.banq.qc.ca/unite_chercheurs/Prc_acces_unite_chercheur?p_codedepo=06M&P_codeclas=P&P_numfonds=48&P_numserie=1&P_numsseri=0&P_numssser=0&P_numdossi=0&P_numpiece=7495`
-- Download URL used: `https://upload.wikimedia.org/wikipedia/commons/0/0b/Children_collecting_rubber.jpg`
-- License / restrictions: `Public domain` in Canada (Poirier died 1968; work entered the public domain under the former life-plus-50 term before the 2022 term change). Commons: `PD-Canada` / `PD-1996`.
-- README credit: `Conrad Poirier / BAnQ, P48,S1,P7495, public domain`
+- Title: `Victory Gardens, A.J. Denne, 15 Pine Crescent`
+- Date: `5 June 1943`
+- Creator: Globe and Mail staff photographer
+- Archive: City of Toronto Archives, fonds 1266 (Globe and Mail fonds)
+- Official Flickr (City of Toronto Archives / Toronto History): `https://www.flickr.com/photos/torontohistory/30116253760/`
+- Download URL used: `https://upload.wikimedia.org/wikipedia/commons/2/22/Victory_Gardens%2C_A.J._Denne%2C_15_Pine_Crescent_%2830116253760%29.jpg` (caption strip cropped in-repo)
+- License / restrictions: `CC BY 2.0` (FlickreviewR 2 confirmed)
+- README credit: `City of Toronto Archives, fonds 1266, CC BY 2.0`
 
 9. `docs/assets/collage-museum-wall.jpg` — **rebuilt** 2×4 grid from the eight stills below
 
@@ -130,16 +131,16 @@ The README uses official Canadian archival photographs. Every file below was che
 - License: `Public domain`
 - README credit: `Archives of Ontario, I0058215, public domain`
 
-11. `docs/assets/victory-gardens-toronto-1943.jpg`
+11. `docs/assets/perry-sisters-victory-garden-1942.jpg`
 
-- Title: `Victory Gardens, A.J. Denne, 15 Pine Crescent`
-- Date: `5 June 1943`
-- Creator: Globe and Mail staff photographer
-- Archive: City of Toronto Archives, fonds 1266 (Globe and Mail fonds)
-- Official Flickr (City of Toronto Archives / Toronto History): `https://www.flickr.com/photos/torontohistory/30116253760/`
-- Download URL used: `https://upload.wikimedia.org/wikipedia/commons/2/22/Victory_Gardens%2C_A.J._Denne%2C_15_Pine_Crescent_%2830116253760%29.jpg` (caption strip cropped in-repo)
-- License / restrictions: `CC BY 2.0` (FlickreviewR 2 confirmed)
-- README credit: `City of Toronto Archives, fonds 1266, CC BY 2.0`
+- Title: `The Perry sisters, employed at the Dominion Arsenals Ltd. plant, armed with rake, watering can and pitchfork`
+- Date: `24 August 1942`
+- Creator: Harry Rowed
+- Archive: Library and Archives Canada / National Film Board of Canada. Photothèque
+- Official Flickr Commons: `https://www.flickr.com/photos/lac-bac/20256970894/`
+- Download URL used: `https://upload.wikimedia.org/wikipedia/commons/a/ac/The_Perry_sisters%2C_employed_at_the_Dominion_Arsenals_Ltd._plant%2C_armed_with_rake%2C_watering_can_and_pitchfork_%2820256970894%29.jpg`
+- License / restrictions: LAC Flickr Commons `CC BY 2.0`
+- README credit: `Harry Rowed / NFB Photothèque / LAC, CC BY 2.0`
 
 12. `docs/assets/making-uniforms-tip-top-tailors.jpg`
 
@@ -153,17 +154,17 @@ The README uses official Canadian archival photographs. Every file below was che
 - License / restrictions: `Copyright expired` / `Public domain` (pre-1946 Canadian photograph)
 - README credit: `Gordon W. Powley / Archives of Ontario, C 109-2-0-18, copyright expired`
 
-13. `docs/assets/brigade-enfantine-rosemont.jpg`
+13. `docs/assets/polymer-rubber-plant-sarnia-1943.jpg`
 
-- Title: `Children. Rosemont Children Gather Rubber for Salvage`
-- Date: `29 April 1942`
-- Creator: Conrad Poirier
-- Archive: BAnQ, Fonds Conrad Poirier
-- Reference: `P48,S1,P7493`
-- Official record: `http://pistard.banq.qc.ca/unite_chercheurs/Prc_acces_unite_chercheur?p_codedepo=06M&P_codeclas=P&P_numfonds=48&P_numserie=1&P_numsseri=0&P_numssser=0&P_numdossi=0&P_numpiece=7493`
-- Download URL used: `https://upload.wikimedia.org/wikipedia/commons/d/dc/Brigade_enfantine_dans_Rosemont.jpg`
-- License / restrictions: `Public domain` (`PD-Canada`)
-- README credit: `Conrad Poirier / BAnQ, P48,S1,P7493, public domain`
+- Title: `Workmen assemble a coal pulverizing mill in the Polymer Rubber Corporation plant`
+- Date: `October 1943`
+- Creator: Harry Rowed
+- Archive: Library and Archives Canada / National Film Board of Canada. Photothèque
+- Reference: ecopy `e000761792` / Item `3196996`
+- Official record: `https://recherche-collection-search.bac-lac.gc.ca/eng/home/record?app=FonAndCol&ecopy=e000761792&idnumber=3196996`
+- Download URL used: `https://central.bac-lac.gc.ca/.item?id=e000761792&op=img&app=fonandcol`
+- License / restrictions: Restrictions on use `nil`; Copyright `Expired`
+- README credit: `Harry Rowed / NFB Photothèque / LAC, e000761792, copyright expired`
 
 14. `docs/assets/small-arms-machinist-laughing.jpg` — **kept** (clean official LAC download)
 
@@ -201,17 +202,20 @@ The README uses official Canadian archival photographs. Every file below was che
 - License: `Public domain`
 - README credit: `Archives of Ontario, I0004900, public domain`
 
-17. `docs/assets/news-salvage-montreal-1943.jpg`
+17. `docs/assets/john-inglis-assembling-bren-blank.jpg` — **kept** (clean official LAC download)
 
-- Title: `News. Salvage`
-- Date: `12 November 1943`
-- Creator: Conrad Poirier
-- Archive: BAnQ, Fonds Conrad Poirier
-- Reference: `P48,S1,P9360`
-- Official record: `http://pistard.banq.qc.ca/unite_chercheurs/Prc_acces_unite_chercheur?p_codedepo=06M&P_codeclas=P&P_numfonds=48&P_numserie=1&P_numsseri=0&P_numssser=0&P_numdossi=0&P_numpiece=9360`
-- Download URL used: `https://upload.wikimedia.org/wikipedia/commons/a/a9/News._Salvage_BAnQ_P48S1P09360.jpg`
-- License / restrictions: `Public domain` (`PD-Canada`)
-- README credit: `Conrad Poirier / BAnQ, P48,S1,P9360, public domain`
+- Title: `Woman munitions worker assembling a Bren gun blank at the John Inglis Co. Bren gun plant`
+- Date: `10 May 1941`
+- Archive: Library and Archives Canada / National Film Board of Canada. Photothèque
+- Reference: ecopy `e000760439` / Item `3195830` / WRM-805 on the print
+- Official record: `https://recherche-collection-search.bac-lac.gc.ca/eng/Home/Record?app=fonandcol&IdNumber=3195830&ecopy=e000760439`
+- Download URL used (existing repo file): `https://central.bac-lac.gc.ca/.item?id=e000760439&op=thumb&height=2400&app=fonandcol`
+- License / restrictions: NFB Photothèque wartime still; Copyright `Expired`
+- README credit: `NFB Photothèque / LAC, e000760439, copyright expired`
+
+## Withdrawn (not an open citation license)
+
+- `five-soldiers-korea-1951.jpg` (LAC e011502811, Sgt. Bill Olson / DND, 3 June 1951) was downloaded from the official LAC item endpoint, then **removed**. Korean War Special Force / DND stills at LAC commonly remain `Copyright: Government of Canada`. Restrictions on use `Nil` is not enough. No clean open-license Korea still was found, so Korea is skipped.
 
 ## Removed from the README (watermarked City of Edmonton Archives previews)
 
@@ -221,13 +225,9 @@ The City of Edmonton Archives marks EA-500 items Public Domain at the item level
 - `walters-saw-mill-edmonton-1908.jpg` — EA-500-205, watermarked 720×501 preview
 - `alberta-lumber-co-factory-1908.jpg` — EA-500-290, watermarked 734×511 preview
 
-## Additional clean LAC stills already in the repo (not currently embedded in the README)
+## Additional clean LAC stills already in the repo (not currently a README `<img>`)
 
-These remain available for later use. Each is an official LAC item download with expired copyright or Flickr Commons CC BY.
-
-- `docs/assets/helene-lalonde-textile.jpg` — LAC official, 3204×2400
 - `docs/assets/ready-for-action-shells.jpg` — LAC/NFB still, WAM-2817 on the print, 2305×2400
-- `docs/assets/john-inglis-assembling-bren-blank.jpg` — LAC e000760439, 1760×2400
 
 ## Older low-resolution extras (not in the README)
 
