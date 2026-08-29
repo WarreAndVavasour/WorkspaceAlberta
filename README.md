@@ -18,9 +18,17 @@ plan, you are thinking about New Business wrong. We build terminals that deliver
 code, files, documents — not conversation widgets.
 
 **Warre & Vavasour acknowledges the astonishing resources this technology is consuming.**
-Training and inference carry real energy, water, and mineral costs. Our answer is Canadian
-infrastructure, right-sized models on hardware you own, and local data retention over redundant
-cloud sprawl — and we say the cost out loud instead of hiding it.
+Training and inference carry real energy, water, and mineral costs — and nobody asked for this.
+No one really asked for GRPO to be released on January 20. But it was released, and that is how
+all models got to reasoning; and from reasoning, we have harnesses now. This is just the way
+the world is — and it is far too cheap not to deploy post-human-scale reasoning tools on a
+desktop device that genuinely accelerates ideas to revenue.
+
+So yes: we acknowledge the cost, we say it out loud instead of hiding it, and our answer stays
+Canadian infrastructure, right-sized models on hardware you own, and local data retention over
+redundant cloud sprawl. Because it is 1834, and the railroad has been built. The tracks arrive
+Tuesday. The world as we know it is all changing. WorkspaceAlberta is the way to stay ahead of
+these changes.
 
 ## Getting Started
 
