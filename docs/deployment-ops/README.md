@@ -54,10 +54,11 @@ curl -H "Authorization: Bearer $(sed -n 's/^WA_API_KEY=//p' ~/.config/workspacea
 
 Expect `200` with `"status": "active"`.
 
-**Known limitation.** Keys are per *subscriber*, not per device. A customer with
-two terminals runs the same key on both, and revoking a returned terminal revokes
-the customer's whole subscription. Until per-device keys land, treat key rotation
-as a customer-level operation and coordinate it with the customer.
+**One executive, one lease, one key, one terminal.** The subscriber row *is* the
+device record — there is no separate device identity to manage, and none is
+wanted. Revoking the subscriber kills the terminal, which is exactly the
+behaviour a returned box needs. Do not issue one key across two terminals; a
+second executive is a second lease.
 
 ## Naming convention
 

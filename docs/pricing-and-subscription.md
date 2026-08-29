@@ -76,7 +76,10 @@ Verify any key by hand:
 curl -H "Authorization: Bearer wa_live_..." https://elbowsupknivesout.warreandvavasour.com/me
 ```
 
-`200` returns status, plan, and email on file. There is currently **one key per
-subscriber**, so a customer with two terminals uses the same key on both and a
-returned terminal cannot be revoked on its own — per-device keys are the next
-step on the fleet track.
+`200` returns status, plan, and email on file.
+
+**One key per subscriber is the model, not a stopgap.** A lease is one executive,
+one terminal, one key. That keeps the subscriber row and the device record the
+same object: cancelling the subscription revokes the terminal, and there is no
+device identity to reconcile against billing. A second executive is a second
+lease, not a second key on the same account.
