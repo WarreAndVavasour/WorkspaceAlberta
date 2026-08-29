@@ -46,6 +46,56 @@ Then ask it something a real owner would ask:
 - *"What closes this week? I don't want to miss anything."*
 - *"Give me my morning brief — what fits us, and what's closing soon?"*
 
+### Adding your Pro key
+
+Search, details, deadlines, and the daily brief are open to everyone. Six tools —
+bid rooms, Cohere tender review, the watchlist, and bid/no-bid scorecards — need an
+active subscription. Your key arrives by email after checkout and starts with `wa_live_`.
+
+Send it as an `Authorization` header. For HTTP-native clients:
+
+```json
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "url": "https://elbowsupknivesout.warreandvavasour.com/mcp",
+      "headers": {
+        "Authorization": "Bearer wa_live_YOUR_KEY"
+      }
+    }
+  }
+}
+```
+
+For Claude Desktop, set it on the bridge instead:
+
+```json
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "command": "npx",
+      "args": ["-y", "@warreandvavasour/workspace-alberta"],
+      "env": { "WORKSPACEALBERTA_API_KEY": "wa_live_YOUR_KEY" }
+    }
+  }
+}
+```
+
+On a Linux workstation or a leased terminal, let the installer do it — it verifies the
+key against the server, writes `~/.config/workspacealberta/credentials` at mode 600, and
+registers the authenticated endpoint with whichever CLIs are present:
+
+```bash
+./installer/configure-subscriber-key.sh
+```
+
+Check a key at any time:
+
+```bash
+curl -H "Authorization: Bearer wa_live_YOUR_KEY" \
+  https://elbowsupknivesout.warreandvavasour.com/me
+```
+
 **Run it locally instead** (the whole server is pure Python):
 
 ```bash

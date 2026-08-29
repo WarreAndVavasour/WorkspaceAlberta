@@ -23,7 +23,8 @@ jobs:
             tests.test_procurement_fixtures \
             tests.test_search_relevance \
             tests.test_production_hardening \
-            tests.test_telemetry
+            tests.test_telemetry \
+            tests.test_gate_and_billing
       - name: pip install (pyproject)
         if: ${{ hashFiles('requirements.txt') == '' && hashFiles('pyproject.toml') != '' }}
         run: pip install .

@@ -1,29 +1,57 @@
 {
-  "_comment": "WorkspaceAlberta procurement MCP. Copy the entry you need. HTTP-native clients (Cursor, Claude Code) should use the first entry.",
+  "_comment": "WorkspaceAlberta procurement MCP. Copy the entry you need. Free tools (search, details, deadlines, daily brief) work with no key. The six Pro tools require an `Authorization: Bearer wa_live_...` header — see the `_pro` entries below and docs/pricing-and-subscription.md.",
 
   "cursor_or_http_native_clients": {
     "mcpServers": {
       "workspacealberta": {
-        "url": "https://workspacealberta-983058968342.northamerica-northeast1.run.app/mcp"
+        "url": "https://elbowsupknivesout.warreandvavasour.com/mcp"
+      }
+    }
+  },
+
+  "cursor_or_http_native_clients_pro": {
+    "_comment": "Same, with a subscriber key. Works in Cursor, Claude Code, and any client with native Streamable HTTP transport.",
+    "mcpServers": {
+      "workspacealberta": {
+        "url": "https://elbowsupknivesout.warreandvavasour.com/mcp",
+        "headers": {
+          "Authorization": "Bearer wa_live_REPLACE_WITH_YOUR_KEY"
+        }
+      }
+    }
+  },
+
+  "claude_desktop_via_bridge": {
+    "_comment": "Claude Desktop has no native HTTP transport. The published bridge wraps mcp-remote and reads WORKSPACEALBERTA_API_KEY (or ~/.config/workspacealberta/credentials) for you. Drop the env block to stay on the free tier.",
+    "mcpServers": {
+      "workspacealberta": {
+        "command": "npx",
+        "args": ["-y", "@warreandvavasour/workspace-alberta"],
+        "env": {
+          "WORKSPACEALBERTA_API_KEY": "wa_live_REPLACE_WITH_YOUR_KEY"
+        }
       }
     }
   },
 
   "claude_desktop_via_mcp_remote": {
-    "_comment": "Claude Desktop has no native HTTP transport. Bridge it with the public mcp-remote package pointed at the hosted endpoint.",
+    "_comment": "Bare mcp-remote, if you would rather not use the bridge. The header value must be one argv element.",
     "mcpServers": {
       "workspacealberta": {
         "command": "npx",
         "args": [
           "-y",
           "mcp-remote",
-          "https://workspacealberta-983058968342.northamerica-northeast1.run.app/mcp"
+          "https://elbowsupknivesout.warreandvavasour.com/mcp",
+          "--header",
+          "Authorization: Bearer wa_live_REPLACE_WITH_YOUR_KEY"
         ]
       }
     }
   },
 
   "local_stdio": {
+    "_comment": "Runs the procurement core on your own machine. The stdio server never gates — a local install is your own machine and your own keys.",
     "mcpServers": {
       "workspacealberta-local": {
         "command": "python",

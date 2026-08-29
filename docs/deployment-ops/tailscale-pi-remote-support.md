@@ -385,10 +385,14 @@ journalctl -u tailscaled -b -1 --no-pager | tail -200
 When equipment comes back:
 
 1. Disable or remove the Tailscale machine in the admin console.
-2. Wipe/reimage the Pi.
-3. Remove customer credentials and cached data.
-4. Inspect hardware, cables, labels, and power supply.
-5. Re-provision under a new hostname before redeployment.
+2. Rotate the customer's WorkspaceAlberta subscriber key if the subscription is
+   ending, so the key on the returned disk is dead before it leaves your hands.
+   (Keys are per subscriber, so skip this if the customer keeps other terminals.)
+3. Wipe/reimage the Pi.
+4. Remove customer credentials and cached data, including
+   `~/.config/workspacealberta/credentials`.
+5. Inspect hardware, cables, labels, and power supply.
+6. Re-provision under a new hostname before redeployment.
 
 ## Security cautions
 

@@ -148,6 +148,17 @@ Path(dst).write_text(text)
 PY
 fi
 
+log "Configuring WorkspaceAlberta subscriber key"
+# Without this the terminal reaches the free tier only: the hosted server gates
+# bid rooms, Cohere review, watchlist, and scorecards on a Bearer key. Skipped
+# non-interactively unless WA_API_KEY is set, so unattended installs still pass.
+if [ -n "${WA_API_KEY:-}" ] || [ -t 0 ]; then
+  bash "$REPO_DIR/installer/configure-subscriber-key.sh" || \
+    warn "Subscriber key not configured. Run installer/configure-subscriber-key.sh later."
+else
+  warn "No WA_API_KEY and no TTY; skipping key setup. Run installer/configure-subscriber-key.sh later."
+fi
+
 log "Verifying dashboard"
 for i in $(seq 1 30); do
   code="$(curl -s -o /tmp/workspace-alberta-dashboard.html -w '%{http_code}' "http://127.0.0.1:${DASHBOARD_PORT}/" || true)"
@@ -181,6 +192,10 @@ Local API server:
 Services:
   systemctl --user status workspace-alberta-dashboard.service
   systemctl --user status workspace-alberta-gateway.service
+
+Subscriber key:
+  ${HOME}/.config/workspacealberta/credentials
+  Re-run installer/configure-subscriber-key.sh to set or rotate it.
 
 Open dashboard now:
   chromium --new-window http://127.0.0.1:${DASHBOARD_PORT}/

@@ -27,6 +27,38 @@ Each deployed terminal should be reachable through a private management plane be
 4. Repair, update, reboot, or inspect logs.
 5. Record what changed.
 
+## Subscriber key on every terminal
+
+A terminal is not billable until it carries a subscriber key. The hosted endpoint
+gates bid rooms, Cohere tender review, the watchlist, and bid/no-bid scorecards on
+an `Authorization: Bearer wa_live_...` header; without one the customer sees the
+free tier and none of what they are leasing the box for.
+
+Provision it during staging, after the software installer and before shipping:
+
+```bash
+WA_API_KEY=wa_live_... ./installer/configure-subscriber-key.sh
+```
+
+The script verifies the key against `GET /me` before writing, so a typo or an
+inactive subscription fails on the bench rather than at the customer's desk. It
+writes `~/.config/workspacealberta/credentials` at mode 600 and registers the
+authenticated endpoint with the CLIs on the box.
+
+Confirm before the terminal leaves:
+
+```bash
+curl -H "Authorization: Bearer $(sed -n 's/^WA_API_KEY=//p' ~/.config/workspacealberta/credentials)" \
+  https://elbowsupknivesout.warreandvavasour.com/me
+```
+
+Expect `200` with `"status": "active"`.
+
+**Known limitation.** Keys are per *subscriber*, not per device. A customer with
+two terminals runs the same key on both, and revoking a returned terminal revokes
+the customer's whole subscription. Until per-device keys land, treat key rotation
+as a customer-level operation and coordinate it with the customer.
+
 ## Naming convention
 
 Use one hostname everywhere: physical label, OS hostname, Tailscale machine name, inventory, and customer record.

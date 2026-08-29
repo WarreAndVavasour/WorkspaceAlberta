@@ -46,3 +46,37 @@ The gate is implemented (see `procurement_core/auth.py`, `billing.py`, `storage.
 - [ ] Test checkout with a promo code; email the issued key (visible in the Stripe customer's metadata / `pending_key` column)
 
 Welcome-email flow is manual for now — the plaintext key sits in `pending_key` and Stripe customer metadata until sent. Early Pro subscribers are design partners: manual onboarding, direct support, and their bid-room usage informs the metering limits.
+
+## Delivering the key to a client
+
+Issuing a key is only half the loop; the client has to send it. The gate reads
+`Authorization: Bearer wa_live_...` on both the MCP and REST surfaces
+(`server_http.py` pulls it from the request context per call), so every config
+snippet a subscriber copies needs that header.
+
+| Client | How the key gets there |
+|---|---|
+| Cursor, Claude Code, any HTTP-native client | `"headers": {"Authorization": "Bearer wa_live_..."}` beside the `url` |
+| Claude Desktop | `WORKSPACEALBERTA_API_KEY` in the `env` block of the `@warreandvavasour/workspace-alberta` bridge |
+| Bare `mcp-remote` | `--header` followed by `Authorization: Bearer wa_live_...` as one argv element |
+| Leased terminal / Linux workstation | `./installer/configure-subscriber-key.sh` |
+
+Working variants of all four live in [`mcp.json.example`](../mcp.json.example).
+
+`configure-subscriber-key.sh` is the supported path for provisioned hardware. It
+verifies the key against `GET /me` before writing anything (401 unknown, 402
+inactive), stores it at `~/.config/workspacealberta/credentials` mode 600, writes
+an authenticated `mcp.json`, and registers the endpoint with Claude Code and
+Cursor when they are installed. It is safe to re-run to rotate a key, and it
+refuses to overwrite a client config it cannot parse.
+
+Verify any key by hand:
+
+```bash
+curl -H "Authorization: Bearer wa_live_..." https://elbowsupknivesout.warreandvavasour.com/me
+```
+
+`200` returns status, plan, and email on file. There is currently **one key per
+subscriber**, so a customer with two terminals uses the same key on both and a
+returned terminal cannot be revoked on its own — per-device keys are the next
+step on the fleet track.
