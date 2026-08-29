@@ -1,11 +1,26 @@
 # WorkspaceAlberta
 
 <p align="center">
-  <img src="docs/assets/women-workers-small-arms.jpg" alt="Women workers at Small Arms Limited, 1942." width="49%">
-  <img src="docs/assets/sophie-okowinski-bren-gun.jpg" alt="Sophie O'Kowinski reaming a Bren gun barrel at the John Inglis Company munitions plant, 1943." width="49%">
+  <img src="docs/assets/women-workers-collage.png" alt="Eight photographs of Canadian women building war industries: welding, machining, drafting, and finishing munitions, 1940-1945." width="100%">
 </p>
 
 <p align="center"><em>Canadian industrial war production, via Library and Archives Canada.</em></p>
+
+## AI Ethics
+
+**Warre & Vavasour does not replace human workers. We build a bigger pie for you.** Every
+capability we ship exists to amplify the people already doing the work — the same promise the
+photographs above made to the generation that industrialized this country. If a savings plan
+starts with headcount, it is not a WorkspaceAlberta plan.
+
+**Warre & Vavasour does not make apps or chatbots. Don't ask.** If this is in your business
+plan, you are thinking about New Business wrong. We build terminals that deliver real work —
+code, files, documents — not conversation widgets.
+
+**Warre & Vavasour acknowledges the astonishing resources this technology is consuming.**
+Training and inference carry real energy, water, and mineral costs. Our answer is Canadian
+infrastructure, right-sized models on hardware you own, and local data retention over redundant
+cloud sprawl — and we say the cost out loud instead of hiding it.
 
 ## Getting Started
 
