@@ -1,5 +1,7 @@
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from procurement_core.e2b_bid_room import (
     build_apc_bid_room_payload,
@@ -7,6 +9,7 @@ from procurement_core.e2b_bid_room import (
     build_sample_payload,
     build_sandbox_command,
     collect_canadabuys_attachment_urls,
+    load_shared_app_secrets,
     parse_artifact,
     render_bid_room_markdown,
     validate_bid_room_artifact,
@@ -16,6 +19,22 @@ from procurement_core.e2b_bid_room import (
 
 
 class E2BBidRoomTest(unittest.TestCase):
+    def test_shared_setup_config_maps_only_e2b_and_cohere_secrets(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(json.dumps({
+                "e2b": {"apiKey": "sandbox-fixture"},
+                "cohere": {"apiKey": "model-fixture"},
+                "composio": {"key": "must-not-leak"},
+            }))
+            self.assertEqual(
+                load_shared_app_secrets(path),
+                {
+                    "E2B_API_KEY": "sandbox-fixture",
+                    "COHERE_API_KEY": "model-fixture",
+                },
+            )
+
     def test_sample_payload_and_artifact_parser(self) -> None:
         payload = build_sample_payload()
         self.assertEqual(payload["profile"]["company_name"], "Edmonton Steel Works")

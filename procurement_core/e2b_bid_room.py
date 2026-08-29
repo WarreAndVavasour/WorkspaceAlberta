@@ -1209,8 +1209,28 @@ class BidRoomSandboxResult:
     stderr: str
 
 
+def load_shared_app_secrets(config_path: Path | None = None) -> dict[str, str]:
+    """Read only bid-room credentials from WorkspaceAlberta Setup config."""
+    if config_path is None:
+        config_root = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+        config_path = config_root / "workspacealberta" / "config.json"
+    try:
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return {}
+    mapping = {
+        "E2B_API_KEY": data.get("e2b", {}).get("apiKey", ""),
+        "COHERE_API_KEY": data.get("cohere", {}).get("apiKey", ""),
+    }
+    return {
+        name: value.strip()
+        for name, value in mapping.items()
+        if isinstance(value, str) and value.strip()
+    }
+
+
 def load_local_env() -> None:
-    """Load repo-local .env values without printing secrets."""
+    """Load local and shared Setup credentials without printing secrets."""
     for env_path in (ROOT_DIR / ".env", Path.cwd() / ".env"):
         if not env_path.exists():
             continue
@@ -1224,6 +1244,9 @@ def load_local_env() -> None:
                 key = key[len("export "):].strip()
             if key and key not in os.environ:
                 os.environ[key] = value.strip().strip('"').strip("'")
+    for key, value in load_shared_app_secrets().items():
+        if key not in os.environ:
+            os.environ[key] = value
 
 
 def has_e2b_api_key() -> bool:

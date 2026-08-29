@@ -50,3 +50,9 @@ data/opera/
 
 # Nested personal clone of the repo — not tracked content
 HarleyCoops/
+
+# Agent inner-workspace state
+.jspace/
+
+# E2B bid-room run artifacts
+output/e2b-runs/

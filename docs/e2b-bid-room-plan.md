@@ -21,13 +21,16 @@ That is enough to process real bid packages without putting unknown files or use
 
 Goal: prove the repo can create an E2B sandbox, run bid-room processing code inside it, return a structured artifact, and shut the sandbox down.
 
-Command:
+Secure first-time setup and smoke command:
 
 ```bash
-python scripts/e2b_bid_room_smoke.py
+python3 scripts/configure_e2b.py
+uv venv .venv  # only if .venv does not already exist
+uv pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/python scripts/e2b_bid_room_smoke.py
 ```
 
-This uses `E2B_API_KEY` from the local environment or repo-root `.env`. It does not print the key.
+`configure_e2b.py` reads the key with a hidden terminal prompt, never accepts it as a command-line argument, and writes it only to the gitignored repo-root `.env` with owner-only (`0600`) permissions. The smoke script uses `E2B_API_KEY` from the local environment or that `.env` and does not print the key.
 
 For a real opportunity plus Cohere review:
 
