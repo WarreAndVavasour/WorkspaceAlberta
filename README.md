@@ -28,7 +28,7 @@ It is 1834 all over again.
 
 The railroad has been built.
 
-The tracks arrive Tuesday.
+The steam engine has been designed.
 
 The world as we know it has changed.
 
