@@ -26,11 +26,9 @@ There is no longer an American dependency on enterprise, on device, Canadian AI 
 
 It is 1834 all over again.
 
-The railroad has been built.
+The steam engine has been designed. The tracks arrive Tuesday.
 
-The steam engine has been designed.
-
-The world as we know it has changed.
+Work, labor, value, cost, have all profoundly changed. Almost overnight.
 
 WorkspaceAlberta is the way to stay ahead of these changes.
 
