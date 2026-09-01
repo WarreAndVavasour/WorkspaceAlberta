@@ -8,27 +8,31 @@
 
 ## AI Ethics
 
-**Warre & Vavasour does not replace human workers. We build a bigger pie for you.** Every
-capability we ship exists to amplify the people already doing the work — the same promise the
-photographs above made to the generation that industrialized this country. If a savings plan
-starts with headcount, it is not a WorkspaceAlberta plan.
+Warre & Vavasour is a startup AI lab that does not replace human workers. We build a bigger pie.
 
-**Warre & Vavasour does not make apps or chatbots. Don't ask.** If this is in your business
-plan, you are thinking about New Business wrong. We build terminals that deliver real work —
-code, files, documents — not conversation widgets.
+Every capability we ship exists to amplify the people already doing the work, the same promise the photographs above made to the generation that industrialized this country.
 
-**Warre & Vavasour acknowledges the astonishing resources this technology is consuming.**
-Training and inference carry real energy, water, and mineral costs — and nobody asked for this.
-No one really asked for GRPO to be released on January 20. But it was released, and that is how
-all models got to reasoning; and from reasoning, we have harnesses now. This is just the way
-the world is — and it is far too cheap not to deploy post-human-scale reasoning tools on a
-desktop device that genuinely accelerates ideas to revenue.
+If your idea starts with headcount cuts, it is not a WorkspaceAlberta plan.
 
-So yes: we acknowledge the cost, we say it out loud instead of hiding it, and our answer stays
-Canadian infrastructure, right-sized models on hardware you own, and local data retention over
-redundant cloud sprawl. Because it is 1834, and the railroad has been built. The tracks arrive
-Tuesday. The world as we know it is all changing. WorkspaceAlberta is the way to stay ahead of
-these changes.
+Warre & Vavasour does not make apps or chatbots. Don't ask. If this is in your business plan, you are thinking about New Business wrong. We build terminals that deliver real work and pay real taxes.
+
+Warre & Vavasour acknowledges the astonishing resources this technology is consuming. Training and inference carry real energy, water, and mineral costs. Nobody asked for this. No one really asked for GRPO to be released on January 20, 2025. But it was released, and that is how all models got to reasoning; and from reasoning, we have harnesses now.
+
+So this is just the way the world is and it is far too cheap not to deploy post-human-scale reasoning tools on a desktop device that genuinely accelerates Canadian manufacturing, development, and industrialization.
+
+So yes: we acknowledge the cost. But Canadian infrastructure, right-sized models on hardware you can touch, and Canadian data retention means your enterprise AI stack is entirely Canadian and NATO supplier friendly.
+
+There is no longer an American dependency on enterprise, on device, Canadian AI at scale.
+
+It is 1834 all over again.
+
+The railroad has been built.
+
+The tracks arrive Tuesday.
+
+The world as we know it has changed.
+
+WorkspaceAlberta is the way to stay ahead of these changes.
 
 ## Getting Started
 
