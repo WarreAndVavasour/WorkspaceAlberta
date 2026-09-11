@@ -10,6 +10,12 @@ The server is now split into:
 - `server.py`: local stdio MCP adapter for MCP-first desktop/agent tools
 - `server_http.py`: hosted StreamableHTTP MCP plus REST/OpenAPI adapter for deployed use
 
+## For connecting agents
+
+Call `get_server_guide` after initialization and tool discovery. Both MCP transports provide shared operating instructions, tool side-effect annotations, and explicit error flags for core execution errors and hosted access denials. Discovery cards include the same workflow and handoff contract under `x-workspacealberta`; these cards do not implement the A2A task protocol.
+
+See [the agent operating guide](../../docs/agent-operating-guide.md) for Cohere route details, evidence handling and agent handoffs. The MCP is the first working connection inside [the supported terminal](../../docs/terminal-offer.md), where the CEO's ideas and small fixes become projects with hands-on support.
+
 ## Run Directly
 
 From the repo root:

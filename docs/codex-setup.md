@@ -1,6 +1,6 @@
 # Codex / OpenClaw Setup
 
-This repository is set up to be Codex-first.
+This page documents optional Codex setup. WorkspaceAlberta connects through MCP to compatible AI clients and agent harnesses.
 
 ## What is already in the repo
 

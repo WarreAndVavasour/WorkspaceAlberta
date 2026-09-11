@@ -36,6 +36,9 @@ output/canadabuys/attachments/
 # Optional project-local Build Canada cache if you set CANADABUYS_DATA_DIR under the repo
 .data/
 
+# Local downloads and evaluation artifacts (never commit)
+drive-downloads/
+
 # Scratch and local tooling
 .tmp/
 .bin-shims/

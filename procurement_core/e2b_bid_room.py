@@ -53,9 +53,11 @@ import json
 import os
 import re
 from dataclasses import dataclass
+from html import unescape
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urljoin, urlparse
+from urllib.request import Request, urlopen
 
 from procurement_core.cohere_parse import (
     EXTRACT_FALLBACK,
@@ -75,6 +77,7 @@ COHERE_PARSE_URL = PARSE_URL
 MAX_ATTACHMENTS = 5
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_COHERE_CHARS = 80_000
+MAX_CANADABUYS_DETAIL_BYTES = 2 * 1024 * 1024
 REQUIRED_COHERE_FIELDS = (
     "bid_recommendation",
     "fit_score",
@@ -1084,7 +1087,7 @@ def call_cohere(evidence_bundle):
     return validate_cohere_analysis(parse_model_json(str(synthesis_content))), tool_trace
 
 documents = []
-warnings = []
+warnings = list(payload.get("warnings", []))
 
 for inline in payload.get("documents", []):
     text = str(inline.get("text", ""))
@@ -1302,6 +1305,72 @@ def collect_canadabuys_attachment_urls(
     return urls[:max_attachments]
 
 
+def canadabuys_detail_url(reference: str) -> str:
+    """Return the canonical first-party CanadaBuys detail URL."""
+    slug = quote(str(reference or "").strip().lower(), safe="-_.~")
+    return f"https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/{slug}"
+
+
+def fetch_canadabuys_detail_html(url: str) -> str:
+    """Fetch a bounded first-party CanadaBuys detail page."""
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname != "canadabuys.canada.ca":
+        raise ValueError("CanadaBuys detail fetch only permits canadabuys.canada.ca HTTPS URLs.")
+    request = Request(url, headers={
+        "Accept": "text/html,application/xhtml+xml",
+        "User-Agent": "WorkspaceAlberta/1.0 (+https://elbowsupknivesout.warreandvavasour.com)",
+    })
+    with urlopen(request, timeout=20) as response:
+        data = response.read(MAX_CANADABUYS_DETAIL_BYTES + 1)
+        if len(data) > MAX_CANADABUYS_DETAIL_BYTES:
+            raise ValueError("CanadaBuys detail page exceeded the 2 MB safety limit.")
+        charset = response.headers.get_content_charset() or "utf-8"
+    return data.decode(charset, errors="replace")
+
+
+def extract_canadabuys_detail_attachment_urls(detail_html: str) -> list[str]:
+    """Extract direct first-party tender attachments from CanadaBuys HTML."""
+    urls: list[str] = []
+    seen: set[str] = set()
+    for href in re.findall(r"href\s*=\s*['\"]([^'\"]+)['\"]", detail_html or "", re.IGNORECASE):
+        url = urljoin("https://canadabuys.canada.ca/", unescape(href))
+        parsed = urlparse(url)
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname != "canadabuys.canada.ca"
+            or not parsed.path.startswith("/sites/default/files/webform/tender_notice/")
+            or url in seen
+        ):
+            continue
+        seen.add(url)
+        urls.append(url)
+    return urls
+
+
+def resolve_canadabuys_attachment_urls(
+    contract: dict[str, Any],
+    *,
+    max_attachments: int = MAX_ATTACHMENTS,
+) -> list[str]:
+    """Resolve CSV attachments, then enrich gaps from first-party CanadaBuys."""
+    urls = collect_canadabuys_attachment_urls(contract, max_attachments=max_attachments)
+    if len(urls) >= max_attachments:
+        return urls
+    reference = _field(contract, "referenceNumber-numeroReference")
+    if not reference:
+        return urls
+    try:
+        detail_html = fetch_canadabuys_detail_html(canadabuys_detail_url(reference))
+    except (OSError, ValueError):
+        return urls
+    for url in extract_canadabuys_detail_attachment_urls(detail_html):
+        if url not in urls:
+            urls.append(url)
+        if len(urls) >= max_attachments:
+            break
+    return urls
+
+
 def _name_from_url(url: str, fallback: str) -> str:
     parsed = urlparse(url)
     name = unquote(Path(parsed.path).name)
@@ -1345,7 +1414,7 @@ def build_canadabuys_bid_room_payload(
             "kind": "canadabuys_attachment",
         }
         for index, url in enumerate(
-            collect_canadabuys_attachment_urls(contract, max_attachments=max_attachments),
+            resolve_canadabuys_attachment_urls(contract, max_attachments=max_attachments),
             1,
         )
     ]
@@ -1373,11 +1442,18 @@ def build_canadabuys_bid_room_payload(
             "buyer": _field(contract, "contractingEntityName-nomEntitContractante-eng"),
             "status": _field(contract, "tenderStatus-appelOffresStatut-eng"),
             "closing": _field(contract, "tenderClosingDate-appelOffresDateCloture"),
-            "url": _field(contract, "noticeURL-URLavis-eng"),
+            "url": canadabuys_detail_url(reference),
         },
         profile=profile_for_bid_room(profile, business_context),
         documents=[{"name": "canadabuys-notice.txt", "text": inline_text, "source": "canadabuys_notice"}],
         attachments=attachments,
+        warnings=(
+            []
+            if attachments or max_attachments == 0
+            else [
+                "No first-party tender attachments were published in the CanadaBuys data or official detail page; this bid room contains the notice only."
+            ]
+        ),
     )
 
 
@@ -1445,6 +1521,7 @@ def build_process_payload(
     profile: dict[str, Any],
     documents: list[dict[str, Any]],
     attachments: list[dict[str, Any]],
+    warnings: list[str] | None = None,
     cohere_enabled: bool = True,
 ) -> dict[str, Any]:
     """Build the normalized sandbox payload."""
@@ -1453,6 +1530,7 @@ def build_process_payload(
         "profile": profile,
         "documents": documents,
         "attachments": attachments[:MAX_ATTACHMENTS],
+        "warnings": list(warnings or []),
         "limits": {
             "max_attachments": MAX_ATTACHMENTS,
             "max_file_bytes": MAX_FILE_BYTES,

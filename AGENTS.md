@@ -4,7 +4,7 @@ This file provides guidance to Codex and Codex-like agents working in this repos
 
 ## Project Overview
 
-WorkspaceAlberta is a Codex/OpenClaw-first procurement workspace.
+WorkspaceAlberta connects Canadian businesses with AI tools and hands-on engineering support. This repository provides the procurement MCP server for compatible AI clients and agent harnesses.
 
 The repo is intentionally narrow:
 
@@ -105,7 +105,7 @@ After changing visible repo docs or agent setup, sync the source and verify with
 
 ## Editing Rules
 
-- Keep the repo Codex/OpenClaw-specific.
+- Keep the MCP server usable across compatible AI clients and agent harnesses; do not position the product as exclusive to or led by one client.
 - Do not reintroduce Claude-specific repo guidance files.
 - Do not reintroduce generator, profile, or catalog workflows.
 - Keep README changes surgical unless the user explicitly asks for a rewrite.

@@ -62,6 +62,7 @@ from procurement_core.auth import (  # noqa: E402
 from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
 from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
+from procurement_core.agent_contract import SERVER_INSTRUCTIONS, workflow_contract  # noqa: E402
 
 def _mcp_authorization_header(ctx: ServerRequestContext) -> str | None:
     """Read the Authorization header from the current MCP request context."""
@@ -125,6 +126,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
 
 mcp_server = Server(
     "canadabuys",
+    instructions=SERVER_INSTRUCTIONS,
     on_list_tools=handle_list_tools,
     on_call_tool=handle_call_tool,
 )
@@ -419,6 +421,7 @@ def _agent_card(base: str) -> dict[str, Any]:
         "defaultInputModes": ["application/json"],
         "defaultOutputModes": ["text/markdown"],
         "skills": skills,
+        "x-workspacealberta": workflow_contract(),
     }
 
 

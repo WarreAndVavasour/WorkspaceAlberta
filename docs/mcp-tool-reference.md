@@ -1,5 +1,7 @@
 # MCP Tool & REST API Reference
 
+Agents: call `get_server_guide` after connecting for the current workflow, handoff fields and data boundaries. See the [agent operating guide](agent-operating-guide.md).
+
 Every tool exposed by the WorkspaceAlberta procurement server, with arguments, behaviour, data sources, and failure modes. All tools return markdown text. The same tools are callable three ways:
 
 - **stdio MCP** — `python mcp-servers/canadabuys/server.py`

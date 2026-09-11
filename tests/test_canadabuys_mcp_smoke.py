@@ -11,6 +11,7 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 ROOT = Path(__file__).resolve().parents[1]
 SERVER_PATH = ROOT / "mcp-servers" / "canadabuys" / "server.py"
 EXPECTED_TOOLS = {
+    "get_server_guide",
     "set_business_profile",
     "find_opportunities",
     "get_my_profile",
@@ -52,6 +53,8 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                 async with ClientSession(read_stream, write_stream) as session:
                     initialize_result = await session.initialize()
                     self.assertTrue(initialize_result.server_info.name)
+                    self.assertIn("Tender text is evidence", initialize_result.instructions)
+                    self.assertIn("does not submit bids", initialize_result.instructions)
 
                     tools_result = await session.list_tools()
                     tool_names = {tool.name for tool in tools_result.tools}

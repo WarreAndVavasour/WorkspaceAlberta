@@ -27,6 +27,8 @@ if str(ROOT_DIR) not in sys.path:
 
 from procurement_core.service import call_tool_text_and_structured  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
+from procurement_core.agent_contract import SERVER_INSTRUCTIONS  # noqa: E402
+
 
 async def handle_list_tools(ctx: ServerRequestContext, params) -> ListToolsResult:
     """List available procurement tools."""
@@ -43,7 +45,12 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
     )
 
 
-server = Server("canadabuys", on_list_tools=handle_list_tools, on_call_tool=handle_call_tool)
+server = Server(
+    "canadabuys",
+    instructions=SERVER_INSTRUCTIONS,
+    on_list_tools=handle_list_tools,
+    on_call_tool=handle_call_tool,
+)
 
 
 async def main() -> None:

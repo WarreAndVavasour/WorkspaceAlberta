@@ -30,7 +30,8 @@ it in ``tests/``. Keep descriptions user-facing and concrete — they are what
 the calling model sees when choosing tools.
 """
 
-from mcp.types import Tool
+from mcp.types import Tool, ToolAnnotations
+from procurement_core.agent_contract import PERSISTENT_TOOLS
 
 # Inline per-request profile: anonymous callers on the shared hosted endpoint
 # have no tenant row, so this is how they describe their business without
@@ -109,7 +110,12 @@ MATCHES_OUTPUT_SCHEMA = {
 
 def get_mcp_tools() -> list[Tool]:
     """Return the full declared tool list in stable order."""
-    return [
+    tools = [
+        Tool(
+            name="get_server_guide",
+            description="Start here when connecting an agent: explains what WorkspaceAlberta does, the search-to-bid-review workflow, handoff fields, data boundaries and unsupported actions. No model or network call.",
+            inputSchema={"type": "object", "properties": {}, "additionalProperties": False},
+        ),
         Tool(
             name="search_contracts",
             description="Search Canadian federal government contracts. Filter by keywords, province, or status.",
@@ -571,3 +577,11 @@ def get_mcp_tools() -> list[Tool]:
             }
         )
     ]
+    for tool in tools:
+        persistent = tool.name in PERSISTENT_TOOLS
+        tool.annotations = ToolAnnotations(
+            readOnlyHint=not persistent,
+            destructiveHint=tool.name in {"set_business_profile", "unwatch_opportunity"},
+            openWorldHint=tool.name not in {"get_server_guide", "get_my_profile", "check_cohere_status", "list_watchlist", "unwatch_opportunity", "set_business_profile"},
+        )
+    return tools

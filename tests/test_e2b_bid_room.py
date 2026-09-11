@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from procurement_core.e2b_bid_room import (
     build_apc_bid_room_payload,
@@ -87,6 +88,59 @@ class E2BBidRoomTest(unittest.TestCase):
         )
         self.assertEqual(payload["opportunity"]["reference"], "TEST-FED-001")
         self.assertEqual(len(payload["attachments"]), 3)
+
+    def test_canadabuys_payload_recovers_missing_attachments_from_official_detail_page(self) -> None:
+        contract = {
+            "referenceNumber-numeroReference": "MX-444095459421",
+            "title-titre-eng": "AI-powered lead education",
+            "noticeURL-URLavis-eng": "https://www.merx.com/example",
+            "attachment-piecesJointes-eng": "",
+            "attachment-piecesJointes-fra": "",
+        }
+        official_html = """
+            <a href="/sites/default/files/webform/tender_notice/999/rfp-en.pdf">RFP</a>
+            <a href="https://canadabuys.canada.ca/sites/default/files/webform/tender_notice/999/pricing.xlsx?download=1">Pricing</a>
+            <a href="https://competitor.example/private-document.pdf">Ignore external file</a>
+        """
+
+        with patch(
+            "procurement_core.e2b_bid_room.fetch_canadabuys_detail_html",
+            return_value=official_html,
+        ):
+            payload = build_canadabuys_bid_room_payload(contract, {})
+
+        self.assertEqual(
+            [item["url"] for item in payload["attachments"]],
+            [
+                "https://canadabuys.canada.ca/sites/default/files/webform/tender_notice/999/rfp-en.pdf",
+                "https://canadabuys.canada.ca/sites/default/files/webform/tender_notice/999/pricing.xlsx?download=1",
+            ],
+        )
+        self.assertEqual(
+            payload["opportunity"]["url"],
+            "https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/mx-444095459421",
+        )
+
+    def test_canadabuys_payload_flags_notice_only_when_official_attachments_are_missing(self) -> None:
+        contract = {
+            "referenceNumber-numeroReference": "MX-444095459421",
+            "title-titre-eng": "AI-powered lead education",
+            "attachment-piecesJointes-eng": "",
+            "attachment-piecesJointes-fra": "",
+        }
+        with patch(
+            "procurement_core.e2b_bid_room.fetch_canadabuys_detail_html",
+            return_value="<html><body>No first-party files</body></html>",
+        ):
+            payload = build_canadabuys_bid_room_payload(contract, {})
+
+        self.assertEqual(payload["attachments"], [])
+        self.assertEqual(
+            payload.get("warnings"),
+            [
+                "No first-party tender attachments were published in the CanadaBuys data or official detail page; this bid room contains the notice only."
+            ],
+        )
 
     def test_apc_payload_uses_metadata_and_external_link(self) -> None:
         payload = build_apc_bid_room_payload(

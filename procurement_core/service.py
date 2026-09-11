@@ -1445,6 +1445,7 @@ def collect_unified_matches(profile: dict, days: int, limit: int) -> tuple[list[
 # ============== Tool Dispatch ==============
 
 TOOL_NAMES = (
+    "get_server_guide",
     "search_contracts",
     "get_contract_details",
     "list_upcoming_deadlines",
@@ -1472,6 +1473,12 @@ TOOL_NAMES = (
     "unwatch_opportunity",
     "bid_no_bid_scorecard",
 )
+
+
+async def get_server_guide(args: dict) -> str:
+    """Agent-readable operating contract without credentials or upstream calls."""
+    from procurement_core.agent_contract import workflow_contract
+    return json.dumps(workflow_contract(), ensure_ascii=False, indent=2)
 
 
 async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> str:

@@ -1,5 +1,7 @@
 # WorkspaceAlberta MCP
 
+Agents: call `get_server_guide` after connecting for the current workflow, handoff fields and data boundaries. See the [agent operating guide](../../docs/agent-operating-guide.md).
+
 Stdio bridge for the hosted WorkspaceAlberta procurement MCP endpoint.
 
 This package is for MCP clients that expect a local `command` transport. It starts `mcp-remote` and connects it to the hosted WorkspaceAlberta StreamableHTTP endpoint.
