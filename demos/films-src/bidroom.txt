@@ -1,0 +1,30 @@
+# Film 1 — the bid room chain (all numbers from the real 2026-09-17 run)
+.. 0.6
+$ python3 demos/demo2_tender_extract.py \
+$   --ref AB-2026-05302 \
+$   --url https://discover.rockymtnhouse.ca/bids/bid-opportunities
+.. 0.4
+- workspacealberta MCP :: search_alberta_opportunities(ref=AB-2026-05302)
++ found: Town of Rocky Mountain House — Website Redesign (Q&A Addendum)
+! opening E2B sandbox for the tender package...
+- sandbox i29peimmqoq7aumu34oho :: boot (ephemeral, sealed)
+- sandbox :: download AB-2026-05302.pdf
++ downloaded 103,567 bytes
+- sandbox :: pypdf text extraction
++ extracted 5,752 text characters from 1 document
+- sandbox :: scan for requirement-like lines
++ 10 requirement-like lines captured
+- sandbox :: evidence sealed -> ARTIFACT-AB-2026-05302.json
+! sandbox closed. unknown files never touched the service.
+.. 0.6
+> REPORT-AB-2026-05302.md
+> ---
+> # Bid Room Analysis
+> **Reference:** AB-2026-05302
+> **Documents:** 1  **Requirement-like lines:** 10
+> **Characters sent to model:** 5773
+> **Parse model:** parse-v5.0
+> ---
+.. 0.5
++ chain complete: posting -> sandbox -> extraction -> evidence
+- one API key in. structured text out. the model is next (Cohere).

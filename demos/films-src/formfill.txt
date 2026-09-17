@@ -1,0 +1,28 @@
+# Film 2 — central identity -> bid form auto-fill (demo5, real run)
+.. 0.6
+$ python3 demos/demo5_oauth_formfill.py
+.. 0.4
+- identity :: ~/.config/workspacealberta/credentials (0600)
++ loaded: Rocky Mountain Carpentry — Rocky Mountain House, AB
+- identity :: framing, finishing, custom woodwork, renovations,
+-            design/build small commercial and residential
+.. 0.3
+- reading newest evidence: ARTIFACT-AB-2026-05302.json
+- mapping 10 requirement lines against stored capabilities...
+.. 0.5
+> [PARTIAL — administrative] must hold insurance issued by a
+>                             Canadian insurer
+> [REVIEW] must be hosted within Canada, including staging
+> [PARTIAL — administrative] must prove experience in municipal
+>                             or public-sector websites
+> [PARTIAL — administrative] Insurance certificates are not
+>                             required with the proposal...
+.. 0.5
+! verdict: 0/10 fully covered · 6 administrative PARTIAL · 4 REVIEW
+- written: /data/tasks/from-grok/BID-FORM-AB-2026-05302.md
+.. 0.4
+> ## Section 4 — Signature
+> Signed: ____________________  (Rocky Mountain Carpentry)
+.. 0.3
++ bid form assembled. admin rows flagged for human documents.
+- the workspace knows who you are. the paperwork starts itself.
