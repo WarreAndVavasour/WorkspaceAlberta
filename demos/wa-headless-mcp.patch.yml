@@ -1,0 +1,11 @@
+# Headless overlay: wire the workspacealberta MCP server so headless runs can
+# call procurement tools exactly like the web profile does.
+- insert:
+    - id: mcp-workspace-alberta
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        transport: streamable-http
+        serverName: workspace_alberta
+        url: https://elbowsupknivesout.warreandvavasour.com/mcp
+        headers: {}
+        failOnStartupError: false
