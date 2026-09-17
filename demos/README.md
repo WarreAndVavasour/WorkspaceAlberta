@@ -51,3 +51,18 @@ Harness session traces (zstd JSONL) land in
 `~/.dsh/sessions/<workspace-slug>/session-*/session.jsonl.zstd` — the
 `tool/call` events carry the same MCP tool names and argument shapes as the
 ZCode-side traces in `demos/output/traces/`, so the two runs diff cleanly.
+
+## Demo 5 — central identity
+
+`wa_credentials.py` implements the fleet credential convention:
+`~/.config/workspacealberta/credentials` (0600) holds the business profile,
+an optional `wa_live_` subscriber key, and per-platform OAuth token slots
+(`--set-key`, `--set-platform`, `--show`). Demo 5 reads that one store and
+auto-fills a bid form against the newest E2B artifact — the same identity
+every platform client (ZCode, Grok Bot, harness, mobile) should share.
+
+## Harness batch
+
+`harness_batch.py` runs all 12 simulated businesses through `dsh --profile
+headless` in parallel (launches from /data/tasks so the harness sandbox can
+write the shared workspace). 12/12 in 114s at 4 workers on a Pi 5.
