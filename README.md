@@ -232,6 +232,74 @@ Underneath the endpoint is pure Python procurement logic. The data processing, f
 
 E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, turning attachments into evidence, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Parse is the document layer — it converts PDF pages and images into structured markdown (tables, forms, drawings) before review. Command A+ is the review layer: it runs inside the short-lived sandbox with read-only evidence tools over that markdown. If Parse is unset, times out, or rejects a file, the existing pdfminer/python-docx/openpyxl extractors stay as fallback. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md), and the business-owner operating diagram lives in [`docs/bid-room-operating-diagram.md`](docs/bid-room-operating-diagram.md).
 
+### Tool calling: how the MCP tools map to Cohere
+
+Every one of the 25 tools above is exposed to the model through one uniform
+function-calling path. There is no per-tool glue: whatever the MCP server
+declares, the model sees.
+
+**The tool families.** Federal (CanadaBuys): `search_contracts`,
+`get_contract_details`, `list_upcoming_deadlines`, `summarize_contracts`,
+`refresh_data`. Unified search across both sources: `search_opportunities`,
+`get_opportunity_details`, `list_deadlines`. Profile and matching:
+`set_business_profile`, `get_my_profile`, `find_opportunities`,
+`find_matching_opportunities`, `daily_bid_brief`. Alberta Purchasing
+Connection: `search_alberta_opportunities`, `get_alberta_opportunity_details`,
+`list_alberta_deadlines`, `summarize_alberta_opportunities`,
+`find_alberta_opportunities`. Model review and bid-room:
+`check_cohere_status`, `analyze_contract_with_cohere`, `process_bid_room`.
+Persistence and decisions: `watch_opportunity`, `list_watchlist`,
+`unwatch_opportunity`, `bid_no_bid_scorecard`. Search, details, deadlines,
+summaries, refresh, and profiles are free; the heavier judgment surfaces
+(bid rooms, Cohere tender review, the watchlist, bid/no-bid scorecards)
+require the Pro key on the `Authorization` header.
+
+**The wire path, desk to model and back.** The MCP server is mounted in the
+desk harness as the `workspace_alberta` server (Streamable HTTP). Each tool's
+MCP declaration — name, description, JSON-schema parameters — becomes a
+harness tool, and the Cohere adapter (`cohere-v2-chat` in the harness's
+`llm-pi-ai` package) serializes the whole set into the Chat API v2 request as
+`tools: [{type: "function", function: {name, description, parameters}}]` —
+OpenAI-style wrapping, JSON Schema parameters, no per-tool special-casing.
+
+Command A+ (`command-a-plus-05-2026`, 436k context, reasoning + vision +
+tools) then decides what to call. The answer streams as SSE: chain-of-thought
+arrives as `thinking` content blocks (with `tool-plan-delta` events during
+tool-turn planning), and each call arrives as `tool-call-start/-delta/-end`
+events with the arguments as JSON-string fragments; `finish_reason` comes
+back as `TOOL_CALL`. The harness executes the call against the MCP server
+and replays the result as a `role: "tool"` message carrying the output as a
+JSON-object string (a v2 requirement — free text is wrapped as
+`{"output": ...}` so the endpoint can parse it and attach citations), with
+the assistant's own turn replayed as `thinking` content blocks plus
+`tool_calls`. The loop repeats — the model chains as many tools as the task
+needs — until `finish_reason: COMPLETE`. A real morning check on the desk ran
+13 tool calls across 14 model steps in one turn (data refresh, summaries,
+deadline scans, watchlist, and per-opportunity detail lookups) with zero
+failures.
+
+**Two wire rules learned the hard way** (both verified against the live
+endpoint, 2026-09-18):
+
+- `strict_tools` is **opt-in, never forced**. Strict mode makes the endpoint
+  enforce parameter schemas on generated calls, but it also rejects the
+  JSON-schema composition keywords (`oneOf`, `anyOf`, `allOf`) that harness
+  and MCP tool schemas legitimately use — a forced `true` failed every
+  tool-bearing turn with `composition constraints not supported: oneOf`. The
+  adapter therefore sends `strict_tools` only when the model's
+  `supportsStrictMode` compat flag opts in; tool-call reliability has been
+  fine without it.
+- Assistant **plans replay as `thinking` content blocks, never as
+  `tool_plan`**. The endpoint rejects `tool_plan` on replayed messages for
+  Command A-class models (`tool plan cannot be used with this model`), even
+  though it emits plan-style events itself while streaming.
+
+The adapter lives in the harness repo
+(`packages/llm/llm-pi-ai/src/cohere-v2-chat*.ts`); the desk mounts the server
+through `workspace-alberta.patch.yml` (`mcp-workspace-alberta`). Adding a new
+MCP tool requires no adapter change: declare it on the server and the next
+turn sees it as a callable function.
+
 <p align="center">
   <img src="docs/assets/machinist-canada-oil-tool-calgary-1963.jpg" alt="A machinist at Canada Oil Tool Manufacturing, Calgary, 1963." width="55%">
 </p>
