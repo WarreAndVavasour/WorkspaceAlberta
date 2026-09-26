@@ -6,6 +6,13 @@ search stays open. The same server can serve Claude, Claude Code, and other
 compatible clients; future Astra integration needs its published requirements
 and client tests before we claim compatibility.
 
+Claude and Claude Code are **OAuth clients**. WorkspaceAlberta is the
+authorization server: it hosts the email-code sign-in and consent pages, then
+issues tokens to the client. Supabase stores the identity and grant state;
+Google Cloud hosts the service. Google sign-in is not configured. Current
+redirect rules allow Claude's hosted callbacks and native-client loopback
+callbacks; another hosted client needs its callback requirements reviewed.
+
 ## What changed and why it matters
 
 | Change | Why it matters |
@@ -15,6 +22,7 @@ and client tests before we claim compatibility.
 | Restricted client-metadata fetching | Client discovery cannot follow redirects to internal services or switch DNS destinations after validation. HTTPS hostname checks and response-size limits remain enforced. |
 | Shared signing secret | Every instance verifies the same access tokens. The key is stored in Secret Manager, outside git. |
 | SMTP with verified TLS | Users receive their own sign-in codes. Cloud Run rejects missing email configuration, debug codes, and in-memory OAuth storage. |
+| MCP tool titles and error results | Clients can display clear tool labels and distinguish subscription denials or backend failures from successful results. Callable identifiers stay unchanged. |
 
 Supabase is the existing Toronto **database** in this implementation. It does
 not send these custom login codes. Its default Auth mail service is also
@@ -41,8 +49,11 @@ subscription is required; it does not execute a payment. Claude Code can
 
 Complete email delivery and the staged Cloud Run rollout, then test discovery,
 sign-in, approval/denial, refresh, anonymous search, paid access, and an inactive
-subscriber through the public endpoint. All 26 current tools still need the
-required titles and annotations; test each tool in Claude after adding them.
+subscriber through the public endpoint. All 26 current tools now declare display
+titles alongside their existing read-only/destructive annotations. The tool
+identifiers remain unchanged for clients and harnesses. These titles are deployed
+on the staging tag. Promote the tested revision and test each tool in Claude
+before submission.
 Prepare a privacy policy, support
 contact, icon, setup instructions, and a populated reviewer account, then
 submit through [Anthropic's developer portal](https://claude.com/docs/connectors/building/submission).
@@ -62,19 +73,34 @@ endpoint. It does not need a copy of the server's authentication or billing code
   Replaced the displayed setup key with a Mail Send-only key, stored as
   `workspacealberta-smtp-password:2`; revoked the setup key and disabled secret
   version `1`. Neither active secret value is in git or the transcript.
-- Deployed commit `5ba7b20394b4` as revision
-  `workspacealberta-oauth-5ba7b20394b4`, tagged `oauth-ready`, with both secrets
-  bound and **zero production traffic**. Health, OAuth discovery, unauthenticated
-  Pro challenge, public search, details, and matching checks passed on the tag.
-- The account dashboard shows an upgraded Email API plan, but SendGrid's
-  sending API still returns `401 Maximum credits exceeded`; SMTP authentication
+- Deployed commit `a504340131ec` as revision
+  `workspacealberta-oauth-a504340131ec`, tagged `oauth-ready`, with both secrets
+  bound and **zero production traffic**. All 14 OAuth preflight checks passed,
+  including 26 tool titles, anonymous access, protected-tool challenges, invalid
+  refresh responses, and Claude Code CIMD authorization-page loading. The
+  slowest individual preflight request took 0.50 seconds in this run.
+- Live procurement checks passed on the tag: search 3.14 seconds, details 0.58
+  seconds, and profile matching 3.91 seconds. Matching refreshed an empty
+  CanadaBuys cache; no planner-fallback or partial-retrieval warning occurred.
+  These timings are observations, not latency guarantees.
+- The local HTTP authorization flow also passed against real Supabase with an
+  in-process mail capture: consent, PKCE exchange, refresh rotation, and grant
+  replay rejection. Its synthetic user and grant rows were removed and their
+  removal checked. This does not verify real email delivery.
+- The account dashboard shows an upgraded Email API plan and a paid invoice,
+  but SendGrid's sending API still returns `401 Maximum credits exceeded`; SMTP authentication
   closes the connection. Email delivery and the real sign-in flow remain
-  unverified. Resolve the provider's quota/billing state before traffic promotion.
+  unverified. Resolve the provider's sending-credit state before traffic promotion;
+  [SendGrid advises contacting support](https://support.sendgrid.com/hc/en-us/articles/35466138799899-Understanding-the-Maximum-Credits-Exceeded-error)
+  when this persists after the correct plan and payment are confirmed. Email
+  troubleshooting and the support message are deferred at the owner's request.
 - Production remains on APC revision `workspacealberta-apc-e3b174942ae2`.
 
-Validation: 146 local/CI tests passed, with seven live-database tests skipped
-by default. All seven opt-in integration tests passed separately with real
-Supabase. Syntax/import and whitespace checks passed. The injection, replay,
+Validation: 151 local tests passed, with eight integration tests skipped
+by default. All eight opt-in tests passed separately, including the real Supabase
+HTTP flow. GitHub smoke checks passed for the deployed code. The stale adapter
+contract tests were repaired and added to CI. Syntax/import and whitespace
+checks passed. The injection, replay,
 concurrent-claim, and private-destination triggers no longer reproduce;
 existing PKCE, refresh, anonymous tools, and legacy-key gating tests still pass.
 

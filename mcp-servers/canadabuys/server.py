@@ -41,7 +41,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
     return CallToolResult(
         content=[TextContent(type="text", text=text)],
         structured_content=structured,
-        is_error=False,
+        is_error=text.startswith("Error:"),
     )
 
 

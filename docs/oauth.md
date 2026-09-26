@@ -7,7 +7,7 @@ server is listed for Claude as
 For a brief explanation of the changes, billing, and current rollout status,
 see [Connector readiness](connector-readiness.md).
 
-## What shipped
+## Implemented behavior
 
 workspaceAlberta is its own MCP-compliant authorization server on the same
 Canadian origin as the MCP resource (Cloud Run, Montréal). Login is an email
@@ -30,7 +30,7 @@ preserves that design and fixes the browser output and one-time-state boundaries
 it is not the token issuer used by this code. Email delivery uses a separate
 SMTP provider; Canadian database hosting does not imply Canadian email processing.
 
-## Env vars Christian must set on Cloud Run
+## Cloud Run configuration
 
 Placeholders only in git. Set the real values in Cloud Run / Secret Manager.
 
@@ -161,8 +161,38 @@ python -m pip install -r requirements.txt
 python -m unittest tests.test_oauth tests.test_oauth_security tests.test_gate_and_billing tests.test_procurement_http_app tests.test_canadabuys_mcp_smoke
 ```
 
-To exercise real PostgreSQL/PostgREST concurrency, set `SUPABASE_URL` and
+To exercise real PostgreSQL/PostgREST concurrency and the HTTP login flow, set `SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY` securely, then run
-`WA_OAUTH_TEST_SUPABASE=1 python -m unittest tests.test_oauth_security.LiveSupabaseTest`.
-This opt-in suite creates and removes its own synthetic OAuth rows, sends no
-email, and does not create subscriptions or modify customer profiles.
+`WA_OAUTH_TEST_SUPABASE=1 python -m unittest tests.test_oauth_security.LiveSupabaseTest tests.test_oauth_security.LiveOAuthHttpTest`.
+These opt-in suites create and remove their own synthetic OAuth rows, send no
+email, and do not create subscriptions or modify customer profiles. The HTTP
+test captures the mail call in-process, uses an ephemeral signing key, and checks
+consent, PKCE, authorization-code replay, refresh rotation, and refresh replay.
+It does not validate the deployed mail provider.
+
+## Deployment checks while email is deferred
+
+Use a tagged revision with zero production traffic. Database migrations and
+secret bindings can be verified independently of email delivery; keep
+`WA_OAUTH_DEV_SHOW_CODE=0` on every hosted revision.
+
+```bash
+python scripts/verify_oauth_readiness.py \
+  --url https://oauth-ready---workspacealberta-b7gk5pch5q-nn.a.run.app \
+  --resource https://elbowsupknivesout.warreandvavasour.com/mcp \
+  --client-metadata-url https://claude.ai/oauth/claude-code-client-metadata \
+  --output output/oauth-rollout/staging-readiness.json
+```
+
+This preflight checks both discovery documents, MCP initialization and tool
+metadata, anonymous access, missing/invalid-token challenges, invalid refresh
+responses, and the CIMD authorization page. It sends no codes, creates no
+accounts or clients, and performs no paid tool work. Its report explicitly marks
+email delivery and customer sign-in as untested.
+
+The tagged revision advertises the canonical production issuer and resource.
+It is a preflight target, not a separate OAuth issuer for a customer connector.
+After email delivery is verified and traffic is promoted, rerun the preflight
+against the public domain and complete a real client sign-in. Signed-in users
+without an active subscription receive an MCP tool error without restarting
+OAuth; anonymous callers still receive an HTTP 401 challenge for protected tools.

@@ -269,6 +269,93 @@ class LiveSupabaseTest(GrantConsumptionTest):
         self.assertIsNotNone(self.live.take_consent(key))
 
 
+@unittest.skipUnless(os.environ.get("WA_OAUTH_TEST_SUPABASE") == "1", "explicit live database opt-in required")
+class LiveOAuthHttpTest(unittest.TestCase):
+    """Exercise local HTTP routes with real persistence and a captured mail boundary.
+
+    Uses a synthetic .invalid user and an ephemeral signing key. Does not send
+    email or create a subscriber; removes every row created by this test.
+    """
+
+    def test_code_consent_pkce_and_refresh_with_real_database(self):
+        live = oauth.SupabaseOAuthStore()
+        original = live._request
+        created = []
+
+        def tracked(method, path, payload=None, prefer="return=representation"):
+            result = original(method, path, payload, prefer)
+            if method == "POST" and not path.startswith("rpc/"):
+                key = {"wa_oauth_clients": "client_id", "wa_oauth_auth_codes": "code_hash",
+                       "wa_oauth_refresh_tokens": "token_hash", "wa_oauth_login_challenges": "id",
+                       "wa_users": "id"}[path]
+                rows = result if path == "wa_users" else payload
+                created.extend((path, key, row[key]) for row in rows)
+            return result
+
+        def cleanup():
+            for table, key, value in reversed(created):
+                query = urlencode({key: "eq." + value})
+                original("DELETE", table + "?" + query, prefer="return=minimal")
+                self.assertFalse(original("GET", table + "?" + query))
+
+        live._request = tracked
+        oauth.use_store(live)
+        self.addCleanup(oauth.use_store, None)
+        self.addCleanup(cleanup)
+        app = FastAPI()
+        oauth_http.register_oauth_routes(app)
+        email = "oauth-http-" + uuid.uuid4().hex + "@example.invalid"
+        verifier = oauth.secrets.token_urlsafe(64)
+        resource = oauth.public_mcp_resource()
+
+        def hidden(page, name):
+            return next(attrs["value"] for tag, attrs in ParsedHTML(page).tags
+                        if tag == "input" and attrs.get("name") == name)
+
+        env = {"WA_OAUTH_DEV_SHOW_CODE": "0", "WA_OAUTH_SIGNING_KEY": oauth.secrets.token_urlsafe(48)}
+        with patch.dict(os.environ, env), patch.object(oauth, "send_login_code", return_value=True) as mail, \
+                TestClient(app) as client:
+            registered = client.post("/register", json={"client_name": "OAuth HTTP verification",
+                                     "redirect_uris": ["http://localhost/callback"]})
+            self.assertEqual(registered.status_code, 201)
+            client_id = registered.json()["client_id"]
+            query = {"response_type": "code", "client_id": client_id,
+                     "redirect_uri": "http://localhost:3118/callback", "resource": resource,
+                     "code_challenge_method": "S256", "state": "http-test",
+                     "code_challenge": oauth._b64url(hashlib.sha256(verifier.encode()).digest())}
+            self.assertEqual(client.get("/authorize", params=query).status_code, 200)
+            started = client.post("/authorize", data={**query, "email": email})
+            self.assertEqual(started.status_code, 200)
+            self.assertNotIn("data-otp=", started.text)
+            self.assertEqual(mail.call_count, 1)
+            self.assertEqual(mail.call_args.args[0], email)
+            verified = client.post("/authorize/verify", data={"login_id": hidden(started.text, "login_id"),
+                                   "code": mail.call_args.args[1]})
+            self.assertEqual(verified.status_code, 200)
+            approved = client.post("/authorize/consent", data={"consent_id": hidden(verified.text, "consent_id"),
+                                   "decision": "approve"}, follow_redirects=False)
+            self.assertEqual(approved.status_code, 302)
+            returned = parse_qs(approved.headers["location"].split("?", 1)[1])
+            self.assertEqual(returned["state"], ["http-test"])
+            exchange = {"grant_type": "authorization_code", "client_id": client_id,
+                        "redirect_uri": query["redirect_uri"], "code": returned["code"][0],
+                        "code_verifier": verifier, "resource": resource}
+            token_response = client.post("/token", data=exchange)
+            self.assertEqual(token_response.status_code, 200)
+            self.assertEqual(token_response.headers["cache-control"], "no-store")
+            tokens = token_response.json()
+            self.assertEqual(oauth.validate_access_token(tokens["access_token"])["email"], email)
+            self.assertEqual(client.post("/token", data=exchange).json()["error"], "invalid_grant")
+            refresh = {"grant_type": "refresh_token", "client_id": client_id,
+                       "refresh_token": tokens["refresh_token"], "resource": resource}
+            rotated = client.post("/token", data=refresh)
+            self.assertEqual(rotated.status_code, 200)
+            self.assertTrue(rotated.json()["refresh_token"] != tokens["refresh_token"])
+            replay = client.post("/token", data=refresh)
+            self.assertEqual(replay.status_code, 400)
+            self.assertEqual(replay.json()["error"], "invalid_grant")
+
+
 class CimdTransportTest(unittest.TestCase):
     URL = "https://client.example/metadata.json"
     PUBLIC = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
