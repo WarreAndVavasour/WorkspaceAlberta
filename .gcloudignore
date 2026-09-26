@@ -12,3 +12,4 @@ xxxQuarantine/
 diagrams/
 env/
 .env
+gha-creds-*.json

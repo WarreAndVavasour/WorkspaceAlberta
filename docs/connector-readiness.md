@@ -73,8 +73,22 @@ endpoint. It does not need a copy of the server's authentication or billing code
 
 ## Rollout record — 2026-09-26
 
-Google sign-in is live on the canonical public endpoint. The production revision
-is `workspacealberta-google-live-faca0c611e08` (100% traffic), built from
+The archival sign-in/consent design is now live on revision
+`workspacealberta-archive-fa746ae305f4` (100% traffic), from merged commit
+`fa746ae305f434ae5768dabb32e935f0a20b9b22`, image digest
+`sha256:997a9dd662f9814f955d36a670b6a4ae58310b87a319f6ca1e9bbb438bf5b546`.
+Cloud Build ID: `54fb661e-909f-4d33-903b-c3798ecd415c`.
+The previous Google revision below is the rollback target. OAuth/26-tool checks,
+exact image hashes, the Google sign-in page and procurement acceptance passed on
+both the candidate and the public endpoint. This presentation release did not
+repeat the interactive Google token exchange; it preserves the tested runtime
+environment, secret bindings, identity and canonical callback configuration.
+See [Cloud Run releases](cloud-run-workflow.md).
+
+### Initial Google sign-in rollout
+
+Google sign-in initially went live on the canonical public endpoint with revision
+`workspacealberta-google-live-faca0c611e08`, built from
 commit `faca0c611e08` with image digest
 `sha256:2d1409ed03037dc5592649245837c2d682108b5b3003d232df06edc49a9ee55f`.
 
@@ -98,7 +112,7 @@ commit `faca0c611e08` with image digest
   tests passed separately.
 - The approved Google sign-in button and public `/privacy`, `/support` and
   `/icon.svg` assets are deployed. The consent-page redesign is deferred at the
-  owner's request.
+  owner's request; it shipped in the archival release above.
 - Official MCP Inspector 2.8.0 exercised all 26 tools successfully against the
   public endpoint using the isolated review tenant. The sample profile and one
   watchlist entry remain available for reviewers. The E2B sandbox closed after

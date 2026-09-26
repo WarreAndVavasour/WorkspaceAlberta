@@ -68,6 +68,15 @@ reduced-motion preference disables animation automatically. On narrow screens,
 two small plates sit above the form, leaving permissions and actions unobstructed.
 The official Google sign-in image stays unmodified.
 
-Validation: the OAuth, OAuth security, Google login and CanadaBuys smoke suites
-ran 56 tests: 48 passed and eight opt-in database tests were skipped. This is a
-local design preview; it has not been deployed to Cloud Run.
+Initial validation: the OAuth, OAuth security, Google login and CanadaBuys smoke
+suites ran 56 tests: 48 passed and eight opt-in database tests were skipped.
+
+Deployed September 26, 2026 from merged commit `fa746ae305f4`. Revision
+`workspacealberta-archive-fa746ae305f4` serves 100% of production traffic. The
+full pre-deployment suite passed 162 tests with eight opt-in tests skipped.
+The tagged revision and public domain passed OAuth discovery/challenge checks,
+all 26 tool titles, Google sign-in rendering, byte-for-byte archive image checks,
+procurement search, details and matching. Browser inspection confirmed all seven
+archive images and the Google button loaded on the live sign-in page.
+The underlying Google authentication configuration and credentials are unchanged.
+See [the release workflow](cloud-run-workflow.md) for future deployments.

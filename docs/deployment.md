@@ -76,6 +76,11 @@ The image is `python:3.12-slim`, copies only `procurement_core/` and `mcp-server
 
 ## Cloud Run (production)
 
+Use the manual [Cloud Run release workflow](cloud-run-workflow.md) to stage a
+tested build and then promote the exact revision in a separate run. GitHub
+authenticates through Workload Identity Federation; no service-account key is
+needed. The commands below remain available for operator-driven releases.
+
 Production lives in project `workspacealberta-prod` (service `workspacealberta`, region `northamerica-northeast1`). Deploys must run under an account with access to that project (`christian@warreandvavasour.com`; Windows gcloud is currently authenticated).
 
 Build from the reviewed source only. The OAuth rollout uses a temporary export
@@ -107,11 +112,11 @@ gcloud run services update-traffic workspacealberta \
 
 Replace `REVIEWED_REVISION` with the verified revision name; do not use `LATEST`
 for this rollout. The known rollback target is
-`workspacealberta-apc-e3b174942ae2`.
+`workspacealberta-google-live-faca0c611e08` for the archival design release.
 
 ### APC planner rollout (2026-09-26)
 
-Production traffic is on `workspacealberta-apc-e3b174942ae2`, built from commit
+That rollout moved production traffic to `workspacealberta-apc-e3b174942ae2`, built from commit
 `e3b174942ae202880116d045abf222f7c55109d0` in PR #31. The previous revision is
 `workspacealberta-00007-sq2`. The rollout preserved the existing environment,
 including both configured Cohere key variables, and first verified a tagged
