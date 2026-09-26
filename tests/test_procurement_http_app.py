@@ -9,6 +9,8 @@ SERVER_DIR = ROOT / "mcp-servers" / "canadabuys"
 TEST_DATA_DIR = tempfile.TemporaryDirectory()
 
 os.environ["CANADABUYS_DATA_DIR"] = TEST_DATA_DIR.name
+os.environ.setdefault("WA_OAUTH_STORE", "memory")
+os.environ.setdefault("WA_OAUTH_SIGNING_KEY", "test-oauth-signing-key")
 sys.path.insert(0, str(SERVER_DIR))
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -135,11 +137,12 @@ class ProcurementHttpAppTest(unittest.TestCase):
         self.assertTrue(prm.json()["resource"].endswith("/mcp"))
         self.assertEqual(prm.json()["bearer_methods_supported"], ["header"])
 
-        # RFC 8414 auth-server metadata: honestly not an OAuth AS.
+        # RFC 8414 auth-server metadata for the in-process OAuth 2.1 server.
         as_meta = self.client.get("/.well-known/oauth-authorization-server")
         self.assertEqual(as_meta.status_code, 200)
         self.assertIn("issuer", as_meta.json())
-        self.assertEqual(as_meta.json()["grant_types_supported"], [])
+        self.assertIn("authorization_code", as_meta.json()["grant_types_supported"])
+        self.assertEqual(as_meta.json()["code_challenge_methods_supported"], ["S256"])
 
         # MCP discovery mirrors the registry entry.
         mcp_meta = self.client.get("/.well-known/mcp.json")

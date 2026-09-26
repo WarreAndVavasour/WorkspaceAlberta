@@ -1093,14 +1093,16 @@ INDUSTRY_UNSPSC = {
 def load_profile() -> dict:
     """Load the business profile.
 
-    Multi-tenant hosted requests (tenant context set + Supabase configured)
-    read from the subscriber's ``wa_subscribers.profile`` column; everything
-    else reads the local ``DATA_DIR/profile.json`` as before.
+    Signed-in hosted requests read the per-user or per-subscriber row.
+    Anonymous callers on the hosted endpoint get an empty profile (no shared
+    file). Local stdio still reads ``DATA_DIR/profile.json``.
     """
     from procurement_core import storage
 
     if storage.tenant_active():
         return storage.get_json_field("profile", {}) or {}
+    if not storage.allow_anonymous_file_persist():
+        return {}
 
     profile_path = DATA_DIR / "profile.json"
     if not profile_path.exists():
@@ -1109,17 +1111,19 @@ def load_profile() -> dict:
         return json.load(f)
 
 
-def save_profile(profile: dict) -> None:
-    """Save the business profile (tenant row when hosted, disk otherwise)."""
+def save_profile(profile: dict) -> bool:
+    """Save the business profile. Returns True when something was persisted."""
     from procurement_core import storage
 
     if storage.tenant_active():
-        storage.set_json_field("profile", profile)
-        return
+        return storage.set_json_field("profile", profile)
+    if not storage.allow_anonymous_file_persist():
+        return False
 
     profile_path = DATA_DIR / "profile.json"
     with profile_path.open("w", encoding="utf-8") as f:
         json.dump(profile, f, indent=2)
+    return True
 
 
 NO_PROFILE_MESSAGE = (
@@ -2048,7 +2052,7 @@ async def set_business_profile(args: dict) -> str:
         "industries": industries,
     }
 
-    save_profile(profile)
+    persisted = save_profile(profile)
 
     output = "# Profile Saved!\n\n"
     output += f"**Company:** {profile['company_name']}\n"
@@ -2056,6 +2060,12 @@ async def set_business_profile(args: dict) -> str:
         output += f"**Location:** {profile['location']}\n"
     output += f"\n**Detected Industries:** {', '.join(industries) if industries else 'General'}\n"
     output += f"**Keywords I'll search for:** {', '.join(capabilities[:10])}\n"
+    if not persisted:
+        output += (
+            "\nThis hosted session is anonymous, so the profile was **not stored**. "
+            "Sign in (or send a `wa_live_` key) to keep it, or pass a `profile` "
+            "argument on later calls.\n"
+        )
     output += "\nUse `find_opportunities` to see matching contracts!"
 
     return output

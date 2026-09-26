@@ -14,6 +14,8 @@ import unittest
 from unittest import mock
 
 os.environ.setdefault("CANADABUYS_LOAD_ENV_FILE", "0")
+os.environ.setdefault("WA_OAUTH_STORE", "memory")
+os.environ.setdefault("WA_OAUTH_SIGNING_KEY", "test-oauth-signing-key")
 
 from procurement_core import auth, billing, storage  # noqa: E402
 
@@ -259,6 +261,7 @@ class HttpGateIntegrationTest(unittest.TestCase):
         with mock.patch.dict(os.environ, env, clear=True):
             response = self.client.post("/tools/list_watchlist", json={})
         self.assertEqual(response.status_code, 401)
+        self.assertIn("resource_metadata=", response.headers.get("www-authenticate", ""))
 
     def test_pro_tool_allowed_with_valid_key(self):
         env = {

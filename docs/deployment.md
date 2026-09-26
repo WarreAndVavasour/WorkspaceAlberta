@@ -30,6 +30,10 @@ How to run the WorkspaceAlberta procurement server locally, in Docker, and in pr
 | `STRIPE_WEBHOOK_SECRET` | `/stripe/webhook` | Signing secret from the Stripe webhook endpoint |
 | `STRIPE_SECRET_KEY` | Optional | Fallback key validator + mirroring issued keys into customer metadata |
 | `WA_GATE_DISABLED` | — | Set `1` to disable Pro gating (dev). Gate also stays off if no validator is configured |
+| `WA_PUBLIC_ORIGIN` / `WA_PUBLIC_MCP_URL` | OAuth / Claude directory | Canonical public origin and MCP resource URL. See `docs/oauth.md` |
+| `WA_OAUTH_SIGNING_KEY` | OAuth | HMAC key for access tokens. Required on multi-instance Cloud Run |
+| `WA_HOSTED` | Hosted profile isolation | `1` on Cloud Run so anonymous callers do not share `profile.json` |
+| `WA_SMTP_*` | OAuth email codes | Canadian SMTP when possible. Placeholders only in example env files |
 
 **Pro-tool gate:** when Supabase (or Stripe) validation is configured, the tools in `auth.PRO_TOOLS` (`process_bid_room`, `analyze_contract_with_cohere`, watchlist tools, `bid_no_bid_scorecard`) require `Authorization: Bearer wa_live_...` on both REST and `/mcp`. Free tools stay open. Subscribers get tenant-scoped profile/watchlist storage in the `wa_subscribers` table (migration: `pipelines/migrations/001_create_wa_subscribers.sql`). Provisioning flow: Stripe checkout → webhook issues a key (hash in Supabase, plaintext in `pending_key` and Stripe customer metadata) → email key to subscriber → cancellation webhook revokes within the 5-minute auth cache TTL. Verify a key with `GET /me`.
 

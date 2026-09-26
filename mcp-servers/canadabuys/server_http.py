@@ -16,9 +16,10 @@ One FastAPI app, two protocols, identical behaviour:
   ``/openapi.json``, liveness at ``/health`` (no upstream calls).
 
 Agent-discovery documents are served under ``/.well-known`` (A2A agent card,
-RFC 9728 protected-resource metadata, RFC 8414 auth-server metadata, and an
-``mcp.json`` mirroring the registry entry) because registries and scanners
-crawl those paths as soon as the endpoint is listed.
+RFC 9728 protected-resource metadata, RFC 8414 authorization-server metadata,
+and an ``mcp.json`` mirroring the registry entry). The hosted app is also its
+own OAuth 2.1 authorization server (PKCE, DCR, CIMD) so Claude can sign a
+user in; see ``docs/oauth.md``.
 
 Both paths dispatch into ``procurement_core.service.call_tool_text``, so a
 REST caller and an MCP agent always get byte-identical markdown for the same
@@ -33,6 +34,7 @@ in this directory). Local run: ``python server_http.py`` serves on :8000.
 
 import asyncio
 import contextlib
+import json
 import sys
 import time
 from collections.abc import AsyncIterator
@@ -50,16 +52,16 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from procurement_core import storage, telemetry  # noqa: E402
+from procurement_core import identity, oauth, storage, telemetry  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
     GateError,
     PRO_TOOLS,
-    check_tool_access,
     extract_bearer_key,
     gate_enabled,
-    validate_key,
 )
 from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
+from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: E402
+from procurement_core.oauth_http import register_oauth_routes  # noqa: E402
 from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 from procurement_core.agent_contract import SERVER_INSTRUCTIONS, workflow_contract  # noqa: E402
@@ -97,9 +99,9 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
                 TextContent(
                     type="text",
                     text=(
-                        f"# WorkspaceAlberta Pro required\n\n{exc}\n\n"
-                        "Add your key to the MCP server config as an "
-                        '`Authorization: Bearer wa_live_...` header, or subscribe at '
+                        f"# workspaceAlberta Pro required\n\n{exc}\n\n"
+                        "Sign in when Claude prompts, add "
+                        '`Authorization: Bearer wa_live_...`, or subscribe at '
                         "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month)."
                     ),
                 )
@@ -107,7 +109,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
             is_error=False,
         )
 
-    token = storage.set_tenant(record["key_hash"]) if record else None
+    token = storage.set_tenant(tenant_id_for(record)) if record else None
     started = time.monotonic()
     try:
         text, structured = await call_tool_text_and_structured(name, arguments)
@@ -170,8 +172,9 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["mcp-session-id", "mcp-protocol-version"],
+    expose_headers=["mcp-session-id", "mcp-protocol-version", "WWW-Authenticate"],
 )
+register_oauth_routes(app)
 
 
 def serialize_tool(tool: Tool) -> dict[str, Any]:
@@ -199,9 +202,12 @@ async def run_tool(
         record = await asyncio.to_thread(check_tool_access, tool_name, authorization)
     except GateError as exc:
         telemetry.capture_gate_denied(tool_name, "rest", exc.status_code)
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        headers = {}
+        if exc.status_code == 401:
+            headers["WWW-Authenticate"] = oauth.www_authenticate_challenge()
+        raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
 
-    token = storage.set_tenant(record["key_hash"]) if record else None
+    token = storage.set_tenant(tenant_id_for(record)) if record else None
     started = time.monotonic()
     try:
         content = await call_tool_text(tool_name, arguments or {})
@@ -216,6 +222,42 @@ async def run_tool(
         "content_type": "text/markdown",
         "content": content,
     }
+
+
+async def _read_http_body(receive: Any) -> bytes:
+    chunks: list[bytes] = []
+    more = True
+    while more:
+        message = await receive()
+        if message["type"] == "http.disconnect":
+            return b""
+        if message["type"] == "http.request":
+            chunks.append(message.get("body") or b"")
+            more = bool(message.get("more_body"))
+        else:
+            more = False
+    return b"".join(chunks)
+
+
+def _replay_receive(body: bytes):
+    sent = False
+
+    async def receive() -> dict[str, Any]:
+        nonlocal sent
+        if sent:
+            return {"type": "http.disconnect"}
+        sent = True
+        return {"type": "http.request", "body": body, "more_body": False}
+
+    return receive
+
+
+def _header_value(scope: dict[str, Any], name: str) -> str | None:
+    target = name.lower().encode("ascii")
+    for key, value in scope.get("headers") or []:
+        if key == target:
+            return value.decode("latin-1")
+    return None
 
 
 class MCPStreamableHTTPApp:
@@ -234,13 +276,37 @@ class MCPStreamableHTTPApp:
             )
             await response(scope, receive, send)
             return
+        body = b""
         if scope.get("type") == "http":
+            body = await _read_http_body(receive)
+            # Lazy auth (Anthropic / MCP spec): Pro tools must 401 at the
+            # HTTP layer *before* the SDK wraps the refusal in a 200 tool
+            # result. initialize, tools/list, and free tools stay open.
+            if gate_enabled() and body:
+                try:
+                    payload = json.loads(body)
+                except json.JSONDecodeError:
+                    payload = None
+                if payload is not None and oauth.mcp_calls_pro_tool(payload, PRO_TOOLS):
+                    authorization = _header_value(scope, "authorization")
+                    if not identity.has_presentable_identity(authorization):
+                        response = JSONResponse(
+                            {
+                                "error": "invalid_token",
+                                "error_description": "Authentication required for this tool",
+                            },
+                            status_code=401,
+                            headers={"WWW-Authenticate": oauth.www_authenticate_challenge()},
+                        )
+                        await response(scope, _replay_receive(b""), send)
+                        return
             # The SDK 406s unless the client accepts BOTH application/json and
             # text/event-stream; many simple HTTP clients send only one. The
             # server runs in JSON response mode, so widening Accept is safe.
             headers = [(key, value) for key, value in scope.get("headers", []) if key != b"accept"]
             headers.append((b"accept", b"application/json, text/event-stream"))
             scope = {**scope, "headers": headers}
+            receive = _replay_receive(body)
         await session_manager.handle_request(scope, receive, send)
 
 
@@ -266,7 +332,7 @@ LANDING_PAGE_TEMPLATE = """<!doctype html>
 </style>
 </head>
 <body>
-<h1>WorkspaceAlberta</h1>
+<h1>workspaceAlberta</h1>
 <p class="sub">Canadian procurement intelligence over MCP: CanadaBuys + Alberta Purchasing Connection.</p>
 <p>This service is live. Search federal and Alberta public tenders, list deadlines,
 rank opportunities against your business, and get daily bid briefs — free, no key needed.
@@ -281,8 +347,10 @@ Pro tools (bid-room processing, Cohere tender analysis, watchlists) use a subscr
     }}
   }}
 }}</pre>
-<p>Pro subscribers add their key as an <code>Authorization: Bearer wa_live_...</code> header
-in the same config block, and can check it at <a href="/me">/me</a>.</p>
+<p>Free search, deadline, and brief tools need no sign-in. Pro tools (bid rooms,
+Cohere analysis, watchlists) start Claude’s sign-in flow, or still accept a
+legacy <code>Authorization: Bearer wa_live_...</code> subscriber key. Check
+status at <a href="/me">/me</a>.</p>
 <h2>Prefer plain REST?</h2>
 <p>The same tools are exposed over REST/OpenAPI:
 <a href="/docs">interactive docs</a> &middot; <a href="/openapi.json">openapi.json</a> &middot;
@@ -328,18 +396,32 @@ async def health() -> dict[str, Any]:
 
 @app.get("/me", tags=["system"])
 async def me(request: Request) -> dict[str, Any]:
-    """Validate the caller's Bearer key and report subscription status."""
-    key = extract_bearer_key(request.headers.get("authorization"))
-    if not key:
-        raise HTTPException(status_code=401, detail="Send your key as `Authorization: Bearer wa_live_...`.")
+    """Validate the caller's OAuth token or legacy key and report status."""
+    if not extract_bearer_key(request.headers.get("authorization")):
+        raise HTTPException(
+            status_code=401,
+            detail="Sign in or send `Authorization: Bearer wa_live_...`.",
+            headers={"WWW-Authenticate": oauth.www_authenticate_challenge()},
+        )
     try:
-        record = await asyncio.to_thread(validate_key, key)
+        record = await asyncio.to_thread(identity.resolve_bearer, request.headers.get("authorization"))
     except GateError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        headers = {}
+        if exc.status_code == 401:
+            headers["WWW-Authenticate"] = oauth.www_authenticate_challenge()
+        raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
+    if not record:
+        raise HTTPException(
+            status_code=401,
+            detail="Sign in or send `Authorization: Bearer wa_live_...`.",
+            headers={"WWW-Authenticate": oauth.www_authenticate_challenge()},
+        )
     return {
         "status": record.get("status"),
         "plan": record.get("plan"),
         "email": record.get("email", ""),
+        "auth_type": record.get("auth_type"),
+        "pro_active": record.get("pro_active"),
         "pro_tools": sorted(PRO_TOOLS),
     }
 
@@ -459,41 +541,21 @@ async def authenticated_extended_card(request: Request) -> JSONResponse:
 
 
 @app.get("/.well-known/oauth-protected-resource", include_in_schema=False)
-async def oauth_protected_resource(request: Request) -> JSONResponse:
-    """RFC 9728 protected-resource metadata for the MCP endpoint."""
-    base = _base_url(request)
-    return JSONResponse(
-        {
-            "resource": f"{base}/mcp",
-            "authorization_servers": [base],
-            "bearer_methods_supported": ["header"],
-            "resource_documentation": REPO_URL,
-        }
-    )
+@app.get("/.well-known/oauth-protected-resource/mcp", include_in_schema=False)
+async def oauth_protected_resource() -> JSONResponse:
+    """RFC 9728 protected-resource metadata for the MCP endpoint.
+
+    ``resource`` is the canonical public MCP URL, not ``request.base_url``,
+    because Claude requires an exact match with the URL users paste and
+    Cloud Run sees the internal ``*.run.app`` host behind Cloudflare.
+    """
+    return JSONResponse(oauth.protected_resource_metadata())
 
 
 @app.get("/.well-known/oauth-authorization-server", include_in_schema=False)
-async def oauth_authorization_server(request: Request) -> JSONResponse:
-    """RFC 8414 metadata.
-
-    This server is not a real OAuth authorization server: subscriber keys are
-    issued through Stripe checkout and validated per request, so the grant
-    and response type lists are honestly empty. Extra members are permitted
-    by RFC 8414; ``subscription_key_registration`` tells crawlers where a
-    human actually gets a key.
-    """
-    base = _base_url(request)
-    return JSONResponse(
-        {
-            "issuer": base,
-            "grant_types_supported": [],
-            "response_types_supported": [],
-            "token_endpoint_auth_methods_supported": [],
-            "service_documentation": REPO_URL,
-            "op_policy_uri": f"{base}/",
-            "subscription_key_registration": STRIPE_SUBSCRIBE_URL,
-        }
-    )
+async def oauth_authorization_server() -> JSONResponse:
+    """RFC 8414 metadata for the in-process workspaceAlberta authorization server."""
+    return JSONResponse(oauth.authorization_server_metadata())
 
 
 @app.get("/.well-known/mcp.json", include_in_schema=False)
@@ -604,9 +666,12 @@ async def bid_room_process(request: Request, arguments: dict[str, Any] | None = 
     try:
         record = await asyncio.to_thread(check_tool_access, "process_bid_room", _auth(request))
     except GateError as exc:
-        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        headers = {}
+        if exc.status_code == 401:
+            headers["WWW-Authenticate"] = oauth.www_authenticate_challenge()
+        raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
 
-    token = storage.set_tenant(record["key_hash"]) if record else None
+    token = storage.set_tenant(tenant_id_for(record)) if record else None
     try:
         # E2B sandbox processing blocks for minutes; keep it off the event loop.
         return await asyncio.to_thread(process_bid_room_artifact, arguments or {})
