@@ -93,9 +93,9 @@ gcloud run deploy workspacealberta \
 
 Do not pass `--set-secrets` on redeploys: the new revision inherits the service's existing env/secret wiring. The service is public (`--allow-unauthenticated` already set); do not change ingress/auth settings.
 
-Run the [OAuth preflight](oauth.md#deployment-checks-while-email-is-deferred)
+Run the [OAuth preflight](oauth.md#deployment-checks)
 and the procurement acceptance script against the tag. Keep OAuth at zero
-production traffic while real email sign-in remains unverified. Once the
+production traffic while real Google sign-in remains unverified. Once the
 release checks pass, promote the exact reviewed revision, then repeat the
 checks through the public domain:
 

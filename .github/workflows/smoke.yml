@@ -20,6 +20,7 @@ jobs:
           python -m unittest -v \
             tests.test_oauth \
             tests.test_oauth_security \
+            tests.test_google_login \
             tests.test_agent_contract \
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \

@@ -121,7 +121,7 @@ def verify(base_url: str, resource: str, *, client_metadata_url: str | None = No
                            "code_challenge_method": "S256", "code_challenge": challenge,
                            "state": "readiness", "scope": "pro offline_access"})
         page, _ = request("/authorize?" + query)
-        assert 'type="email"' in page
+        assert 'action="/authorize/google"' in page or 'type="email"' in page
         assert 'data-otp=' not in page
         report["client_metadata_authorization_page"] = "passed"
     return report
@@ -137,5 +137,5 @@ if __name__ == "__main__":
     result = verify(args.url, args.resource, client_metadata_url=args.client_metadata_url)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    print(f"Passed {len(result['checks'])} checks; {result['tool_count']} tools. Email and customer sign-in not tested.")
+    print(f"Passed {len(result['checks'])} checks; {result['tool_count']} tools. Customer sign-in not tested.")
     print(f"Evidence: {args.output}")

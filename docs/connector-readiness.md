@@ -7,9 +7,10 @@ compatible clients; future Astra integration needs its published requirements
 and client tests before we claim compatibility.
 
 Claude and Claude Code are **OAuth clients**. WorkspaceAlberta is the
-authorization server: it hosts the email-code sign-in and consent pages, then
+authorization server: it hosts the Google sign-in entry and consent pages, then
 issues tokens to the client. Supabase stores the identity and grant state;
-Google Cloud hosts the service. Google sign-in is not configured. Current
+Google Cloud hosts the service. Google is the upstream identity provider, not
+the MCP token issuer. Current
 redirect rules allow Claude's hosted callbacks and native-client loopback
 callbacks; another hosted client needs its callback requirements reviewed.
 
@@ -21,17 +22,20 @@ callbacks; another hosted client needs its callback requirements reviewed.
 | Database migrations `002` and `003` | Identity and OAuth grants survive restarts. Atomic claims and a locked email-code verifier prevent replay and lost attempt counts across Cloud Run instances. |
 | Restricted client-metadata fetching | Client discovery cannot follow redirects to internal services or switch DNS destinations after validation. HTTPS hostname checks and response-size limits remain enforced. |
 | Shared signing secret | Every instance verifies the same access tokens. The key is stored in Secret Manager, outside git. |
-| SMTP with verified TLS | Users receive their own sign-in codes. Cloud Run rejects missing email configuration, debug codes, and in-memory OAuth storage. |
+| Google sign-in and migration `004` | Users prove identity through Google, then approve their MCP client. One-use browser-bound state and nonce/PKCE checks prevent login replay. Stable Google IDs avoid merging accounts by email. |
+| Google client secret | Secret Manager supplies the web app credential to Cloud Run; customers and MCP clients never receive it. Google mode needs no SMTP credentials. |
 | MCP tool titles and error results | Clients can display clear tool labels and distinguish subscription denials or backend failures from successful results. Callable identifiers stay unchanged. |
 
-Supabase is the existing Toronto **database** in this implementation. It does
-not send these custom login codes. Its default Auth mail service is also
-[restricted to project-team recipients and unsuitable for production](https://supabase.com/docs/guides/auth/auth-smtp).
-The selected sender is Twilio SendGrid: `smtp.sendgrid.net`, port `587`, STARTTLS,
-username `apikey`, and a Mail Send API key as the password. The From address
-must be verified in that account. See [SendGrid's SMTP setup](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/integrating-with-the-smtp-api).
-Database and signing-key storage remain in Canada; SendGrid email processing
-is a separate provider arrangement, not a Canada-only residency claim.
+Supabase remains the existing Toronto **database**. Google sign-in requests
+only identity and email, and supports Gmail and Google Workspace accounts.
+It does not request Gmail, Drive or contact access. Google is not authoritative
+for third-party email addresses attached to Google accounts, so those accounts
+need a future independently verified linking flow before email-based paid access
+can support them. SendGrid is set aside for corporate marketing, outreach and
+inbound free requests; login does not subscribe anyone to marketing.
+The application and database are hosted in Canada, while Google identity and
+other service providers have their own processing arrangements. The public
+`/privacy` page describes these boundaries and `/support` explains setup.
 
 ## Can customers pay to use this in Claude Code?
 
@@ -47,7 +51,7 @@ subscription is required; it does not execute a payment. Claude Code can
 
 ## What remains before a directory submission
 
-Complete email delivery and the staged Cloud Run rollout, then test discovery,
+Complete Google app configuration and the staged Cloud Run rollout, then test discovery,
 sign-in, approval/denial, refresh, anonymous search, paid access, and an inactive
 subscriber through the public endpoint. All 26 current tools now declare display
 titles alongside their existing read-only/destructive annotations. The tool
@@ -63,6 +67,11 @@ The harness should use discovery, PKCE, refresh, and reconnect against this same
 endpoint. It does not need a copy of the server's authentication or billing code.
 
 ## Rollout record — 2026-09-26
+
+The record below describes the earlier email-based staging revision. Google
+sign-in supersedes that dependency; SendGrid troubleshooting is no longer a
+prerequisite for this release. Deployment and directory approval remain separate
+steps and must be recorded only after their live checks complete.
 
 - Applied migrations `002` and `003` to the existing Toronto Supabase project,
   after a transaction rollback validation. Tested single-use grants and OTP

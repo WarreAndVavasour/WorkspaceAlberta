@@ -5,10 +5,11 @@ workspaceAlberta keeps a single public Streamable HTTP resource
 own authorization server on the same Canadian origin (Cloud Run in Montréal,
 state in the Toronto Supabase project).
 
-This implementation owns the MCP authorization endpoints and email-code flow;
+This implementation owns the MCP authorization endpoints and consent flow;
 Supabase PostgreSQL holds identity and OAuth state. Supabase Auth also offers
 an OAuth server, but is not the token issuer used by this implementation.
-Email delivery is a separate SMTP provider with its own processing locations.
+Hosted sign-in uses Google OIDC when WA_LOGIN_PROVIDER=google. The optional
+legacy email-code mode uses a separate SMTP provider.
 
 Tokens are audience-bound to the canonical MCP resource. ``wa_live_``
 subscriber keys remain a legacy Bearer path and are handled in
@@ -114,11 +115,20 @@ def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
+def login_provider() -> str:
+    provider = os.environ.get("WA_LOGIN_PROVIDER", "email").strip().lower()
+    if provider not in {"email", "google"}:
+        raise RuntimeError("WA_LOGIN_PROVIDER must be email or google.")
+    return provider
+
+
 def validate_hosted_configuration() -> None:
     """Fail Cloud Run startup before a revision can serve unusable sign-in."""
     if not os.environ.get("K_SERVICE"):
         return
-    missing = [name for name in ("WA_OAUTH_SIGNING_KEY", "WA_SMTP_HOST", "WA_SMTP_FROM")
+    provider = login_provider()
+    required = ("WA_GOOGLE_CLIENT_ID", "WA_GOOGLE_CLIENT_SECRET") if provider == "google" else ("WA_SMTP_HOST", "WA_SMTP_FROM")
+    missing = [name for name in ("WA_OAUTH_SIGNING_KEY", *required)
                if not os.environ.get(name, "").strip()]
     if missing:
         raise RuntimeError("Hosted OAuth requires: " + ", ".join(missing))
@@ -128,7 +138,7 @@ def validate_hosted_configuration() -> None:
         raise RuntimeError("Hosted OAuth must not expose sign-in codes.")
     if os.environ.get("WA_OAUTH_STORE", "").strip().lower() == "memory" or not all(supabase_config()):
         raise RuntimeError("Hosted OAuth requires Supabase persistence.")
-    if os.environ.get("WA_SMTP_STARTTLS", "1").lower() not in {"1", "true", "yes"}:
+    if provider == "email" and os.environ.get("WA_SMTP_STARTTLS", "1").lower() not in {"1", "true", "yes"}:
         raise RuntimeError("Hosted OAuth requires verified SMTP STARTTLS.")
 
 
@@ -235,6 +245,7 @@ class MemoryOAuthStore:
         self.refresh: dict[str, dict[str, Any]] = {}
         self.logins: dict[str, dict[str, Any]] = {}
         self.users: dict[str, dict[str, Any]] = {}
+        self.google_states: dict[str, dict[str, Any]] = {}
 
     def clear(self) -> None:
         with self._lock:
@@ -243,6 +254,29 @@ class MemoryOAuthStore:
             self.refresh.clear()
             self.logins.clear()
             self.users.clear()
+            self.google_states.clear()
+
+    def put_google_state(self, row: dict[str, Any]) -> None:
+        with self._lock:
+            self.google_states[row["state_hash"]] = dict(row)
+
+    def take_google_state(self, state_hash: str, browser_hash: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self.google_states.get(state_hash)
+            if not row or not hmac.compare_digest(row["browser_hash"], browser_hash):
+                return None
+            return dict(self.google_states.pop(state_hash))
+
+    def google_user(self, subject: str, email: str) -> dict[str, Any]:
+        with self._lock:
+            matched = next((row for row in self.users.values() if row.get("google_subject") == subject), None)
+            if any(row["email"] == email and row is not matched for row in self.users.values()):
+                raise OAuthError(409, "access_denied", "This email already belongs to another sign-in. Contact support to link accounts.")
+            if matched is None:
+                matched = {"id": secrets.token_hex(16), "email": email, "google_subject": subject}
+                self.users[matched["id"]] = matched
+            matched["email"] = email
+            return dict(matched)
 
     def put_client(self, row: dict[str, Any]) -> None:
         with self._lock:
@@ -334,6 +368,19 @@ class MemoryOAuthStore:
 
 class SupabaseOAuthStore:
     """Persist OAuth state in the Toronto Supabase project."""
+
+    def put_google_state(self, row: dict[str, Any]) -> None:
+        self._request("POST", "wa_oauth_google_states", [row], prefer="return=minimal")
+
+    def take_google_state(self, state_hash: str, browser_hash: str) -> dict[str, Any] | None:
+        return self._claim("wa_oauth_google_states", "state_hash", state_hash, "consumed_at",
+                           browser_hash=f"eq.{browser_hash}")
+
+    def google_user(self, subject: str, email: str) -> dict[str, Any]:
+        result = self._request("POST", "rpc/wa_google_user", {"p_subject": subject, "p_email": email})
+        if result.get("error"):
+            raise OAuthError(409, "access_denied", "This email already belongs to another sign-in. Contact support to link accounts.")
+        return result
 
     def clear(self) -> None:
         return None
@@ -814,6 +861,11 @@ def verify_login(login_id: str, code: str) -> dict[str, Any]:
     if isinstance(params, str):
         params = json.loads(params)
     user = store.upsert_user(row["email"])
+    return create_consent(user, params)
+
+
+def create_consent(user: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+    store = get_store()
     consent_id = secrets.token_urlsafe(24)
     store.put_login(
         {
@@ -828,7 +880,7 @@ def verify_login(login_id: str, code: str) -> dict[str, Any]:
     return {"user": user, "authorize_params": params, "consent_id": consent_id}
 
 
-def take_consent(consent_id: str) -> dict[str, Any]:
+def take_consent(consent_id: str, browser_secret: str = "") -> dict[str, Any]:
     store = get_store()
     row = store.take_consent(consent_id)
     if not row or row.get("code_hash") != _hash_secret("consent"):
@@ -838,6 +890,8 @@ def take_consent(consent_id: str) -> dict[str, Any]:
     params = row.get("authorize_params") or {}
     if isinstance(params, str):
         params = json.loads(params)
+    if params.get("browser_hash") and not hmac.compare_digest(params["browser_hash"], _hash_secret(browser_secret)):
+        raise OAuthError(400, "invalid_request", "Sign-in browser changed. Start again.")
     user = {"id": params.get("user_id", ""), "email": params.get("email", "")}
     if not user["id"] or not user["email"]:
         raise OAuthError(400, "invalid_request", "Consent session is missing the signed-in user.")
