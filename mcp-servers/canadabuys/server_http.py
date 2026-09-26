@@ -139,6 +139,7 @@ session_manager: StreamableHTTPSessionManager | None = None
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Run the StreamableHTTP MCP session manager for the app lifetime."""
     global session_manager
+    oauth.validate_hosted_configuration()
     # Built per startup: the SDK allows .run() only once per manager instance.
     # Stateless + JSON: Cloud Run autoscaling routes each request to any
     # instance, so in-memory sessions would intermittently fail with

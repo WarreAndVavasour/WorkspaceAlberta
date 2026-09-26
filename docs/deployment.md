@@ -33,11 +33,15 @@ How to run the WorkspaceAlberta procurement server locally, in Docker, and in pr
 | `WA_PUBLIC_ORIGIN` / `WA_PUBLIC_MCP_URL` | OAuth / Claude directory | Canonical public origin and MCP resource URL. See `docs/oauth.md` |
 | `WA_OAUTH_SIGNING_KEY` | OAuth | HMAC key for access tokens. Required on multi-instance Cloud Run |
 | `WA_HOSTED` | Hosted profile isolation | `1` on Cloud Run so anonymous callers do not share `profile.json` |
-| `WA_SMTP_*` | OAuth email codes | Canadian SMTP when possible. Placeholders only in example env files |
+| `WA_SMTP_*` | OAuth email codes | SendGrid SMTP with verified STARTTLS. Placeholders only in example env files |
 
 **Pro-tool gate:** when Supabase (or Stripe) validation is configured, the tools in `auth.PRO_TOOLS` (`process_bid_room`, `analyze_contract_with_cohere`, watchlist tools, `bid_no_bid_scorecard`) require `Authorization: Bearer wa_live_...` on both REST and `/mcp`. Free tools stay open. Subscribers get tenant-scoped profile/watchlist storage in the `wa_subscribers` table (migration: `pipelines/migrations/001_create_wa_subscribers.sql`). Provisioning flow: Stripe checkout → webhook issues a key (hash in Supabase, plaintext in `pending_key` and Stripe customer metadata) → email key to subscriber → cancellation webhook revokes within the 5-minute auth cache TTL. Verify a key with `GET /me`.
 
 Local runs read a repo-root `.env` automatically (existing env vars win; secrets never printed). In hosted environments, inject secrets via the platform's secret manager and set `CANADABUYS_LOAD_ENV_FILE=0`.
+
+For OAuth migration/secret/email setup, see [OAuth deployment](oauth.md).
+[Connector readiness](connector-readiness.md) explains platform submission and
+how the existing Stripe subscription unlocks paid tools through MCP clients.
 
 ## Local Development
 
