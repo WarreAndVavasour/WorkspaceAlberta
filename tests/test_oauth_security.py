@@ -12,6 +12,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from html.parser import HTMLParser
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlencode
@@ -52,6 +53,16 @@ class OAuthHTMLTest(unittest.TestCase):
             self.assertFalse(any(k.startswith("on") for _, attrs in tags for k in attrs))
         self.assertEqual(dict((a.get("name"), a.get("value")) for t, a in
                               ParsedHTML(pages[1]).tags if t == "input")["login_id"], attack)
+
+    def test_archive_files_match_allowlist_and_every_piece_renders(self):
+        # The Cloud Run release check requires every served archive file on the sign-in page.
+        archive = Path(oauth_http.__file__).with_name("assets") / "archive"
+        stems = [scan for scan, *_ in ARTWORK]
+        self.assertEqual(len(stems), len(set(stems)))
+        self.assertEqual({path.stem for path in archive.glob("*.webp")}, set(stems))
+        page = oauth_http._google_form({"redirect_uri": "https://client.example/callback"})
+        for stem in stems:
+            self.assertIn(f"/assets/archive/{stem}.webp", page)
 
     def test_reflected_login_and_backend_error_are_escaped(self):
         app = FastAPI()

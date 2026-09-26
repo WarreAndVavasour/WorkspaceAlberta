@@ -1,18 +1,21 @@
 <h1>Allow access?</h1>
 <p class="intro"><strong>$client_name</strong> wants to connect to your workspaceAlberta account.</p>
-<div class="account"><span class="account-label">SIGNED IN AS</span><span class="account-email">$email</span></div>
+<dl class="ledger">
+  <div><dt>Signed in as</dt><dd>$email</dd></div>
+  <div><dt>Returns to</dt><dd>$host</dd></div>
+</dl>
 <section class="permissions" aria-labelledby="permissions-heading">
-  <h2 id="permissions-heading">What you’re allowing</h2>
+  <h2 id="permissions-heading">It will be able to</h2>
   <ul>
-    <li><span class="permission-symbol" aria-hidden="true">↗</span><span>Use procurement tools on your behalf</span></li>
-    <li><span class="permission-symbol" aria-hidden="true">↗</span><span>Read and update your saved business profile</span></li>
-    <li><span class="permission-symbol" aria-hidden="true">↗</span><span>Read and update your opportunity watchlist</span></li>
+    <li>Use procurement tools on your behalf</li>
+    <li>Read and update your saved business profile</li>
+    <li>Read and update your opportunity watchlist</li>
   </ul>
 </section>
 <p class="subscription-note">Signing in does not start a subscription or charge you. Pro tools require an active subscription for this email.</p>
 <form method="post" action="/authorize/consent" class="decision-form">
   <input type="hidden" name="consent_id" value="$consent_id">
-  <button type="submit" name="decision" value="approve" class="primary-button">Allow access <span aria-hidden="true">↗</span></button>
+  <button type="submit" name="decision" value="approve" class="primary-button">Allow access</button>
   <button type="submit" name="decision" value="deny" class="secondary-button">Cancel</button>
 </form>
-<p class="return-note">You’ll return to <strong>$host</strong></p>
+<p class="return-note">Only allow access if you recognise this application and <strong>$host</strong>.</p>
