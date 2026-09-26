@@ -41,8 +41,10 @@ subscription is required; it does not execute a payment. Claude Code can
 
 Complete email delivery and the staged Cloud Run rollout, then test discovery,
 sign-in, approval/denial, refresh, anonymous search, paid access, and an inactive
-subscriber through the public endpoint. All 26 current tools still need the
-required titles and annotations; test each tool in Claude after adding them.
+subscriber through the public endpoint. All 26 current tools now declare display
+titles alongside their existing read-only/destructive annotations. The tool
+identifiers remain unchanged for clients and harnesses. Deploy these titles and
+test each tool in Claude before submission.
 Prepare a privacy policy, support
 contact, icon, setup instructions, and a populated reviewer account, then
 submit through [Anthropic's developer portal](https://claude.com/docs/connectors/building/submission).
@@ -66,10 +68,12 @@ endpoint. It does not need a copy of the server's authentication or billing code
   `workspacealberta-oauth-5ba7b20394b4`, tagged `oauth-ready`, with both secrets
   bound and **zero production traffic**. Health, OAuth discovery, unauthenticated
   Pro challenge, public search, details, and matching checks passed on the tag.
-- The account dashboard shows an upgraded Email API plan, but SendGrid's
-  sending API still returns `401 Maximum credits exceeded`; SMTP authentication
+- The account dashboard shows an upgraded Email API plan and a paid invoice,
+  but SendGrid's sending API still returns `401 Maximum credits exceeded`; SMTP authentication
   closes the connection. Email delivery and the real sign-in flow remain
-  unverified. Resolve the provider's quota/billing state before traffic promotion.
+  unverified. Resolve the provider's sending-credit state before traffic promotion;
+  [SendGrid advises contacting support](https://support.sendgrid.com/hc/en-us/articles/35466138799899-Understanding-the-Maximum-Credits-Exceeded-error)
+  when this persists after the correct plan and payment are confirmed.
 - Production remains on APC revision `workspacealberta-apc-e3b174942ae2`.
 
 Validation: 146 local/CI tests passed, with seven live-database tests skipped

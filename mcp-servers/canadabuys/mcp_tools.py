@@ -113,11 +113,13 @@ def get_mcp_tools() -> list[Tool]:
     tools = [
         Tool(
             name="get_server_guide",
+            title="Read the WorkspaceAlberta guide",
             description="Start here when connecting an agent: explains what WorkspaceAlberta does, the search-to-bid-review workflow, handoff fields, data boundaries and unsupported actions. No model or network call.",
             inputSchema={"type": "object", "properties": {}, "additionalProperties": False},
         ),
         Tool(
             name="search_contracts",
+            title="Search federal contracts",
             description="Search Canadian federal government contracts. Filter by keywords, province, or status.",
             input_schema={
                 "type": "object",
@@ -140,6 +142,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="get_contract_details",
+            title="Get federal contract details",
             description="Get full details of a contract by reference or solicitation number.",
             input_schema={
                 "type": "object",
@@ -154,6 +157,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="list_upcoming_deadlines",
+            title="List federal contract deadlines",
             description="List contracts with upcoming closing deadlines.",
             input_schema={
                 "type": "object",
@@ -172,6 +176,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="summarize_contracts",
+            title="Summarize federal contracts",
             description="Get a summary of available contracts.",
             input_schema={
                 "type": "object",
@@ -180,6 +185,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="refresh_data",
+            title="Refresh federal contract data",
             description="Refresh contract data from CanadaBuys.",
             input_schema={
                 "type": "object",
@@ -189,6 +195,7 @@ def get_mcp_tools() -> list[Tool]:
         # ===== Business Profile Tools =====
         Tool(
             name="set_business_profile",
+            title="Save my business profile",
             description="Tell me about your business. I'll save your profile and use it to find matching government contracts.",
             input_schema={
                 "type": "object",
@@ -211,6 +218,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="find_opportunities",
+            title="Find federal opportunities for my business",
             description="Find government contracts that match your business profile. Returns scored and ranked opportunities with explanations of why each one fits your capabilities. Pass an inline `profile` to describe the business per call.",
             input_schema={
                 "type": "object",
@@ -231,6 +239,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="get_my_profile",
+            title="View my business profile",
             description="View your current business profile that's being used to match contracts.",
             input_schema={
                 "type": "object",
@@ -240,6 +249,7 @@ def get_mcp_tools() -> list[Tool]:
         # ===== Unified Procurement Tools =====
         Tool(
             name="search_opportunities",
+            title="Search procurement opportunities",
             description="Search CanadaBuys and Alberta Purchasing Connection together.",
             output_schema=OPPORTUNITIES_OUTPUT_SCHEMA,
             input_schema={
@@ -272,6 +282,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="get_opportunity_details",
+            title="Get procurement opportunity details",
             description="Get details for a federal CanadaBuys or Alberta APC opportunity by reference number.",
             input_schema={
                 "type": "object",
@@ -286,6 +297,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="list_deadlines",
+            title="List procurement deadlines",
             description="List CanadaBuys and Alberta APC opportunities closing soon.",
             output_schema=OPPORTUNITIES_OUTPUT_SCHEMA,
             input_schema={
@@ -319,6 +331,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="find_matching_opportunities",
+            title="Match procurement opportunities to my business",
             description="Rank CanadaBuys and Alberta APC opportunities against a business profile. Pass an inline `profile` to describe the business per call.",
             output_schema=MATCHES_OUTPUT_SCHEMA,
             input_schema={
@@ -340,6 +353,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="daily_bid_brief",
+            title="Get my daily bid brief",
             description="Generate a free daily bid brief from CanadaBuys and Alberta APC for a business profile. Pass an inline `profile` to describe the business per call.",
             input_schema={
                 "type": "object",
@@ -361,6 +375,7 @@ def get_mcp_tools() -> list[Tool]:
         # ===== Alberta Purchasing Connection Tools =====
         Tool(
             name="search_alberta_opportunities",
+            title="Search Alberta procurement opportunities",
             description="Search Alberta Purchasing Connection opportunities from Alberta public-sector buyers.",
             input_schema={
                 "type": "object",
@@ -388,6 +403,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="get_alberta_opportunity_details",
+            title="Get Alberta procurement opportunity details",
             description="Get full Alberta Purchasing Connection details by reference number, such as AB-2026-03908.",
             input_schema={
                 "type": "object",
@@ -402,6 +418,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="list_alberta_deadlines",
+            title="List Alberta procurement deadlines",
             description="List open Alberta Purchasing Connection opportunities closing soon.",
             input_schema={
                 "type": "object",
@@ -425,6 +442,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="summarize_alberta_opportunities",
+            title="Summarize Alberta procurement opportunities",
             description="Summarize current open Alberta Purchasing Connection opportunities by category.",
             input_schema={
                 "type": "object",
@@ -433,6 +451,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="find_alberta_opportunities",
+            title="Find Alberta opportunities for my business",
             description="Find Alberta Purchasing Connection opportunities that match your business profile. Pass an inline `profile` to describe the business per call.",
             input_schema={
                 "type": "object",
@@ -453,6 +472,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="process_bid_room",
+            title="Process bid documents",
             description="Use an E2B sandbox to process tender attachments: Cohere Parse turns PDF/image files into markdown, then Command A+ reviews the evidence inside the sandbox.",
             input_schema={
                 "type": "object",
@@ -487,6 +507,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="check_cohere_status",
+            title="Check Cohere analysis availability",
             description="Check whether the optional Cohere Command A+ model integration is configured. Does not call the model.",
             input_schema={
                 "type": "object",
@@ -495,6 +516,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="analyze_contract_with_cohere",
+            title="Analyze a contract with Cohere",
             description="Use Cohere Command A+ to review a CanadaBuys tender and explain fit, risks, and next steps.",
             input_schema={
                 "type": "object",
@@ -524,6 +546,7 @@ def get_mcp_tools() -> list[Tool]:
         # ===== Extension Tools (watchlist + scorecard) =====
         Tool(
             name="watch_opportunity",
+            title="Add an opportunity to my watchlist",
             description="Add a CanadaBuys or Alberta APC opportunity to your persistent watchlist, with an optional note.",
             input_schema={
                 "type": "object",
@@ -542,6 +565,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="list_watchlist",
+            title="View my opportunity watchlist",
             description="List watched opportunities sorted by closing date, with days remaining and notes.",
             input_schema={
                 "type": "object",
@@ -550,6 +574,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="unwatch_opportunity",
+            title="Remove an opportunity from my watchlist",
             description="Remove an opportunity from the watchlist by reference number.",
             input_schema={
                 "type": "object",
@@ -564,6 +589,7 @@ def get_mcp_tools() -> list[Tool]:
         ),
         Tool(
             name="bid_no_bid_scorecard",
+            title="Assess whether to bid",
             description="Fast deterministic bid/no-bid checklist for one opportunity: profile fit, runway to closing, region match, and a go/caution/no-go verdict with reasons. No model call.",
             input_schema={
                 "type": "object",
