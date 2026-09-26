@@ -10,24 +10,27 @@
 <body>
   <a class="skip-link" href="#connection">Skip to connection</a>
   <div class="auth-world">
-    <input class="motion-toggle" type="checkbox" id="pause-artwork">
-    <label class="motion-control" for="pause-artwork">Pause artwork motion</label>
+    <div class="archive" aria-hidden="true">$archive</div>
     <header class="masthead">
-      <a class="wordmark" href="/" aria-label="workspaceAlberta home">warre <i>&amp;</i> vavasour<span>INDEPENDENT THINKING. CANADIAN ROOTS.</span></a>
-      <div class="masthead-product">workspace<strong>Alberta</strong><span>YOUR ACCOUNT CONNECTION</span></div>
+      <a class="wordmark" href="/" aria-label="workspaceAlberta home">warre <i>&amp;</i> vavasour<span>Independent thinking. Canadian roots.</span></a>
+      <div class="masthead-product">workspace<strong>Alberta</strong><span>Your account connection</span></div>
     </header>
-    <div class="archival-field" aria-hidden="true">$plates</div>
+    <div class="archive-band" aria-hidden="true">$band</div>
     <main class="connection" id="connection" tabindex="-1">
       <div class="connection-card">
         <div class="card-masthead"><span class="wa-monogram" aria-hidden="true">wA</span><span>workspace<strong>Alberta</strong></span><span class="step">$step / 02</span></div>
         <p class="eyebrow">$step_label</p>
         $content
-        <nav class="card-links" aria-label="Connection help"><a href="/privacy">Privacy</a><span aria-hidden="true">·</span><a href="/support">Help with connecting</a></nav>
+        <nav class="card-links" aria-label="Connection help"><a href="/privacy">Privacy</a><span aria-hidden="true">&middot;</span><a href="/support">Help with connecting</a></nav>
       </div>
       <p class="connection-caption">A connection to your next possibility.</p>
     </main>
     <footer class="archive-footer">
-      <div class="archive-credit"><span class="credit-rule" aria-hidden="true"></span><p>From the Warre &amp; Vavasour journals<br><span>Artwork &amp; handwritten pages from our archive</span></p></div>
+      <div class="motion">
+        <input class="motion-toggle" type="checkbox" id="pause-artwork">
+        <label for="pause-artwork">Pause the archive</label>
+      </div>
+      <p class="archive-credit">Plates from Henry J. Warre, <cite>Sketches in North America and the Oregon Territory</cite>, 1848.<br>Handwriting from Warre&rsquo;s diary, <cite>Red River to the Columbia</cite>, July 1845.</p>
       <p class="archive-thought">A history of <em>looking ahead.</em></p>
     </footer>
   </div>
