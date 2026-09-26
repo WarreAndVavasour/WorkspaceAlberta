@@ -1,6 +1,7 @@
 """Small public pages for connector setup and data-handling transparency."""
+from pathlib import Path
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response, FileResponse
 from procurement_core.oauth_http import _page
 
 PRIVACY = """
@@ -41,6 +42,11 @@ ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox
 
 
 def register_public_pages(app: FastAPI) -> None:
+    @app.get("/assets/google-signin.png", include_in_schema=False)
+    async def google_signin_button():
+        return FileResponse(Path(__file__).with_name("assets") / "google-signin.png",
+                            headers={"Cache-Control": "public, max-age=86400"})
+
     @app.get("/privacy", include_in_schema=False)
     async def privacy():
         return HTMLResponse(_page("workspaceAlberta privacy", PRIVACY))

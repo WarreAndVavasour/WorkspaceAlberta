@@ -65,7 +65,7 @@ class GoogleFlowTest(unittest.TestCase):
 
     def test_google_login_consent_pkce_refresh_and_replays(self):
         page = self.http.get("/authorize", params=self.params)
-        self.assertIn("Continue with Google", page.text)
+        self.assertIn('aria-label="Sign in with Google"', page.text)
         self.assertNotIn('type="email"', page.text)
         query = self.begin()
         consent = self.callback(query)

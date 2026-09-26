@@ -18,6 +18,9 @@ body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 3rem auto; 
 code { background: #f4f4f4; border-radius: 6px; padding: 0.1rem 0.35rem; }
 input, button { font: inherit; width: 100%; box-sizing: border-box; padding: 0.6rem 0.7rem; margin: 0.35rem 0 0.9rem; }
 button { background: #0b57d0; color: #fff; border: 0; border-radius: 8px; cursor: pointer; }
+.google-signin { background: transparent; width: auto; padding: 0; line-height: 0; }
+.google-signin img { width: auto; height: 40px; }
+.google-signin:focus-visible { outline: 2px solid #0b57d0; outline-offset: 3px; }
 .sub { color: #555; }
 .warn { background: #fff4cc; padding: 0.7rem 0.8rem; border-radius: 8px; }
 .error { color: #9b1c1c; }
@@ -105,7 +108,7 @@ def _google_form(params: dict[str, str]) -> str:
 <p>Connect your procurement tools. Sign in with your Gmail or Google Workspace account, then review access for <code>{host}</code>.</p>
 <form method="post" action="/authorize/google">
   {_hidden_params(params)}
-  <button type="submit">Continue with Google</button>
+  <button type="submit" class="google-signin" aria-label="Sign in with Google"><img src="/assets/google-signin.png" alt="Sign in with Google"></button>
 </form>
 <p class="sub">Use the same email as your Pro subscription. Signing in does not start a subscription or charge you.</p>
 <p><a href="/privacy">Privacy</a> · <a href="/support">Setup and support</a></p>
@@ -188,7 +191,7 @@ def register_oauth_routes(app: FastAPI) -> None:
                                      "X-Frame-Options": "DENY",
                                      # OAuth form responses legitimately redirect to Google
                                      # and the validated MCP callback (including loopback).
-                                     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'"})
+                                     "Content-Security-Policy": "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'"})
             if request.url.path == "/authorize/consent" and request.method == "POST":
                 response.delete_cookie(google_login.BROWSER_COOKIE, path="/", secure=True, httponly=True, samesite="lax")
         return response
