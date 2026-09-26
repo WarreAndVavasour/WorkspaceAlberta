@@ -1084,6 +1084,13 @@ def exchange_refresh_token(form: dict[str, str]) -> dict[str, Any]:
     if not store.take_refresh(_hash_secret(token)):
         raise OAuthError(400, "invalid_grant", "Refresh token is invalid or revoked.")
     user = {"id": row["user_id"], "email": row["user_email"]}
+    if login_provider() == "google":
+        # Google Workspace addresses can change. Never renew the old email's
+        # billing entitlement indefinitely from a refresh-token snapshot.
+        current = store.get_user(row["user_id"])
+        if not current:
+            raise OAuthError(400, "invalid_grant", "The account no longer exists. Sign in again.")
+        user = current
     resource = row.get("resource") or public_mcp_resource()
     scope = row.get("scope") or f"{SCOPE_PRO} {SCOPE_OFFLINE}"
     return _token_response(user, row["client_id"], resource, scope)

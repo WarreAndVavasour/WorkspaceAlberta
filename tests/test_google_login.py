@@ -144,6 +144,16 @@ class GoogleFlowTest(unittest.TestCase):
             results = list(pool.map(lambda _: self.store.take_google_state(state_hash, browser_hash), range(8)))
         self.assertEqual(sum(row is not None for row in results), 1)
 
+    def test_refresh_uses_current_google_email_and_rejects_deleted_user(self):
+        user = self.store.google_user("subject", "before@gmail.com")
+        token = oauth._issue_refresh_token(user, self.client["client_id"], self.params["resource"], "pro")
+        self.store.google_user("subject", "after@gmail.com")
+        renewed = oauth.issue_tokens({"grant_type": "refresh_token", "refresh_token": token})
+        self.assertEqual(oauth.validate_access_token(renewed["access_token"])["email"], "after@gmail.com")
+        self.store.users.clear()
+        with self.assertRaises(oauth.OAuthError):
+            oauth.issue_tokens({"grant_type": "refresh_token", "refresh_token": renewed["refresh_token"]})
+
     def test_google_hosted_configuration_needs_no_smtp(self):
         config = {**CONFIG, "K_SERVICE": "test", "SUPABASE_URL": "https://test.supabase.co",
                   "SUPABASE_SERVICE_ROLE_KEY": "test"}
