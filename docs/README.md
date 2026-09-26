@@ -7,6 +7,7 @@ Index of project documentation.
 - [`architecture.md`](architecture.md) — how the layers fit: adapters, procurement core, data sources, E2B sandbox
 - [`mcp-tool-reference.md`](mcp-tool-reference.md) — every MCP tool and REST route, with args, defaults, and failure modes
 - [`deployment.md`](deployment.md) — local, Docker, Cloud Run, Railway; env vars and ops notes
+- [`cloud-run-workflow.md`](cloud-run-workflow.md) — stage, verify, promote and roll back Cloud Run releases from GitHub Actions
 - [`tooling-roadmap.md`](tooling-roadmap.md) — proposed new tools and extensions, prioritized
 
 ## Product & business

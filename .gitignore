@@ -4,6 +4,7 @@
 .env.*.local
 *.pem
 *.key
+gha-creds-*.json
 
 # IDE
 .idea/
@@ -47,6 +48,7 @@ research/
 
 # Probe and spec-extraction output
 output/spec-extract/
+output/cloud-run/
 output/use-case-experiments/
 
 # OPERA runtime data (synced CSVs, DuckDB, exports)

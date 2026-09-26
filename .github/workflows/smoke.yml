@@ -31,6 +31,8 @@ jobs:
             tests.test_production_hardening \
             tests.test_telemetry \
             tests.test_gate_and_billing
+      - name: deployment safety checks
+        run: python -m unittest tests.test_cloud_run_release
       - name: pip install (pyproject)
         if: ${{ hashFiles('requirements.txt') == '' && hashFiles('pyproject.toml') != '' }}
         run: pip install .
