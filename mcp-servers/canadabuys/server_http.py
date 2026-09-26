@@ -63,6 +63,7 @@ from procurement_core.auth import (  # noqa: E402
 from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
 from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: E402
 from procurement_core.oauth_http import register_oauth_routes  # noqa: E402
+from procurement_core.public_pages import register_public_pages  # noqa: E402
 from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 from procurement_core.agent_contract import SERVER_INSTRUCTIONS, workflow_contract  # noqa: E402
@@ -178,6 +179,7 @@ app.add_middleware(
     expose_headers=["mcp-session-id", "mcp-protocol-version", "WWW-Authenticate"],
 )
 register_oauth_routes(app)
+register_public_pages(app)
 
 
 def serialize_tool(tool: Tool) -> dict[str, Any]:
@@ -339,7 +341,7 @@ LANDING_PAGE_TEMPLATE = """<!doctype html>
 <p class="sub">Canadian procurement intelligence over MCP: CanadaBuys + Alberta Purchasing Connection.</p>
 <p>This service is live. Search federal and Alberta public tenders, list deadlines,
 rank opportunities against your business, and get daily bid briefs — free, no key needed.
-Pro tools (bid-room processing, Cohere tender analysis, watchlists) use a subscriber key.</p>
+Pro tools (bid-room processing, Cohere tender analysis, watchlists) require sign-in and an active subscription.</p>
 <h2>Connect an MCP client</h2>
 <p>Add this server to Claude Desktop, Cursor, Cline, VS Code, Zed, or any MCP-capable client:</p>
 <pre>{{
@@ -351,7 +353,7 @@ Pro tools (bid-room processing, Cohere tender analysis, watchlists) use a subscr
   }}
 }}</pre>
 <p>Free search, deadline, and brief tools need no sign-in. Pro tools (bid rooms,
-Cohere analysis, watchlists) start Claude’s sign-in flow, or still accept a
+Cohere analysis, watchlists) start your client's OAuth sign-in flow, or still accept a
 legacy <code>Authorization: Bearer wa_live_...</code> subscriber key. Check
 status at <a href="/me">/me</a>.</p>
 <h2>Prefer plain REST?</h2>
@@ -363,7 +365,8 @@ status at <a href="/me">/me</a>.</p>
 <a href="/.well-known/oauth-protected-resource">protected-resource metadata</a></p>
 <p>Always open and verify the original tender documents before bidding. This tool triages
 and summarizes; it does not replace the source posting.</p>
-<p><a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation on GitHub</a></p>
+<p><a href="/support">Setup and support</a> &middot; <a href="/privacy">Privacy</a> &middot;
+<a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation on GitHub</a></p>
 </body>
 </html>
 """

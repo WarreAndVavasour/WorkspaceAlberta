@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import secrets
 from html import escape
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -10,13 +11,16 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-from procurement_core import oauth
+from procurement_core import oauth, google_login
 
 _PAGE_STYLE = """
 body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.55; color: #1c1c1c; }
 code { background: #f4f4f4; border-radius: 6px; padding: 0.1rem 0.35rem; }
 input, button { font: inherit; width: 100%; box-sizing: border-box; padding: 0.6rem 0.7rem; margin: 0.35rem 0 0.9rem; }
 button { background: #0b57d0; color: #fff; border: 0; border-radius: 8px; cursor: pointer; }
+.google-signin { background: transparent; width: auto; padding: 0; line-height: 0; }
+.google-signin img { width: auto; height: 40px; }
+.google-signin:focus-visible { outline: 2px solid #0b57d0; outline-offset: 3px; }
 .sub { color: #555; }
 .warn { background: #fff4cc; padding: 0.7rem 0.8rem; border-radius: 8px; }
 .error { color: #9b1c1c; }
@@ -97,6 +101,20 @@ def _email_form(params: dict[str, str], *, error: str = "", notice: str = "") ->
     )
 
 
+def _google_form(params: dict[str, str]) -> str:
+    host = escape(oauth.consent_hostname(params.get("redirect_uri", "")))
+    return _page("Sign in to workspaceAlberta", f"""
+<h1>workspaceAlberta</h1>
+<p>Connect your procurement tools. Sign in with your Gmail or Google Workspace account, then review access for <code>{host}</code>.</p>
+<form method="post" action="/authorize/google">
+  {_hidden_params(params)}
+  <button type="submit" class="google-signin" aria-label="Sign in with Google"><img src="/assets/google-signin.png" alt="Sign in with Google"></button>
+</form>
+<p class="sub">Use the same email as your Pro subscription. Signing in does not start a subscription or charge you.</p>
+<p><a href="/privacy">Privacy</a> · <a href="/support">Setup and support</a></p>
+""")
+
+
 def _code_form(login_id: str, email: str, *, dev_code: str = "", error: str = "") -> str:
     login_id, email, dev_code = escape(login_id), escape(email), escape(dev_code)
     hint = ""
@@ -138,6 +156,7 @@ def _consent_form(login_result: dict[str, Any]) -> str:
 <h1>Allow access?</h1>
 <p><strong>{client_name}</strong> wants to use workspaceAlberta as <code>{email}</code>.</p>
 <p>We will send you back to <code>{host}</code>.</p>
+<p>This client can use procurement tools as you and read or update your saved business profile and watchlist.</p>
 <p class="sub">Pro tools stay locked unless this email has an active workspaceAlberta Pro subscription.</p>
 <form method="post" action="/authorize/consent">
   <input type="hidden" name="consent_id" value="{consent_id}">
@@ -164,6 +183,19 @@ async def _form_map(request: Request) -> dict[str, str]:
 def register_oauth_routes(app: FastAPI) -> None:
     """Attach RFC 8414 / RFC 7591 / authorization-code routes to *app*."""
 
+    @app.middleware("http")
+    async def protect_sign_in_pages(request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith(("/authorize", "/oauth/google/")):
+            response.headers.update({"Cache-Control": "no-store", "Referrer-Policy": "no-referrer",
+                                     "X-Frame-Options": "DENY",
+                                     # OAuth form responses legitimately redirect to Google
+                                     # and the validated MCP callback (including loopback).
+                                     "Content-Security-Policy": "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'"})
+            if request.url.path == "/authorize/consent" and request.method == "POST":
+                response.delete_cookie(google_login.BROWSER_COOKIE, path="/", secure=True, httponly=True, samesite="lax")
+        return response
+
     @app.get("/authorize", include_in_schema=False, response_model=None)
     async def authorize_get(request: Request) -> HTMLResponse | RedirectResponse:
         params = _params_from_request(request)
@@ -179,10 +211,36 @@ def register_oauth_routes(app: FastAPI) -> None:
             if target:
                 return RedirectResponse(target, status_code=302)
             return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
-        return HTMLResponse(_email_form(checked))
+        return HTMLResponse(_google_form(checked) if oauth.login_provider() == "google" else _email_form(checked))
+
+    @app.post("/authorize/google", include_in_schema=False, response_model=None)
+    async def authorize_google(request: Request) -> HTMLResponse | RedirectResponse:
+        form = await _form_map(request)
+        try:
+            checked = await asyncio.to_thread(oauth.validate_authorize_params, _params_from_form(form))
+            browser_secret = secrets.token_urlsafe(32)
+            target = await asyncio.to_thread(google_login.start, checked, browser_secret)
+        except oauth.OAuthError as exc:
+            return HTMLResponse(_page("Sign-in error", f"<p>{escape(exc.description)}</p>"), exc.status_code)
+        response = RedirectResponse(target, status_code=303)
+        response.set_cookie(google_login.BROWSER_COOKIE, browser_secret, max_age=oauth.LOGIN_TTL_SECONDS,
+                            secure=True, httponly=True, samesite="lax", path="/")
+        return response
+
+    @app.get("/oauth/google/callback", include_in_schema=False)
+    async def google_callback(request: Request) -> HTMLResponse:
+        query = request.query_params
+        try:
+            result = await asyncio.to_thread(google_login.finish, query.get("state", ""), query.get("code", ""),
+                                             request.cookies.get(google_login.BROWSER_COOKIE, ""), query.get("error", ""))
+        except oauth.OAuthError as exc:
+            return HTMLResponse(_page("Sign-in error", f"<p>{escape(exc.description)}</p>"), exc.status_code)
+        return HTMLResponse(_consent_form(result))
 
     @app.post("/authorize", include_in_schema=False, response_model=None)
     async def authorize_start(request: Request) -> HTMLResponse | RedirectResponse:
+        if oauth.login_provider() != "email":
+            return HTMLResponse(_page("Sign in with Google", "<p>Reconnect from your MCP client to sign in with Google.</p>"), 404)
         form = await _form_map(request)
         params = _params_from_form(form)
         try:
@@ -212,6 +270,8 @@ def register_oauth_routes(app: FastAPI) -> None:
 
     @app.post("/authorize/verify", include_in_schema=False)
     async def authorize_verify(request: Request) -> HTMLResponse:
+        if oauth.login_provider() != "email":
+            return HTMLResponse(_page("Sign in with Google", "<p>Email-code sign-in is disabled.</p>"), 404)
         form = await _form_map(request)
         try:
             result = await asyncio.to_thread(oauth.verify_login, form.get("login_id", ""), form.get("code", ""))
@@ -226,7 +286,8 @@ def register_oauth_routes(app: FastAPI) -> None:
     async def authorize_consent(request: Request) -> HTMLResponse | RedirectResponse:
         form = await _form_map(request)
         try:
-            session = await asyncio.to_thread(oauth.take_consent, form.get("consent_id", ""))
+            session = await asyncio.to_thread(oauth.take_consent, form.get("consent_id", ""),
+                                               request.cookies.get(google_login.BROWSER_COOKIE, ""))
         except oauth.OAuthError as exc:
             return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
         params = session["authorize_params"]
