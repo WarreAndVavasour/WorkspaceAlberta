@@ -1,7 +1,14 @@
 # workspaceAlberta directory submission
 
-Status: prepared; live Google sign-in, production promotion and portal submission
-must be completed before claiming a public listing.
+Status as of September 26, 2026: **submitted; In review** in the corporate
+Warre & Vavasour account. The owner completed the final submission in Chrome.
+The [submission dashboard](https://claude.ai/directory/manage/workspacealberta)
+shows Live as not yet reached. Deployment is complete; directory acceptance is
+pending.
+
+Saved authentication is **Required when the server asks** with **Client ID
+Metadata Document**. The overview's legacy authentication summary says None,
+but the full editor confirms the on-demand OAuth configuration is saved.
 
 ## Listing copy
 
@@ -49,13 +56,40 @@ routes and configured PostHog telemetry have separate processing arrangements.
 Do not claim universal Canadian residency, zero retention, certifications or
 third-party no-training guarantees that have not been established.
 
+API ownership is declared as **We proxy a partner's API with permission**.
+The owner confirmed existing APC permission on September 26, 2026; the underlying
+permission document was not inspected or uploaded in this session. Keep that
+record available for reviewers. CanadaBuys tender notices are published under
+the [Open Government Licence – Canada](https://open.canada.ca/data/en/dataset/6abd20d4-7a1c-4b38-baa2-9525d0bb2fd2).
+APC's [copyright statement](https://purchasing.alberta.ca/legal#copyright)
+requires permission unless otherwise specified. An extra proxy deployment
+would not itself create permission and is not needed for this declaration.
+
 ## Evidence and reviewer access
 
-Record the deployed image digest and revision, public preflight, real Google
-callback/consent/token/refresh checks, tool checks in the target client, and the
-final portal confirmation. The readiness script alone does not prove a customer
-can sign in. Supply a populated review account through the portal's secure
-authentication fields when required; never commit reviewer credentials.
+Production is on revision `workspacealberta-google-live-faca0c611e08`.
+The [rollout record](connector-readiness.md) includes the image digest, database
+and secret setup, real Google callback/consent/token/refresh checks, and public
+preflight results. Claude's corporate submission connection succeeded and
+discovered 26 tools. The production title fix supplies `annotations.title` as
+well as the top-level title; no callable tool names changed.
+
+All 26 tools returned successful live responses through official MCP Inspector
+2.8.0, including every Pro tool. The separate complimentary review tenant has a
+fictional company profile and a public opportunity in its watchlist. Its key is
+stored in Secret Manager and was shared in Anthropic's private test setup
+instructions with the owner's explicit approval. The saved instructions and
+credential were verified after reloading; the temporary plaintext handoff file
+was removed. The instructions describe the completed tests and populated
+account; the self-test checkbox is checked.
+
+The E2B test used the public CanadaBuys notice for `MX-443841357513` and closed
+the sandbox successfully. No first-party attachment was available, so the test
+did not exercise PDF parsing. `AB-2026-06542` was used for the APC details,
+watchlist and scoring checks. These results establish successful tool calls,
+not a guarantee of model-output accuracy or complete coverage of all inputs.
+Never commit reviewer credentials or use the owner's corporate login as shared
+reviewer access. Revocation instructions are in the rollout record.
 
 Directory acceptance is Anthropic's decision after submission. This integration
 also remains usable by compatible MCP clients; it does not create billing through
