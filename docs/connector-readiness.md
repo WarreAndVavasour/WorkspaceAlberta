@@ -15,6 +15,7 @@ and client tests before we claim compatibility.
 | Restricted client-metadata fetching | Client discovery cannot follow redirects to internal services or switch DNS destinations after validation. HTTPS hostname checks and response-size limits remain enforced. |
 | Shared signing secret | Every instance verifies the same access tokens. The key is stored in Secret Manager, outside git. |
 | SMTP with verified TLS | Users receive their own sign-in codes. Cloud Run rejects missing email configuration, debug codes, and in-memory OAuth storage. |
+| MCP tool titles and error results | Clients can display clear tool labels and distinguish subscription denials or backend failures from successful results. Callable identifiers stay unchanged. |
 
 Supabase is the existing Toronto **database** in this implementation. It does
 not send these custom login codes. Its default Auth mail service is also

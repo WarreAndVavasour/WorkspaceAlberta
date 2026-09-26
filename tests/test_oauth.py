@@ -413,6 +413,32 @@ class HttpOAuthTest(unittest.TestCase):
         self.assertEqual(me.json()["email"], "owner@shop.ca")
         self.assertEqual(me.json()["auth_type"], "oauth")
 
+        # A signed-in customer without Pro needs billing guidance, not another
+        # OAuth prompt; both the transport and the MCP result must reflect that.
+        env = {"SUPABASE_URL": "https://x.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "k"}
+        identity.set_subscriber_lookup(lambda email: None)
+        with mock.patch.dict(os.environ, env, clear=False):
+            denied = self.client.post(
+                "/mcp",
+                headers={"Accept": "application/json", "Authorization": f"Bearer {body['access_token']}"},
+                json={"jsonrpc": "2.0", "id": 11, "method": "tools/call",
+                      "params": {"name": "list_watchlist", "arguments": {}}},
+            )
+            self.assertEqual(denied.status_code, 200)
+            self.assertNotIn("www-authenticate", denied.headers)
+            self.assertTrue(denied.json()["result"]["isError"])
+            self.assertIn("not active", denied.json()["result"]["content"][0]["text"])
+
+        refresh_form = {"grant_type": "refresh_token", "refresh_token": body["refresh_token"],
+                        "client_id": created["client_id"], "resource": CANONICAL}
+        refreshed = self.client.post("/token", data=refresh_form)
+        self.assertEqual(refreshed.status_code, 200)
+        self.assertEqual(refreshed.headers["cache-control"], "no-store")
+        self.assertNotEqual(refreshed.json()["refresh_token"], body["refresh_token"])
+        replayed = self.client.post("/token", data=refresh_form)
+        self.assertEqual(replayed.status_code, 400)
+        self.assertEqual(replayed.json()["error"], "invalid_grant")
+
     def test_pro_tool_401_challenge_rest_and_mcp(self):
         env = {
             "SUPABASE_URL": "https://x.supabase.co",

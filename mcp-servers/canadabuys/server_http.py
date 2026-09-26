@@ -58,6 +58,7 @@ from procurement_core.auth import (  # noqa: E402
     PRO_TOOLS,
     extract_bearer_key,
     gate_enabled,
+    validate_key,
 )
 from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
 from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: E402
@@ -85,8 +86,9 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
 
     Applies the same Pro-tool gate as REST: the Bearer key is read from the
     StreamableHTTP request headers via the MCP request context. Gate
-    failures return a readable message (MCP has no HTTP status per tool
-    call) telling the caller how to subscribe or configure their key.
+    The HTTP gate challenges missing/invalid identities before dispatch.
+    Denials that reach the handler (such as an inactive subscription) are
+    tool errors, so clients can distinguish them from successful results.
     """
     name = params.name
     arguments = params.arguments or {}
@@ -100,13 +102,13 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
                     type="text",
                     text=(
                         f"# workspaceAlberta Pro required\n\n{exc}\n\n"
-                        "Sign in when Claude prompts, add "
+                        "Sign in when your client prompts, add "
                         '`Authorization: Bearer wa_live_...`, or subscribe at '
                         "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month)."
                     ),
                 )
             ],
-            is_error=False,
+            is_error=True,
         )
 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
@@ -122,7 +124,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
     return CallToolResult(
         content=[TextContent(type="text", text=text)],
         structured_content=structured,
-        is_error=False,
+        is_error=text.startswith("Error:"),
     )
 
 

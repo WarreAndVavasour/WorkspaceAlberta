@@ -76,16 +76,38 @@ The image is `python:3.12-slim`, copies only `procurement_core/` and `mcp-server
 
 ## Cloud Run (production)
 
-Production lives in project `workspacealberta-prod` (service `workspacealberta`, region `northamerica-northeast1`). Deploys must run under an account with access to that project (currently `christian@warreandvavasour.com` via WSL gcloud):
+Production lives in project `workspacealberta-prod` (service `workspacealberta`, region `northamerica-northeast1`). Deploys must run under an account with access to that project (`christian@warreandvavasour.com`; Windows gcloud is currently authenticated).
+
+Build from the reviewed source only. The OAuth rollout uses a temporary export
+of the tracked commit containing `Dockerfile`, `requirements.txt`,
+`procurement_core/`, and `mcp-servers/canadabuys/`. From that export directory,
+create a tagged revision without moving production traffic:
 
 ```bash
 gcloud run deploy workspacealberta \
   --source . \
+  --no-traffic --tag oauth-ready \
   --region northamerica-northeast1 \
   --project workspacealberta-prod
 ```
 
 Do not pass `--set-secrets` on redeploys: the new revision inherits the service's existing env/secret wiring. The service is public (`--allow-unauthenticated` already set); do not change ingress/auth settings.
+
+Run the [OAuth preflight](oauth.md#deployment-checks-while-email-is-deferred)
+and the procurement acceptance script against the tag. Keep OAuth at zero
+production traffic while real email sign-in remains unverified. Once the
+release checks pass, promote the exact reviewed revision, then repeat the
+checks through the public domain:
+
+```bash
+gcloud run services update-traffic workspacealberta \
+  --project workspacealberta-prod --region northamerica-northeast1 \
+  --to-revisions=REVIEWED_REVISION=100
+```
+
+Replace `REVIEWED_REVISION` with the verified revision name; do not use `LATEST`
+for this rollout. The known rollback target is
+`workspacealberta-apc-e3b174942ae2`.
 
 ### APC planner rollout (2026-09-26)
 

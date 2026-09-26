@@ -3,6 +3,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVER_DIR = ROOT / "mcp-servers" / "canadabuys"
@@ -68,6 +69,16 @@ class ProcurementHttpAppTest(unittest.TestCase):
         self.assertIn("text/html", landing.headers["content-type"])
         self.assertIn("/mcp", landing.text)
         self.assertIn("mcpServers", landing.text)
+
+    def test_extended_card_still_validates_legacy_keys(self) -> None:
+        with patch("server_http.validate_key", return_value={"status": "active"}) as validate:
+            response = self.client.get(
+                "/agent/authenticatedExtendedCard",
+                headers={"Authorization": "Bearer wa_live_test"},
+            )
+        validate.assert_called_once_with("wa_live_test")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["authenticated"])
 
     def test_cors_preflight(self) -> None:
         preflight = self.client.options(
