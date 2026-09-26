@@ -606,6 +606,7 @@ def get_mcp_tools() -> list[Tool]:
     for tool in tools:
         persistent = tool.name in PERSISTENT_TOOLS
         tool.annotations = ToolAnnotations(
+            title=tool.title,
             readOnlyHint=not persistent,
             destructiveHint=tool.name in {"set_business_profile", "unwatch_opportunity"},
             openWorldHint=tool.name not in {"get_server_guide", "get_my_profile", "check_cohere_status", "list_watchlist", "unwatch_opportunity", "set_business_profile"},

@@ -33,6 +33,9 @@ class AgentContractTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_persistent_actions_are_distinguishable_from_search(self):
         tools = {t.name: t for t in get_mcp_tools()}
+        for tool in tools.values():
+            self.assertTrue(tool.title)
+            self.assertEqual(tool.annotations.title, tool.title)
         self.assertTrue(tools["search_opportunities"].annotations.read_only_hint)
         for name in ("set_business_profile", "watch_opportunity", "unwatch_opportunity"):
             self.assertFalse(tools[name].annotations.read_only_hint)

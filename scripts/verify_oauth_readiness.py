@@ -93,6 +93,7 @@ def verify(base_url: str, resource: str, *, client_metadata_url: str | None = No
         assert re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", tool["name"])
         assert tool.get("title", "").strip(), f"Missing title: {tool['name']}"
         annotations = tool.get("annotations", {})
+        assert annotations.get("title") == tool["title"], f"Missing annotation title: {tool['name']}"
         assert any(isinstance(annotations.get(hint), bool) for hint in ("readOnlyHint", "destructiveHint"))
     report["tool_count"] = len(tools)
     report["tool_titles"] = {tool["name"]: tool["title"] for tool in tools}
