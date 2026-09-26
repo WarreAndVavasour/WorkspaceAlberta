@@ -164,7 +164,7 @@ async def _form_map(request: Request) -> dict[str, str]:
 def register_oauth_routes(app: FastAPI) -> None:
     """Attach RFC 8414 / RFC 7591 / authorization-code routes to *app*."""
 
-    @app.get("/authorize", include_in_schema=False)
+    @app.get("/authorize", include_in_schema=False, response_model=None)
     async def authorize_get(request: Request) -> HTMLResponse | RedirectResponse:
         params = _params_from_request(request)
         try:
@@ -181,7 +181,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             return HTMLResponse(_page("Authorization error", f"<p class='error'>{exc.description}</p>"), 400)
         return HTMLResponse(_email_form(checked))
 
-    @app.post("/authorize", include_in_schema=False)
+    @app.post("/authorize", include_in_schema=False, response_model=None)
     async def authorize_start(request: Request) -> HTMLResponse | RedirectResponse:
         form = await _form_map(request)
         params = _params_from_form(form)
@@ -222,7 +222,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             )
         return HTMLResponse(_consent_form(result))
 
-    @app.post("/authorize/consent", include_in_schema=False)
+    @app.post("/authorize/consent", include_in_schema=False, response_model=None)
     async def authorize_consent(request: Request) -> HTMLResponse | RedirectResponse:
         form = await _form_map(request)
         try:
