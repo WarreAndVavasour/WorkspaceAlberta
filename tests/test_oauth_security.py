@@ -20,6 +20,7 @@ os.environ.setdefault("CANADABUYS_LOAD_ENV_FILE", "0")
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from procurement_core import oauth, oauth_http
+from procurement_core.auth_pages import ARTWORK
 
 
 class ParsedHTML(HTMLParser):
@@ -44,7 +45,10 @@ class OAuthHTMLTest(unittest.TestCase):
         ]
         for page in pages:
             tags = ParsedHTML(page).tags
-            self.assertFalse(any(t in {"script", "img"} for t, _ in tags))
+            self.assertFalse(any(t == "script" for t, _ in tags))
+            allowed_images = {f"/assets/archive/{scan}.webp" for scan, *_ in ARTWORK}
+            self.assertTrue(all(attrs.get("src") in allowed_images
+                                for tag, attrs in tags if tag == "img"))
             self.assertFalse(any(k.startswith("on") for _, attrs in tags for k in attrs))
         self.assertEqual(dict((a.get("name"), a.get("value")) for t, a in
                               ParsedHTML(pages[1]).tags if t == "input")["login_id"], attack)

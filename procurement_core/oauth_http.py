@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from procurement_core import oauth, google_login
+from procurement_core.auth_pages import CONSENT, auth_page
 
 _PAGE_STYLE = """
 body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.55; color: #1c1c1c; }
@@ -103,16 +104,17 @@ def _email_form(params: dict[str, str], *, error: str = "", notice: str = "") ->
 
 def _google_form(params: dict[str, str]) -> str:
     host = escape(oauth.consent_hostname(params.get("redirect_uri", "")))
-    return _page("Sign in to workspaceAlberta", f"""
-<h1>workspaceAlberta</h1>
-<p>Connect your procurement tools. Sign in with your Gmail or Google Workspace account, then review access for <code>{host}</code>.</p>
+    return auth_page("Sign in to workspaceAlberta", f"""
+<div class="signin-body">
+<h1>Your next<br>possibility awaits.</h1>
+<p class="intro">Connect your procurement tools. Sign in with your Gmail or Google Workspace account, then review access for <strong>{host}</strong>.</p>
 <form method="post" action="/authorize/google">
   {_hidden_params(params)}
   <button type="submit" class="google-signin" aria-label="Sign in with Google"><img src="/assets/google-signin.png" alt="Sign in with Google"></button>
 </form>
-<p class="sub">Use the same email as your Pro subscription. Signing in does not start a subscription or charge you.</p>
-<p><a href="/privacy">Privacy</a> · <a href="/support">Setup and support</a></p>
-""")
+<p class="subscription-note">Use the same email as your Pro subscription. Signing in does not start a subscription or charge you.</p>
+</div>
+""", step="01", step_label="Connect your workspace")
 
 
 def _code_form(login_id: str, email: str, *, dev_code: str = "", error: str = "") -> str:
@@ -150,20 +152,10 @@ def _consent_form(login_result: dict[str, Any]) -> str:
     host = escape(host)
     email = escape(str(user["email"]))
     consent_id = escape(str(login_result["consent_id"]))
-    return _page(
+    return auth_page(
         "Approve workspaceAlberta access",
-        f"""
-<h1>Allow access?</h1>
-<p><strong>{client_name}</strong> wants to use workspaceAlberta as <code>{email}</code>.</p>
-<p>We will send you back to <code>{host}</code>.</p>
-<p>This client can use procurement tools as you and read or update your saved business profile and watchlist.</p>
-<p class="sub">Pro tools stay locked unless this email has an active workspaceAlberta Pro subscription.</p>
-<form method="post" action="/authorize/consent">
-  <input type="hidden" name="consent_id" value="{consent_id}">
-  <button type="submit" name="decision" value="approve">Allow</button>
-  <button type="submit" name="decision" value="deny" style="background:#555;margin-top:0.4rem">Deny</button>
-</form>
-""",
+        CONSENT.substitute(client_name=client_name, email=email, host=host, consent_id=consent_id),
+        step="02", step_label="Review access",
     )
 
 

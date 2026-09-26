@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, Response, FileResponse
 from procurement_core.oauth_http import _page
+from procurement_core.auth_pages import ARTWORK
 
 PRIVACY = """
 <h1>workspaceAlberta privacy notice</h1>
@@ -42,6 +43,17 @@ ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox
 
 
 def register_public_pages(app: FastAPI) -> None:
+    # A fixed allowlist exposes only selected web derivatives, never source folios.
+    artwork_files = {f"{scan}.webp" for scan, *_ in ARTWORK}
+
+    @app.get("/assets/archive/{filename}", include_in_schema=False)
+    async def archival_artwork(filename: str):
+        if filename not in artwork_files:
+            return Response(status_code=404)
+        return FileResponse(Path(__file__).with_name("assets") / "archive" / filename,
+                            media_type="image/webp",
+                            headers={"Cache-Control": "public, max-age=86400"})
+
     @app.get("/assets/google-signin.png", include_in_schema=False)
     async def google_signin_button():
         return FileResponse(Path(__file__).with_name("assets") / "google-signin.png",
