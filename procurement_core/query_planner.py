@@ -152,12 +152,23 @@ def vocabulary_from_facets(facets: dict[str, Any]) -> list[tuple[str, str, int]]
     Sub-segment codes are rolled up to their segment so the prompt stays small.
     """
     counts: dict[str, int] = {}
-    for entry in (facets or {}).get("CommodityCodes") or []:
+    if not isinstance(facets, dict):
+        return []
+    entries = facets.get("CommodityCodes")
+    if not isinstance(entries, list):
+        return []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
         code = str(entry.get("value") or "")
-        if len(code) < 2 or not code[:2].isdigit():
+        if len(code) != 8 or not code.isdigit():
             continue
         segment = code[:2] + "000000"
-        counts[segment] = counts.get(segment, 0) + int(entry.get("count") or 0)
+        try:
+            count = max(0, int(entry.get("count") or 0))
+        except (TypeError, ValueError):
+            continue
+        counts[segment] = counts.get(segment, 0) + count
     rows = [(code, SEGMENT_TITLES.get(code, "Unknown"), n) for code, n in counts.items()]
     rows.sort(key=lambda r: r[2], reverse=True)
     return rows
@@ -167,7 +178,7 @@ def _render_vocabulary(vocab: list[tuple[str, str, int]]) -> str:
     return "\n".join(f"{code}  {title}  ({n} open)" for code, title, n in vocab)
 
 
-def _post_chat(payload: dict, api_key: str, url: str, timeout: int = 60) -> dict:
+def _post_chat(payload: dict, api_key: str, url: str, timeout: float = 6) -> dict:
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
@@ -189,6 +200,7 @@ def plan_query(
     model: str | None = None,
     url: str | None = None,
     post_fn: Any = None,
+    timeout: float = 6,
 ) -> dict[str, Any]:
     """Turn a natural-language business description into a structured filter.
 
@@ -200,6 +212,8 @@ def plan_query(
     api_key = api_key or cohere_api_key()
     if not api_key:
         return _fallback(intent, "no-api-key")
+    if not vocab:
+        return _fallback(intent, "no-vocabulary")
 
     # Imported lazily so this module stays importable without service.py.
     from procurement_core.service import (  # noqa: PLC0415
@@ -221,7 +235,7 @@ def plan_query(
                     "credibly win work, not everything adjacent."
                 ),
             },
-            {"role": "user", "content": intent},
+            {"role": "user", "content": intent[:8000]},
         ],
         "tools": [PLANNER_TOOL],
         # NB: command-a-plus rejects `tool_choice` ("not supported for this
@@ -230,19 +244,30 @@ def plan_query(
         "temperature": 0.2,
     }
 
-    poster = post_fn or _post_chat
     try:
-        data = poster(payload, api_key, url or COHERE_CHAT_COMPLETIONS_URL)
+        endpoint = url or COHERE_CHAT_COMPLETIONS_URL
+        data = (post_fn(payload, api_key, endpoint) if post_fn else
+                _post_chat(payload, api_key, endpoint, timeout=timeout))
     except Exception:  # noqa: BLE001 - never let planning break search
         return _fallback(intent, "request-failed")
 
-    calls = ((data.get("choices") or [{}])[0].get("message") or {}).get("tool_calls") or []
-    if not calls:
-        return _fallback(intent, "no-tool-call")
-
     try:
+        calls = ((data.get("choices") or [{}])[0].get("message") or {}).get("tool_calls") or []
+        if not calls:
+            return _fallback(intent, "no-tool-call")
+        if not isinstance(calls, list) or len(calls) != 1:
+            return _fallback(intent, "bad-tool-call")
+        if calls[0]["function"]["name"] != "set_opportunity_filter":
+            return _fallback(intent, "bad-tool-call")
         args = json.loads(calls[0]["function"]["arguments"])
-    except (KeyError, TypeError, ValueError):
+        if not isinstance(args, dict):
+            return _fallback(intent, "bad-arguments")
+        for field in ("unspsc_segments", "categories", "keywords", "regions"):
+            value = args.get(field, [] if field == "regions" else None)
+            if (not isinstance(value, list) or len(value) > 20
+                    or any(not isinstance(v, str) or len(v) > 200 for v in value)):
+                return _fallback(intent, "bad-arguments")
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError):
         return _fallback(intent, "bad-arguments")
 
     allowed = {code for code, _, _ in vocab}
@@ -262,7 +287,7 @@ def plan_query(
 def _as_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
-    return [str(v).strip() for v in value if str(v).strip()]
+    return list(dict.fromkeys(v.strip() for v in value if isinstance(v, str) and v.strip()))
 
 
 def _fallback(intent: str, reason: str) -> dict[str, Any]:

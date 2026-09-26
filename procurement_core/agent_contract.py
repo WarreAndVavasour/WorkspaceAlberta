@@ -8,7 +8,10 @@ bonding, capacity or business facts. Saving a profile and changing a watchlist a
 persistent actions: do them only when requested. Respect the caller's tenant and
 never put credentials into tool arguments, documents, logs or handoffs.
 
-Search and deterministic briefs do not need a model. check_cohere_status checks
+Search and briefs work without a model. When a Cohere key is configured, APC search
+and matching send the search intent or business capabilities to Cohere once to select
+commodity filters. Ranking stays deterministic; preserve fallback and partial-retrieval
+warnings. Supplier location is not automatically a delivery restriction. check_cohere_status checks
 configuration, not provider health. Cohere analysis and process_bid_room are optional
 paid hosted capabilities; bid-room processing sends attachments to E2B and extracted
 evidence to Cohere. Verify the user's authority to send those materials. Canadian

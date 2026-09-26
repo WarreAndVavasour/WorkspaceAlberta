@@ -100,6 +100,10 @@ def filter_apc_search_payload(
     status: str = "OPEN",
     category: str = "",
     limit: int = 10,
+    offset: int = 0,
+    unspsc: list[str] | None = None,
+    close_start: str = "",
+    close_end: str = "",
 ) -> dict[str, Any]:
     """Apply light local filters so fixture ingest mirrors the live search call."""
     rows = list(payload.get("values") or [])
@@ -108,13 +112,25 @@ def filter_apc_search_payload(
         rows = [row for row in rows if str(row.get("statusCode") or "").upper() == status_norm]
     if category:
         rows = [row for row in rows if str(row.get("categoryCode") or "").upper() == category.upper()]
+    if unspsc:
+        prefixes = [str(code).rstrip("0") for code in unspsc]
+        rows = [row for row in rows if any(
+            str(code).startswith(prefix) for code in row.get("commodityCodes", [])
+            for prefix in prefixes
+        )]
+    if close_start:
+        rows = [row for row in rows if str(row.get("closeDateTime") or "")[:10] >= close_start]
+    if close_end:
+        rows = [row for row in rows if str(row.get("closeDateTime") or "")[:10] <= close_end]
     query_norm = (query or "").strip().lower()
     if query_norm:
         tokens = [token for token in query_norm.replace(",", " ").split() if token]
         if tokens:
             rows = [row for row in rows if all(token in _apc_row_text(row) for token in tokens)]
-    limited = rows[: max(1, int(limit or 10))]
+    page_size = max(1, int(limit or 10))
+    limited = rows[offset * page_size:(offset + 1) * page_size]
     return {
         "values": limited,
-        "totalCount": payload.get("totalCount", len(rows)),
+        "totalCount": len(rows),
+        "facets": payload.get("facets", {}),
     }

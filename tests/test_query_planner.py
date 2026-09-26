@@ -193,6 +193,43 @@ def _tool_call_response(arguments: str) -> dict:
 class PlanQueryTests(unittest.TestCase):
     VOCAB = [("43000000", "IT", 100), ("81000000", "Engineering", 50)]
 
+    def test_valid_json_with_invalid_shapes_falls_back(self):
+        for value in (None, [], 42, "text", {}, {"unspsc_segments": "43000000"},
+                      {"unspsc_segments": [], "categories": [], "keywords": [None]}):
+            with self.subTest(value=value):
+                import json
+                plan = query_planner.plan_query("software", self.VOCAB, api_key="k",
+                    post_fn=lambda *a: _tool_call_response(json.dumps(value)))
+                self.assertEqual(plan["source"], "fallback")
+
+    def test_invalid_response_envelopes_fall_back(self):
+        for response in (None, [], {"choices": [None]}, {"choices": "text"},
+                         {"choices": [{"message": {"tool_calls": [None]}}]}):
+            with self.subTest(response=response):
+                plan = query_planner.plan_query("software", self.VOCAB, api_key="k",
+                                                post_fn=lambda *a: response)
+                self.assertEqual(plan["source"], "fallback")
+
+    def test_wrong_function_and_multiple_calls_fall_back(self):
+        response = _tool_call_response('{"unspsc_segments": [], "categories": [], "keywords": []}')
+        response["choices"][0]["message"]["tool_calls"][0]["function"]["name"] = "other_tool"
+        self.assertEqual(query_planner.plan_query("software", self.VOCAB, api_key="k",
+            post_fn=lambda *a: response)["source"], "fallback")
+        response["choices"][0]["message"]["tool_calls"] *= 2
+        self.assertEqual(query_planner.plan_query("software", self.VOCAB, api_key="k",
+            post_fn=lambda *a: response)["source"], "fallback")
+
+    def test_empty_vocabulary_does_not_call_provider(self):
+        poster = mock.Mock(side_effect=AssertionError("provider called"))
+        plan = query_planner.plan_query("software", [], api_key="k", post_fn=poster)
+        self.assertEqual(plan["reason"], "no-vocabulary")
+
+    def test_provider_timeout_is_bounded(self):
+        with mock.patch.object(query_planner, "_post_chat", side_effect=TimeoutError) as post:
+            plan = query_planner.plan_query("software", self.VOCAB, api_key="k", timeout=2)
+        self.assertEqual(post.call_args.kwargs["timeout"], 2)
+        self.assertEqual(plan["source"], "fallback")
+
     def test_parses_tool_call(self):
         payload = (
             '{"unspsc_segments": ["43000000"], "categories": ["SRV"], '

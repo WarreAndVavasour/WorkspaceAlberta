@@ -22,6 +22,8 @@ jobs:
             tests.test_canadabuys_mcp_smoke \
             tests.test_procurement_fixtures \
             tests.test_search_relevance \
+            tests.test_query_planner \
+            tests.test_apc_workflow \
             tests.test_production_hardening \
             tests.test_telemetry \
             tests.test_gate_and_billing

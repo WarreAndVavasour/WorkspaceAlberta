@@ -36,8 +36,9 @@ Layout (top to bottom):
 
 Data flow: CanadaBuys publishes a full open-tender CSV which is fetched with
 :func:`fetch_all_contracts` and cached at ``DATA_DIR/latest.csv``; APC is
-queried live per request. Scoring is deterministic (no LLM); the model layer
-is used only for judgment tools (``analyze_contract_with_cohere`` and the
+queried live per request. Scoring is deterministic; APC candidate retrieval
+uses an optional bounded Cohere query planner with lexical fallback. The model layer
+also supports judgment tools (``analyze_contract_with_cohere`` and the
 sandboxed bid-room review).
 
 Configuration (environment variables):
@@ -58,6 +59,7 @@ import json
 import os
 import re
 from datetime import datetime, timedelta, timezone
+import time
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -517,7 +519,7 @@ def parse_alberta_reference(reference: str) -> tuple[int, int]:
     return int(match.group(1)), int(match.group(2))
 
 
-def read_json_request(request: Request, timeout: int = 120) -> dict:
+def read_json_request(request: Request, timeout: float = 120) -> dict:
     """Read a JSON HTTP response with a useful error message."""
     try:
         with urlopen(request, timeout=timeout) as response:
@@ -534,6 +536,8 @@ def read_json_request(request: Request, timeout: int = 120) -> dict:
         raise RuntimeError(f"HTTP {exc.code}: {str(message)[:500]}") from exc
     except URLError as exc:
         raise RuntimeError(f"Could not reach source: {exc.reason}") from exc
+    except (TimeoutError, OSError, ValueError) as exc:
+        raise RuntimeError("Source timed out or returned an invalid response") from exc
 
 
 def build_alberta_filter(
@@ -602,6 +606,7 @@ def search_alberta_api(
     post_start: str = "",
     post_end: str = "",
     unspsc: list[str] | None = None,
+    timeout: float = 5,
 ) -> dict:
     """Search Alberta Purchasing Connection opportunities.
 
@@ -618,6 +623,10 @@ def search_alberta_api(
             status=status,
             category=category,
             limit=limit,
+            offset=offset,
+            unspsc=unspsc,
+            close_start=close_start,
+            close_end=close_end,
         )
     payload = {
         "query": query or "",
@@ -647,7 +656,7 @@ def search_alberta_api(
         },
         method="POST",
     )
-    return read_json_request(request)
+    return read_json_request(request, timeout=timeout)
 
 
 def fetch_all_alberta_opportunities(
@@ -657,6 +666,10 @@ def fetch_all_alberta_opportunities(
     unspsc: list[str] | None = None,
     page_size: int = 100,
     max_pages: int = 100,
+    query: str = "",
+    close_start: str = "",
+    close_end: str = "",
+    timeout_seconds: float = 20,
 ) -> tuple[list[dict], str]:
     """Enumerate every matching APC opportunity by paging the search API.
 
@@ -671,35 +684,163 @@ def fetch_all_alberta_opportunities(
     """
     page_size = clamp_int(page_size, default=100, minimum=1, maximum=100)
     seen: dict[str, dict] = {}
-    total = 0
+    total = None
+    deadline = time.monotonic() + max(0, timeout_seconds)
+    max_pages = clamp_int(max_pages, default=100, minimum=1, maximum=100)
+    stop_reason = f"the {max_pages}-page ceiling was reached"
+    complete = False
 
     for page in range(max_pages):
-        response = search_alberta_api(
-            query="",
-            status=status,
-            category=category,
-            limit=page_size,
-            offset=page,
-            unspsc=unspsc,
-        )
-        total = response.get("totalCount") or total
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            stop_reason = "the retrieval time budget was exhausted"
+            break
+        try:
+            response = search_alberta_api(
+                query=query, status=status, category=category,
+                limit=page_size, offset=page, unspsc=unspsc,
+                close_start=close_start, close_end=close_end,
+                timeout=min(5, remaining),
+            )
+        except RuntimeError:
+            stop_reason = "an APC page request failed"
+            break
+        reported = response.get("totalCount")
+        if isinstance(reported, int) and reported >= 0:
+            total = reported
         rows = response.get("values") or []
         if not rows:
+            complete = total is None or len(seen) >= total
+            stop_reason = "APC returned an empty page before its reported total"
             break
+        previous_count = len(seen)
         for row in rows:
             reference = str(row.get("referenceNumber") or row.get("id") or "")
             if reference:
                 seen[reference] = row
-        if len(seen) >= total:
+        if total is not None and len(seen) >= total:
+            complete = True
+            break
+        if len(seen) == previous_count:
+            stop_reason = "APC repeated a page without new references"
+            break
+        if total is None and len(rows) < page_size:
+            complete = True
             break
 
     warning = ""
-    if total and len(seen) < total:
+    if not complete:
         warning = (
-            f"Partial enumeration: retrieved {len(seen)} of {total} APC records "
-            f"before hitting the {max_pages}-page ceiling."
+            f"Partial enumeration: retrieved {len(seen)} of "
+            f"{total if total is not None else 'an unknown number of'} APC records; {stop_reason}."
         )
     return list(seen.values()), warning
+
+
+def collect_alberta_candidates(
+    intent: str, *, category: str = "", status: str = "OPEN",
+    close_start: str = "", close_end: str = "", profile_search: bool = False,
+) -> tuple[list[dict], list[str]]:
+    """Plan once, retrieve bounded pages, and retain explicit caller filters.
+
+    Location inferred from a supplier's address is not a delivery restriction.
+    Multiple inferred categories are also not collapsed into a single category.
+    """
+    from procurement_core import query_planner
+
+    deadline = time.monotonic() + 25
+    warnings: list[str] = []
+    plan = None
+    if intent.strip():
+        vocab = []
+        if fixtures.fixture_dir() is not None:
+            plan = query_planner._fallback(intent, "fixture-mode")
+        elif query_planner.cohere_api_key():
+            try:
+                facets = search_alberta_api(status=status, category=category, limit=1, timeout=4)
+                vocab = query_planner.vocabulary_from_facets(facets.get("facets", {}))
+            except RuntimeError:
+                warnings.append("APC filter vocabulary unavailable; using keyword fallback.")
+        if plan is None:
+            plan = query_planner.plan_query(intent, vocab, timeout=6)
+        if plan["source"] == "fallback":
+            warnings.append(f"APC query planner fallback ({plan['reason']}); using lexical matching.")
+
+    codes = plan["unspsc"] if plan else []
+    planned = bool(plan and plan["source"] == "cohere" and codes)
+    if plan and plan["source"] == "cohere" and not codes:
+        warnings.append("APC query planner returned no usable commodity codes; using lexical matching.")
+    # An inferred commodity segment can narrow candidates. Explicit categories
+    # and status always win; inferred regions never narrow supplier coverage.
+    effective_category = category
+    if planned and not category and len(plan["categories"]) == 1:
+        effective_category = plan["categories"][0]
+    rows, warning = fetch_all_alberta_opportunities(
+        status=status, category=effective_category, unspsc=codes if planned else None,
+        query="" if planned or profile_search else intent,
+        close_start=close_start, close_end=close_end,
+        timeout_seconds=max(0, deadline - time.monotonic()),
+    )
+    if warning:
+        warnings.append(warning)
+    if not rows and planned and not warning:
+        warnings.append("No APC records matched inferred filters; retrying with explicit filters only.")
+        rows, warning = fetch_all_alberta_opportunities(
+            status=status, category=category,
+            query="" if profile_search else intent,
+            close_start=close_start, close_end=close_end,
+            timeout_seconds=max(0, deadline - time.monotonic()),
+        )
+        if warning:
+            warnings.append(warning)
+        planned = False
+    if not profile_search:
+        if planned:
+            terms = plan["keywords"] or [intent]
+            rows = [row for row in rows if any(
+                capability_hit(term, alberta_opportunity_text(row)) for term in terms
+            )]
+            rows.sort(key=lambda row: (
+                sum(capability_hit(term, alberta_opportunity_text(row)) for term in terms),
+                alberta_posted_date(row),
+            ), reverse=True)
+        else:
+            rows, relevance_warning = rank_by_token_coverage(
+                rows, intent, alberta_opportunity_text, alberta_posted_date,
+            )
+            if relevance_warning:
+                warnings.append(relevance_warning)
+    return rows, warnings
+
+
+def collect_alberta_matches(profile: dict, days: int) -> tuple[list[tuple], list[str]]:
+    """Use the same retrieval and relevance gate for unified and APC matching."""
+    now = datetime.now(timezone.utc)
+    capabilities = [str(kw) for kw in profile.get("capabilities", []) if str(kw).strip()]
+    intent = str(profile.get("description") or "") + " " + "; ".join(capabilities)
+    if not intent.strip():
+        return [], ["No business capabilities were supplied for APC matching."]
+    rows, warnings = collect_alberta_candidates(
+        intent, profile_search=True,
+        close_start=now.strftime("%Y-%m-%d"),
+        close_end=(now + timedelta(days=days)).strftime("%Y-%m-%d"),
+    )
+    scored = []
+    for opp in rows:
+        closing = parse_date(str(opp.get("closeDateTime") or ""))
+        if not closing:
+            continue
+        if closing.tzinfo is None:
+            closing = closing.replace(tzinfo=timezone.utc)
+        if not now <= closing <= now + timedelta(days=days):
+            continue
+        score, reasons = score_alberta_opportunity(opp, profile)
+        # Region and imminent-close bonuses alone do not establish supplier fit.
+        if not any("matches:" in reason for reason in reasons):
+            continue
+        scored.append((score, (closing - now).days, opp, reasons))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return scored, warnings
 
 
 def get_alberta_api_details(reference: str) -> dict:
@@ -1428,27 +1569,16 @@ def collect_unified_search(args: dict) -> tuple[list[dict], list[str]]:
             if category and apc_category not in ALBERTA_CATEGORY_LABELS:
                 apc_category = ""
             try:
-                data = search_alberta_api(
-                    query=keywords,
-                    status="OPEN",
-                    category=apc_category,
-                    limit=100 if len(tokenize_keywords(keywords)) > 1 else limit,
-                    sort_field="PostDateTime",
-                    sort_direction="desc",
+                alberta_rows, alberta_warnings = collect_alberta_candidates(
+                    keywords, category=apc_category,
                 )
-                alberta_rows, relevance_warning = rank_by_token_coverage(
-                    data.get("values", []),
-                    keywords,
-                    alberta_opportunity_text,
-                    alberta_posted_date,
-                )
-                if relevance_warning:
-                    warnings.append(relevance_warning)
+                warnings.extend(alberta_warnings)
                 opportunities.extend(normalize_alberta_opportunity(opp) for opp in alberta_rows[:limit])
             except RuntimeError as exc:
                 warnings.append(f"Alberta APC unavailable: {exc}")
 
-    opportunities.sort(key=lambda item: opportunity_date(item, "posted"), reverse=True)
+    if not keywords:
+        opportunities.sort(key=lambda item: opportunity_date(item, "posted"), reverse=True)
     return opportunities[:limit], warnings
 
 
@@ -1524,37 +1654,10 @@ def collect_unified_matches(profile: dict, days: int, limit: int) -> tuple[list[
         if score > 0:
             scored.append((score, days_until, normalize_canadabuys_contract(contract), reasons))
 
-    keywords = [kw for kw in profile.get("capabilities", []) if len(str(kw)) >= 4]
-    found_alberta: dict[str, dict] = {}
-    close_start = now.strftime("%Y-%m-%d")
-    close_end = (now + timedelta(days=days)).strftime("%Y-%m-%d")
-    for keyword in keywords[:8]:
-        try:
-            data = search_alberta_api(
-                query=str(keyword),
-                status="OPEN",
-                limit=25,
-                close_start=close_start,
-                close_end=close_end,
-            )
-        except RuntimeError as exc:
-            warnings.append(f"Alberta APC unavailable for `{keyword}`: {exc}")
-            continue
-        for opp in data.get("values", []):
-            ref = opp.get("referenceNumber")
-            if ref:
-                found_alberta[ref] = opp
-
-    for opp in found_alberta.values():
-        score, reasons = score_alberta_opportunity(opp, profile)
-        if score > 0:
-            closing = parse_date(str(opp.get("closeDateTime") or ""))
-            days_until = 9999
-            if closing:
-                if closing.tzinfo is None:
-                    closing = closing.replace(tzinfo=timezone.utc)
-                days_until = (closing - now).days
-            scored.append((score, days_until, normalize_alberta_opportunity(opp), reasons))
+    alberta_matches, alberta_warnings = collect_alberta_matches(profile, days)
+    warnings.extend(alberta_warnings)
+    scored.extend((score, days_until, normalize_alberta_opportunity(opp), reasons)
+                  for score, days_until, opp, reasons in alberta_matches)
 
     scored.sort(key=lambda item: (-item[0], item[1]))
     return scored[:limit], warnings
@@ -2236,42 +2339,17 @@ async def search_alberta_opportunities(args: dict) -> str:
     category = args.get("category", "")
     status = args.get("status", "OPEN")
     limit = clamp_int(args.get("limit"), default=10, minimum=1, maximum=50)
-    multi_token = len(tokenize_keywords(keywords)) > 1
-
-    try:
-        data = search_alberta_api(
-            query=keywords,
-            status=status,
-            category=category,
-            limit=100 if multi_token else limit,
-            sort_field="PostDateTime",
-            sort_direction="desc",
-        )
-    except RuntimeError as exc:
-        return f"Alberta APC search failed: {exc}"
-
-    rows = data.get("values", [])
-    if not rows:
-        return "No Alberta opportunities found matching criteria."
-
-    rows, relevance_warning = rank_by_token_coverage(
-        rows, keywords, alberta_opportunity_text, alberta_posted_date
-    )
-
+    rows, warnings = collect_alberta_candidates(keywords, category=category, status=status)
     output = "# Alberta Opportunities\n\n"
-    total = data.get("totalCount")
-    if multi_token:
-        output += f"Showing {len(rows[:limit])} of {len(rows)} matching APC records.\n\n"
-    elif total is not None:
-        output += f"Showing {len(rows[:limit])} of {total} matching APC records.\n\n"
-    else:
-        output += f"Found {len(rows)} matching APC records.\n\n"
+    output += f"Showing {min(limit, len(rows))} of {len(rows)} retrieved matching APC records.\n\n"
+    if not rows:
+        output += "No Alberta opportunities found matching criteria.\n\n"
 
     for i, opp in enumerate(rows[:limit], 1):
         output += render_alberta_opportunity_line(opp, i) + "\n"
 
-    if relevance_warning:
-        output += f"## Warnings\n- {relevance_warning}\n\n"
+    if warnings:
+        output += "## Warnings\n" + "\n".join(f"- {warning}" for warning in warnings) + "\n\n"
 
     output += "Use `get_alberta_opportunity_details` with an `AB-YYYY-NNNNN` reference for full details."
     return output
@@ -2350,48 +2428,9 @@ async def find_alberta_opportunities(args: dict) -> str:
     if not profile:
         return NO_PROFILE_MESSAGE
 
-    keywords = [kw for kw in profile.get("capabilities", []) if len(str(kw)) >= 4]
-    if not keywords:
-        return "Your profile does not have enough keywords yet. Update it with more detail, then try again."
-
     days = clamp_int(args.get("days"), default=60, minimum=1, maximum=365)
     limit = clamp_int(args.get("limit"), default=15, minimum=1, maximum=30)
-    now = datetime.now(timezone.utc)
-    close_start = now.strftime("%Y-%m-%d")
-    close_end = (now + timedelta(days=days)).strftime("%Y-%m-%d")
-
-    found: dict[str, dict] = {}
-    errors = []
-    for keyword in keywords[:8]:
-        try:
-            data = search_alberta_api(
-                query=str(keyword),
-                status="OPEN",
-                limit=25,
-                close_start=close_start,
-                close_end=close_end,
-            )
-        except RuntimeError as exc:
-            errors.append(str(exc))
-            continue
-        for opp in data.get("values", []):
-            ref = opp.get("referenceNumber")
-            if ref:
-                found[ref] = opp
-
-    scored = []
-    for opp in found.values():
-        score, reasons = score_alberta_opportunity(opp, profile)
-        if score > 0:
-            closing = parse_date(str(opp.get("closeDateTime") or ""))
-            days_until = 9999
-            if closing:
-                if closing.tzinfo is None:
-                    closing = closing.replace(tzinfo=timezone.utc)
-                days_until = (closing - now).days
-            scored.append((score, days_until, opp, reasons))
-
-    scored.sort(key=lambda item: (-item[0], item[1]))
+    scored, errors = collect_alberta_matches(profile, days)
 
     if not scored:
         message = f"No matching Alberta opportunities found in the next {days} days."
@@ -2415,6 +2454,9 @@ async def find_alberta_opportunities(args: dict) -> str:
         output += f"**Why it matches:** {'; '.join(reasons)}\n"
         output += f"**Organization:** {org}\n"
         output += f"**Reference:** `{ref}`\n\n"
+
+    if errors:
+        output += "## Warnings\n" + "\n".join(f"- {warning}" for warning in errors) + "\n\n"
 
     output += "---\nUse `get_alberta_opportunity_details` with a reference number to inspect the posting."
     return output
