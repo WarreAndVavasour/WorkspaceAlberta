@@ -6,11 +6,12 @@ tool names, timings and warnings; no credentials or customer profiles are needed
 
 import argparse
 import asyncio
-from datetime import timedelta
 import json
 from pathlib import Path
 import time
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
+
+import httpx2
 
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
@@ -18,12 +19,14 @@ from mcp.client.streamable_http import streamable_http_client
 
 async def verify(base_url: str) -> dict:
     base_url = base_url.rstrip("/")
-    with urlopen(base_url + "/health", timeout=15) as response:
+    headers = {"User-Agent": "WorkspaceAlberta-Acceptance/1.0"}
+    with urlopen(Request(base_url + "/health", headers=headers), timeout=15) as response:
         health = json.load(response)
     assert health["status"] == "ok", health
     report = {"endpoint": base_url, "health": health["status"], "calls": []}
-    async with streamable_http_client(base_url + "/mcp") as (read, write):
-        async with ClientSession(read, write, read_timeout_seconds=timedelta(seconds=180)) as client:
+    async with httpx2.AsyncClient(headers=headers, timeout=180) as http_client, \
+            streamable_http_client(base_url + "/mcp", http_client=http_client) as (read, write):
+        async with ClientSession(read, write, read_timeout_seconds=180) as client:
             initialized = await client.initialize()
             assert "commodity filters" in (initialized.instructions or ""), "Server is missing the planner rollout instructions"
             tools = await client.list_tools()
