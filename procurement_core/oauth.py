@@ -5,15 +5,10 @@ workspaceAlberta keeps a single public Streamable HTTP resource
 own authorization server on the same Canadian origin (Cloud Run in Montréal,
 state in the Toronto Supabase project).
 
-Why this shape, not Supabase Auth as the authorization server:
-
-- Claude and the MCP spec need RFC 9728 protected-resource metadata, RFC 8414
-  authorization-server metadata, authorization-code + PKCE (S256), RFC 8707
-  resource indicators, refresh-token rotation, Dynamic Client Registration
-  (RFC 7591), and Client ID Metadata Documents. Supabase Auth does not speak
-  those MCP-facing contracts.
-- Supabase (Toronto) still holds identity and OAuth state. Email one-time
-  codes are the sign-in factor so we do not add a US-hosted IdP.
+This implementation owns the MCP authorization endpoints and email-code flow;
+Supabase PostgreSQL holds identity and OAuth state. Supabase Auth also offers
+an OAuth server, but is not the token issuer used by this implementation.
+Email delivery is a separate SMTP provider with its own processing locations.
 
 Tokens are audience-bound to the canonical MCP resource. ``wa_live_``
 subscriber keys remain a legacy Bearer path and are handled in
@@ -25,12 +20,14 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import http.client
 import ipaddress
 import json
 import os
 import secrets
 import smtplib
 import socket
+import ssl
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -57,6 +54,7 @@ REFRESH_TTL_SECONDS = 30 * 24 * 3600
 LOGIN_TTL_SECONDS = 600
 CIMD_CACHE_TTL_SECONDS = 300
 MAX_OTP_ATTEMPTS = 5
+CIMD_MAX_BYTES = 64 * 1024
 
 CLAUDE_REDIRECTS = frozenset(
     {
@@ -114,6 +112,24 @@ def resource_metadata_url() -> str:
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def validate_hosted_configuration() -> None:
+    """Fail Cloud Run startup before a revision can serve unusable sign-in."""
+    if not os.environ.get("K_SERVICE"):
+        return
+    missing = [name for name in ("WA_OAUTH_SIGNING_KEY", "WA_SMTP_HOST", "WA_SMTP_FROM")
+               if not os.environ.get(name, "").strip()]
+    if missing:
+        raise RuntimeError("Hosted OAuth requires: " + ", ".join(missing))
+    if len(os.environ["WA_OAUTH_SIGNING_KEY"].strip()) < 32:
+        raise RuntimeError("Hosted OAuth requires a random signing key of at least 32 characters.")
+    if dev_show_code():
+        raise RuntimeError("Hosted OAuth must not expose sign-in codes.")
+    if os.environ.get("WA_OAUTH_STORE", "").strip().lower() == "memory" or not all(supabase_config()):
+        raise RuntimeError("Hosted OAuth requires Supabase persistence.")
+    if os.environ.get("WA_SMTP_STARTTLS", "1").lower() not in {"1", "true", "yes"}:
+        raise RuntimeError("Hosted OAuth requires verified SMTP STARTTLS.")
 
 
 def signing_key() -> bytes:
@@ -259,6 +275,11 @@ class MemoryOAuthStore:
         with self._lock:
             self.refresh.pop(token_hash, None)
 
+    def take_refresh(self, token_hash: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self.refresh.pop(token_hash, None)
+            return dict(row) if row and not row.get("revoked_at") else None
+
     def put_login(self, row: dict[str, Any]) -> None:
         with self._lock:
             self.logins[row["id"]] = dict(row)
@@ -276,6 +297,23 @@ class MemoryOAuthStore:
     def delete_login(self, login_id: str) -> None:
         with self._lock:
             self.logins.pop(login_id, None)
+
+    def take_consent(self, consent_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self.logins.get(consent_id)
+            if not row or row.get("consumed_at") or row["code_hash"] != _hash_secret("consent"):
+                return None
+            return dict(self.logins.pop(consent_id))
+
+    def verify_login(self, login_id: str, code_hash: str) -> dict[str, Any]:
+        with self._lock:
+            row = self.logins.get(login_id)
+            error = _login_error(row, code_hash)
+            if error:
+                if error == "That code is incorrect.":
+                    row["attempts"] = int(row.get("attempts") or 0) + 1
+                return {"error": error}
+            return {"row": dict(self.logins.pop(login_id))}
 
     def upsert_user(self, email: str) -> dict[str, Any]:
         email = normalize_email(email)
@@ -345,16 +383,15 @@ class SupabaseOAuthStore:
         self._request("POST", "wa_oauth_auth_codes", [row], prefer="return=minimal")
 
     def take_code(self, code_hash: str) -> dict[str, Any] | None:
-        params = urlencode({"code_hash": f"eq.{code_hash}", "select": "*", "limit": "1"})
-        rows = self._request("GET", f"wa_oauth_auth_codes?{params}") or []
+        return self._claim("wa_oauth_auth_codes", "code_hash", code_hash, "consumed_at")
+
+    def _claim(self, table: str, key: str, value: str, marker: str, **filters: str) -> dict[str, Any] | None:
+        # A single UPDATE ... WHERE marker IS NULL RETURNING * is atomic across
+        # processes and replicas. Only the winning request receives a row.
+        params = urlencode({key: f"eq.{value}", marker: "is.null", **filters})
+        rows = self._request("PATCH", f"{table}?{params}", {marker: _iso(_utc_now())}) or []
         if not rows:
             return None
-        self._request(
-            "PATCH",
-            f"wa_oauth_auth_codes?{urlencode({'code_hash': f'eq.{code_hash}'})}",
-            {"consumed_at": _iso(_utc_now())},
-            prefer="return=minimal",
-        )
         return rows[0]
 
     def put_refresh(self, row: dict[str, Any]) -> None:
@@ -373,6 +410,9 @@ class SupabaseOAuthStore:
             {"revoked_at": _iso(_utc_now())},
             prefer="return=minimal",
         )
+
+    def take_refresh(self, token_hash: str) -> dict[str, Any] | None:
+        return self._claim("wa_oauth_refresh_tokens", "token_hash", token_hash, "revoked_at")
 
     def put_login(self, row: dict[str, Any]) -> None:
         self._request("POST", "wa_oauth_login_challenges", [row], prefer="return=minimal")
@@ -394,6 +434,17 @@ class SupabaseOAuthStore:
             {"consumed_at": _iso(_utc_now())},
             prefer="return=minimal",
         )
+
+    def take_consent(self, consent_id: str) -> dict[str, Any] | None:
+        return self._claim(
+            "wa_oauth_login_challenges", "id", consent_id, "consumed_at",
+            code_hash=f"eq.{_hash_secret('consent')}",
+        )
+
+    def verify_login(self, login_id: str, code_hash: str) -> dict[str, Any]:
+        return self._request("POST", "rpc/wa_oauth_verify_login", {
+            "p_id": login_id, "p_code_hash": code_hash,
+        })
 
     def upsert_user(self, email: str) -> dict[str, Any]:
         email = normalize_email(email)
@@ -505,39 +556,87 @@ def set_cimd_fetch(fetch: FetchJson | None) -> None:
     _cimd_fetch = fetch
 
 
-def _host_is_safe(hostname: str) -> bool:
+def _public_addresses(hostname: str, port: int) -> list[tuple]:
     if not hostname or hostname.lower() in LOOPBACK_HOSTS:
-        return False
+        raise ValueError("Non-public host")
     try:
-        infos = socket.getaddrinfo(hostname, None)
+        infos = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
     except socket.gaierror:
-        return False
+        raise ValueError("Host could not be resolved") from None
+    if not infos:
+        raise ValueError("Host could not be resolved")
     for info in infos:
         ip = ipaddress.ip_address(info[4][0])
-        if (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_reserved
-            or ip.is_multicast
-            or ip.is_unspecified
-        ):
-            return False
-    return True
+        addresses = [ip]
+        if isinstance(ip, ipaddress.IPv6Address):
+            addresses.extend(item for item in (ip.ipv4_mapped, ip.sixtofour) if item is not None)
+            if ip.teredo:
+                addresses.extend(ip.teredo)
+            if ip in ipaddress.ip_network("64:ff9b::/96"):
+                addresses.append(ipaddress.IPv4Address(int(ip) & 0xffffffff))
+        if any(not address.is_global or address.is_multicast for address in addresses):
+            raise ValueError("Non-public address")
+    return infos
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """Connect only to a previously checked address; retain TLS hostname checks."""
+
+    def __init__(self, host: str, port: int, addresses: list[tuple]) -> None:
+        super().__init__(host, port, timeout=5, context=ssl.create_default_context())
+        self.addresses = addresses
+
+    def connect(self) -> None:
+        # No second DNS lookup, proxy, or automatic redirect can change the peer.
+        deadline = time.monotonic() + self.timeout
+        failure: OSError = TimeoutError("Metadata connection timed out")
+        for family, socktype, proto, _, address in self.addresses:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            sock = socket.socket(family, socktype, proto)
+            try:
+                sock.settimeout(remaining)
+                sock.connect(address)
+                sock.settimeout(max(0.001, deadline - time.monotonic()))
+                self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
+                return
+            except OSError as exc:
+                sock.close()
+                failure = exc
+            except BaseException:
+                sock.close()
+                raise
+        raise failure
 
 
 def _default_cimd_fetch(url: str) -> dict[str, Any]:
-    parsed = urlparse(url)
-    if parsed.scheme != "https" or not parsed.path or parsed.path == "/":
-        raise OAuthError(400, "invalid_client", "Client ID Metadata Document URL is invalid.")
-    if not _host_is_safe(parsed.hostname or ""):
-        raise OAuthError(400, "invalid_client", "Client ID Metadata Document host is not allowed.")
-    request = Request(url, headers={"Accept": "application/json"})
+    connection = None
     try:
-        with urlopen(request, timeout=5) as response:
-            body = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, json.JSONDecodeError, TimeoutError) as exc:
-        raise OAuthError(400, "invalid_client", f"Could not fetch client metadata: {exc}") from exc
+        parsed = urlparse(url)
+        if (parsed.scheme != "https" or not parsed.path or parsed.path == "/"
+                or parsed.username is not None or parsed.password is not None or parsed.fragment
+                or any(ord(char) < 33 for char in url)):
+            raise ValueError("Invalid metadata URL")
+        hostname = (parsed.hostname or "").encode("idna").decode("ascii")
+        port = parsed.port or 443
+        addresses = _public_addresses(hostname, port)
+        connection = _PinnedHTTPSConnection(hostname, port, addresses)
+        path = urlunparse(("", "", parsed.path, parsed.params, parsed.query, ""))
+        connection.request("GET", path, headers={"Accept": "application/json"})
+        response = connection.getresponse()
+        # Metadata URLs identify the client. Redirects are deliberately rejected.
+        if response.status != 200:
+            raise ValueError("Metadata must return HTTP 200 without redirects")
+        raw = response.read(CIMD_MAX_BYTES + 1)
+        if len(raw) > CIMD_MAX_BYTES:
+            raise ValueError("Metadata is too large")
+        body = json.loads(raw.decode("utf-8"))
+    except (OSError, ValueError, http.client.HTTPException) as exc:
+        raise OAuthError(400, "invalid_client", "Could not fetch valid public HTTPS client metadata.") from exc
+    finally:
+        if connection is not None:
+            connection.close()
     if not isinstance(body, dict):
         raise OAuthError(400, "invalid_client", "Client metadata is not a JSON object.")
     return body
@@ -655,7 +754,7 @@ def send_login_code(email: str, code: str) -> bool:
     )
     with smtplib.SMTP(host, port, timeout=10) as smtp:
         if starttls:
-            smtp.starttls()
+            smtp.starttls(context=ssl.create_default_context())
         if user:
             smtp.login(user, password)
         smtp.send_message(message)
@@ -687,26 +786,34 @@ def start_login(email: str, authorize_params: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def verify_login(login_id: str, code: str) -> dict[str, Any]:
-    store = get_store()
-    row = store.get_login(login_id)
+def _login_error(row: dict[str, Any] | None, code_hash: str) -> str:
+    """Mirror the locked PostgreSQL verifier in migration 003 for local use."""
     if not row:
-        raise OAuthError(400, "invalid_request", "Sign-in challenge not found.")
+        return "Sign-in challenge not found."
     if row.get("consumed_at"):
-        raise OAuthError(400, "invalid_request", "Sign-in challenge already used.")
+        return "Sign-in challenge already used."
+    if row["code_hash"] == _hash_secret("consent"):
+        return "Sign-in challenge not found."
     if _parse_iso(row["expires_at"]) < _utc_now():
-        raise OAuthError(400, "invalid_request", "Sign-in code expired. Start again.")
+        return "Sign-in code expired. Start again."
     attempts = int(row.get("attempts") or 0)
     if attempts >= MAX_OTP_ATTEMPTS:
-        raise OAuthError(400, "invalid_request", "Too many attempts. Start again.")
-    if not hmac.compare_digest(row["code_hash"], _hash_secret(code.strip())):
-        store.update_login(login_id, {"attempts": attempts + 1})
-        raise OAuthError(400, "invalid_request", "That code is incorrect.")
+        return "Too many attempts. Start again."
+    if not hmac.compare_digest(row["code_hash"], code_hash):
+        return "That code is incorrect."
+    return ""
+
+
+def verify_login(login_id: str, code: str) -> dict[str, Any]:
+    store = get_store()
+    result = store.verify_login(login_id, _hash_secret(code.strip()))
+    if result.get("error"):
+        raise OAuthError(400, "invalid_request", result["error"])
+    row = result["row"]
     params = row.get("authorize_params") or {}
     if isinstance(params, str):
         params = json.loads(params)
     user = store.upsert_user(row["email"])
-    store.delete_login(login_id)
     consent_id = secrets.token_urlsafe(24)
     store.put_login(
         {
@@ -723,7 +830,7 @@ def verify_login(login_id: str, code: str) -> dict[str, Any]:
 
 def take_consent(consent_id: str) -> dict[str, Any]:
     store = get_store()
-    row = store.get_login(consent_id)
+    row = store.take_consent(consent_id)
     if not row or row.get("code_hash") != _hash_secret("consent"):
         raise OAuthError(400, "invalid_request", "Consent session not found.")
     if _parse_iso(row["expires_at"]) < _utc_now():
@@ -731,7 +838,6 @@ def take_consent(consent_id: str) -> dict[str, Any]:
     params = row.get("authorize_params") or {}
     if isinstance(params, str):
         params = json.loads(params)
-    store.delete_login(consent_id)
     user = {"id": params.get("user_id", ""), "email": params.get("email", "")}
     if not user["id"] or not user["email"]:
         raise OAuthError(400, "invalid_request", "Consent session is missing the signed-in user.")
@@ -889,7 +995,7 @@ def exchange_authorization_code(form: dict[str, str]) -> dict[str, Any]:
         raise OAuthError(400, "invalid_request", "code and code_verifier are required.")
     client = resolve_client(client_id)
     row = get_store().take_code(_hash_secret(code))
-    if not row or row.get("consumed_at"):
+    if not row:
         raise OAuthError(400, "invalid_grant", "Authorization code is invalid or already used.")
     if _parse_iso(row["expires_at"]) < _utc_now():
         raise OAuthError(400, "invalid_grant", "Authorization code expired.")
@@ -921,7 +1027,8 @@ def exchange_refresh_token(form: dict[str, str]) -> dict[str, Any]:
         raise OAuthError(400, "invalid_grant", "Refresh token expired.")
     if client_id and row["client_id"] != client_id:
         raise OAuthError(400, "invalid_grant", "Refresh token does not match this client.")
-    store.delete_refresh(_hash_secret(token))
+    if not store.take_refresh(_hash_secret(token)):
+        raise OAuthError(400, "invalid_grant", "Refresh token is invalid or revoked.")
     user = {"id": row["user_id"], "email": row["user_email"]}
     resource = row.get("resource") or public_mcp_resource()
     scope = row.get("scope") or f"{SCOPE_PRO} {SCOPE_OFFLINE}"

@@ -4,8 +4,8 @@ This is the deploy checklist for the hosted MCP authorization server. The
 server is listed for Claude as
 `https://elbowsupknivesout.warreandvavasour.com/mcp`.
 
-Do not merge this as a live cutover note: apply the migration and env vars on
-Cloud Run only when Christian is ready to deploy.
+For a brief explanation of the changes, billing, and current rollout status,
+see [Connector readiness](connector-readiness.md).
 
 ## What shipped
 
@@ -23,14 +23,12 @@ runs PKCE, and retries. A 200 JSON-RPC error does **not** start sign-in.
 
 ## Why this implementation
 
-Supabase Auth is a good identity store, not an MCP authorization server. It
-does not speak RFC 9728, RFC 7591, RFC 8707 resource indicators, CIMD, or
-Claude's redirect rules. Putting our own OAuth 2.1 layer in the FastAPI app
-and keeping state in the Toronto Supabase project stays on the existing
-Python stack, keeps data in Canada, and matches the connector-directory
-contract.
-
-Google sign-in was not added. Google's authorization servers are US-hosted.
+PR #32 put the OAuth endpoints and email-code login in the existing FastAPI
+server, with persistent state in Toronto Supabase PostgreSQL. This follow-up
+preserves that design and fixes the browser output and one-time-state boundaries.
+[Supabase Auth also supports MCP OAuth](https://supabase.com/docs/guides/auth/oauth-server/mcp-authentication);
+it is not the token issuer used by this code. Email delivery uses a separate
+SMTP provider; Canadian database hosting does not imply Canadian email processing.
 
 ## Env vars Christian must set on Cloud Run
 
@@ -42,14 +40,14 @@ Placeholders only in git. Set the real values in Cloud Run / Secret Manager.
 | `WA_PUBLIC_MCP_URL` | yes | `https://elbowsupknivesout.warreandvavasour.com/mcp` — must match the URL pasted into Claude |
 | `WA_OAUTH_SIGNING_KEY` | yes | Long random string. Access tokens are HMAC-signed with this. Required for multi-instance Cloud Run |
 | `WA_HOSTED` | yes | `1` — disables the shared anonymous `profile.json` |
-| `WA_SMTP_HOST` | yes for real email | Canadian SMTP if possible |
+| `WA_SMTP_HOST` | yes for real email | Selected provider: `smtp.sendgrid.net` |
 | `WA_SMTP_PORT` | no | Default `587` |
-| `WA_SMTP_USER` | if the SMTP host needs auth | |
-| `WA_SMTP_PASSWORD` | if the SMTP host needs auth | Secret |
+| `WA_SMTP_USER` | if the SMTP host needs auth | SendGrid uses the literal `apikey` |
+| `WA_SMTP_PASSWORD` | if the SMTP host needs auth | SendGrid API key with Mail Send permission; inject from Secret Manager |
 | `WA_SMTP_FROM` | yes when SMTP is set | From-address users will see |
-| `WA_SMTP_STARTTLS` | no | Default `1` |
-| `WA_OAUTH_DEV_SHOW_CODE` | staging only | `1` prints the one-time code on the login page. Leave off in production |
-| `WA_OAUTH_STORE` | no | Default: Supabase when configured, memory otherwise. Production must use Supabase |
+| `WA_SMTP_STARTTLS` | no | Default `1`; TLS certificates are verified |
+| `WA_OAUTH_DEV_SHOW_CODE` | local only | `1` prints the code on a local login page. Cloud Run startup rejects this setting |
+| `WA_OAUTH_STORE` | hosted | Set `supabase`. Cloud Run startup rejects memory storage |
 | `WA_OAUTH_EXTRA_RESOURCES` | no | Comma-separated extra `resource` values for local inspector testing |
 
 Existing vars stay required for Pro: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
@@ -61,10 +59,22 @@ In the Toronto project SQL editor, apply:
 
 1. `pipelines/migrations/001_create_wa_subscribers.sql` (if not already applied)
 2. `pipelines/migrations/002_oauth_identity.sql`
+3. `pipelines/migrations/003_oauth_atomic_login.sql`
 
 `002` creates `wa_users`, `wa_user_data`, and the OAuth client / code / refresh /
 login tables, plus `wa_subscribers(lower(email))`. All tables are service-role
 only.
+
+`003` installs a service-role-only function that locks the challenge row while
+checking the email code, counting failed attempts, and consuming a successful
+login. Authorization codes, consent, and refresh tokens use conditional database
+updates so only one concurrent request can consume them. The in-memory store
+enforces the same transitions for local development.
+
+Cloud Run startup requires a signing key of at least 32 characters, Supabase,
+SMTP host/from address, and STARTTLS. Store the random signing key and SMTP
+password in Secret Manager and bind explicit versions with `--update-secrets`;
+do not replace the service's other secret mappings. Never put credentials in git.
 
 After checkout, the webhook still writes `wa_subscribers.email`. Login looks
 that row up by email (case-insensitive). Active `status` unlocks Pro.
@@ -132,8 +142,8 @@ at the protected-resource metadata URL.
    `127.0.0.1`, any port). Those are already allowlisted.
 
 MCP Inspector: point it at the same `/mcp` URL, start OAuth, and complete
-the email-code + consent pages. Use `WA_OAUTH_DEV_SHOW_CODE=1` only on a
-staging revision if email is not wired yet.
+the email-code + consent pages. A Cloud Run staging revision also needs real
+SMTP; debug codes are permitted only in local development.
 
 ### 4. Legacy key
 
@@ -148,5 +158,11 @@ Still returns plan, email, and `auth_type: api_key`.
 
 ```bash
 python -m pip install -r requirements.txt
-python -m unittest tests.test_oauth tests.test_gate_and_billing tests.test_procurement_http_app tests.test_canadabuys_mcp_smoke
+python -m unittest tests.test_oauth tests.test_oauth_security tests.test_gate_and_billing tests.test_procurement_http_app tests.test_canadabuys_mcp_smoke
 ```
+
+To exercise real PostgreSQL/PostgREST concurrency, set `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` securely, then run
+`WA_OAUTH_TEST_SUPABASE=1 python -m unittest tests.test_oauth_security.LiveSupabaseTest`.
+This opt-in suite creates and removes its own synthetic OAuth rows, sends no
+email, and does not create subscriptions or modify customer profiles.

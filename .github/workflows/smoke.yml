@@ -19,6 +19,7 @@ jobs:
         run: |
           python -m unittest -v \
             tests.test_oauth \
+            tests.test_oauth_security \
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \
             tests.test_procurement_fixtures \

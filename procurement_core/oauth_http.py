@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+from html import escape
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -25,7 +27,7 @@ def _page(title: str, body: str) -> str:
     return (
         "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-        f"<title>{title}</title><style>{_PAGE_STYLE}</style></head><body>"
+        f"<title>{escape(title)}</title><style>{_PAGE_STYLE}</style></head><body>"
         f"{body}</body></html>"
     )
 
@@ -33,13 +35,7 @@ def _page(title: str, body: str) -> str:
 def _hidden_params(params: dict[str, str]) -> str:
     parts = []
     for key, value in params.items():
-        escaped = (
-            str(value)
-            .replace("&", "&amp;")
-            .replace('"', "&quot;")
-            .replace("<", "&lt;")
-        )
-        parts.append(f'<input type="hidden" name="{key}" value="{escaped}">')
+        parts.append(f'<input type="hidden" name="{escape(str(key))}" value="{escape(str(value))}">')
     return "\n".join(parts)
 
 
@@ -81,9 +77,9 @@ def _error_redirect(redirect_uri: str, error: str, description: str, state: str)
 
 
 def _email_form(params: dict[str, str], *, error: str = "", notice: str = "") -> str:
-    host = oauth.consent_hostname(params.get("redirect_uri", ""))
-    error_html = f'<p class="error">{error}</p>' if error else ""
-    notice_html = f'<p class="warn">{notice}</p>' if notice else ""
+    host = escape(oauth.consent_hostname(params.get("redirect_uri", "")))
+    error_html = f'<p class="error">{escape(error)}</p>' if error else ""
+    notice_html = f'<p class="warn">{escape(notice)}</p>' if notice else ""
     return _page(
         "Sign in to workspaceAlberta",
         f"""
@@ -102,13 +98,14 @@ def _email_form(params: dict[str, str], *, error: str = "", notice: str = "") ->
 
 
 def _code_form(login_id: str, email: str, *, dev_code: str = "", error: str = "") -> str:
+    login_id, email, dev_code = escape(login_id), escape(email), escape(dev_code)
     hint = ""
     if dev_code:
         hint = (
             f'<p class="warn">Developer mode: your code is '
             f'<code data-otp="{dev_code}">{dev_code}</code>.</p>'
         )
-    error_html = f'<p class="error">{error}</p>' if error else ""
+    error_html = f'<p class="error">{escape(error)}</p>' if error else ""
     return _page(
         "Enter your workspaceAlberta code",
         f"""
@@ -131,12 +128,15 @@ def _consent_form(login_result: dict[str, Any]) -> str:
     client_name = params.get("client_name") or "This MCP client"
     if params.get("cimd") == "1":
         client_name = host
-    consent_id = login_result["consent_id"]
+    client_name = escape(str(client_name))
+    host = escape(host)
+    email = escape(str(user["email"]))
+    consent_id = escape(str(login_result["consent_id"]))
     return _page(
         "Approve workspaceAlberta access",
         f"""
 <h1>Allow access?</h1>
-<p><strong>{client_name}</strong> wants to use workspaceAlberta as <code>{user['email']}</code>.</p>
+<p><strong>{client_name}</strong> wants to use workspaceAlberta as <code>{email}</code>.</p>
 <p>We will send you back to <code>{host}</code>.</p>
 <p class="sub">Pro tools stay locked unless this email has an active workspaceAlberta Pro subscription.</p>
 <form method="post" action="/authorize/consent">
@@ -168,7 +168,7 @@ def register_oauth_routes(app: FastAPI) -> None:
     async def authorize_get(request: Request) -> HTMLResponse | RedirectResponse:
         params = _params_from_request(request)
         try:
-            checked = oauth.validate_authorize_params(params)
+            checked = await asyncio.to_thread(oauth.validate_authorize_params, params)
         except oauth.OAuthError as exc:
             target = _error_redirect(
                 params.get("redirect_uri", ""),
@@ -178,7 +178,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             )
             if target:
                 return RedirectResponse(target, status_code=302)
-            return HTMLResponse(_page("Authorization error", f"<p class='error'>{exc.description}</p>"), 400)
+            return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
         return HTMLResponse(_email_form(checked))
 
     @app.post("/authorize", include_in_schema=False, response_model=None)
@@ -186,13 +186,13 @@ def register_oauth_routes(app: FastAPI) -> None:
         form = await _form_map(request)
         params = _params_from_form(form)
         try:
-            checked = oauth.validate_authorize_params(params)
-            started = oauth.start_login(form.get("email", ""), checked)
+            checked = await asyncio.to_thread(oauth.validate_authorize_params, params)
+            started = await asyncio.to_thread(oauth.start_login, form.get("email", ""), checked)
         except oauth.OAuthError as exc:
             try:
-                checked = oauth.validate_authorize_params(params)
+                checked = await asyncio.to_thread(oauth.validate_authorize_params, params)
             except oauth.OAuthError:
-                return HTMLResponse(_page("Authorization error", f"<p class='error'>{exc.description}</p>"), 400)
+                return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
             return HTMLResponse(_email_form(checked, error=exc.description), 400)
         notice = ""
         if not started.get("delivered") and not started.get("dev_code"):
@@ -214,7 +214,7 @@ def register_oauth_routes(app: FastAPI) -> None:
     async def authorize_verify(request: Request) -> HTMLResponse:
         form = await _form_map(request)
         try:
-            result = oauth.verify_login(form.get("login_id", ""), form.get("code", ""))
+            result = await asyncio.to_thread(oauth.verify_login, form.get("login_id", ""), form.get("code", ""))
         except oauth.OAuthError as exc:
             return HTMLResponse(
                 _code_form(form.get("login_id", ""), "", error=exc.description),
@@ -226,9 +226,9 @@ def register_oauth_routes(app: FastAPI) -> None:
     async def authorize_consent(request: Request) -> HTMLResponse | RedirectResponse:
         form = await _form_map(request)
         try:
-            session = oauth.take_consent(form.get("consent_id", ""))
+            session = await asyncio.to_thread(oauth.take_consent, form.get("consent_id", ""))
         except oauth.OAuthError as exc:
-            return HTMLResponse(_page("Authorization error", f"<p class='error'>{exc.description}</p>"), 400)
+            return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
         params = session["authorize_params"]
         if form.get("decision") != "approve":
             target = _error_redirect(
@@ -241,10 +241,10 @@ def register_oauth_routes(app: FastAPI) -> None:
                 return RedirectResponse(target, status_code=302)
             return HTMLResponse(_page("Denied", "<p>Access denied.</p>"), 403)
         try:
-            checked = oauth.validate_authorize_params(params)
+            checked = await asyncio.to_thread(oauth.validate_authorize_params, params)
         except oauth.OAuthError as exc:
-            return HTMLResponse(_page("Authorization error", f"<p class='error'>{exc.description}</p>"), 400)
-        code = oauth.issue_authorization_code(session["user"], checked)
+            return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
+        code = await asyncio.to_thread(oauth.issue_authorization_code, session["user"], checked)
         return RedirectResponse(oauth.authorization_redirect(checked, code), status_code=302)
 
     @app.post("/token", include_in_schema=False)
@@ -262,7 +262,7 @@ def register_oauth_routes(app: FastAPI) -> None:
         else:
             form = await _form_map(request)
         try:
-            tokens = oauth.issue_tokens(form)
+            tokens = await asyncio.to_thread(oauth.issue_tokens, form)
         except oauth.OAuthError as exc:
             return _oauth_error_response(exc)
         return JSONResponse(tokens, headers={"Cache-Control": "no-store"})
@@ -273,7 +273,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             payload = await request.json()
             if not isinstance(payload, dict):
                 raise oauth.OAuthError(400, "invalid_client_metadata", "JSON object required.")
-            created = oauth.register_client(payload)
+            created = await asyncio.to_thread(oauth.register_client, payload)
         except oauth.OAuthError as exc:
             return _oauth_error_response(exc)
         return JSONResponse(created, status_code=201)
