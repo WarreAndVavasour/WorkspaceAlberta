@@ -41,8 +41,9 @@ subscription is required; it does not execute a payment. Claude Code can
 
 Complete email delivery and the staged Cloud Run rollout, then test discovery,
 sign-in, approval/denial, refresh, anonymous search, paid access, and an inactive
-subscriber through the public endpoint. Test each tool in Claude and confirm
-tool titles and read/write annotations. Prepare a privacy policy, support
+subscriber through the public endpoint. All 26 current tools still need the
+required titles and annotations; test each tool in Claude after adding them.
+Prepare a privacy policy, support
 contact, icon, setup instructions, and a populated reviewer account, then
 submit through [Anthropic's developer portal](https://claude.com/docs/connectors/building/submission).
 OAuth is part of readiness; merging this change does not publish a listing.
@@ -57,8 +58,24 @@ endpoint. It does not need a copy of the server's authentication or billing code
   concurrency against the real database; synthetic test rows were cleaned up.
 - Created Secret Manager secret `workspacealberta-oauth-signing-key`, version
   `1`, replicated in Montréal; granted the existing Cloud Run runtime access.
-- SMTP credential and verified sender setup is pending access to the existing
-  SendGrid account. No OAuth production cutover has been performed yet.
+- Configured SendGrid with verified sender `christian@warreandvavasour.com`.
+  Replaced the displayed setup key with a Mail Send-only key, stored as
+  `workspacealberta-smtp-password:2`; revoked the setup key and disabled secret
+  version `1`. Neither active secret value is in git or the transcript.
+- Deployed commit `5ba7b20394b4` as revision
+  `workspacealberta-oauth-5ba7b20394b4`, tagged `oauth-ready`, with both secrets
+  bound and **zero production traffic**. Health, OAuth discovery, unauthenticated
+  Pro challenge, public search, details, and matching checks passed on the tag.
+- The account dashboard shows an upgraded Email API plan, but SendGrid's
+  sending API still returns `401 Maximum credits exceeded`; SMTP authentication
+  closes the connection. Email delivery and the real sign-in flow remain
+  unverified. Resolve the provider's quota/billing state before traffic promotion.
 - Production remains on APC revision `workspacealberta-apc-e3b174942ae2`.
+
+Validation: 146 local/CI tests passed, with seven live-database tests skipped
+by default. All seven opt-in integration tests passed separately with real
+Supabase. Syntax/import and whitespace checks passed. The injection, replay,
+concurrent-claim, and private-destination triggers no longer reproduce;
+existing PKCE, refresh, anonymous tools, and legacy-key gating tests still pass.
 
 Operational details and verification commands are in [OAuth deployment](oauth.md).
