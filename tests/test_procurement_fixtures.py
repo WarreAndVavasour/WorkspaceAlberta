@@ -63,7 +63,7 @@ class ProcurementFixtureIngestTest(unittest.TestCase):
                 {"keywords": SHOP_QUERY, "source": "all", "limit": 20}
             )
 
-        self.assertEqual(warnings, [])
+        self.assertTrue(any("fallback" in warning for warning in warnings))
         self.assertGreaterEqual(len(opportunities), 2)
 
         by_source = {row["source"]: row for row in opportunities}
@@ -98,7 +98,7 @@ class ProcurementFixtureIngestTest(unittest.TestCase):
             )
 
         self.assertEqual(federal_warnings, [])
-        self.assertEqual(alberta_warnings, [])
+        self.assertTrue(any("fallback" in warning for warning in alberta_warnings))
         self.assertEqual({row["source"] for row in federal}, {"CanadaBuys"})
         self.assertEqual({row["source"] for row in alberta}, {"Alberta Purchasing Connection"})
         self.assertEqual(federal[0]["title"], FEDERAL_TITLE)

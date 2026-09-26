@@ -79,6 +79,52 @@ gcloud run deploy workspacealberta \
 
 Do not pass `--set-secrets` on redeploys: the new revision inherits the service's existing env/secret wiring. The service is public (`--allow-unauthenticated` already set); do not change ingress/auth settings.
 
+### APC planner rollout (2026-09-26)
+
+Production traffic is on `workspacealberta-apc-e3b174942ae2`, built from commit
+`e3b174942ae202880116d045abf222f7c55109d0` in PR #31. The previous revision is
+`workspacealberta-00007-sq2`. The rollout preserved the existing environment,
+including both configured Cohere key variables, and first verified a tagged
+revision with zero production traffic.
+
+Validation: 111 local tests passed, GitHub smoke checks passed, and live MCP
+search, details, and profile matching passed on both the tagged revision and
+the public domain. Public-domain search took 3.22 seconds and matching took
+2.41 seconds in the acceptance run, with no planner-fallback or partial-retrieval
+warnings. These are observations from one run, not latency guarantees.
+
+The actual harness MCP bridge also passed search → details → local APC connector
+sign-in handoff → resumed document retrieval, including hash checks and file
+persistence after shutdown. The document portal was a local fixture; this does
+not certify live APC account access. No harness code or deployment change was
+required. Its standalone browser example had an intermittent Windows profile
+cleanup failure, then passed on rerun.
+
+Reproduce the read-only hosted checks with:
+
+```bash
+python scripts/verify_procurement_rollout.py \
+  --url https://elbowsupknivesout.warreandvavasour.com \
+  --output output/apc-rollout/production-acceptance.json
+node scripts/verify_harness_handoff.mjs /path/to/workspacealberta-harness \
+  https://elbowsupknivesout.warreandvavasour.com \
+  output/apc-rollout/harness-acceptance.json
+```
+
+The harness check uses that checkout's installed/built packages and configured
+APC test virtual environment. Its report identifies the harness commit and
+whether local changes are present. The Python verifier uses an explicit
+`WorkspaceAlberta-Acceptance/1.0` user agent because Cloudflare rejects the default
+`Python-urllib` agent with error 1010; no Cloudflare policy was changed.
+
+Rollback, if needed:
+
+```bash
+gcloud run services update-traffic workspacealberta \
+  --project workspacealberta-prod --region northamerica-northeast1 \
+  --to-revisions=workspacealberta-00007-sq2=100
+```
+
 > Migration note (2026-07-20, updated 2026-07-25): production previously ran in project `n8n-automation-project-459922` at `https://workspacealberta-719334491060.northamerica-northeast1.run.app`. The Cloudflare worker cutover below is done and verified, so that project is the **retired backend** — its service is still running and can now be deleted.
 
 Montréal region keeps traffic on Canadian infrastructure, consistent with the project's sovereignty positioning. Cloud Run instances are ephemeral: the tender cache re-downloads on cold start (self-healing), but the saved business profile also resets — this is acceptable single-tenant, and is the main operational driver for the multi-user persistence work in `docs/tooling-roadmap.md`.
