@@ -126,7 +126,11 @@ def capture_gate_denied(tool: str, transport: str, status_code: int) -> bool:
 
 
 def _distinct_id(record: dict[str, Any] | None) -> str:
-    if record and record.get("key_hash"):
+    if not record:
+        return "anonymous"
+    if record.get("user_id"):
+        return f"user_{str(record['user_id'])[:16]}"
+    if record.get("key_hash"):
         return f"sub_{str(record['key_hash'])[:16]}"
     return "anonymous"
 

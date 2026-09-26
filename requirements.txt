@@ -1,5 +1,6 @@
 mcp>=2.2.0,<3
 fastapi>=0.141.1
+python-multipart>=0.0.9
 uvicorn>=0.52.4
 e2b>=2.49.1
 duckdb>=1.5.5

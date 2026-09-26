@@ -44,6 +44,8 @@ def load_watchlist() -> list[dict[str, Any]]:
     if storage.tenant_active():
         data = storage.get_json_field("watchlist", [])
         return data if isinstance(data, list) else []
+    if not storage.allow_anonymous_file_persist():
+        return []
 
     path = _watchlist_path()
     if not path.exists():
@@ -61,6 +63,8 @@ def save_watchlist(items: list[dict[str, Any]]) -> None:
 
     if storage.tenant_active():
         storage.set_json_field("watchlist", items)
+        return
+    if not storage.allow_anonymous_file_persist():
         return
 
     _watchlist_path().write_text(json.dumps(items, indent=2), encoding="utf-8")

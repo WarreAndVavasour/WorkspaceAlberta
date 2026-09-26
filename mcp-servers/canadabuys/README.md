@@ -54,7 +54,7 @@ docker build -f mcp-servers/canadabuys/Dockerfile -t workspacealberta-procuremen
 docker run --env-file .env -p 8080:8080 workspacealberta-procurement
 ```
 
-Production note: subscribers with a valid `Authorization: Bearer wa_live_...` key get tenant-scoped profile storage (Supabase-backed, keyed by key hash). Anonymous callers on the hosted endpoint share one file-backed profile under `CANADABUYS_DATA_DIR`, so the profile-consuming tools (`find_matching_opportunities`, `daily_bid_brief`, `find_opportunities`, `find_alberta_opportunities`, `process_bid_room`, `analyze_contract_with_cohere`) also accept an inline `profile` argument (company_name, location, description, optional capabilities/industries) that overrides the saved profile for that call. CORS is enabled so browser-based MCP clients can connect. See `docs/deployment-ops/public-endpoint-accessibility.md` for the operator checklist.
+Production note: signed-in users (OAuth or a `wa_live_` key) get per-user profile and watchlist storage in Supabase. Anonymous callers on the hosted endpoint do not share a file-backed profile; pass an inline `profile` argument (company_name, location, description, optional capabilities/industries) or sign in. CORS is enabled so browser-based MCP clients can connect. OAuth deploy steps are in `docs/oauth.md`. See `docs/deployment-ops/public-endpoint-accessibility.md` for the operator checklist.
 
 ## Connect an MCP Client
 

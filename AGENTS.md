@@ -69,6 +69,12 @@ Run the offline CanadaBuys + APC fixture ingest tests (no network):
 python -m unittest tests.test_procurement_fixtures
 ```
 
+Run the hosted OAuth 2.1 tests (metadata, DCR, PKCE, 401 challenge):
+
+```bash
+python -m unittest tests.test_oauth
+```
+
 ## Build Canada MCP Guidance
 
 Use the Build Canada tools for:

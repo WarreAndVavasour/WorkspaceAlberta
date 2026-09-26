@@ -19,12 +19,11 @@ that are not code changes.
   pass preflight; `mcp-session-id` and `mcp-protocol-version` are exposed.
 - **Landing page at `/`.** Visitors who paste the bare host into a browser get
   connect instructions (including the Pro Bearer-key note) instead of a 404.
-- **Inline per-request profiles.** Subscribers get tenant-scoped saved
-  profiles via the key-hash tenancy in `procurement_core/storage.py`.
-  Anonymous callers on the shared endpoint would otherwise share one
-  file-backed profile, so every profile-consuming tool also accepts an inline
-  `profile` argument (company_name, location, description, optional
-  capabilities/industries) that overrides the saved one for that call.
+- **Per-user profiles.** Signed-in callers (OAuth or a `wa_live_` key) get
+  their own Supabase row. Anonymous callers on the hosted endpoint no longer
+  share a file-backed profile; pass an inline `profile` argument
+  (company_name, location, description, optional capabilities/industries)
+  or sign in. See `docs/oauth.md`.
 
 ## Operator checklist (not code)
 

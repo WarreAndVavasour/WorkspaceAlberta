@@ -5,6 +5,7 @@
 | `test_canadabuys_mcp_smoke.py` | Stdio MCP server startup and tool-list/response smoke test — run this after any change to the server, config, or agent setup |
 | `test_procurement_fixtures.py` | Offline CanadaBuys + APC fixture ingest; shop-in-Red-Deer query returns structured rows (title, close date, source) with no network |
 | `test_procurement_http_app.py` | Hosted FastAPI app: routes, tool dispatch, error envelopes |
+| `test_oauth.py` | OAuth 2.1 metadata, DCR, PKCE, 401 challenge, Pro gating, hosted anonymous profiles |
 | `test_e2b_bid_room.py` | Bid-room payload builders, artifact parsing/validation, markdown rendering (no live sandbox) |
 | `test_cohere_parse.py` | Cohere Parse request shape, mocked `POST /v2/parse`, fallback policy (no live Cohere credits) |
 
