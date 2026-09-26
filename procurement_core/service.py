@@ -544,8 +544,15 @@ def build_alberta_filter(
     close_end: str = "",
     post_start: str = "",
     post_end: str = "",
+    unspsc: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Build the APC opportunity filter payload."""
+    """Build the APC opportunity filter payload.
+
+    ``unspsc`` takes plain 8-digit code strings (APC rejects the ``selectable``
+    object shape used by ``categories``/``statuses`` with a 400). Passing codes
+    here lets APC filter by commodity server-side, which is far more precise
+    than matching the code titles as free text.
+    """
     statuses = []
     if status and status.lower() not in {"all", "any"}:
         statuses.append(apc_selectable(status.strip().upper()))
@@ -564,7 +571,7 @@ def build_alberta_filter(
         "deliveryRegions": [],
         "deliveryRegion": "",
         "organizations": [],
-        "unspsc": [],
+        "unspsc": [str(code).strip() for code in (unspsc or []) if str(code).strip()],
         "postDateRange": "$$custom",
         "closeDateRange": "$$custom",
         "onlyBookmarked": False,
@@ -594,8 +601,13 @@ def search_alberta_api(
     close_end: str = "",
     post_start: str = "",
     post_end: str = "",
+    unspsc: list[str] | None = None,
 ) -> dict:
-    """Search Alberta Purchasing Connection opportunities."""
+    """Search Alberta Purchasing Connection opportunities.
+
+    ``offset`` is a PAGE index, not a row offset: APC starts the result window
+    at ``offset * limit``. See ``fetch_all_alberta_opportunities`` for paging.
+    """
     limit = clamp_int(limit, default=10, minimum=1, maximum=100)
     offset = clamp_int(offset, default=0, minimum=0, maximum=100)
     fixture_payload = fixtures.load_apc_search_payload()
@@ -618,6 +630,7 @@ def search_alberta_api(
             close_end=close_end,
             post_start=post_start,
             post_end=post_end,
+            unspsc=unspsc,
         ),
         "limit": limit,
         "offset": offset,
@@ -635,6 +648,58 @@ def search_alberta_api(
         method="POST",
     )
     return read_json_request(request)
+
+
+def fetch_all_alberta_opportunities(
+    *,
+    status: str = "OPEN",
+    category: str = "",
+    unspsc: list[str] | None = None,
+    page_size: int = 100,
+    max_pages: int = 100,
+) -> tuple[list[dict], str]:
+    """Enumerate every matching APC opportunity by paging the search API.
+
+    APC's ``offset`` is a page index (the window starts at ``offset * limit``),
+    so the whole open corpus is reachable in ``ceil(total / 100)`` requests --
+    about 17 calls and a few seconds for the ~1,600 currently-open records.
+
+    Search rows already carry ``projectDescription``, ``commodityCodes`` and
+    ``commodityCodeTitles``, so no per-record detail call is needed to enrich
+    them. Returns ``(rows, warning)``; ``warning`` is non-empty when paging
+    stopped before the reported total.
+    """
+    page_size = clamp_int(page_size, default=100, minimum=1, maximum=100)
+    seen: dict[str, dict] = {}
+    total = 0
+
+    for page in range(max_pages):
+        response = search_alberta_api(
+            query="",
+            status=status,
+            category=category,
+            limit=page_size,
+            offset=page,
+            unspsc=unspsc,
+        )
+        total = response.get("totalCount") or total
+        rows = response.get("values") or []
+        if not rows:
+            break
+        for row in rows:
+            reference = str(row.get("referenceNumber") or row.get("id") or "")
+            if reference:
+                seen[reference] = row
+        if len(seen) >= total:
+            break
+
+    warning = ""
+    if total and len(seen) < total:
+        warning = (
+            f"Partial enumeration: retrieved {len(seen)} of {total} APC records "
+            f"before hitting the {max_pages}-page ceiling."
+        )
+    return list(seen.values()), warning
 
 
 def get_alberta_api_details(reference: str) -> dict:
@@ -762,6 +827,55 @@ def render_alberta_details_markdown(data: dict) -> str:
     return "\n".join(lines)
 
 
+def capability_terms(capability: str) -> list[str]:
+    """Split a capability phrase into the significant terms worth matching.
+
+    Profiles are written as natural phrases ("custom software development and
+    systems integration"), but tender text never contains them verbatim. Match
+    on the meaningful tokens instead, ignoring connective filler.
+    """
+    stop = {
+        "and", "or", "the", "for", "with", "of", "in", "to", "a", "an",
+        "our", "we", "custom", "services", "service", "solutions", "solution",
+        "based", "other",
+    }
+    tokens = re.findall(r"[a-z0-9/+]{3,}", (capability or "").lower())
+    return [t for t in tokens if t not in stop]
+
+
+def capability_hit(capability: str, text: str) -> bool:
+    """True when a capability phrase is meaningfully present in ``text``.
+
+    Terms are matched on a five-character prefix so ordinary morphology lines
+    up ("platforms" against "platform", "analytics" against "analysis"). A
+    single-term capability must match; a multi-term one needs at least a third
+    of its terms, which keeps "data platforms, analytics and AI/ML engineering"
+    matching a data-analytics platform tender without letting a lone generic
+    word drag in unrelated work.
+
+    This raises the floor for phrase-shaped profiles. It is still a lexical
+    heuristic: the calibrated relevance signal belongs upstream in the query
+    planner and downstream in classification.
+    """
+    terms = capability_terms(capability)
+    if not terms:
+        return False
+    words = set(re.findall(r"[a-z0-9/+]+", (text or "").lower()))
+    hits = sum(1 for term in terms if _term_present(term, words))
+    if len(terms) == 1:
+        return hits == 1
+    return hits * 3 >= len(terms)
+
+
+def _term_present(term: str, words: set[str]) -> bool:
+    if term in words:
+        return True
+    if len(term) < 5:
+        return False
+    prefix = term[:5]
+    return any(len(word) >= 5 and word[:5] == prefix for word in words)
+
+
 def score_alberta_opportunity(opp: dict, profile: dict) -> tuple[int, list[str]]:
     """Score an APC opportunity against the saved business profile."""
     score = 0
@@ -774,17 +888,20 @@ def score_alberta_opportunity(opp: dict, profile: dict) -> tuple[int, list[str]]
     commodity_titles = " ".join(str(v) for v in opp.get("commodityCodeTitles") or []).lower()
     regions = " ".join(str(v) for v in opp.get("regionOfDelivery") or []).lower()
 
-    title_matches = [kw for kw in keywords if kw.lower() in title]
+    title_matches = [kw for kw in keywords if capability_hit(kw, title)]
     if title_matches:
         score += 10 * len(title_matches)
         reasons.append(f"title matches: {', '.join(title_matches[:3])}")
 
-    desc_matches = [kw for kw in keywords if kw.lower() in desc and kw.lower() not in title]
+    desc_matches = [
+        kw for kw in keywords
+        if capability_hit(kw, desc) and not capability_hit(kw, title)
+    ]
     if desc_matches:
         score += 5 * len(desc_matches)
         reasons.append(f"description matches: {', '.join(desc_matches[:3])}")
 
-    commodity_matches = [kw for kw in keywords if kw.lower() in commodity_titles]
+    commodity_matches = [kw for kw in keywords if capability_hit(kw, commodity_titles)]
     if commodity_matches:
         score += 8 * len(commodity_matches)
         reasons.append(f"commodity matches: {', '.join(commodity_matches[:3])}")
