@@ -153,6 +153,7 @@ def _consent_form(login_result: dict[str, Any]) -> str:
 <h1>Allow access?</h1>
 <p><strong>{client_name}</strong> wants to use workspaceAlberta as <code>{email}</code>.</p>
 <p>We will send you back to <code>{host}</code>.</p>
+<p>This client can use procurement tools as you and read or update your saved business profile and watchlist.</p>
 <p class="sub">Pro tools stay locked unless this email has an active workspaceAlberta Pro subscription.</p>
 <form method="post" action="/authorize/consent">
   <input type="hidden" name="consent_id" value="{consent_id}">
