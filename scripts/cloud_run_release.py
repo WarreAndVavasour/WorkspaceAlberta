@@ -15,6 +15,8 @@ import shutil
 import subprocess
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from html import escape
+from xml.etree import ElementTree as ET
 
 from verify_oauth_readiness import verify as verify_oauth
 from verify_procurement_rollout import verify as verify_procurement
@@ -115,7 +117,41 @@ def verify(url, commit):
     print(f"Verifying {url}", flush=True)
     return {"oauth": verify_oauth(url, ORIGIN + "/mcp"),
             "assets": verify_assets(url, commit),
+            "website": verify_website(url, commit),
             "procurement": asyncio.run(verify_procurement(url))}
+
+
+def verify_website(url, commit):
+    """Check packaged blog content and CSS against the exact reviewed commit."""
+    paths = git("ls-tree", "-r", "--name-only", commit, "procurement_core/content/blog").decode().splitlines()
+    if not paths:  # Allow promotion/rollback of revisions predating the blog.
+        return {"blog": "not in this source commit"}
+
+    def read(path):
+        with urlopen(Request(url + path, headers={"User-Agent": "WorkspaceAlberta-Acceptance/1.0"}), timeout=15) as response:
+            require(response.status == 200, f"Website route unavailable: {path}")
+            return response.read(500_000)
+
+    css = read("/assets/blog.css")
+    require(hashlib.sha256(css).digest() == hashlib.sha256(git("show", f"{commit}:procurement_core/assets/blog.css")).digest(),
+            "Blog CSS differs from reviewed source")
+    index = read("/blog").decode()
+    feed = ET.fromstring(read("/blog/feed.xml"))
+    feed_urls = {item.findtext("link") for item in feed.findall("channel/item")}
+    published = []
+    for path in paths:
+        if not path.endswith(".md"):
+            continue
+        metadata = json.loads(git("show", f"{commit}:{path}").decode().split("\n---\n", 1)[0][4:])
+        slug = Path(path).stem
+        visible = metadata["status"] == "published" and metadata["date"] <= datetime.now(timezone.utc).date().isoformat()
+        post_url = ORIGIN + "/blog/" + slug
+        require((post_url in feed_urls) == visible, f"Blog publication status differs from source: {slug}")
+        if visible:
+            require(escape(metadata["title"]) in index, f"Blog index missing post: {slug}")
+            require(escape(metadata["title"]) in read("/blog/" + slug).decode(), f"Blog post unavailable: {slug}")
+            published.append(slug)
+    return {"blog": "passed", "published_posts": published, "css_sha256": hashlib.sha256(css).hexdigest()}
 
 
 def stage(image, commit, suffix):

@@ -52,6 +52,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from dataclasses import dataclass
 from html import unescape
 from pathlib import Path
@@ -75,6 +76,26 @@ COHERE_CHAT_URL = "https://api.cohere.com/v2/chat"
 COHERE_PARSE_MODEL = PARSE_MODEL_DEFAULT
 COHERE_PARSE_URL = PARSE_URL
 MAX_ATTACHMENTS = 5
+BID_ROOM_CALL_SECONDS = 145
+BID_ROOM_WORK_SECONDS = 135  # Leave time to kill the sandbox and return a response.
+BID_ROOM_TIMEOUT_MESSAGE = (
+    "Bid-room processing reached its time limit; no completed analysis is available. "
+    "Retry with max_attachments=1 (or 0 for notice-only analysis). "
+    "Do not treat this response as a completed document review."
+)
+
+
+class BidRoomTimeout(RuntimeError):
+    """The bounded tool call did not produce a complete artifact."""
+
+
+def remaining_bid_room_seconds(deadline: float, reserve: float = 0) -> float:
+    remaining = deadline - time.monotonic() - reserve
+    if remaining < 1:
+        raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE)
+    return remaining
+
+
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_COHERE_CHARS = 80_000
 MAX_CANADABUYS_DETAIL_BYTES = 2 * 1024 * 1024
@@ -1681,6 +1702,7 @@ def _run_e2b_payload(
     command_timeout_seconds: int = 420,
     keep_alive: bool = False,
     require_cohere: bool = False,
+    deadline: float | None = None,
 ) -> BidRoomSandboxResult:
     load_local_env()
     if not os.environ.get("E2B_API_KEY", "").strip():
@@ -1694,11 +1716,19 @@ def _run_e2b_payload(
 
     try:
         from e2b import Sandbox
+        from e2b.exceptions import TimeoutException
     except ImportError as exc:
         raise RuntimeError("Install the E2B SDK with `python -m pip install e2b>=2.21.1`.") from exc
 
+    # SDK retries would multiply network timeouts and defeat the call budget.
+    bounded = deadline is not None
+    if bounded:
+        remaining = remaining_bid_room_seconds(deadline, reserve=5)
+        timeout_seconds = max(1, min(130, int(remaining)))
+        keep_alive = False
     sandbox = Sandbox.create(
         timeout=timeout_seconds,
+        **({"request_timeout": min(10, remaining), "retries": 0} if bounded else {}),
         envs=envs,
         metadata={
             "project": "workspacealberta",
@@ -1717,18 +1747,32 @@ def _run_e2b_payload(
 
     try:
         command = build_sandbox_command(payload)
-        command_result = sandbox.commands.run(command, timeout=command_timeout_seconds)
+        if bounded:
+            command_timeout_seconds = min(120, remaining_bid_room_seconds(deadline, reserve=5))
+        command_result = sandbox.commands.run(
+            command, timeout=command_timeout_seconds,
+            **({"request_timeout": min(10, command_timeout_seconds)} if bounded else {}),
+        )
         stdout = _result_text(command_result, "stdout")
         stderr = _result_text(command_result, "stderr")
         artifact = validate_bid_room_artifact(
             parse_artifact(stdout),
             require_cohere=require_cohere,
         )
+    except TimeoutException as exc:
+        raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE) from exc
     finally:
         killed = False
         if not keep_alive:
-            sandbox.kill()
-            killed = True
+            try:
+                killed = bool(sandbox.kill(**({"request_timeout": 5, "retries": 0} if bounded else {})))
+            except Exception:
+                # A failed cleanup must not hide a valid artifact or the original
+                # processing error. Bounded sandboxes also expire automatically.
+                if artifact is not None:
+                    artifact.setdefault("warnings", []).append(
+                        "Sandbox cleanup could not be confirmed; it will expire automatically."
+                    )
 
     if artifact is None:
         raise RuntimeError("E2B sandbox did not return a bid room artifact.")
@@ -1760,9 +1804,10 @@ def run_live_bid_room_smoke(
 def run_live_bid_room_process(
     payload: dict[str, Any],
     *,
-    timeout_seconds: int = 900,
-    command_timeout_seconds: int = 420,
+    timeout_seconds: int = 130,
+    command_timeout_seconds: int = 120,
     keep_alive: bool = False,
+    deadline: float | None = None,
 ) -> BidRoomSandboxResult:
     """Create an E2B sandbox, extract evidence, call Cohere inside it, and return JSON."""
     payload = dict(payload)
@@ -1773,6 +1818,7 @@ def run_live_bid_room_process(
         command_timeout_seconds=command_timeout_seconds,
         keep_alive=keep_alive,
         require_cohere=True,
+        deadline=deadline if deadline is not None else time.monotonic() + BID_ROOM_WORK_SECONDS,
     )
 
 

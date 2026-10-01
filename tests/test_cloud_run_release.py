@@ -5,6 +5,8 @@ from pathlib import Path
 import sys
 import unittest
 from unittest.mock import patch
+from io import BytesIO
+import json
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import cloud_run_release as release
@@ -17,6 +19,45 @@ SPEC = {"serviceAccountName": "runtime@example.invalid", "containers": [{"env": 
 
 def service(revision=OLD):
     return {"status": {"traffic": [{"revisionName": revision, "percent": 100}]}}
+
+
+class WebsiteReleaseTest(unittest.TestCase):
+    def _git(self, *args):
+        if args[0] == "ls-tree":
+            return b"procurement_core/content/blog/approved.md\n"
+        if args[-1].endswith("blog.css"):
+            return b"reviewed css"
+        return ("---\n" + json.dumps({"status": "published", "date": "2026-10-01", "title": "Approved & ready"}) + "\n---\n\nPost.").encode()
+
+    def _response(self, request, **kwargs):
+        path = request.full_url.removeprefix("https://candidate.invalid")
+        content = {
+            "/assets/blog.css": b"reviewed css",
+            "/blog": b"Approved &amp; ready",
+            "/blog/approved": b"Approved &amp; ready",
+            "/blog/feed.xml": ('<rss><channel><item><link>' + release.ORIGIN + '/blog/approved</link></item></channel></rss>').encode(),
+        }[path]
+        response = BytesIO(content)
+        response.status = 200
+        return response
+
+    def test_live_blog_matches_reviewed_source(self):
+        with patch.object(release, "git", side_effect=self._git), patch.object(release, "urlopen", side_effect=self._response):
+            report = release.verify_website("https://candidate.invalid", "a" * 40)
+        self.assertEqual(report["published_posts"], ["approved"])
+
+    def test_stale_css_blocks_promotion(self):
+        with patch.object(release, "git", side_effect=self._git), patch.object(release, "urlopen", return_value=BytesIO(b"old css")) as request:
+            request.return_value.status = 200
+            with self.assertRaisesRegex(RuntimeError, "Blog CSS differs"):
+                release.verify_website("https://candidate.invalid", "a" * 40)
+
+    def test_misadvertised_draft_blocks_promotion(self):
+        def draft_git(*args):
+            return self._git(*args).replace(b'"status": "published"', b'"status": "draft"')
+        with patch.object(release, "git", side_effect=draft_git), patch.object(release, "urlopen", side_effect=self._response):
+            with self.assertRaisesRegex(RuntimeError, "publication status differs"):
+                release.verify_website("https://candidate.invalid", "a" * 40)
 
 
 class CloudRunReleaseTest(unittest.TestCase):

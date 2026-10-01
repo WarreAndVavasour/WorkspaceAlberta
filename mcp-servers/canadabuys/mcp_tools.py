@@ -32,6 +32,7 @@ the calling model sees when choosing tools.
 
 from mcp.types import Tool, ToolAnnotations
 from procurement_core.agent_contract import PERSISTENT_TOOLS
+from procurement_core.auth import PRO_TOOLS, SIGN_IN_TOOLS
 
 # Inline per-request profile: anonymous callers on the shared hosted endpoint
 # have no tenant row, so this is how they describe their business without
@@ -120,7 +121,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="search_contracts",
             title="Search federal contracts",
-            description="Search Canadian federal government contracts. Filter by keywords, province, or status.",
+            description="Legacy: federal CanadaBuys only. Filter by keywords or province. Prefer search_opportunities for combined CanadaBuys and Alberta APC results.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -143,7 +144,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="get_contract_details",
             title="Get federal contract details",
-            description="Get full details of a contract by reference or solicitation number.",
+            description="Legacy: federal CanadaBuys details only, by reference or solicitation number. Prefer get_opportunity_details for federal or Alberta APC tenders.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -158,7 +159,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="list_upcoming_deadlines",
             title="List federal contract deadlines",
-            description="List contracts with upcoming closing deadlines.",
+            description="Legacy: federal CanadaBuys closing deadlines only. Prefer list_deadlines for combined CanadaBuys and Alberta APC results.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -177,7 +178,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="summarize_contracts",
             title="Summarize federal contracts",
-            description="Get a summary of available contracts.",
+            description="Legacy: summarize federal CanadaBuys contracts only. For combined discovery use search_opportunities or daily_bid_brief; this summary excludes Alberta APC.",
             input_schema={
                 "type": "object",
                 "properties": {}
@@ -219,7 +220,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="find_opportunities",
             title="Find federal opportunities for my business",
-            description="Find government contracts that match your business profile. Returns scored and ranked opportunities with explanations of why each one fits your capabilities. Pass an inline `profile` to describe the business per call.",
+            description="Legacy: rank federal CanadaBuys contracts only against your business profile. Prefer find_matching_opportunities for combined CanadaBuys and Alberta APC matches. Anonymous hosted callers must pass an inline profile.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -473,7 +474,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="process_bid_room",
             title="Process bid documents",
-            description="Use an E2B sandbox to process tender attachments: Cohere Parse turns PDF/image files into markdown, then Command A+ reviews the evidence inside the sandbox.",
+            description="Process tender attachments in E2B: sends documents and business context to E2B, PDF page images/images and extracted evidence to Cohere Parse and Command A+. See /privacy for processing locations. Returns within 145 seconds including setup; large packages may time out. Retry with fewer attachments; a timeout is not a completed analysis.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -488,21 +489,14 @@ def get_mcp_tools() -> list[Tool]:
                     "max_attachments": {
                         "type": "integer",
                         "description": "Maximum direct attachments to process (default 5, max 5)",
-                        "default": 5
-                    },
-                    "timeout_seconds": {
-                        "type": "integer",
-                        "description": "E2B sandbox timeout in seconds (default 900)",
-                        "default": 900
-                    },
-                    "command_timeout_seconds": {
-                        "type": "integer",
-                        "description": "Sandbox command timeout in seconds (default 420)",
-                        "default": 420
+                        "default": 5,
+                        "minimum": 0,
+                        "maximum": 5
                     },
                     "profile": PROFILE_ARG_SCHEMA
                 },
-                "required": ["reference"]
+                "required": ["reference"],
+                "additionalProperties": False
             }
         ),
         Tool(
@@ -604,6 +598,12 @@ def get_mcp_tools() -> list[Tool]:
         )
     ]
     for tool in tools:
+        if tool.name in PRO_TOOLS:
+            tool.description += " Hosted: sign-in and an active workspaceAlberta Pro subscription required."
+        elif tool.name in SIGN_IN_TOOLS:
+            tool.description += " Hosted: sign-in required; no paid subscription needed."
+        if tool.name in {"search_alberta_opportunities", "find_alberta_opportunities", "find_matching_opportunities", "search_opportunities", "daily_bid_brief"}:
+            tool.description += " When configured, search terms or business capabilities may be sent to Cohere to select commodity filters. See /privacy."
         persistent = tool.name in PERSISTENT_TOOLS
         tool.annotations = ToolAnnotations(
             title=tool.title,
