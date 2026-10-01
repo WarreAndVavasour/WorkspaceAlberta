@@ -6,3 +6,4 @@ uvicorn>=0.52.4
 e2b>=2.49.1
 duckdb>=1.5.5
 markdown-it-py>=4.0.0,<5
+tzdata>=2024.1

@@ -6,3 +6,4 @@ starlette>=0.27.0
 uvicorn>=0.23.0
 sse-starlette>=3.0.0
 e2b>=2.21.1
+tzdata>=2024.1

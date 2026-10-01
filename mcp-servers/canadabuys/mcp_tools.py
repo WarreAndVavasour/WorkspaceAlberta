@@ -70,7 +70,11 @@ _OPPORTUNITY_RECORD_SCHEMA = {
         "reference": {"type": "string"},
         "buyer": {"type": "string"},
         "category": {"type": "string"},
-        "closing": {"type": "string"},
+        "closing": {"type": "string", "description": "Closing value exactly as the source published it"},
+        "closes_at": {
+            "type": "string",
+            "description": "Closing time as ISO 8601 in Alberta time with UTC offset; empty when unknown",
+        },
         "region": {"type": "string"},
         "solicitation": {"type": "string"},
     },
@@ -100,7 +104,10 @@ MATCHES_OUTPUT_SCHEMA = {
                 "properties": {
                     **_OPPORTUNITY_RECORD_SCHEMA["properties"],
                     "score": {"type": "integer"},
-                    "days_until": {"type": ["integer", "null"]},
+                    "days_until": {
+                        "type": ["integer", "null"],
+                        "description": "Calendar days to the closing date in Alberta time; 0 means it closes today",
+                    },
                     "reasons": {"type": "array", "items": {"type": "string"}},
                 },
             },
