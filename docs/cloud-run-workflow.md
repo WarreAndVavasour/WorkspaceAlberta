@@ -45,10 +45,17 @@ Changes to authentication logic still need a real sign-in test before promotion.
 
 GitHub uses short-lived OIDC credentials through Workload Identity Federation.
 There is no downloaded service-account key or GCP credential stored in GitHub
-Secrets. The provider accepts only repository ID `1112614818`, owner ID
-`76745467`, branch `refs/heads/main`, event `workflow_dispatch`, and
-`HarleyCoops/WorkspaceAlberta/.github/workflows/deploy-cloud-run.yml@refs/heads/main`.
-Renaming the workflow or changing the release branch requires updating that trust.
+Secrets. The provider accepts two repositories, each only on branch
+`refs/heads/main` with event `workflow_dispatch`:
+
+| Repository | Repository ID | Owner ID | Workflow ref |
+| --- | --- | --- | --- |
+| `WarreAndVavasour/WorkspaceAlberta` (corporate) | `1400771945` | `323728381` | `WarreAndVavasour/WorkspaceAlberta/.github/workflows/deploy-cloud-run.yml@refs/heads/main` |
+| `HarleyCoops/WorkspaceAlberta` | `1112614818` | `76745467` | `HarleyCoops/WorkspaceAlberta/.github/workflows/deploy-cloud-run.yml@refs/heads/main` |
+
+Each repository needs the two repository variables above set to the same
+values. Renaming the workflow, changing the release branch, or moving the
+repository requires updating that trust.
 
 The deployment account has:
 
@@ -57,8 +64,9 @@ The deployment account has:
 - `roles/iam.serviceAccountUser` on the existing Cloud Run runtime identity,
   `983058968342-compute@developer.gserviceaccount.com`.
 
-The repository's federated principal has `roles/iam.workloadIdentityUser` on
-the deployment account. It has no project-wide owner/editor grant or direct
+Each repository's federated principal (`attribute.repository_id/1400771945`
+and `attribute.repository_id/1112614818`) has `roles/iam.workloadIdentityUser`
+on the deployment account. Neither has a project-wide owner/editor grant or direct
 Secret Manager access. The runtime keeps its existing environment and secret
 bindings; the workflow does not replace them or change Google callback URLs,
 SMTP, ingress, public access, billing, or database schema.
