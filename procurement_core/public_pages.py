@@ -49,8 +49,18 @@ SUPPORT = """
 <p><a href="/blog">News and notes</a> · <a href="/privacy">Privacy</a> · <a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation</a></p>
 """
 
-# A simple vector wordmark keeps the public listing asset part of this service.
-ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#16382d"/><text x="256" y="315" font-family="Arial,sans-serif" font-size="180" font-weight="700" text-anchor="middle" fill="#fff7e8">wA</text></svg>'
+# The listing mark as outlined paths, so it renders the same without any installed font.
+ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#16382d"/><path fill="#fff7e8" d="M236.400390625 315.0H210.296875L195.1796875 256.9921875Q194.125 253.037109375 191.048828125 237.48046875L186.478515625 257.16796875L171.185546875 315.0H145.08203125L120.47265625 219.90234375H143.67578125L159.3203125 292.587890625L160.55078125 286.083984375L162.748046875 275.80078125L177.689453125 219.90234375H204.14453125L218.734375 275.80078125Q219.96484375 280.37109375 222.337890625 292.587890625L224.798828125 280.986328125L238.509765625 219.90234375H261.361328125ZM360.58984375 315.0 349.603515625 283.359375H302.40625L291.419921875 315.0H265.4921875L310.66796875 191.162109375H341.25390625L386.25390625 315.0ZM325.9609375 210.234375 325.43359375 212.16796875Q324.5546875 215.33203125 323.32421875 219.375Q322.09375 223.41796875 308.20703125 263.84765625H343.802734375L331.5859375 228.251953125L327.806640625 216.298828125Z"/></svg>'
+
+# Raster copies of the same mark for clients and directories that do not accept SVG.
+ICON_FILES = {
+    "favicon.ico": "image/x-icon",
+    "favicon-32.png": "image/png",
+    "icon-192.png": "image/png",
+    "icon.png": "image/png",
+    "apple-touch-icon.png": "image/png",
+}
+_ICON_SOURCES = {"icon.png": "icon-512.png"}
 
 
 def register_public_pages(app: FastAPI) -> None:
@@ -83,3 +93,14 @@ def register_public_pages(app: FastAPI) -> None:
     @app.get("/icon.svg", include_in_schema=False)
     async def icon():
         return Response(ICON, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=3600"})
+
+    icon_dir = Path(__file__).with_name("assets") / "icons"
+
+    def icon_route(path: Path, media_type: str):
+        async def serve_icon():
+            return FileResponse(path, media_type=media_type, headers={"Cache-Control": "public, max-age=86400"})
+        return serve_icon
+
+    for name, media_type in ICON_FILES.items():
+        app.add_api_route(f"/{name}", icon_route(icon_dir / _ICON_SOURCES.get(name, name), media_type),
+                          methods=["GET"], include_in_schema=False)

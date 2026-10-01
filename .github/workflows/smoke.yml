@@ -23,6 +23,7 @@ jobs:
             tests.test_agent_contract \
             tests.test_connector_review \
             tests.test_blog \
+            tests.test_icons \
             tests.test_e2b_bid_room \
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \

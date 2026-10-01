@@ -28,11 +28,16 @@ button { background: #0b57d0; color: #fff; border: 0; border-radius: 8px; cursor
 """
 
 
+ICON_LINKS = (
+    '<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png">'
+)
+
+
 def _page(title: str, body: str) -> str:
     return (
         "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-        f"<title>{escape(title)}</title><style>{_PAGE_STYLE}</style></head><body>"
+        f"<title>{escape(title)}</title>{ICON_LINKS}<style>{_PAGE_STYLE}</style></head><body>"
         f"{body}</body></html>"
     )
 
