@@ -87,7 +87,7 @@ def render_index(posts: list[Post]) -> str:
         for p in posts
     ) or '<p class="empty">Something good is taking shape. Our first update is on its way.</p>'
     content = f'''<section class="hero"><div class="hero-copy"><p class="eyebrow">The workspaceAlberta journal</p>
-    <h1>Public work.<br>New possibilities.</h1><p class="intro">Wouldn’t it be great if the next opportunity was easier to find?</p>
+    <h1>Public work.<br><em>New possibilities.</em></h1><p class="intro">Wouldn’t it be great if the next opportunity was easier to find?</p>
     <p class="hero-note">News, practical notes and small steps forward for Canadian businesses.</p></div>
     <figure class="hero-art"><img src="/assets/archive/plate-rocky-mountains.webp" width="560" height="354"
     alt="A hand-coloured view of the Rocky Mountains by Henry J. Warre"><figcaption>Henry J. Warre · The Rocky Mountains · 1848</figcaption></figure></section>
@@ -120,6 +120,16 @@ def render_feed(posts: list[Post]) -> bytes:
 
 
 def register_blog_routes(app: FastAPI) -> None:
+    @app.get("/assets/brand/{filename}", include_in_schema=False)
+    async def blog_font(filename: str):
+        allowed = {"fonts.css", "fraunces-normal.woff2", "fraunces-italic.woff2",
+                   "inter-tight-normal.woff2", "jetbrains-mono-normal.woff2"}
+        if filename not in allowed:
+            return Response(status_code=404)
+        return FileResponse(ROOT / "assets" / "brand" / filename,
+                            media_type="text/css" if filename == "fonts.css" else "font/woff2",
+                            headers={"Cache-Control": "public, max-age=3600"})
+
     @app.get("/assets/blog.css", include_in_schema=False)
     async def blog_styles():
         return FileResponse(ROOT / "assets" / "blog.css", media_type="text/css",

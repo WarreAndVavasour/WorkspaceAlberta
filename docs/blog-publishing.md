@@ -1,8 +1,11 @@
 # News and notes
 
 The existing Cloud Run website now serves `/blog`, `/blog/<slug>` and
-`/blog/feed.xml`. It uses the blue brand palette and Henry J. Warre's archival
-artwork already packaged with the sign-in pages. No new hosting, database,
+`/blog/feed.xml`. It follows warreandvavasour.com's warm prairie-at-dusk palette,
+lowercase wordmark and Fraunces / Inter Tight / JetBrains Mono typography.
+Font files are hosted locally under `/assets/brand`, with their OFL licences
+in the repo. Henry J. Warre's archival artwork is already packaged with the
+sign-in pages. No new hosting, database,
 credentials or CMS account is needed.
 
 ## Write a post
@@ -46,6 +49,7 @@ Keep customer data, private review instructions and credentials out of posts.
    Publishing a post is a website deployment; saving or merging alone does
    not update the live site. Editing a published post follows the same workflow.
 
-The first post announces **community connector approval**, with directory
-publication pending. Update that sentence only after the portal reports Live.
+The first post announces **community connector approval** and links to both
+direct setup and the directory. Confirm the portal reports Live before writing
+an explicit claim that directory publication is complete.
 Do not describe community approval as Verified status or a security audit.

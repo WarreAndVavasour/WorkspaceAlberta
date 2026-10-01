@@ -11,7 +11,7 @@
 
 Wouldn’t it be great if finding public work started with a conversation?
 
-Anthropic has approved workspaceAlberta as a **community connector** for the Claude directory. We’re pleased to share that milestone. Publication is the next step; the [directory listing](https://claude.ai/directory/connectors/workspacealberta) is where you’ll find it once it goes live.
+Anthropic has approved workspaceAlberta as a **community connector** for the Claude directory. We’re pleased to share that milestone. Read the [connection guide](/support) for setup and visit the [directory listing](https://claude.ai/directory/connectors/workspacealberta) for Claude.
 
 ## From a question to a useful opportunity
 
