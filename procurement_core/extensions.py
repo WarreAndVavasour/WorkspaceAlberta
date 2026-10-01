@@ -97,6 +97,8 @@ def _find_opportunity(reference: str) -> tuple[dict[str, Any] | None, list[str]]
 
 async def watch_opportunity(args: dict) -> str:
     """Add an opportunity to the persistent watchlist with an optional note."""
+    from procurement_core import service
+
     reference = str(args.get("reference") or "").strip()
     if not reference:
         return "Please provide a reference number to watch."
@@ -129,7 +131,8 @@ async def watch_opportunity(args: dict) -> str:
         output += f"**{entry['title']}**\n"
         output += f"- Source: {entry['source']}\n"
         output += f"- Buyer: {entry['buyer']}\n"
-        output += f"- Closing: {entry['closing']}\n"
+        closing_tz = service.source_timezone_for_reference(reference)
+        output += f"- Closing: {service.format_closing(str(entry['closing'] or ''), closing_tz)}\n"
     else:
         output += "Saved by reference only — details could not be resolved right now.\n"
     if entry["note"]:
@@ -150,13 +153,12 @@ async def list_watchlist(args: dict) -> str:
 
     now = datetime.now(timezone.utc)
 
+    def item_closing(item: dict[str, Any]):
+        source_tz = service.source_timezone_for_reference(str(item.get("reference") or ""))
+        return service.parse_closing(str(item.get("closing") or ""), source_tz)
+
     def sort_key(item: dict[str, Any]):
-        parsed = service.parse_date(str(item.get("closing") or ""))
-        if not parsed:
-            return datetime.max.replace(tzinfo=timezone.utc)
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
-        return parsed
+        return item_closing(item) or datetime.max.replace(tzinfo=timezone.utc)
 
     items = sorted(items, key=sort_key)
     output = f"# Watchlist ({len(items)} opportunities)\n\n"
@@ -166,13 +168,16 @@ async def list_watchlist(args: dict) -> str:
         output += f"   Reference: `{item.get('reference', '')}`\n"
         if item.get("buyer"):
             output += f"   Buyer: {item['buyer'][:70]}\n"
-        closing = service.parse_date(str(item.get("closing") or ""))
+        closing = item_closing(item)
         if closing:
-            if closing.tzinfo is None:
-                closing = closing.replace(tzinfo=timezone.utc)
-            days = (closing - now).days
-            status = f"closes in {days} days" if days >= 0 else f"closed {-days} days ago"
-            output += f"   Closing: {item.get('closing', '')} ({status})\n"
+            source_tz = service.source_timezone_for_reference(str(item.get("reference") or ""))
+            closing_text = service.format_closing(str(item.get("closing") or ""), source_tz)
+            if service.has_closed(closing, now):
+                days_ago = -service.days_until_close(closing, now)
+                status = "closed today" if days_ago == 0 else f"closed {days_ago} days ago"
+            else:
+                status = service.describe_days_until(service.days_until_close(closing, now))
+            output += f"   Closing: {closing_text} ({status})\n"
         if item.get("note"):
             output += f"   Note: {item['note']}\n"
         output += "\n"
@@ -237,16 +242,15 @@ async def bid_no_bid_scorecard(args: dict) -> str:
         checks.append(("Profile fit", "unknown", "no saved profile — run `set_business_profile` for a real fit read"))
 
     # 2. Runway to closing
-    closing = service.parse_date(str(opportunity.get("closing") or ""))
+    closing = service.opportunity_closing(opportunity)
     if closing:
-        if closing.tzinfo is None:
-            closing = closing.replace(tzinfo=timezone.utc)
-        days = (closing - datetime.now(timezone.utc)).days
-        if days < 0:
-            checks.append(("Runway", "closed", f"closed {-days} days ago"))
+        now = datetime.now(timezone.utc)
+        days = service.days_until_close(closing, now)
+        if service.has_closed(closing, now):
+            checks.append(("Runway", "closed", "closed today" if days == 0 else f"closed {-days} days ago"))
             negatives += 3
         elif days < 5:
-            checks.append(("Runway", "very tight", f"{days} days to closing — realistic only if documents are ready"))
+            checks.append(("Runway", "very tight", f"{service.describe_days_until(days)} — realistic only if documents are ready"))
             negatives += 1
         elif days <= 21:
             checks.append(("Runway", "workable", f"{days} days to closing"))

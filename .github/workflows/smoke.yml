@@ -28,6 +28,7 @@ jobs:
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \
             tests.test_procurement_fixtures \
+            tests.test_deadlines \
             tests.test_search_relevance \
             tests.test_query_planner \
             tests.test_apc_workflow \

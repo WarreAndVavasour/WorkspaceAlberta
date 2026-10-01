@@ -58,8 +58,9 @@ import gzip
 import json
 import os
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone, tzinfo
 import time
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -173,6 +174,158 @@ def parse_date(value: str) -> datetime | None:
         return datetime.strptime(raw, "%Y-%m-%d")
     except ValueError:
         return None
+
+
+# ============== Closing times ==============
+
+def load_alberta_tz() -> ZoneInfo:
+    """America/Edmonton from the bundled tzdata package, else the system database.
+
+    tzdata 2026c (pip tzdata 2026.3) carries Alberta's move to year-round
+    UTC-06:00 from 2026-11-01. A host database older than that puts Alberta
+    an hour off from November on, so the packaged copy is preferred.
+    """
+    try:
+        from importlib import resources
+
+        path = resources.files("tzdata").joinpath("zoneinfo").joinpath("America").joinpath("Edmonton")
+        with path.open("rb") as handle:
+            return ZoneInfo.from_file(handle, key="America/Edmonton")
+    except (ImportError, OSError, ValueError):
+        return ZoneInfo("America/Edmonton")
+
+
+# Deadlines are counted and shown in Alberta time, because that is where the
+# businesses reading them are.
+ALBERTA_TZ = load_alberta_tz()
+
+# APC returns closing times without an offset, in Alberta local time
+# (the usual APC close is 14:00:59 local).
+APC_SOURCE_TZ = ALBERTA_TZ
+
+# CanadaBuys open data publishes tenderClosingDate at a fixed UTC-05:00 offset,
+# not daylight-adjusted Eastern time. Source: PSPC, "Understanding the new
+# CanadaBuys tender and award notices datasets"
+# (https://donnees-data.tpsgc-pwgsc.gc.ca/ba2/ac-cb/soutien-support-eng.html).
+CANADABUYS_SOURCE_TZ = timezone(timedelta(hours=-5), "UTC-05:00")
+
+SOURCE_TIMEZONES: dict[str, tzinfo] = {
+    "federal": CANADABUYS_SOURCE_TZ,
+    "alberta": APC_SOURCE_TZ,
+}
+
+DATE_ONLY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def is_date_only(value: str) -> bool:
+    """True when a source value carries a date but no time of day."""
+    return bool(DATE_ONLY_RE.match(str(value or "").strip()))
+
+
+def parse_closing(value: str, source_tz: tzinfo) -> datetime | None:
+    """Parse a source closing value into a timezone-aware datetime.
+
+    Values without an offset are read in the source's published time zone.
+    A bare date closes at the end of that day, not at its start.
+    """
+    parsed = parse_date(str(value or ""))
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        if is_date_only(value):
+            parsed = parsed.replace(hour=23, minute=59, second=59)
+        parsed = parsed.replace(tzinfo=source_tz)
+    return parsed
+
+
+def canadabuys_closing(contract: dict) -> datetime | None:
+    """Closing time of a raw CanadaBuys row."""
+    return parse_closing(get_field(contract, "tenderClosingDate-appelOffresDateCloture"), CANADABUYS_SOURCE_TZ)
+
+
+def alberta_closing(opp: dict) -> datetime | None:
+    """Closing time of a raw APC row."""
+    return parse_closing(str(opp.get("closeDateTime") or ""), APC_SOURCE_TZ)
+
+
+def source_timezone_for_reference(reference: str) -> tzinfo:
+    """Source time zone for a stored reference (APC refs start with AB-)."""
+    return APC_SOURCE_TZ if is_alberta_reference(reference) else CANADABUYS_SOURCE_TZ
+
+
+def opportunity_closing(opportunity: dict) -> datetime | None:
+    """Closing time of a normalized opportunity, using its source's time zone."""
+    source_tz = SOURCE_TIMEZONES.get(str(opportunity.get("source_key") or ""), timezone.utc)
+    return parse_closing(str(opportunity.get("closing") or ""), source_tz)
+
+
+def alberta_today(now: datetime | None = None) -> date:
+    """Today's date in Alberta."""
+    return (now or datetime.now(timezone.utc)).astimezone(ALBERTA_TZ).date()
+
+
+def days_until_close(closing: datetime, now: datetime | None = None) -> int:
+    """Calendar days from today to the closing date, both in Alberta time.
+
+    0 means it closes today and 1 means tomorrow. Counting whole 24-hour
+    periods instead understates by one day whenever the closing time of day
+    is earlier than the current time of day.
+    """
+    return (closing.astimezone(ALBERTA_TZ).date() - alberta_today(now)).days
+
+
+def has_closed(closing: datetime, now: datetime | None = None) -> bool:
+    """True once the closing time has passed."""
+    return closing <= (now or datetime.now(timezone.utc))
+
+
+def describe_days_until(days: int) -> str:
+    """Plain wording for a calendar-day count from days_until_close."""
+    if days < 0:
+        return "closed"
+    if days == 0:
+        return "closes today"
+    if days == 1:
+        return "closes tomorrow"
+    return f"closes in {days} days"
+
+
+def describe_closing(closing: datetime | None, now: datetime | None = None) -> str:
+    """Plain wording for how long is left, or '' when the closing is unknown."""
+    if closing is None:
+        return ""
+    if has_closed(closing, now):
+        return "closed"
+    return describe_days_until(days_until_close(closing, now))
+
+
+def format_closing(raw: str, source_tz: tzinfo) -> str:
+    """Show a source closing value in Alberta time with its UTC offset.
+
+    APC values become e.g. '2026-10-01 14:00 Alberta time (UTC-06:00)'.
+    CanadaBuys values also keep the published value so it can be checked
+    against the notice, e.g. '2026-10-21 15:00 Alberta time (UTC-06:00);
+    CanadaBuys: 16:00 UTC-05:00'. The offset is shown instead of a zone
+    abbreviation because tzdata labels Alberta's year-round UTC-06:00 as
+    "CST" from November 2026. Unparseable values are returned unchanged.
+    """
+    closing = parse_closing(raw, source_tz)
+    if closing is None:
+        return str(raw or "")
+    local = closing.astimezone(ALBERTA_TZ)
+    if is_date_only(raw):
+        return local.strftime("%Y-%m-%d")
+    offset = local.strftime("%z")
+    text = f"{local.strftime('%Y-%m-%d %H:%M')} Alberta time (UTC{offset[:3]}:{offset[3:]})"
+    if source_tz is CANADABUYS_SOURCE_TZ and parse_date(raw).tzinfo is None:
+        text += f"; CanadaBuys: {closing.strftime('%H:%M')} UTC-05:00"
+    return text
+
+
+def format_opportunity_closing(opportunity: dict) -> str:
+    """format_closing for a normalized opportunity."""
+    source_tz = SOURCE_TIMEZONES.get(str(opportunity.get("source_key") or ""), timezone.utc)
+    return format_closing(str(opportunity.get("closing") or ""), source_tz)
 
 
 def fetch_all_contracts() -> list[dict]:
@@ -816,29 +969,29 @@ def collect_alberta_candidates(
 def collect_alberta_matches(profile: dict, days: int) -> tuple[list[tuple], list[str]]:
     """Use the same retrieval and relevance gate for unified and APC matching."""
     now = datetime.now(timezone.utc)
+    today = alberta_today(now)
     capabilities = [str(kw) for kw in profile.get("capabilities", []) if str(kw).strip()]
     intent = str(profile.get("description") or "") + " " + "; ".join(capabilities)
     if not intent.strip():
         return [], ["No business capabilities were supplied for APC matching."]
     rows, warnings = collect_alberta_candidates(
         intent, profile_search=True,
-        close_start=now.strftime("%Y-%m-%d"),
-        close_end=(now + timedelta(days=days)).strftime("%Y-%m-%d"),
+        close_start=today.strftime("%Y-%m-%d"),
+        close_end=(today + timedelta(days=days)).strftime("%Y-%m-%d"),
     )
     scored = []
     for opp in rows:
-        closing = parse_date(str(opp.get("closeDateTime") or ""))
-        if not closing:
+        closing = alberta_closing(opp)
+        if not closing or has_closed(closing, now):
             continue
-        if closing.tzinfo is None:
-            closing = closing.replace(tzinfo=timezone.utc)
-        if not now <= closing <= now + timedelta(days=days):
+        days_until = days_until_close(closing, now)
+        if days_until > days:
             continue
         score, reasons = score_alberta_opportunity(opp, profile)
         # Region and imminent-close bonuses alone do not establish supplier fit.
         if not any("matches:" in reason for reason in reasons):
             continue
-        scored.append((score, (closing - now).days, opp, reasons))
+        scored.append((score, days_until, opp, reasons))
     scored.sort(key=lambda item: (-item[0], item[1]))
     return scored, warnings
 
@@ -863,7 +1016,7 @@ def render_alberta_opportunity_line(opp: dict, index: int) -> str:
     ref = opp.get("referenceNumber", "")
     org = str(opp.get("contractingOrganization") or "")[:70]
     category = ALBERTA_CATEGORY_LABELS.get(opp.get("categoryCode"), opp.get("categoryCode", ""))
-    close_date = opp.get("closeDateTime") or ""
+    close_date = format_closing(str(opp.get("closeDateTime") or ""), APC_SOURCE_TZ)
     solicitation = opp.get("solicitationTypeCode") or ""
     return (
         f"**{index}. {title}**\n"
@@ -900,7 +1053,12 @@ def render_alberta_details_markdown(data: dict) -> str:
     lines.append(f"- **Opportunity Type:** {opp.get('postingTypeCode', '')}")
     lines.append(f"- **Organization:** {organization}")
     lines.append(f"- **Posted:** {opp.get('postDateTime', '')}")
-    lines.append(f"- **Closing:** {opp.get('closeDateTime', '')}")
+    closing_raw = str(opp.get("closeDateTime") or "")
+    closing_text = format_closing(closing_raw, APC_SOURCE_TZ)
+    time_left = describe_closing(parse_closing(closing_raw, APC_SOURCE_TZ))
+    if time_left:
+        closing_text += f" ({time_left})"
+    lines.append(f"- **Closing:** {closing_text}")
     lines.append("")
 
     region = opp.get("regionOfDelivery") or ""
@@ -1055,15 +1213,12 @@ def score_alberta_opportunity(opp: dict, profile: dict) -> tuple[int, list[str]]
                 reasons.append(f"delivers to {part}")
                 break
 
-    closing_date = parse_date(str(opp.get("closeDateTime") or ""))
-    if closing_date:
-        now = datetime.now(timezone.utc)
-        if closing_date.tzinfo is None:
-            closing_date = closing_date.replace(tzinfo=timezone.utc)
-        days_until = (closing_date - now).days
+    closing_date = alberta_closing(opp)
+    if closing_date and not has_closed(closing_date):
+        days_until = days_until_close(closing_date)
         if 0 < days_until <= 14:
             score += 5
-            reasons.append(f"closes in {days_until} days")
+            reasons.append(describe_days_until(days_until))
 
     return score, reasons
 
@@ -1242,16 +1397,12 @@ def score_contract(contract: dict, profile: dict) -> tuple[int, list[str]]:
                 break
 
     # Closing soon bonus (urgency)
-    closing_str = get_field(contract, "tenderClosingDate-appelOffresDateCloture")
-    closing_date = parse_date(closing_str)
-    if closing_date:
-        now = datetime.now(timezone.utc)
-        if closing_date.tzinfo is None:
-            closing_date = closing_date.replace(tzinfo=timezone.utc)
-        days_until = (closing_date - now).days
+    closing_date = canadabuys_closing(contract)
+    if closing_date and not has_closed(closing_date):
+        days_until = days_until_close(closing_date)
         if 0 < days_until <= 14:
             score += 5
-            reasons.append(f"closes in {days_until} days")
+            reasons.append(describe_days_until(days_until))
 
     return score, reasons
 
@@ -1268,7 +1419,12 @@ def render_contract_markdown(contract: dict) -> str:
     lines.append(f"- **Reference:** {get_field(contract, 'referenceNumber-numeroReference', 'Reference Number')}")
     lines.append(f"- **Solicitation:** {get_field(contract, 'solicitationNumber-numeroSollicitation', 'Solicitation Number')}")
     lines.append(f"- **Status:** {get_field(contract, 'tenderStatus-appelOffresStatut-eng', 'Status')}")
-    lines.append(f"- **Closing Date:** {get_field(contract, 'tenderClosingDate-appelOffresDateCloture', 'Closing Date')}")
+    closing_raw = get_field(contract, 'tenderClosingDate-appelOffresDateCloture', 'Closing Date')
+    closing_text = format_closing(closing_raw, CANADABUYS_SOURCE_TZ)
+    time_left = describe_closing(parse_closing(closing_raw, CANADABUYS_SOURCE_TZ))
+    if time_left:
+        closing_text += f" — {time_left}"
+    lines.append(f"- **Closing Date:** {closing_text}")
     lines.append(f"- **Entity:** {get_field(contract, 'contractingEntityName-nomEntitContractante-eng', 'Organization')}")
     lines.append("")
 
@@ -1401,12 +1557,20 @@ def normalize_alberta_opportunity(opp: dict) -> dict[str, Any]:
 
 
 def opportunity_date(opportunity: dict, field: str) -> datetime:
-    """Parse a normalized opportunity date for sorting."""
-    parsed = parse_date(str(opportunity.get(field) or ""))
+    """Parse a normalized opportunity date for sorting.
+
+    Closing times are read in their source's time zone. Other fields keep
+    the older UTC reading, which only affects relative ordering.
+    """
+    raw = str(opportunity.get(field) or "")
+    if field == "closing":
+        parsed = opportunity_closing(opportunity)
+    else:
+        parsed = parse_date(raw)
+        if parsed and parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
     if not parsed:
         return datetime.max.replace(tzinfo=timezone.utc)
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed
 
 
@@ -1533,13 +1697,17 @@ def render_unified_opportunity_line(opportunity: dict, index: int, extra: str = 
     """Render a normalized opportunity for unified listings."""
     title = str(opportunity.get("title") or "Untitled opportunity")[:90]
     buyer = str(opportunity.get("buyer") or "")[:70]
+    closing_text = format_opportunity_closing(opportunity)
+    closing = opportunity_closing(opportunity)
+    if closing and has_closed(closing):
+        closing_text += " — closed"
     output = (
         f"**{index}. {title}**\n"
         f"   Source: {opportunity.get('source')}\n"
         f"   Reference: `{opportunity.get('reference', '')}`\n"
         f"   Buyer: {buyer}\n"
         f"   Category: {opportunity.get('category', '')}\n"
-        f"   Closing: {opportunity.get('closing', '')}\n"
+        f"   Closing: {closing_text}\n"
     )
     if extra:
         output += f"   {extra}\n"
@@ -1594,7 +1762,7 @@ def collect_unified_deadlines(args: dict) -> tuple[list[dict], list[str]]:
     category = args.get("category", "")
     province = args.get("province", "")
     now = datetime.now(timezone.utc)
-    close_end = now + timedelta(days=days)
+    today = alberta_today(now)
     warnings = []
     opportunities = []
 
@@ -1604,12 +1772,10 @@ def collect_unified_deadlines(args: dict) -> tuple[list[dict], list[str]]:
         for contract in contracts:
             if not federal_contract_matches(contract, "", province, category):
                 continue
-            closing = parse_date(get_field(contract, "tenderClosingDate-appelOffresDateCloture"))
-            if not closing:
+            closing = canadabuys_closing(contract)
+            if not closing or has_closed(closing, now):
                 continue
-            if closing.tzinfo is None:
-                closing = closing.replace(tzinfo=timezone.utc)
-            if now <= closing <= close_end:
+            if days_until_close(closing, now) <= days:
                 opportunities.append(normalize_canadabuys_contract(contract))
 
     if include_source(source, "alberta"):
@@ -1626,10 +1792,14 @@ def collect_unified_deadlines(args: dict) -> tuple[list[dict], list[str]]:
                     limit=limit,
                     sort_field="CloseDateTime",
                     sort_direction="asc",
-                    close_start=now.strftime("%Y-%m-%d"),
-                    close_end=close_end.strftime("%Y-%m-%d"),
+                    close_start=today.strftime("%Y-%m-%d"),
+                    close_end=(today + timedelta(days=days)).strftime("%Y-%m-%d"),
                 )
-                opportunities.extend(normalize_alberta_opportunity(opp) for opp in data.get("values", []))
+                for opp in data.get("values", []):
+                    closing = alberta_closing(opp)
+                    if closing and has_closed(closing, now):
+                        continue
+                    opportunities.append(normalize_alberta_opportunity(opp))
             except RuntimeError as exc:
                 warnings.append(f"Alberta APC unavailable: {exc}")
 
@@ -1646,13 +1816,11 @@ def collect_unified_matches(profile: dict, days: int, limit: int) -> tuple[list[
     contracts, federal_warnings = load_contracts_for_unified()
     warnings.extend(federal_warnings)
     for contract in contracts:
-        closing = parse_date(get_field(contract, "tenderClosingDate-appelOffresDateCloture"))
-        if not closing:
+        closing = canadabuys_closing(contract)
+        if not closing or has_closed(closing, now):
             continue
-        if closing.tzinfo is None:
-            closing = closing.replace(tzinfo=timezone.utc)
-        days_until = (closing - now).days
-        if days_until < 0 or days_until > days:
+        days_until = days_until_close(closing, now)
+        if days_until > days:
             continue
         score, reasons = score_contract(contract, profile)
         if score > 0:
@@ -1730,7 +1898,12 @@ async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> 
 
 
 def _opportunity_record(opportunity: dict) -> dict[str, Any]:
-    """Return a JSON-safe normalized opportunity record for structured output."""
+    """Return a JSON-safe normalized opportunity record for structured output.
+
+    ``closing`` is the value exactly as the source published it; ``closes_at``
+    is the same moment as ISO 8601 in Alberta time with its UTC offset.
+    """
+    closing = opportunity_closing(opportunity)
     return {
         "title": str(opportunity.get("title") or ""),
         "source": str(opportunity.get("source") or ""),
@@ -1738,6 +1911,7 @@ def _opportunity_record(opportunity: dict) -> dict[str, Any]:
         "buyer": str(opportunity.get("buyer") or ""),
         "category": str(opportunity.get("category") or ""),
         "closing": str(opportunity.get("closing") or ""),
+        "closes_at": closing.astimezone(ALBERTA_TZ).isoformat() if closing else "",
         "region": str(opportunity.get("region") or ""),
         "solicitation": str(opportunity.get("solicitation") or ""),
     }
@@ -1799,14 +1973,11 @@ def _render_deadlines_markdown(opportunities: list[dict], warnings: list[str], d
             output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
         return output
 
-    now = datetime.now(timezone.utc)
     output = f"# Opportunities Closing Within {days} Days\n\n"
     for i, opportunity in enumerate(opportunities, 1):
-        closing = opportunity_date(opportunity, "closing")
-        days_until = ""
-        if closing != datetime.max.replace(tzinfo=timezone.utc):
-            days_until = f"Closes in {(closing - now).days} days"
-        output += render_unified_opportunity_line(opportunity, i, days_until) + "\n"
+        time_left = describe_closing(opportunity_closing(opportunity))
+        extra = time_left[:1].upper() + time_left[1:] if time_left else ""
+        output += render_unified_opportunity_line(opportunity, i, extra) + "\n"
 
     if warnings:
         output += "## Warnings\n"
@@ -1837,7 +2008,7 @@ def _render_matches_markdown(
     for i, (score, days_until, opportunity, reasons) in enumerate(scored[:limit], 1):
         extra = f"Match Score: {score}"
         if days_until != 9999:
-            extra += f" | Closes in {days_until} days"
+            extra += f" | {describe_days_until(days_until).capitalize()}"
         output += render_unified_opportunity_line(opportunity, i, extra)
         output += f"   Why it matches: {'; '.join(reasons)}\n\n"
 
@@ -1933,7 +2104,7 @@ async def search_contracts(args: dict) -> str:
         title = get_field(c, "title-titre-eng", "title-titre-fra")[:60]
         output += f"**{i}. {title}**\n"
         output += f"   Reference: {get_field(c, 'referenceNumber-numeroReference')}\n"
-        output += f"   Closing: {get_field(c, 'tenderClosingDate-appelOffresDateCloture')}\n"
+        output += f"   Closing: {format_closing(get_field(c, 'tenderClosingDate-appelOffresDateCloture'), CANADABUYS_SOURCE_TZ)}\n"
         output += f"   Entity: {get_field(c, 'contractingEntityName-nomEntitContractante-eng')}\n\n"
 
     return output
@@ -1971,17 +2142,12 @@ async def list_upcoming_deadlines(args: dict) -> str:
             if province not in regions:
                 continue
 
-        closing_str = get_field(contract, "tenderClosingDate-appelOffresDateCloture")
-        closing_date = parse_date(closing_str)
+        closing_date = canadabuys_closing(contract)
 
-        if closing_date:
-            if closing_date.tzinfo is None:
-                closing_date = closing_date.replace(tzinfo=timezone.utc)
-
-            if closing_date > now:
-                days_until = (closing_date - now).days
-                if days_until <= days:
-                    upcoming.append((days_until, contract))
+        if closing_date and not has_closed(closing_date, now):
+            days_until = days_until_close(closing_date, now)
+            if days_until <= days:
+                upcoming.append((closing_date, days_until, contract))
 
     upcoming.sort(key=lambda x: x[0])
 
@@ -1989,10 +2155,11 @@ async def list_upcoming_deadlines(args: dict) -> str:
         return f"No contracts closing within {days} days."
 
     output = f"Contracts closing within {days} days:\n\n"
-    for days_until, c in upcoming[:20]:
+    for _closing, days_until, c in upcoming[:20]:
         title = get_field(c, "title-titre-eng")[:50]
+        closing_text = format_closing(get_field(c, "tenderClosingDate-appelOffresDateCloture"), CANADABUYS_SOURCE_TZ)
         output += f"**{title}**\n"
-        output += f"   Closes in: {days_until} days\n"
+        output += f"   Closing: {closing_text} ({describe_days_until(days_until)})\n"
         output += f"   Reference: {get_field(c, 'referenceNumber-numeroReference')}\n\n"
 
     return output
@@ -2091,16 +2258,15 @@ async def find_opportunities(args: dict) -> str:
     scored = []
     for contract in contracts:
         # Check if closing date is within range
-        closing_str = get_field(contract, "tenderClosingDate-appelOffresDateCloture")
-        closing_date = parse_date(closing_str)
+        closing_date = canadabuys_closing(contract)
 
         if closing_date:
-            if closing_date.tzinfo is None:
-                closing_date = closing_date.replace(tzinfo=timezone.utc)
-            days_until = (closing_date - now).days
+            if has_closed(closing_date, now):
+                continue  # Skip expired
+            days_until = days_until_close(closing_date, now)
 
-            if days_until < 0 or days_until > days:
-                continue  # Skip expired or too far out
+            if days_until > days:
+                continue  # Skip too far out
 
             score, reasons = score_contract(contract, profile)
             if score > 0:
@@ -2122,7 +2288,7 @@ async def find_opportunities(args: dict) -> str:
         entity = get_field(contract, "contractingEntityName-nomEntitContractante-eng")[:40]
 
         output += f"### {i}. {title}\n"
-        output += f"**Match Score:** {score} | **Closes in:** {days_until} days\n"
+        output += f"**Match Score:** {score} | **Closing:** {format_closing(get_field(contract, 'tenderClosingDate-appelOffresDateCloture'), CANADABUYS_SOURCE_TZ)} ({describe_days_until(days_until)})\n"
         output += f"**Why it matches:** {'; '.join(reasons)}\n"
         output += f"**Entity:** {entity}\n"
         output += f"**Reference:** `{ref}`\n\n"
@@ -2236,7 +2402,7 @@ async def daily_bid_brief(args: dict) -> str:
         for i, (score, days_until, opportunity, reasons) in enumerate(matches[:limit], 1):
             extra = f"Score {score}"
             if days_until != 9999:
-                extra += f" | closes in {days_until} days"
+                extra += f" | {describe_days_until(days_until)}"
             output += render_unified_opportunity_line(opportunity, i, extra)
             output += f"   Reason: {'; '.join(reasons)}\n\n"
     else:
@@ -2244,12 +2410,9 @@ async def daily_bid_brief(args: dict) -> str:
 
     output += "## Closing Soon\n"
     if deadlines:
-        now = datetime.now(timezone.utc)
         for i, opportunity in enumerate(deadlines[:limit], 1):
-            closing = opportunity_date(opportunity, "closing")
-            extra = ""
-            if closing != datetime.max.replace(tzinfo=timezone.utc):
-                extra = f"Closes in {(closing - now).days} days"
+            time_left = describe_closing(opportunity_closing(opportunity))
+            extra = time_left.capitalize() if time_left else ""
             output += render_unified_opportunity_line(opportunity, i, extra) + "\n"
     else:
         output += "No upcoming deadlines found.\n\n"
@@ -2418,8 +2581,9 @@ async def list_alberta_deadlines(args: dict) -> str:
     limit = clamp_int(args.get("limit"), default=20, minimum=1, maximum=50)
     category = args.get("category", "")
     now = datetime.now(timezone.utc)
-    close_start = now.strftime("%Y-%m-%d")
-    close_end = (now + timedelta(days=days)).strftime("%Y-%m-%d")
+    today = alberta_today(now)
+    close_start = today.strftime("%Y-%m-%d")
+    close_end = (today + timedelta(days=days)).strftime("%Y-%m-%d")
 
     try:
         data = search_alberta_api(
@@ -2434,13 +2598,22 @@ async def list_alberta_deadlines(args: dict) -> str:
     except RuntimeError as exc:
         return f"Alberta deadline search failed: {exc}"
 
-    rows = data.get("values", [])
+    rows = []
+    for opp in data.get("values", []):
+        closing = alberta_closing(opp)
+        if closing and has_closed(closing, now):
+            continue
+        rows.append(opp)
     if not rows:
         return f"No Alberta opportunities closing within {days} days."
 
     output = f"# Alberta Opportunities Closing Within {days} Days\n\n"
     for i, opp in enumerate(rows[:limit], 1):
-        output += render_alberta_opportunity_line(opp, i) + "\n"
+        time_left = describe_closing(alberta_closing(opp), now)
+        output += render_alberta_opportunity_line(opp, i)
+        if time_left:
+            output += f"   {time_left.capitalize()}\n"
+        output += "\n"
     return output
 
 
@@ -2492,7 +2665,7 @@ async def find_alberta_opportunities(args: dict) -> str:
         output += f"### {i}. {title}\n"
         output += f"**Match Score:** {score}"
         if days_until != 9999:
-            output += f" | **Closes in:** {days_until} days"
+            output += f" | **Closing:** {format_closing(str(opp.get('closeDateTime') or ''), APC_SOURCE_TZ)} ({describe_days_until(days_until)})"
         output += "\n"
         output += f"**Why it matches:** {'; '.join(reasons)}\n"
         output += f"**Organization:** {org}\n"
