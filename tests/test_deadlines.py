@@ -69,7 +69,7 @@ class ClosingHelperTests(unittest.TestCase):
         self.assertEqual(service.describe_closing(closing, MORNING), "closes today")
         self.assertEqual(
             service.format_closing("2026-10-01T14:00:00", service.APC_SOURCE_TZ),
-            "2026-10-01 14:00 MDT",
+            "2026-10-01 14:00 Alberta time (UTC-06:00)",
         )
 
     def test_apc_close_a_week_out_counts_calendar_days(self):
@@ -99,20 +99,31 @@ class ClosingHelperTests(unittest.TestCase):
         self.assertEqual(closing.astimezone(timezone.utc).hour, 21)
         self.assertEqual(
             service.format_closing("2026-10-21T16:00:00", service.CANADABUYS_SOURCE_TZ),
-            "2026-10-21 15:00 MDT (CanadaBuys: 16:00 UTC-05:00)",
+            "2026-10-21 15:00 Alberta time (UTC-06:00); CanadaBuys: 16:00 UTC-05:00",
         )
 
     def test_canadabuys_offset_does_not_follow_daylight_time(self):
-        # December: UTC-05:00 is still the offset, and Alberta is on MST.
+        # December: CanadaBuys is still UTC-05:00.
+        closing = service.parse_closing("2026-12-01T14:00:00", service.CANADABUYS_SOURCE_TZ)
+        self.assertEqual(closing.astimezone(timezone.utc).hour, 19)
+
+    def test_alberta_stays_on_utc_minus_six_from_november_2026(self):
+        # tzdata 2026c: Alberta keeps UTC-06:00 year-round from 2026-11-01.
+        # An older host database would say UTC-07:00 here.
+        winter = datetime(2026, 12, 1, 19, 0, tzinfo=timezone.utc).astimezone(service.ALBERTA_TZ)
+        self.assertEqual(winter.utcoffset().total_seconds(), -6 * 3600)
         self.assertEqual(
             service.format_closing("2026-12-01T14:00:00", service.CANADABUYS_SOURCE_TZ),
-            "2026-12-01 12:00 MST (CanadaBuys: 14:00 UTC-05:00)",
+            "2026-12-01 13:00 Alberta time (UTC-06:00); CanadaBuys: 14:00 UTC-05:00",
         )
+        # An APC 14:00 close in December is 20:00 UTC, not 21:00.
+        apc = service.parse_closing("2026-12-01T14:00:00", service.APC_SOURCE_TZ)
+        self.assertEqual(apc.astimezone(timezone.utc).hour, 20)
 
     def test_explicit_offsets_are_respected(self):
         self.assertEqual(
             service.format_closing("2026-09-22T16:00:00Z", service.APC_SOURCE_TZ),
-            "2026-09-22 10:00 MDT",
+            "2026-09-22 10:00 Alberta time (UTC-06:00)",
         )
 
     def test_bare_date_closes_at_end_of_day(self):
@@ -167,7 +178,7 @@ class ClosingWorkflowTests(unittest.TestCase):
         self.assertEqual([o["reference"] for o in opportunities], ["AB-2026-06315", "cb-open"])
 
         output = service._render_deadlines_markdown(opportunities, warnings, 14)
-        self.assertIn("Closing: 2026-10-01 14:00 MDT", output)
+        self.assertIn("Closing: 2026-10-01 14:00 Alberta time (UTC-06:00)", output)
         self.assertIn("Closes today", output)
         self.assertNotIn("-1 days", output)
 
@@ -214,7 +225,7 @@ class ClosingWorkflowTests(unittest.TestCase):
         line = service.render_unified_opportunity_line(
             service.normalize_canadabuys_contract(canadabuys_row("cb-old", "Old notice", "2025-08-26T16:00:00")), 1
         )
-        self.assertIn("Closing: 2025-08-26 15:00 MDT (CanadaBuys: 16:00 UTC-05:00) (closed)", line)
+        self.assertIn("Closing: 2025-08-26 15:00 Alberta time (UTC-06:00); CanadaBuys: 16:00 UTC-05:00 — closed", line)
 
 
 class ExtensionClosingTests(unittest.TestCase):
@@ -249,8 +260,8 @@ class ExtensionClosingTests(unittest.TestCase):
             {"reference": "cb-old", "title": "Old notice", "closing": "2025-08-26T16:00:00"},
         ])
         listing = asyncio.run(self.extensions.list_watchlist({}))
-        self.assertIn("Closing: 2026-10-08 14:00 MDT (closes in 7 days)", listing)
-        self.assertIn("Closing: 2025-08-26 15:00 MDT (CanadaBuys: 16:00 UTC-05:00) (closed 401 days ago)", listing)
+        self.assertIn("Closing: 2026-10-08 14:00 Alberta time (UTC-06:00) (closes in 7 days)", listing)
+        self.assertIn("Closing: 2025-08-26 15:00 Alberta time (UTC-06:00); CanadaBuys: 16:00 UTC-05:00 (closed 401 days ago)", listing)
 
 
 if __name__ == "__main__":

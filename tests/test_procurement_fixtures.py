@@ -114,8 +114,8 @@ class ProcurementFixtureIngestTest(unittest.TestCase):
         self.assertIn("Source: Alberta Purchasing Connection", output)
         # Closing times render in Alberta time; CanadaBuys also keeps its
         # published UTC-05:00 value so it can be checked against the notice.
-        self.assertIn("Closing: 2026-09-15 13:00 MDT (CanadaBuys: 14:00 UTC-05:00)", output)
-        self.assertIn("Closing: 2026-09-22 10:00 MDT", output)
+        self.assertIn("Closing: 2026-09-15 13:00 Alberta time (UTC-06:00); CanadaBuys: 14:00 UTC-05:00", output)
+        self.assertIn("Closing: 2026-09-22 10:00 Alberta time (UTC-06:00)", output)
         self.assertNotIn("CanadaBuys data unavailable", output)
         self.assertNotIn("Alberta APC unavailable", output)
 

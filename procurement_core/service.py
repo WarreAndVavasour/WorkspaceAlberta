@@ -178,9 +178,26 @@ def parse_date(value: str) -> datetime | None:
 
 # ============== Closing times ==============
 
+def load_alberta_tz() -> ZoneInfo:
+    """America/Edmonton from the bundled tzdata package, else the system database.
+
+    tzdata 2026c (pip tzdata 2026.3) carries Alberta's move to year-round
+    UTC-06:00 from 2026-11-01. A host database older than that puts Alberta
+    an hour off from November on, so the packaged copy is preferred.
+    """
+    try:
+        from importlib import resources
+
+        path = resources.files("tzdata").joinpath("zoneinfo").joinpath("America").joinpath("Edmonton")
+        with path.open("rb") as handle:
+            return ZoneInfo.from_file(handle, key="America/Edmonton")
+    except (ImportError, OSError, ValueError):
+        return ZoneInfo("America/Edmonton")
+
+
 # Deadlines are counted and shown in Alberta time, because that is where the
 # businesses reading them are.
-ALBERTA_TZ = ZoneInfo("America/Edmonton")
+ALBERTA_TZ = load_alberta_tz()
 
 # APC returns closing times without an offset, in Alberta local time
 # (the usual APC close is 14:00:59 local).
@@ -283,12 +300,14 @@ def describe_closing(closing: datetime | None, now: datetime | None = None) -> s
 
 
 def format_closing(raw: str, source_tz: tzinfo) -> str:
-    """Show a source closing value in Alberta time with its zone abbreviation.
+    """Show a source closing value in Alberta time with its UTC offset.
 
-    APC values become e.g. '2026-10-01 14:00 MDT'. CanadaBuys values also
-    keep the published value so it can be checked against the notice, e.g.
-    '2026-10-21 15:00 MDT (CanadaBuys: 16:00 UTC-05:00)'. Unparseable values
-    are returned unchanged.
+    APC values become e.g. '2026-10-01 14:00 Alberta time (UTC-06:00)'.
+    CanadaBuys values also keep the published value so it can be checked
+    against the notice, e.g. '2026-10-21 15:00 Alberta time (UTC-06:00);
+    CanadaBuys: 16:00 UTC-05:00'. The offset is shown instead of a zone
+    abbreviation because tzdata labels Alberta's year-round UTC-06:00 as
+    "CST" from November 2026. Unparseable values are returned unchanged.
     """
     closing = parse_closing(raw, source_tz)
     if closing is None:
@@ -296,9 +315,10 @@ def format_closing(raw: str, source_tz: tzinfo) -> str:
     local = closing.astimezone(ALBERTA_TZ)
     if is_date_only(raw):
         return local.strftime("%Y-%m-%d")
-    text = local.strftime("%Y-%m-%d %H:%M %Z")
+    offset = local.strftime("%z")
+    text = f"{local.strftime('%Y-%m-%d %H:%M')} Alberta time (UTC{offset[:3]}:{offset[3:]})"
     if source_tz is CANADABUYS_SOURCE_TZ and parse_date(raw).tzinfo is None:
-        text += f" (CanadaBuys: {closing.strftime('%H:%M')} UTC-05:00)"
+        text += f"; CanadaBuys: {closing.strftime('%H:%M')} UTC-05:00"
     return text
 
 
@@ -1680,7 +1700,7 @@ def render_unified_opportunity_line(opportunity: dict, index: int, extra: str = 
     closing_text = format_opportunity_closing(opportunity)
     closing = opportunity_closing(opportunity)
     if closing and has_closed(closing):
-        closing_text += " (closed)"
+        closing_text += " — closed"
     output = (
         f"**{index}. {title}**\n"
         f"   Source: {opportunity.get('source')}\n"
