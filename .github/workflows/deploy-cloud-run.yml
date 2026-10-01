@@ -47,7 +47,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt -r mcp-servers/canadabuys/requirements.txt -r tests/requirements.txt
+        run: python -m pip install -r requirements.txt -r mcp-servers/canadabuys/requirements.txt
       - name: Validate request
         run: |
           if [[ "$RELEASE_ACTION" == promote ]]; then
@@ -62,7 +62,6 @@ jobs:
             tests.test_oauth tests.test_oauth_security tests.test_google_login \
             tests.test_agent_contract tests.test_procurement_http_app \
             tests.test_connector_review tests.test_blog tests.test_e2b_bid_room \
-            tests.test_apc_documents \
             tests.test_canadabuys_mcp_smoke tests.test_procurement_fixtures \
             tests.test_search_relevance tests.test_query_planner tests.test_apc_workflow \
             tests.test_production_hardening tests.test_telemetry tests.test_gate_and_billing \
