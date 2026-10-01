@@ -11,7 +11,7 @@ jobs:
           python-version: '3.x'
       - name: pip install
         if: ${{ hashFiles('requirements.txt') != '' }}
-        run: pip install -r requirements.txt -r mcp-servers/canadabuys/requirements.txt
+        run: pip install -r requirements.txt -r mcp-servers/canadabuys/requirements.txt -r tests/requirements.txt
       - name: unit tests
         if: ${{ hashFiles('requirements.txt') != '' }}
         # Offline suites. E2B payload/cleanup tests use mocks, never live keys.
@@ -25,6 +25,7 @@ jobs:
             tests.test_blog \
             tests.test_icons \
             tests.test_e2b_bid_room \
+            tests.test_apc_documents \
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \
             tests.test_procurement_fixtures \

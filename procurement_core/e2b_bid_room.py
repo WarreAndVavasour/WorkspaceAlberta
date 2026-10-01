@@ -60,6 +60,8 @@ from typing import Any
 from urllib.parse import quote, unquote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
+from procurement_core.apc_documents import apc_posting_url, resolve_apc_documents
+from procurement_core.document_coverage import coverage_warnings, document_coverage
 from procurement_core.cohere_parse import (
     EXTRACT_FALLBACK,
     PARSE_DEFAULT_MAX_PAGES,
@@ -174,9 +176,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 __COHERE_PARSE_HELPERS__
+__APC_DOCUMENT_HELPERS__
+__DOCUMENT_COVERAGE_HELPERS__
 
 payload = json.loads(__PAYLOAD_JSON__)
 work_dir = Path("/tmp/workspacealberta-bid-room")
@@ -227,10 +231,19 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def read_url(url):
+class PublicDocumentRedirects(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, message, headers, new_url):
+        public_document_url(new_url, resolve=True)
+        return super().redirect_request(request, fp, code, message, headers, new_url)
+
+
+def read_url(url, public_apc=False):
     request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
     try:
-        with urlopen(request, timeout=90) as response:
+        if public_apc:
+            public_document_url(url, resolve=True)
+        open_url = build_opener(PublicDocumentRedirects()).open if public_apc else urlopen
+        with open_url(request, timeout=90) as response:
             content_length = response.headers.get("Content-Length")
             if content_length and int(content_length) > MAX_FILE_BYTES:
                 return None, response.headers, f"file too large from content-length: {content_length}"
@@ -271,10 +284,15 @@ def extract_pdf(path):
 
     reader = PdfReader(str(path))
     pages = []
-    for page in reader.pages[:80]:
+    total_pages = len(reader.pages)
+    for index, page in enumerate(reader.pages[:80], 1):
         pages.append(page.extract_text() or "")
         if sum(len(item) for item in pages) >= MAX_DOC_CHARS:
+            if index < total_pages:
+                warnings.append(f"{path.name}: PDF extraction truncated at page {index} of {total_pages}.")
             break
+    if total_pages > 80:
+        warnings.append(f"{path.name}: PDF extraction limited to 80 of {total_pages} pages.")
     return "\n".join(pages)
 
 
@@ -333,8 +351,12 @@ def extract_zip(path):
     outputs = []
     methods = []
     with zipfile.ZipFile(path) as archive:
+        if len(archive.infolist()) > MAX_ZIP_MEMBERS:
+            warnings.append(f"{path.name}: ZIP extraction limited to {MAX_ZIP_MEMBERS} members.")
         for member in archive.infolist()[:MAX_ZIP_MEMBERS]:
             if member.is_dir() or member.file_size > MAX_FILE_BYTES:
+                if not member.is_dir():
+                    warnings.append(f"{path.name}: {member.filename} exceeds the extraction size limit.")
                 continue
             member_name = safe_name(member.filename, "zip_member")
             target = extract_dir / f"{path.stem}_{member_name}"
@@ -347,6 +369,7 @@ def extract_zip(path):
                     outputs.append(f"--- {member.filename} ---\n{text[:MAX_DOC_CHARS]}")
             except Exception as exc:
                 methods.append("fallback")
+                warnings.append(f"{path.name}: {member.filename} extraction failed: {exc}")
                 outputs.append(f"--- {member.filename} ---\n[Extraction failed: {exc}]")
     parse_model = str((payload.get("parse") or {}).get("model") or PARSE_MODEL_DEFAULT)
     method = parse_model if parse_model in methods else "fallback"
@@ -902,6 +925,9 @@ def call_cohere(evidence_bundle):
             "questions_to_ask": ["question strings"],
             "next_actions": ["action strings"],
         },
+        "document_coverage": evidence_bundle.get("coverage", {}),
+        "warnings": evidence_bundle.get("warnings", []),
+        "review_scope": "Missing, failed, empty, or truncated files mean an incomplete review. Include those gaps in missing_information; do not claim complete document coverage.",
         "output_rule": (
             "Your entire response must be one valid JSON object. The first character "
             "must be { and the last character must be }. Do not include analysis, "
@@ -1124,7 +1150,17 @@ for inline in payload.get("documents", []):
         "error": "",
         "extract_method": EXTRACT_INLINE,
         "parse_error": "",
+        "is_tender_document": False,
+        "truncated": len(text) > MAX_DOC_CHARS,
     })
+
+for item in payload.get("document_manifest", []):
+    if item.get("status") != "selected":
+        documents.append({
+            **item, "source": item.get("kind", "attachment"), "bytes": 0,
+            "sha256": "", "text": "", "text_length": 0,
+            "extract_method": "none", "parse_error": "", "is_tender_document": True,
+        })
 
 for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.get("limits", {}).get("max_attachments", 5))], 1):
     url = attachment.get("url", "")
@@ -1141,8 +1177,14 @@ for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.
         "error": "",
         "extract_method": EXTRACT_FALLBACK,
         "parse_error": "",
+        "document_id": attachment.get("document_id", ""),
+        "version": attachment.get("version"),
+        "amendment_number": attachment.get("amendment_number"),
+        "provenance": attachment.get("provenance", "source_attachment"),
+        "is_tender_document": attachment.get("kind") != "apc_external_page",
+        "truncated": False,
     }
-    data, headers, error = read_url(url)
+    data, headers, error = read_url(url, public_apc=attachment.get("kind") in {"apc_document", "apc_addendum"})
     if error:
         record["status"] = "download_failed"
         record["error"] = error
@@ -1150,6 +1192,10 @@ for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.
         continue
     record["bytes"] = len(data)
     record["sha256"] = sha256_bytes(data)
+    if attachment.get("expected_mime_type") == "application/pdf" and b"%PDF-" not in data[:1024]:
+        record.update(status="unexpected_content", error="Expected a PDF; received a login/error page or another file type.")
+        documents.append(record)
+        continue
     path = download_dir / safe_name(name or url, f"attachment-{index}")
     path.write_bytes(data)
     try:
@@ -1161,6 +1207,7 @@ for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.
         record["extract_method"] = extract_method
         record["parse_error"] = parse_error
         record["status"] = "extracted" if text.strip() else "empty"
+        record["truncated"] = len(text) > MAX_DOC_CHARS
     except Exception as exc:
         record["status"] = "extract_failed"
         record["error"] = str(exc)
@@ -1172,10 +1219,15 @@ text_documents = [
     if item.get("text")
 ]
 evidence = extract_evidence(text_documents, payload.get("profile", {}))
+if sum(len(item["text"]) + len(item["name"]) + 5 for item in text_documents) > MAX_COHERE_CHARS:
+    warnings.append("The evidence exceeds the model text limit; model coverage is incomplete.")
+if any(item.get("truncated") for item in documents):
+    warnings.append("One or more document extracts were truncated by the text limit.")
 document_summaries = [
     {key: item.get(key) for key in (
         "name", "source", "url", "bytes", "sha256", "status",
         "text_length", "error", "extract_method", "parse_error",
+        "document_id", "version", "amendment_number", "provenance", "is_tender_document", "truncated",
     )}
     for item in documents
 ]
@@ -1183,10 +1235,14 @@ parse_summary = summarize_extract_methods(
     documents,
     str((payload.get("parse") or {}).get("model") or PARSE_MODEL_DEFAULT),
 )
+coverage = document_coverage(document_summaries, warnings)
+warnings.extend(coverage_warnings(coverage))
 evidence_bundle = {
     "opportunity": payload.get("opportunity", {}),
     "profile": payload.get("profile", {}),
     "documents": document_summaries,
+    "coverage": coverage,
+    "warnings": warnings,
     "evidence": {
         "matched_terms": evidence["matched_terms"],
         "requirements": evidence["requirements"],
@@ -1215,6 +1271,7 @@ artifact = {
     "cohere_analysis": cohere_analysis,
     "cohere_tool_calls": cohere_tool_calls,
     "parse": parse_summary,
+    "coverage": coverage,
     "warnings": warnings,
 }
 
@@ -1484,19 +1541,24 @@ def build_apc_bid_room_payload(
     *,
     business_context: str = "",
     max_attachments: int = MAX_ATTACHMENTS,
+    apc_document_urls: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build an E2B payload for an Alberta Purchasing Connection opportunity."""
     opp = details.get("opportunity") or details
     reference = str(opp.get("referenceNumber") or "")
     title = str(opp.get("title") or opp.get("shortTitle") or "Untitled Alberta opportunity")
+    region = opp.get("regionOfDelivery") or ""
+    region_text = ", ".join(str(item) for item in region) if isinstance(region, list) else str(region)
+    buyer = opp.get("contractingOrganization") or (title.split(" - ", 1)[0] if " - " in title else "")
     text_parts = [
         f"Title: {title}",
         f"Reference: {reference}",
         f"Solicitation: {opp.get('solicitationNumber', '')}",
-        f"Buyer: {opp.get('contractingOrganization', '')}",
+        f"Buyer: {buyer}",
         f"Closing: {opp.get('closeDateTime', '')}",
         f"Category: {opp.get('categoryCode', '')}",
-        f"Region: {', '.join(str(item) for item in (opp.get('regionOfDelivery') or []))}",
+        f"Region: {region_text}",
+        f"Email submission: {opp.get('emailSubmissionValue', '')}" if opp.get("useEmailSubmission") else "",
         str(opp.get("projectDescription") or ""),
         str(opp.get("additionalRequirements") or ""),
         str(opp.get("submissionDetails") or ""),
@@ -1507,9 +1569,9 @@ def build_apc_bid_room_payload(
     if commodity_codes:
         text_parts.append("Commodity codes: " + json.dumps(commodity_codes, ensure_ascii=False))
 
-    attachments = []
+    manifest, attachments = resolve_apc_documents(details, apc_document_urls, max_attachments)
     external_link = str(opp.get("externalOriginLink") or "")
-    if external_link:
+    if external_link and not manifest and max_attachments > 0:
         attachments.append({
             "url": external_link,
             "name": _name_from_url(external_link, "apc-external-page.html"),
@@ -1521,10 +1583,10 @@ def build_apc_bid_room_payload(
             "reference": reference,
             "solicitation": str(opp.get("solicitationNumber") or ""),
             "title": title,
-            "buyer": str(opp.get("contractingOrganization") or ""),
+            "buyer": str(buyer),
             "status": str(opp.get("statusCode") or ""),
             "closing": str(opp.get("closeDateTime") or ""),
-            "url": external_link,
+            "url": apc_posting_url(reference, os.environ.get("ALBERTA_APC_APP_BASE", "https://purchasing.alberta.ca")),
         },
         profile=profile_for_bid_room(profile, business_context),
         documents=[{
@@ -1533,6 +1595,8 @@ def build_apc_bid_room_payload(
             "source": "apc_details",
         }],
         attachments=attachments[:max_attachments],
+        document_manifest=manifest,
+        warnings=(["No procurement files were discovered; only notice/external-page evidence is available."] if not manifest else []),
     )
 
 
@@ -1544,6 +1608,7 @@ def build_process_payload(
     attachments: list[dict[str, Any]],
     warnings: list[str] | None = None,
     cohere_enabled: bool = True,
+    document_manifest: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the normalized sandbox payload."""
     return {
@@ -1551,6 +1616,7 @@ def build_process_payload(
         "profile": profile,
         "documents": documents,
         "attachments": attachments[:MAX_ATTACHMENTS],
+        "document_manifest": list(document_manifest or []),
         "warnings": list(warnings or []),
         "limits": {
             "max_attachments": MAX_ATTACHMENTS,
@@ -1614,6 +1680,11 @@ def build_sandbox_command(payload: dict[str, Any]) -> str:
     """Build a Python command that processes a bid package inside E2B."""
     helpers = (Path(__file__).resolve().parent / "cohere_parse.py").read_text(encoding="utf-8")
     script = SANDBOX_PROCESSOR.replace("__COHERE_PARSE_HELPERS__", helpers, 1)
+    for marker, filename in (
+        ("__APC_DOCUMENT_HELPERS__", "apc_documents.py"),
+        ("__DOCUMENT_COVERAGE_HELPERS__", "document_coverage.py"),
+    ):
+        script = script.replace(marker, (Path(__file__).resolve().parent / filename).read_text(encoding="utf-8"), 1)
     script = script.replace("__PAYLOAD_JSON__", repr(json.dumps(payload)))
     return "python3 - <<'PY'\n" + script + "\nPY"
 
@@ -1655,6 +1726,7 @@ def validate_bid_room_artifact(
     artifact: dict[str, Any],
     *,
     require_cohere: bool = False,
+    expected_documents: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Validate the host-visible bid room artifact."""
     for field in ("processor", "opportunity", "profile", "documents", "evidence"):
@@ -1687,6 +1759,24 @@ def validate_bid_room_artifact(
             method = document.get("extract_method")
             if method is not None and not isinstance(method, str):
                 raise ValueError("Bid room document extract_method must be a string.")
+    for expected in expected_documents or []:
+        matching = [item for item in artifact["documents"] if (
+            item.get("document_id") == expected.get("document_id")
+            if expected.get("document_id") else item.get("name") == expected.get("name")
+        )]
+        if matching:
+            for item in matching:
+                item["is_tender_document"] = True
+        else:
+            artifact["documents"].append({
+                **expected, "status": "not_returned", "text_length": 0,
+                "is_tender_document": True, "error": "Expected document absent from processor output.",
+            })
+    warnings = artifact.setdefault("warnings", [])
+    artifact["coverage"] = document_coverage(artifact["documents"], warnings)
+    for warning in coverage_warnings(artifact["coverage"]):
+        if warning not in warnings:
+            warnings.append(warning)
     return artifact
 
 
@@ -1758,6 +1848,7 @@ def _run_e2b_payload(
         artifact = validate_bid_room_artifact(
             parse_artifact(stdout),
             require_cohere=require_cohere,
+            expected_documents=payload.get("document_manifest"),
         )
     except TimeoutException as exc:
         raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE) from exc
@@ -1836,6 +1927,14 @@ def render_bid_room_markdown(result: BidRoomSandboxResult) -> str:
     if result.killed:
         output += " (closed)"
     output += "\n\n"
+
+    coverage = artifact.get("coverage") or document_coverage(artifact.get("documents", []), artifact.get("warnings"))
+    output += "## Document coverage\n"
+    output += f"**Status:** {coverage['status']} — {coverage['extracted_documents']} of {coverage['expected_documents']} procurement files extracted.\n\n"
+    if not coverage["complete"]:
+        output += "**This is not a complete document review.**\n\n"
+    if artifact.get("warnings"):
+        output += "## Warnings\n" + "\n".join(f"- {warning}" for warning in artifact["warnings"]) + "\n\n"
 
     if analysis:
         output += "## Cohere Recommendation\n"

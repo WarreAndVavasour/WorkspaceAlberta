@@ -1,0 +1,28 @@
+{
+  "opportunity": {
+    "id": "745ed118-2d33-4a78-add7-1bf1cc9580f9",
+    "referenceNumber": "AB-2026-06584",
+    "solicitationNumber": "9256",
+    "title": "Special Areas Board - Request for Proposal - RE9256 - Contract Services Kirriemuir Hamlet Water Station Electrical Supply Installation",
+    "statusCode": "OPEN",
+    "categoryCode": "SRV",
+    "projectDescription": "Supply and install electrical components at 203 Railway Avenue, Kirriemuir, Alberta.",
+    "regionOfDelivery": "Alberta",
+    "closeDateTime": "2026-10-14T11:00:00",
+    "externalOriginLink": null,
+    "isNdaRequiredForDocumentsAccess": false,
+    "useEmailSubmission": true,
+    "emailSubmissionValue": "requisitions@specialareas.ab.ca",
+    "documents": [{
+      "id": "f245a5f8-d095-4e7c-8872-ddcc900dc24c",
+      "filename": "RE9256 - Contract Services Kirriemuir Hamlet Water Station Electrical Supply Installation.pdf",
+      "typeCode": "PROCUREMENT-PACKAGE",
+      "size": 422592,
+      "mimeType": "application/pdf",
+      "version": 0,
+      "amendmentNumber": 0,
+      "deletedOnUtc": null
+    }],
+    "addendaDocuments": null
+  }
+}

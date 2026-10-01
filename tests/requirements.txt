@@ -1,0 +1,3 @@
+# Local execution of the actual embedded PDF extractor; no provider credentials.
+pypdf>=6,<7
+cryptography>=42

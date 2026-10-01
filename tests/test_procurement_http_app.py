@@ -1,4 +1,5 @@
 import os
+import json
 import sys
 import tempfile
 import unittest
@@ -25,6 +26,55 @@ class ProcurementHttpAppTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.client_context.__exit__(None, None, None)
+
+    def test_apc_missing_document_access_is_rest_and_mcp_error_before_e2b(self):
+        details = json.loads((ROOT / "tests/fixtures/procurement/apc_re9256.json").read_text())
+        with patch("server_http.check_tool_access", return_value=None), patch(
+            "procurement_core.service.get_alberta_api_details", return_value=details
+        ), patch("procurement_core.service.resolve_profile", return_value={}), patch(
+            "procurement_core.e2b_bid_room.run_live_bid_room_process"
+        ) as run:
+            response = self.client.post("/bid-room/process", json={"reference": "AB-2026-06584"})
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("No sandbox was started", response.json()["detail"])
+            response = self.client.post("/mcp", headers={"Accept": "application/json"}, json={
+                "jsonrpc": "2.0", "id": 21, "method": "tools/call",
+                "params": {"name": "process_bid_room", "arguments": {"reference": "AB-2026-06584"}},
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.json()["result"]["isError"])
+            self.assertIn("No sandbox was started", response.json()["result"]["content"][0]["text"])
+            run.assert_not_called()
+
+    def test_mcp_public_copy_argument_routes_actual_pdf_content_to_processor(self):
+        from tests.test_apc_documents import COPY_URL, DOCUMENT_ID, LocalAPCPDFProcessingTest
+        from procurement_core.e2b_bid_room import BidRoomSandboxResult
+        helper = LocalAPCPDFProcessingTest()
+        helper.setUp()
+        pdf = helper.pdf_bytes("Supplier must provide control panel certification MCP-PDF-BODY.")
+
+        def local_processor(payload, **kwargs):
+            artifact, requests, namespace = helper.process(payload, {"re9256.pdf": pdf})
+            self.assertEqual(requests, [COPY_URL])
+            self.assertIn("MCP-PDF-BODY", namespace["evidence_bundle"]["evidence"]["text_for_model"])
+            return BidRoomSandboxResult("local-only", True, artifact, "", "")
+
+        with patch("server_http.check_tool_access", return_value=None), patch(
+            "procurement_core.service.get_alberta_api_details", return_value=helper.details
+        ), patch("procurement_core.service.resolve_profile", return_value={}), patch(
+            "procurement_core.e2b_bid_room.run_live_bid_room_process", side_effect=local_processor
+        ) as run:
+            response = self.client.post("/mcp", headers={"Accept": "application/json"}, json={
+                "jsonrpc": "2.0", "id": 22, "method": "tools/call", "params": {
+                    "name": "process_bid_room", "arguments": {"reference": "AB-2026-06584",
+                    "apc_document_urls": {DOCUMENT_ID: COPY_URL}},
+                },
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(response.json()["result"]["isError"])
+            self.assertIn("1 of 1 procurement files extracted", response.json()["result"]["content"][0]["text"])
+            self.assertIn(f"{len(pdf)} bytes", response.json()["result"]["content"][0]["text"])
+            run.assert_called_once()
 
     def test_health_tools_openapi_and_generic_tool(self) -> None:
         health = self.client.get("/health")
