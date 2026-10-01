@@ -15,11 +15,27 @@ Google OpenID Connect with `openid email` scopes. Tokens are audience-bound to t
 billing: Pro tools unlock only when the signed-in email matches an active
 `wa_subscribers` row. Legacy `wa_live_` keys keep working.
 
-Free tools stay anonymous. That is Anthropic **lazy authentication**:
-`initialize`, `tools/list`, and free tools never 401. A Pro tool without a
+Public tools stay anonymous. This is **authless with partial authentication**
+(OAuth upgrade on demand): `auth_type: none`, `partial_auth: true`.
+`initialize`, `tools/list`, and public tools never 401. A protected tool without a
 token returns HTTP 401 with
 `WWW-Authenticate: Bearer resource_metadata="..."`. Claude then shows Connect,
 runs PKCE, and retries. A 200 JSON-RPC error does **not** start sign-in.
+
+Hosted tools requiring **free sign-in**: `set_business_profile`, `get_my_profile`.
+They use the signed-in tenant's profile and do not require Pro.
+
+Hosted tools requiring **sign-in and active Pro**: `watch_opportunity`,
+`list_watchlist`, `unwatch_opportunity`, `bid_no_bid_scorecard`, `process_bid_room`,
+`analyze_contract_with_cohere`. An unpaid signed-in account receives a
+subscription-required error, not another OAuth challenge.
+
+All remaining tools are public. Anonymous matching uses an inline profile.
+Local stdio installations retain their single-user file-based profile behavior.
+In Anthropic's portal select **Required when the server asks → OAuth sign-in →
+Client ID Metadata Document**. The MCP registry `server.json` is a different
+schema; do not add unsupported directory-specific fields to it. The runtime
+`get_server_guide` includes the matching declaration and exact protected tool lists.
 
 ## Why this implementation
 

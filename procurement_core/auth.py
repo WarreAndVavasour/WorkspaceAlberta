@@ -59,6 +59,10 @@ PRO_TOOLS = frozenset(
     }
 )
 
+# Hosted profiles belong to a signed-in tenant; saving one is free.
+SIGN_IN_TOOLS = frozenset({"set_business_profile", "get_my_profile"})
+PROTECTED_TOOLS = PRO_TOOLS | SIGN_IN_TOOLS
+
 _cache: dict[str, tuple[float, dict[str, Any] | None]] = {}
 
 

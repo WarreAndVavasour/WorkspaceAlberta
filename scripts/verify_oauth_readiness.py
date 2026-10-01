@@ -100,11 +100,21 @@ def verify(base_url: str, resource: str, *, client_metadata_url: str | None = No
     guide, _ = rpc("tools/call", {"name": "get_server_guide", "arguments": {}})
     assert guide["result"]["isError"] is False
 
-    for headers in [{}, {"Authorization": "Bearer oauth-readiness-invalid"}]:
-        body, response_headers = rpc("tools/call", {"name": "list_watchlist", "arguments": {}},
-                                     expected=401, headers=headers)
-        assert body["error"] == "invalid_token"
-        assert f'resource_metadata="{issuer}/.well-known/oauth-protected-resource/mcp"' in response_headers["WWW-Authenticate"]
+    contract = json.loads(guide["result"]["content"][0]["text"])
+    protected = {"list_watchlist"}
+    declaration = contract.get("authentication", {})
+    if declaration.get("partial_auth"):
+        assert declaration["auth_type"] == "none"
+        protected.update(declaration["sign_in_tools"])
+        protected.update(declaration["pro_tools"])
+        report["partial_auth"] = declaration
+
+    for name in sorted(protected):
+        for headers in [{}, {"Authorization": "Bearer oauth-readiness-invalid"}]:
+            body, response_headers = rpc("tools/call", {"name": name, "arguments": {}},
+                                         expected=401, headers=headers)
+            assert body["error"] == "invalid_token"
+            assert f'resource_metadata="{issuer}/.well-known/oauth-protected-resource/mcp"' in response_headers["WWW-Authenticate"]
     _, rest_headers = request("/tools/list_watchlist", 401, payload={})
     assert "resource_metadata=" in rest_headers["WWW-Authenticate"]
     for form, error in [({"grant_type": "invalid"}, "unsupported_grant_type"),

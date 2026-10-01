@@ -10,6 +10,8 @@ The workflow is manual: merging or pushing alone does not change production.
    Artifact Registry, and deploys its immutable digest at zero production traffic.
    It checks OAuth discovery, all 26 tool titles, authentication challenges,
    Google sign-in rendering, exact image hashes, search, details and matching.
+   For revisions containing the blog, it also verifies the index, each published
+   post, RSS publication status and the exact CSS hash from the reviewed commit.
 2. Open the successful run's summary. Copy **revision** and **previous_revision**.
 3. Run the same workflow on **main** with **promote**. Enter those values as
    **revision** and **expected_current**, respectively. This is the explicit

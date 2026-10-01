@@ -1722,6 +1722,8 @@ async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> 
         return asyncio.run(handler(args))
 
     try:
+        if name == "process_bid_room":
+            return await handler(args)  # This handler owns its complete deadline.
         return await asyncio.to_thread(_run_in_thread)
     except Exception as exc:
         return f"Error: {exc}"
@@ -2271,14 +2273,20 @@ async def daily_bid_brief(args: dict) -> str:
     return output
 
 
-def process_bid_room_artifact(args: dict) -> dict[str, Any]:
+def process_bid_room_artifact(args: dict, *, deadline: float | None = None, cancelled=None) -> dict[str, Any]:
     """Process a bid room in E2B and return a JSON-ready artifact envelope."""
     from procurement_core.e2b_bid_room import (
         build_apc_bid_room_payload,
         build_canadabuys_bid_room_payload,
         render_bid_room_markdown,
         run_live_bid_room_process,
+        BID_ROOM_WORK_SECONDS,
+        remaining_bid_room_seconds,
+        BidRoomTimeout, BID_ROOM_TIMEOUT_MESSAGE,
     )
+
+    deadline = deadline if deadline is not None else time.monotonic() + BID_ROOM_WORK_SECONDS
+    remaining_bid_room_seconds(deadline)
 
     reference = str(args.get("reference") or "").strip()
     if not reference:
@@ -2287,9 +2295,8 @@ def process_bid_room_artifact(args: dict) -> dict[str, Any]:
     profile = resolve_profile(args) or {}
     business_context = str(args.get("business_context") or "").strip()
     max_attachments = clamp_int(args.get("max_attachments"), default=5, minimum=0, maximum=5)
-    timeout_seconds = clamp_int(args.get("timeout_seconds"), default=900, minimum=60, maximum=86400)
-    command_timeout_seconds = clamp_int(args.get("command_timeout_seconds"), default=420, minimum=120, maximum=3600)
-    keep_alive = bool(args.get("keep_alive", False))
+    # Older REST callers may send these fields; they cannot extend the budget
+    # or leave a paid sandbox alive. They are no longer in the MCP schema.
     warnings: list[str] = []
 
     if is_alberta_reference(reference):
@@ -2316,11 +2323,12 @@ def process_bid_room_artifact(args: dict) -> dict[str, Any]:
             max_attachments=max_attachments,
         )
 
+    remaining_bid_room_seconds(deadline, reserve=5)
+    if cancelled is not None and cancelled.is_set():
+        raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE)
     result = run_live_bid_room_process(
         payload,
-        timeout_seconds=timeout_seconds,
-        command_timeout_seconds=command_timeout_seconds,
-        keep_alive=keep_alive,
+        deadline=deadline,
     )
     if warnings:
         result.artifact.setdefault("warnings", []).extend(warnings)
@@ -2332,12 +2340,37 @@ def process_bid_room_artifact(args: dict) -> dict[str, Any]:
     }
 
 
+async def process_bid_room_artifact_bounded(args: dict) -> dict[str, Any]:
+    """Bound every public adapter, including slow host-side source lookups.
+
+    A source lookup already in a thread may finish after cancellation; the
+    shared deadline prevents that worker from subsequently starting E2B work.
+    Running sandboxes have command limits, bounded cleanup and a short expiry.
+    """
+    from procurement_core.e2b_bid_room import (
+        BID_ROOM_CALL_SECONDS, BID_ROOM_WORK_SECONDS,
+        BID_ROOM_TIMEOUT_MESSAGE, BidRoomTimeout,
+    )
+    from threading import Event
+    cancelled = Event()
+    deadline = time.monotonic() + BID_ROOM_WORK_SECONDS
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(process_bid_room_artifact, args, deadline=deadline, cancelled=cancelled),
+            timeout=BID_ROOM_CALL_SECONDS,
+        )
+    except TimeoutError as exc:
+        raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE) from exc
+    finally:
+        cancelled.set()
+
+
 async def process_bid_room(args: dict) -> str:
     """Process a tender package in E2B and analyze it with Cohere inside the sandbox."""
     try:
-        return process_bid_room_artifact(args)["markdown"]
+        return (await process_bid_room_artifact_bounded(args))["markdown"]
     except (RuntimeError, ValueError) as exc:
-        return f"Bid room processing is not available: {exc}"
+        return f"Error: Bid room processing is not available: {exc}"
 
 
 # ============== Alberta Purchasing Connection Handlers ==============

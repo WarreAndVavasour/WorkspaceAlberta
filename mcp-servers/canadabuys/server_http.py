@@ -56,6 +56,8 @@ from procurement_core import identity, oauth, storage, telemetry  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
     GateError,
     PRO_TOOLS,
+    PROTECTED_TOOLS,
+    SIGN_IN_TOOLS,
     extract_bearer_key,
     gate_enabled,
     validate_key,
@@ -64,7 +66,7 @@ from procurement_core.billing import WebhookError, process_webhook_event  # noqa
 from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: E402
 from procurement_core.oauth_http import register_oauth_routes  # noqa: E402
 from procurement_core.public_pages import register_public_pages  # noqa: E402
-from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact  # noqa: E402
+from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact_bounded  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 from procurement_core.agent_contract import SERVER_INSTRUCTIONS, workflow_contract  # noqa: E402
 
@@ -102,10 +104,9 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
                 TextContent(
                     type="text",
                     text=(
-                        f"# workspaceAlberta Pro required\n\n{exc}\n\n"
-                        "Sign in when your client prompts, add "
-                        '`Authorization: Bearer wa_live_...`, or subscribe at '
-                        "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a ($85 CAD/month)."
+                        f"# workspaceAlberta access required\n\n{exc}\n\n"
+                        "Sign in when your client prompts. Saved profiles are free; "
+                        "only Pro tools require a separate subscription."
                     ),
                 )
             ],
@@ -284,17 +285,17 @@ class MCPStreamableHTTPApp:
         body = b""
         if scope.get("type") == "http":
             body = await _read_http_body(receive)
-            # Lazy auth (Anthropic / MCP spec): Pro tools must 401 at the
+            # Partial auth: all protected tools must 401 at the
             # HTTP layer *before* the SDK wraps the refusal in a 200 tool
             # result. initialize, tools/list, and free tools stay open.
-            if gate_enabled() and body:
+            if (gate_enabled() or storage.is_hosted()) and body:
                 try:
                     payload = json.loads(body)
                 except json.JSONDecodeError:
                     payload = None
-                if payload is not None and oauth.mcp_calls_pro_tool(payload, PRO_TOOLS):
+                if payload is not None and oauth.mcp_calls_pro_tool(payload, PROTECTED_TOOLS):
                     authorization = _header_value(scope, "authorization")
-                    if not identity.has_presentable_identity(authorization):
+                    if not await asyncio.to_thread(identity.has_presentable_identity, authorization):
                         response = JSONResponse(
                             {
                                 "error": "invalid_token",
@@ -365,7 +366,7 @@ status at <a href="/me">/me</a>.</p>
 <a href="/.well-known/oauth-protected-resource">protected-resource metadata</a></p>
 <p>Always open and verify the original tender documents before bidding. This tool triages
 and summarizes; it does not replace the source posting.</p>
-<p><a href="/support">Setup and support</a> &middot; <a href="/privacy">Privacy</a> &middot;
+<p><a href="/blog">News and notes</a> &middot; <a href="/support">Setup and support</a> &middot; <a href="/privacy">Privacy</a> &middot;
 <a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation on GitHub</a></p>
 </body>
 </html>
@@ -462,6 +463,8 @@ def _agent_card(base: str) -> dict[str, Any]:
             tags.append("alberta")
         if tool.name in PRO_TOOLS:
             tags.append("pro")
+        elif tool.name in SIGN_IN_TOOLS:
+            tags.append("sign-in")
         description = (tool.description or "").strip().splitlines()[0] if tool.description else ""
         skills.append(
             {
@@ -493,19 +496,19 @@ def _agent_card(base: str) -> dict[str, Any]:
         "authentication": {
             "schemes": ["Bearer"],
             "credentials": (
-                "Pro tools require a subscriber key sent as "
-                "`Authorization: Bearer wa_live_...`. Search, deadline, and "
-                "brief tools are free without a key."
+                "Public tools work anonymously. Saved profiles require free OAuth sign-in. "
+                "Pro tools additionally require an active subscription. "
+                "OAuth access tokens and legacy wa_live_ keys use Authorization: Bearer."
             ),
         },
         "securitySchemes": {
             "bearer": {
                 "type": "http",
                 "scheme": "bearer",
-                "description": "Subscriber key (wa_live_...) for Pro tools.",
+                "description": "OAuth access token or legacy subscriber key for protected tools.",
             }
         },
-        "security": [{"bearer": []}],
+        "security": [{}, {"bearer": []}],
         "defaultInputModes": ["application/json"],
         "defaultOutputModes": ["text/markdown"],
         "skills": skills,
@@ -679,8 +682,7 @@ async def bid_room_process(request: Request, arguments: dict[str, Any] | None = 
 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
     try:
-        # E2B sandbox processing blocks for minutes; keep it off the event loop.
-        return await asyncio.to_thread(process_bid_room_artifact, arguments or {})
+        return await process_bid_room_artifact_bounded(arguments or {})
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:

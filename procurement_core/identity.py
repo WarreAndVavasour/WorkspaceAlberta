@@ -14,7 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from procurement_core import auth, oauth
+from procurement_core import auth, oauth, storage
 from procurement_core.auth import GateError
 
 _subscriber_lookup = None
@@ -110,6 +110,12 @@ def has_presentable_identity(authorization_header: str | None) -> bool:
     (that would restart OAuth). They fall through to the existing 402 copy.
     """
     try:
+        key = auth.extract_bearer_key(authorization_header)
+        if key and key.startswith(oauth.ACCESS_PREFIX):
+            # The HTTP challenge only needs identity. Subscription lookup
+            # happens once in the tool gate, rather than twice per OAuth call.
+            oauth.validate_access_token(key)
+            return True
         record = resolve_bearer(authorization_header)
     except GateError as exc:
         return exc.status_code != 401
@@ -130,14 +136,16 @@ def check_tool_access(tool_name: str, authorization_header: str | None) -> dict[
     - Gate disabled: honour a valid identity when present so profiles stay
       per-user, otherwise anonymous.
     - A valid key or access token is honoured on any tool.
-    - Pro tools without a valid identity raise 401.
+    - Hosted saved-profile tools and Pro tools without an identity raise 401.
+    - Saved-profile tools require sign-in, but no paid subscription.
     - Pro tools with a signed-in user who has no active subscription raise 402.
     - Free tools with a bad token degrade to anonymous.
     """
     is_pro = tool_name in auth.PRO_TOOLS
+    requires_identity = is_pro or tool_name in auth.SIGN_IN_TOOLS
     key = auth.extract_bearer_key(authorization_header)
 
-    if not auth.gate_enabled():
+    if not auth.gate_enabled() and not storage.is_hosted():
         if not key:
             return None
         try:
@@ -146,14 +154,14 @@ def check_tool_access(tool_name: str, authorization_header: str | None) -> dict[
             return None
 
     if not key:
-        if is_pro:
-            raise GateError(401, "Sign in to workspaceAlberta Pro, or send a wa_live_ subscriber key.")
+        if requires_identity:
+            raise GateError(401, "Sign in to workspaceAlberta to use this tool. Signing in does not charge you.")
         return None
 
     try:
         record = resolve_bearer(authorization_header)
     except GateError:
-        if is_pro:
+        if requires_identity:
             raise
         return None
 
