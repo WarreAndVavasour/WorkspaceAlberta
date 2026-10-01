@@ -135,6 +135,13 @@ def verify_website(url, commit):
     css = read("/assets/blog.css")
     require(hashlib.sha256(css).digest() == hashlib.sha256(git("show", f"{commit}:procurement_core/assets/blog.css")).digest(),
             "Blog CSS differs from reviewed source")
+    assets = git("ls-tree", "-r", "--name-only", commit, "procurement_core/assets/brand").decode().splitlines()
+    for asset in assets:
+        if not asset.endswith((".css", ".woff2")):
+            continue
+        actual = read("/assets/brand/" + Path(asset).name)
+        require(hashlib.sha256(actual).digest() == hashlib.sha256(git("show", f"{commit}:{asset}")).digest(),
+                f"Blog brand asset differs from reviewed source: {Path(asset).name}")
     index = read("/blog").decode()
     feed = ET.fromstring(read("/blog/feed.xml"))
     feed_urls = {item.findtext("link") for item in feed.findall("channel/item")}

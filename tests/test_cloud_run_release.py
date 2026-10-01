@@ -24,7 +24,11 @@ def service(revision=OLD):
 class WebsiteReleaseTest(unittest.TestCase):
     def _git(self, *args):
         if args[0] == "ls-tree":
+            if args[-1] == "procurement_core/assets/brand":
+                return b"procurement_core/assets/brand/fonts.css\n"
             return b"procurement_core/content/blog/approved.md\n"
+        if args[-1].endswith("fonts.css"):
+            return b"local corporate fonts"
         if args[-1].endswith("blog.css"):
             return b"reviewed css"
         return ("---\n" + json.dumps({"status": "published", "date": "2026-10-01", "title": "Approved & ready"}) + "\n---\n\nPost.").encode()
@@ -33,6 +37,7 @@ class WebsiteReleaseTest(unittest.TestCase):
         path = request.full_url.removeprefix("https://candidate.invalid")
         content = {
             "/assets/blog.css": b"reviewed css",
+            "/assets/brand/fonts.css": b"local corporate fonts",
             "/blog": b"Approved &amp; ready",
             "/blog/approved": b"Approved &amp; ready",
             "/blog/feed.xml": ('<rss><channel><item><link>' + release.ORIGIN + '/blog/approved</link></item></channel></rss>').encode(),
@@ -50,6 +55,17 @@ class WebsiteReleaseTest(unittest.TestCase):
         with patch.object(release, "git", side_effect=self._git), patch.object(release, "urlopen", return_value=BytesIO(b"old css")) as request:
             request.return_value.status = 200
             with self.assertRaisesRegex(RuntimeError, "Blog CSS differs"):
+                release.verify_website("https://candidate.invalid", "a" * 40)
+
+    def test_wrong_brand_asset_blocks_promotion(self):
+        def wrong_asset(request, **kwargs):
+            response = self._response(request, **kwargs)
+            if request.full_url.endswith("fonts.css"):
+                response = BytesIO(b"wrong brand fonts")
+                response.status = 200
+            return response
+        with patch.object(release, "git", side_effect=self._git), patch.object(release, "urlopen", side_effect=wrong_asset):
+            with self.assertRaisesRegex(RuntimeError, "brand asset differs"):
                 release.verify_website("https://candidate.invalid", "a" * 40)
 
     def test_misadvertised_draft_blocks_promotion(self):
