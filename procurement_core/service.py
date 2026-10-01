@@ -67,6 +67,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from . import fixtures
+from .apc_documents import APC_ACCESS_MESSAGE, apc_document_manifest, apc_posting_url
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -1032,8 +1033,7 @@ def render_alberta_details_markdown(data: dict) -> str:
     opp = data.get("opportunity", {})
     title = opp.get("title") or opp.get("shortTitle") or "Untitled Alberta Opportunity"
     ref = opp.get("referenceNumber", "")
-    year, draft_id = parse_alberta_reference(ref) if ref else ("", "")
-    public_url = f"{ALBERTA_APC_APP_BASE}/opportunity/{year}/{draft_id}" if ref else ALBERTA_APC_APP_BASE
+    public_url = apc_posting_url(ref, ALBERTA_APC_APP_BASE) if ref else ALBERTA_APC_APP_BASE
     contact_info = data.get("contractingEntityContactInformation") or {}
     organization = (
         opp.get("contractingOrganization")
@@ -1109,14 +1109,30 @@ def render_alberta_details_markdown(data: dict) -> str:
 
     submission = opp.get("submissionDetails") or ""
     question_submission = opp.get("questionSubmissionDetails") or ""
-    if submission or question_submission:
+    email_submission = opp.get("emailSubmissionValue") if opp.get("useEmailSubmission") else ""
+    if submission or question_submission or email_submission:
         lines.append("## Submission")
+        if email_submission:
+            lines.append(f"Email submission: {email_submission}")
         if submission:
             lines.append(str(submission)[:1500])
         if question_submission:
             lines.append(f"Questions: {str(question_submission)[:1000]}")
         lines.append("")
 
+    manifest = apc_document_manifest(data)
+    lines.extend(["## Procurement documents and addenda", ""])
+    if manifest:
+        for document in manifest:
+            lines.append(
+                f"- {document['name']} — ID `{document['document_id']}`, "
+                f"{document['expected_bytes'] or 'unknown'} bytes, version {document['version']}, "
+                f"amendment {document['amendment_number']} ({document['kind']})"
+            )
+        lines.append(APC_ACCESS_MESSAGE)
+    else:
+        lines.append("No procurement document metadata was returned; a notice is not a complete document package.")
+    lines.append("")
     external_link = opp.get("externalOriginLink")
     lines.append("## Links")
     lines.append(f"- [View on Alberta Purchasing Connection]({public_url})")
@@ -1528,7 +1544,7 @@ def normalize_alberta_opportunity(opp: dict) -> dict[str, Any]:
     if ref:
         try:
             year, draft_id = parse_alberta_reference(ref)
-            url = f"{ALBERTA_APC_APP_BASE}/opportunity/{year}/{draft_id}"
+            url = apc_posting_url(ref, ALBERTA_APC_APP_BASE)
         except ValueError:
             url = ALBERTA_APC_APP_BASE
 
@@ -2454,6 +2470,8 @@ def process_bid_room_artifact(args: dict, *, deadline: float | None = None, canc
     reference = str(args.get("reference") or "").strip()
     if not reference:
         raise ValueError("Please provide a reference number.")
+    if args.get("apc_document_urls") is not None and not is_alberta_reference(reference):
+        raise ValueError("apc_document_urls applies only to an Alberta APC reference.")
 
     profile = resolve_profile(args) or {}
     business_context = str(args.get("business_context") or "").strip()
@@ -2472,6 +2490,7 @@ def process_bid_room_artifact(args: dict, *, deadline: float | None = None, canc
             profile,
             business_context=business_context,
             max_attachments=max_attachments,
+            apc_document_urls=args.get("apc_document_urls"),
         )
     else:
         contracts, federal_warnings = load_contracts_for_unified()
@@ -2489,12 +2508,18 @@ def process_bid_room_artifact(args: dict, *, deadline: float | None = None, canc
     remaining_bid_room_seconds(deadline, reserve=5)
     if cancelled is not None and cancelled.is_set():
         raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE)
+    if is_alberta_reference(reference) and max_attachments > 0 and not any(
+        item.get("kind") in {"apc_document", "apc_addendum"} for item in payload.get("attachments", [])
+    ):
+        raise ValueError(f"No readable APC procurement files were resolved. No sandbox was started. {APC_ACCESS_MESSAGE}")
     result = run_live_bid_room_process(
         payload,
         deadline=deadline,
     )
     if warnings:
         result.artifact.setdefault("warnings", []).extend(warnings)
+        from procurement_core.document_coverage import document_coverage
+        result.artifact["coverage"] = document_coverage(result.artifact["documents"], result.artifact["warnings"])
     return {
         "sandbox_id": result.sandbox_id,
         "sandbox_killed": result.killed,

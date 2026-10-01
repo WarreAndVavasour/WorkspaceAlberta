@@ -495,10 +495,16 @@ def get_mcp_tools() -> list[Tool]:
                     },
                     "max_attachments": {
                         "type": "integer",
-                        "description": "Maximum direct attachments to process (default 5, max 5)",
+                        "description": "Maximum procurement files to process (default 5, max 5). Use 0 explicitly for a notice-only review; missing/gated documents do not count as complete coverage.",
                         "default": 5,
                         "minimum": 0,
                         "maximum": 5
+                    },
+                    "apc_document_urls": {
+                        "type": "object",
+                        "description": "For APC only: map document IDs from get_opportunity_details to already authorized, publicly accessible HTTPS copies. This tool never signs in to APC, registers supplier interest, subscribes notifications, or accepts authenticated download URLs. Copies are sent to E2B and their contents to Cohere.",
+                        "additionalProperties": {"type": "string", "format": "uri"},
+                        "maxProperties": 5
                     },
                     "profile": PROFILE_ARG_SCHEMA
                 },

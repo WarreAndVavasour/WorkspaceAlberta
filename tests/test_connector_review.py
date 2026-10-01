@@ -132,7 +132,7 @@ class BidRoomBoundsTest(unittest.IsolatedAsyncioTestCase):
         with patch.object(service, "resolve_profile", return_value={}), patch.object(
             service, "is_alberta_reference", return_value=True
         ), patch.object(service, "get_alberta_api_details", return_value={}), patch.object(
-            bid, "build_apc_bid_room_payload", return_value={}
+            bid, "build_apc_bid_room_payload", return_value={"attachments": [{"kind": "apc_document"}]}
         ), patch.object(bid, "run_live_bid_room_process", return_value=result) as run, patch.object(
             bid, "render_bid_room_markdown", return_value="done"
         ):
