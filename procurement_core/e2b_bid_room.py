@@ -259,6 +259,32 @@ def read_url(url, public_apc=False):
         return None, {}, str(exc)
 
 
+LOCAL_CONTENT_TYPES = {
+    ".pdf": "application/pdf",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".zip": "application/zip",
+    ".doc": "application/msword",
+    ".xls": "application/vnd.ms-excel",
+}
+
+
+def read_local(attachment):
+    # Read a host-uploaded file from the sandbox's local folder and re-check its hash.
+    local_dir = (work_dir / "local").resolve()
+    path = (local_dir / str(attachment.get("local_name") or "")).resolve()
+    if path.parent != local_dir or not path.is_file():
+        return None, {}, "local file missing from sandbox upload"
+    if path.stat().st_size > MAX_FILE_BYTES:
+        return None, {}, f"file exceeded {MAX_FILE_BYTES} byte limit"
+    data = path.read_bytes()
+    expected = str(attachment.get("expected_sha256") or "")
+    if expected and sha256_bytes(data) != expected:
+        return None, {}, "SHA-256 mismatch between the local manifest and the uploaded bytes"
+    headers = {"Content-Type": LOCAL_CONTENT_TYPES.get(path.suffix.lower(), "")}
+    return data, headers, ""
+
+
 def decode_text(data):
     for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
         try:
@@ -1184,9 +1210,13 @@ for index, attachment in enumerate(payload.get("attachments", [])[: int(payload.
         "is_tender_document": attachment.get("kind") != "apc_external_page",
         "truncated": False,
     }
-    data, headers, error = read_url(url, public_apc=attachment.get("kind") in {"apc_document", "apc_addendum"})
+    is_local = attachment.get("kind") == "apc_local_document"
+    if is_local:
+        data, headers, error = read_local(attachment)
+    else:
+        data, headers, error = read_url(url, public_apc=attachment.get("kind") in {"apc_document", "apc_addendum"})
     if error:
-        record["status"] = "download_failed"
+        record["status"] = "local_file_rejected" if is_local else "download_failed"
         record["error"] = error
         documents.append(record)
         continue
@@ -1793,6 +1823,7 @@ def _run_e2b_payload(
     keep_alive: bool = False,
     require_cohere: bool = False,
     deadline: float | None = None,
+    uploads: list[tuple[str, bytes]] | None = None,
 ) -> BidRoomSandboxResult:
     load_local_env()
     if not os.environ.get("E2B_API_KEY", "").strip():
@@ -1836,6 +1867,8 @@ def _run_e2b_payload(
     stderr = ""
 
     try:
+        for sandbox_path, data in uploads or []:
+            sandbox.files.write(sandbox_path, data)
         command = build_sandbox_command(payload)
         if bounded:
             command_timeout_seconds = min(120, remaining_bid_room_seconds(deadline, reserve=5))
@@ -1899,8 +1932,13 @@ def run_live_bid_room_process(
     command_timeout_seconds: int = 120,
     keep_alive: bool = False,
     deadline: float | None = None,
+    uploads: list[tuple[str, bytes]] | None = None,
 ) -> BidRoomSandboxResult:
-    """Create an E2B sandbox, extract evidence, call Cohere inside it, and return JSON."""
+    """Create an E2B sandbox, extract evidence, call Cohere inside it, and return JSON.
+
+    ``uploads`` are ``(sandbox_path, bytes)`` pairs written into the sandbox
+    before the processor runs; used by the local (stdio-only) bid room.
+    """
     payload = dict(payload)
     payload["cohere"] = {**payload.get("cohere", {}), "enabled": True}
     return _run_e2b_payload(
@@ -1910,6 +1948,7 @@ def run_live_bid_room_process(
         keep_alive=keep_alive,
         require_cohere=True,
         deadline=deadline if deadline is not None else time.monotonic() + BID_ROOM_WORK_SECONDS,
+        uploads=uploads,
     )
 
 

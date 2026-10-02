@@ -26,6 +26,7 @@ jobs:
             tests.test_icons \
             tests.test_e2b_bid_room \
             tests.test_apc_documents \
+            tests.test_local_bid_room \
             tests.test_procurement_http_app \
             tests.test_canadabuys_mcp_smoke \
             tests.test_procurement_fixtures \
