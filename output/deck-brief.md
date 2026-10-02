@@ -137,7 +137,7 @@ Page size [960, 540]. Kicker label positions: [64,36,400,16]; page label top-rig
 - Optional faint background: `small-arms-machinist-laughing.jpg` with overlay 0.88
 - Headline 56px centered-ish left: `Canada is going to work.`
 - Sub 15px ink-66: `More contracts won. More jobs kept. More skill developed. More value staying here at home.`
-- Two CTA blocks: `READ THE BRIEF TOMORROW — FREE` `github.com/HarleyCoops/WorkspaceAlberta` ; `READY TO BID — $85 CAD/MONTH` `buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a` (gold rule above each)
+- Two CTA blocks: `READ THE BRIEF TOMORROW — FREE` `github.com/WarreAndVavasour/WorkspaceAlberta` ; `READY TO BID — $85 CAD/MONTH` `buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a` (gold rule above each)
 - Bottom: `WARRE & VAVASOUR · AN AI LABORATORY · BOW VALLEY, ALBERTA` left, right: `BUILT FOR TRADES, NOT TECH`
 
 ### S13 — Appendix: the brand answer (light)

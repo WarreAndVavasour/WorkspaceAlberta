@@ -2,7 +2,7 @@
 
 Connect to `https://elbowsupknivesout.warreandvavasour.com/mcp` using StreamableHTTP, initialize, discover the current tool schemas, and call `get_server_guide`. Both local stdio and hosted MCP supply the same operating instructions during initialization. REST clients can call `POST /tools/get_server_guide` with `{}`.
 
-The MCP server is the procurement specialist. The [harness](https://github.com/HarleyCoops/workspacealberta-harness) carries the working session; [setup](https://github.com/HarleyCoops/workspaceAlbertaSetup) installs the physical workspace. The [terminal support offer](terminal-offer.md) explains the human relationship around them.
+The MCP server is the procurement specialist. The [harness](https://github.com/WarreAndVavasour/workspacealberta-harness) carries the working session; [setup](https://github.com/HarleyCoops/workspaceAlbertaSetup) installs the physical workspace. The [terminal support offer](terminal-offer.md) explains the human relationship around them.
 
 ## From an owner's question to a useful handoff
 

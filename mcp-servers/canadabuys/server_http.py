@@ -368,7 +368,7 @@ status at <a href="/me">/me</a>.</p>
 <p>Always open and verify the original tender documents before bidding. This tool triages
 and summarizes; it does not replace the source posting.</p>
 <p><a href="/blog">News and notes</a> &middot; <a href="/support">Setup and support</a> &middot; <a href="/privacy">Privacy</a> &middot;
-<a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation on GitHub</a></p>
+<a href="https://github.com/WarreAndVavasour/WorkspaceAlberta">Source and documentation on GitHub</a></p>
 </body>
 </html>
 """
@@ -443,7 +443,7 @@ async def me(request: Request) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 STRIPE_SUBSCRIBE_URL = "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a"
-REPO_URL = "https://github.com/HarleyCoops/WorkspaceAlberta"
+REPO_URL = "https://github.com/WarreAndVavasour/WorkspaceAlberta"
 
 
 def _base_url(request: Request) -> str:

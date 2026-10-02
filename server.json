@@ -3,7 +3,7 @@
   "name": "io.github.HarleyCoops/workspace-alberta",
   "description": "Canadian procurement intelligence: CanadaBuys and Alberta tenders, ranked for your shop.",
   "repository": {
-    "url": "https://github.com/HarleyCoops/WorkspaceAlberta",
+    "url": "https://github.com/WarreAndVavasour/WorkspaceAlberta",
     "source": "github"
   },
   "version": "0.4.0",

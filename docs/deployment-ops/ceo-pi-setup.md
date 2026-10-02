@@ -31,7 +31,7 @@ This installer is separate from the Hermes appliance stack. Use the Hermes insta
 Clone the repo and run the installer:
 
 ```bash
-git clone https://github.com/HarleyCoops/WorkspaceAlberta.git ~/WorkspaceAlberta
+git clone https://github.com/WarreAndVavasour/WorkspaceAlberta.git ~/WorkspaceAlberta
 cd ~/WorkspaceAlberta
 chmod +x installer/install-ceo-pi.sh
 ./installer/install-ceo-pi.sh
