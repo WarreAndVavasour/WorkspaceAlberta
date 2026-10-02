@@ -21,7 +21,7 @@ For a single-purpose Workspace Alberta appliance, the repo includes an installer
 From a fresh Pi desktop session:
 
 ```bash
-git clone https://github.com/HarleyCoops/WorkspaceAlberta.git ~/WorkspaceAlberta
+git clone https://github.com/WarreAndVavasour/WorkspaceAlberta.git ~/WorkspaceAlberta
 cd ~/WorkspaceAlberta
 chmod +x installer/install-workspace-alberta-pi.sh
 ./installer/install-workspace-alberta-pi.sh
@@ -145,7 +145,7 @@ hermes --version
 Clone this repository:
 
 ```bash
-git clone https://github.com/HarleyCoops/WorkspaceAlberta.git ~/WorkspaceAlberta
+git clone https://github.com/WarreAndVavasour/WorkspaceAlberta.git ~/WorkspaceAlberta
 cd ~/WorkspaceAlberta
 ```
 
@@ -419,7 +419,7 @@ Use kiosk mode only after the setup is stable, because it is less convenient whi
 
 1. Install system dependencies.
 2. Install Hermes Agent.
-3. Clone `HarleyCoops/WorkspaceAlberta`.
+3. Clone `WarreAndVavasour/WorkspaceAlberta`.
 4. Install Python requirements.
 5. Run the MCP smoke test.
 6. Copy `hermes/dashboard-themes/workspace-alberta.yaml` into `~/.hermes/dashboard-themes/`.

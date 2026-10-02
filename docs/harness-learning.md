@@ -1,6 +1,6 @@
 # Learn from work, then prove the improvement
 
-WorkspaceAlberta connects three repositories: [procurement tools](https://github.com/HarleyCoops/WorkspaceAlberta), [terminal setup](https://github.com/HarleyCoops/workspaceAlbertaSetup), and [the working harness](https://github.com/HarleyCoops/workspacealberta-harness). The harness already describes local trajectories and an evolution loop. Those mechanisms are distinct from updating model weights.
+WorkspaceAlberta connects three repositories: [procurement tools](https://github.com/WarreAndVavasour/WorkspaceAlberta), [terminal setup](https://github.com/HarleyCoops/workspaceAlbertaSetup), and [the working harness](https://github.com/WarreAndVavasour/workspacealberta-harness). The harness already describes local trajectories and an evolution loop. Those mechanisms are distinct from updating model weights.
 
 ## An experiment worth running
 

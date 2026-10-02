@@ -26,12 +26,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HarleyCoops/WorkspaceAlberta.git",
+    "url": "git+https://github.com/WarreAndVavasour/WorkspaceAlberta.git",
     "directory": "packages/workspace-alberta-mcp"
   },
-  "homepage": "https://github.com/HarleyCoops/WorkspaceAlberta#readme",
+  "homepage": "https://github.com/WarreAndVavasour/WorkspaceAlberta#readme",
   "bugs": {
-    "url": "https://github.com/HarleyCoops/WorkspaceAlberta/issues"
+    "url": "https://github.com/WarreAndVavasour/WorkspaceAlberta/issues"
   },
   "dependencies": {
     "mcp-remote": "^0.1.38"

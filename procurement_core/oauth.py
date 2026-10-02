@@ -552,7 +552,7 @@ def protected_resource_metadata() -> dict[str, Any]:
         "authorization_servers": [public_origin()],
         "bearer_methods_supported": ["header"],
         "scopes_supported": [SCOPE_PRO],
-        "resource_documentation": "https://github.com/HarleyCoops/WorkspaceAlberta",
+        "resource_documentation": "https://github.com/WarreAndVavasour/WorkspaceAlberta",
     }
 
 
@@ -570,7 +570,7 @@ def authorization_server_metadata() -> dict[str, Any]:
         "token_endpoint_auth_methods_supported": ["none", "client_secret_post"],
         "client_id_metadata_document_supported": True,
         "scopes_supported": [SCOPE_PRO, SCOPE_OFFLINE],
-        "service_documentation": "https://github.com/HarleyCoops/WorkspaceAlberta",
+        "service_documentation": "https://github.com/WarreAndVavasour/WorkspaceAlberta",
     }
 
 

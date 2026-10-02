@@ -116,7 +116,7 @@ The installer script sets up the AI productivity tools: Tailscale, Codex CLI, Ch
 ### Basic install
 
 ```bash
-git clone https://github.com/HarleyCoops/WorkspaceAlberta.git ~/WorkspaceAlberta
+git clone https://github.com/WarreAndVavasour/WorkspaceAlberta.git ~/WorkspaceAlberta
 cd ~/WorkspaceAlberta
 chmod +x installer/install-ceo-pi.sh
 ./installer/install-ceo-pi.sh

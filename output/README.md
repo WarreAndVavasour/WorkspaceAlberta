@@ -53,4 +53,4 @@ Some tools require API keys. Add them in your Codespaces secrets:
 
 ---
 
-Built with [WorkspaceAlberta](https://github.com/HarleyCoops/WorkspaceAlberta) - AI-powered workspaces for small businesses.
+Built with [WorkspaceAlberta](https://github.com/WarreAndVavasour/WorkspaceAlberta) - AI-powered workspaces for small businesses.

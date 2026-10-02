@@ -260,7 +260,7 @@ if [ "$CLONE_REPO" = "1" ]; then
     git -C "$REPO_DIR" pull --ff-only || warn "Could not pull; may have local changes"
   else
     log "Cloning WorkspaceAlberta to $REPO_DIR"
-    git clone https://github.com/HarleyCoops/WorkspaceAlberta.git "$REPO_DIR"
+    git clone https://github.com/WarreAndVavasour/WorkspaceAlberta.git "$REPO_DIR"
   fi
 else
   log "Skipping repo clone (CLONE_REPO=0)"

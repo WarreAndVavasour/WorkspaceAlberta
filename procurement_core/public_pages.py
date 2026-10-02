@@ -46,7 +46,7 @@ SUPPORT = """
 <p>APC search and matching may send your search terms or business capabilities to Cohere for commodity-filter selection. Document analysis sends data to the providers described in our <a href="/privacy">privacy notice</a>. Bid-room processing has a 145-second overall limit and may ask you to retry a large package with fewer attachments. A timeout means no completed analysis is available.</p>
 <p>Always verify deadlines, eligibility and requirements in the original tender documents. Summaries and scores assist your review; they do not submit a bid.</p>
 <p>For sign-in help, account-data requests or subscription questions: <a href="mailto:christian@warreandvavasour.com">christian@warreandvavasour.com</a>. Include the client name and a description of the issue; never send passwords, API keys or access tokens.</p>
-<p><a href="/blog">News and notes</a> · <a href="/privacy">Privacy</a> · <a href="https://github.com/HarleyCoops/WorkspaceAlberta">Source and documentation</a></p>
+<p><a href="/blog">News and notes</a> · <a href="/privacy">Privacy</a> · <a href="https://github.com/WarreAndVavasour/WorkspaceAlberta">Source and documentation</a></p>
 """
 
 # The listing mark as outlined paths, so it renders the same without any installed font.

@@ -67,7 +67,7 @@ elements:
       fontSize: 14
       color: "$dink"
       wrap: false
-      text: github.com/HarleyCoops/WorkspaceAlberta
+      text: github.com/WarreAndVavasour/WorkspaceAlberta
   - elementId: cta-2-rule
     elementType: shape
     bounds: [496, 336, 80, 2]
