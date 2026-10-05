@@ -87,3 +87,15 @@ Official references checked 2026-10-05:
 - https://developers.openai.com/plugins/build/plugins
 - https://developers.openai.com/plugins/build/auth
 - https://developers.openai.com/plugins/deploy/submission
+
+## Intermittent planner transport errors during acceptance
+
+The live release check may retry only `search_opportunities` and
+`find_matching_opportunities` when the server reports the exact
+`request-failed` planner fallback. It waits two then five seconds, at most
+two additional calls, and records every attempt, warning and delay in
+the release report. Persistent fallback still fails. Other warnings, partial
+enumeration, tool errors, authorization failures and all write actions are not
+retryable. The existing successful-result and completeness assertions remain
+unchanged. This handles transient upstream failures in acceptance; it does not
+claim to eliminate intermittent Cohere failures in the product.

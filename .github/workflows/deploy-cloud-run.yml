@@ -59,7 +59,7 @@ jobs:
         if: inputs.action == 'stage'
         run: |
           python -m unittest \
-            tests.test_openai_plugin tests.test_openai_wire tests.test_openai_pipeline \
+            tests.test_openai_plugin tests.test_openai_wire tests.test_openai_pipeline tests.test_openai_acceptance \
             tests.test_oauth tests.test_oauth_security tests.test_google_login \
             tests.test_agent_contract tests.test_procurement_http_app \
             tests.test_connector_review tests.test_blog tests.test_e2b_bid_room \

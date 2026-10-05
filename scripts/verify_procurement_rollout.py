@@ -17,6 +17,42 @@ from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
 
+PLANNER_TRANSPORT_WARNING = "APC query planner fallback (request-failed); using lexical matching."
+CACHE_REFRESH_WARNING = "CanadaBuys cache was empty, so it was refreshed from open data."
+RETRYABLE_READS = frozenset({"search_opportunities", "find_matching_opportunities"})
+RETRY_DELAYS = (2, 5)
+
+
+async def call_for_acceptance(client, name, args, report):
+    """Retry only an explicit planner transport fallback on two known reads.
+
+    Every attempt remains in the public evidence. This is not a server retry or
+    an instruction to hide degraded results: persistent failures still raise,
+    all original completeness assertions remain, and writes/auth/schema errors
+    are never retried. The retry budget is fixed at two additional calls.
+    """
+    for attempt in range(1, len(RETRY_DELAYS) + 2):
+        started = time.monotonic()
+        result = await client.call_tool(name, args)
+        text = "\n".join(block.text for block in result.content if hasattr(block, "text"))
+        assert not result.is_error and not text.startswith("Error:"), text
+        data = result.structured_content
+        warnings = data.get("warnings", []) if data else []
+        record = {"tool": name, "attempt": attempt,
+                  "seconds": round(time.monotonic() - started, 2), "warnings": list(warnings)}
+        report["calls"].append(record)
+        retryable = (name in RETRYABLE_READS and PLANNER_TRANSPORT_WARNING in warnings
+                     and all(w in (PLANNER_TRANSPORT_WARNING, CACHE_REFRESH_WARNING) for w in warnings))
+        print(f"Received {name} attempt {attempt} in {record['seconds']}s; warnings={warnings}", flush=True)
+        if not retryable:
+            return text, data
+        if attempt > len(RETRY_DELAYS):
+            raise AssertionError(f"Planner transport fallback persisted after {attempt} read attempts: {warnings}")
+        record["retry_delay_seconds"] = RETRY_DELAYS[attempt - 1]
+        await asyncio.sleep(RETRY_DELAYS[attempt - 1])
+    raise AssertionError("Unreachable acceptance retry state")
+
+
 async def verify(base_url: str) -> dict:
     base_url = base_url.rstrip("/")
     headers = {"User-Agent": "WorkspaceAlberta-Acceptance/1.0"}
@@ -35,16 +71,7 @@ async def verify(base_url: str) -> dict:
             report["tools"] = sorted(names)
 
             async def call(name, args):
-                started = time.monotonic()
-                result = await client.call_tool(name, args)
-                text = "\n".join(block.text for block in result.content if hasattr(block, "text"))
-                assert not result.is_error and not text.startswith("Error:"), text
-                data = result.structured_content
-                warnings = data.get("warnings", []) if data else []
-                report["calls"].append({"tool": name, "seconds": round(time.monotonic() - started, 2),
-                                        "warnings": warnings})
-                print(f"Verified {name} in {report['calls'][-1]['seconds']}s", flush=True)
-                return text, data
+                return await call_for_acceptance(client, name, args, report)
 
             text, search = await call("search_opportunities", {
                 "source": "alberta", "keywords": "data platforms and software engineering", "limit": 5,
