@@ -115,7 +115,14 @@ def verify_assets(url, commit):
 
 def verify(url, commit):
     print(f"Verifying {url}", flush=True)
-    return {"oauth": verify_oauth(url, ORIGIN + "/mcp"),
+    # Gate both candidate and public verification on actual OpenAI wire behavior.
+    # Terms/domain ownership remain explicit portal gates, not fake backend failures.
+    from openai_plugin import probe
+    openai = probe(url)
+    require(openai["backend_checks_pass"], "OpenAI backend compatibility failed: " +
+            ", ".join(c["name"] for c in openai["checks"]
+                      if not c["pass"] and c["name"] not in ("/terms", "domain challenge configured")))
+    return {"openai": openai, "oauth": verify_oauth(url, ORIGIN + "/mcp"),
             "assets": verify_assets(url, commit),
             "website": verify_website(url, commit),
             "procurement": asyncio.run(verify_procurement(url))}
@@ -225,6 +232,7 @@ def main():
         command.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     report = stage(args.image, args.commit, args.suffix) if args.action == "stage" else promote(args.revision, args.expected_current)
+    report["source_repository"] = "WarreAndVavasour/WorkspaceAlberta"
     report["checked_at"] = datetime.now(timezone.utc).isoformat()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

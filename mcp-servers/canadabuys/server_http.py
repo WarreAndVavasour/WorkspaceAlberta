@@ -81,7 +81,8 @@ def _mcp_authorization_header(ctx: ServerRequestContext) -> str | None:
 
 async def handle_list_tools(ctx: ServerRequestContext, params) -> ListToolsResult:
     """List available procurement MCP tools."""
-    return ListToolsResult(tools=get_mcp_tools())
+    from procurement_core.openai_support import OpenAIListToolsResult
+    return OpenAIListToolsResult(tools=get_mcp_tools())
 
 
 async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestParams) -> CallToolResult:
@@ -111,6 +112,8 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
                 )
             ],
             is_error=True,
+            _meta={"mcp/www_authenticate": [oauth.www_authenticate_challenge()]}
+            if exc.status_code == 401 else None,
         )
 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
@@ -136,6 +139,8 @@ mcp_server = Server(
     on_list_tools=handle_list_tools,
     on_call_tool=handle_call_tool,
 )
+from procurement_core.openai_wire import preserve_auth_metadata
+mcp_server.middleware.append(preserve_auth_metadata)
 session_manager: StreamableHTTPSessionManager | None = None
 
 

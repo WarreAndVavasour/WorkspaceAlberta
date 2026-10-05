@@ -48,7 +48,7 @@ REFRESH_PREFIX = "wa_rt_"
 CLIENT_PREFIX = "wa_cli_"
 SCOPE_PRO = "pro"
 SCOPE_OFFLINE = "offline_access"
-SUPPORTED_SCOPES = (SCOPE_PRO, SCOPE_OFFLINE)
+SUPPORTED_SCOPES = (SCOPE_PRO, SCOPE_OFFLINE, "openid", "email")
 CODE_TTL_SECONDS = 600
 ACCESS_TTL_SECONDS = 900
 REFRESH_TTL_SECONDS = 30 * 24 * 3600
@@ -211,7 +211,8 @@ def redirect_uri_allowed(uri: str) -> bool:
     """Return True when *uri* is a Claude callback or an RFC 8252 loopback."""
     if not uri:
         return False
-    if uri in CLAUDE_REDIRECTS:
+    from procurement_core.openai_support import openai_redirect_allowed
+    if uri in CLAUDE_REDIRECTS or openai_redirect_allowed(uri):
         return True
     return _loopback_key(uri) is not None
 
@@ -569,7 +570,9 @@ def authorization_server_metadata() -> dict[str, Any]:
         "code_challenge_methods_supported": ["S256"],
         "token_endpoint_auth_methods_supported": ["none", "client_secret_post"],
         "client_id_metadata_document_supported": True,
-        "scopes_supported": [SCOPE_PRO, SCOPE_OFFLINE],
+        "scopes_supported": list(SUPPORTED_SCOPES),
+        "userinfo_endpoint": f"{origin}/userinfo",
+        "authorization_response_iss_parameter_supported": True,
         "service_documentation": "https://github.com/WarreAndVavasour/WorkspaceAlberta",
     }
 
@@ -716,7 +719,7 @@ def register_client(payload: dict[str, Any]) -> dict[str, Any]:
             raise OAuthError(
                 400,
                 "invalid_redirect_uri",
-                "redirect_uri is not a Claude callback or loopback URI.",
+                "redirect_uri is not an allowed MCP client callback or loopback URI.",
             )
         cleaned.append(uri)
     auth_method = str(payload.get("token_endpoint_auth_method") or "none")
@@ -929,6 +932,9 @@ def validate_authorize_params(params: dict[str, str]) -> dict[str, str]:
     resource = params.get("resource") or public_mcp_resource()
     if not _resource_allowed(resource):
         raise OAuthError(400, "invalid_target", "resource is not this MCP server.")
+    requested_scope = params.get("scope") or SCOPE_PRO
+    if not set(requested_scope.split()).issubset(SUPPORTED_SCOPES):
+        raise OAuthError(400, "invalid_scope", "Unsupported OAuth scope requested.")
     return {
         "response_type": "code",
         "client_id": client["client_id"],
@@ -965,6 +971,7 @@ def authorization_redirect(params: dict[str, str], code: str) -> str:
     parsed = urlparse(params["redirect_uri"])
     query = dict(parse_qsl(parsed.query, keep_blank_values=True))
     query["code"] = code
+    query["iss"] = public_origin()
     if params.get("state"):
         query["state"] = params["state"]
     return urlunparse(parsed._replace(query=urlencode(query)))
@@ -974,6 +981,7 @@ def _mint_access_token(user: dict[str, Any], resource: str, scope: str) -> str:
     claims = {
         "sub": user["id"],
         "email": user["email"],
+        "email_verified": user.get("email_verified") is True,
         "aud": resource,
         "iss": public_origin(),
         "iat": int(time.time()),
@@ -1059,7 +1067,8 @@ def exchange_authorization_code(form: dict[str, str]) -> dict[str, Any]:
         raise OAuthError(400, "invalid_grant", "PKCE verification failed.")
     if str(row.get("resource") or "").rstrip("/") != resource.rstrip("/"):
         raise OAuthError(400, "invalid_target", "resource does not match the authorization request.")
-    user = {"id": row["user_id"], "email": row["user_email"]}
+    # These grants originate only from verified Google or email-code login.
+    user = {"id": row["user_id"], "email": row["user_email"], "email_verified": True}
     scope = row.get("scope") or SCOPE_PRO
     if SCOPE_OFFLINE not in scope:
         scope = f"{scope} {SCOPE_OFFLINE}".strip()
@@ -1083,14 +1092,15 @@ def exchange_refresh_token(form: dict[str, str]) -> dict[str, Any]:
         raise OAuthError(400, "invalid_grant", "Refresh token does not match this client.")
     if not store.take_refresh(_hash_secret(token)):
         raise OAuthError(400, "invalid_grant", "Refresh token is invalid or revoked.")
-    user = {"id": row["user_id"], "email": row["user_email"]}
+    # These grants originate only from verified Google or email-code login.
+    user = {"id": row["user_id"], "email": row["user_email"], "email_verified": True}
     if login_provider() == "google":
         # Google Workspace addresses can change. Never renew the old email's
         # billing entitlement indefinitely from a refresh-token snapshot.
         current = store.get_user(row["user_id"])
         if not current:
             raise OAuthError(400, "invalid_grant", "The account no longer exists. Sign in again.")
-        user = current
+        user = {**current, "email_verified": True}
     resource = row.get("resource") or public_mcp_resource()
     scope = row.get("scope") or f"{SCOPE_PRO} {SCOPE_OFFLINE}"
     return _token_response(user, row["client_id"], resource, scope)

@@ -624,4 +624,5 @@ def get_mcp_tools() -> list[Tool]:
             destructiveHint=tool.name in {"set_business_profile", "unwatch_opportunity"},
             openWorldHint=tool.name not in {"get_server_guide", "get_my_profile", "check_cohere_status", "list_watchlist", "unwatch_opportunity", "set_business_profile"},
         )
-    return tools
+    from procurement_core.openai_support import annotate_tools
+    return annotate_tools(tools)
