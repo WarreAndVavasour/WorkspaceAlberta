@@ -76,6 +76,7 @@ def identity_from_oauth_claims(claims: dict[str, Any]) -> dict[str, Any]:
     pro_active = bool(subscriber and subscriber.get("status") == "active")
     return {
         "auth_type": "oauth",
+        "oauth_scopes": str(claims.get("scope") or "").split(),
         "tenant_id": f"user:{user_id}" if user_id else None,
         "user_id": user_id,
         "email": email,
@@ -163,6 +164,11 @@ def check_tool_access(tool_name: str, authorization_header: str | None) -> dict[
     except GateError:
         if requires_identity:
             raise
+        return None
+
+    if record.get("auth_type") == "oauth" and oauth.SCOPE_PRO not in record.get("oauth_scopes", []):
+        if requires_identity:
+            raise GateError(401, "Reauthorize with the pro scope to access procurement account tools.")
         return None
 
     if is_pro and not record.get("pro_active"):

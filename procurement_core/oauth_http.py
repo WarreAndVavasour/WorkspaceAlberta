@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from procurement_core import oauth, google_login
 from procurement_core.auth_pages import CONSENT, auth_page
+from procurement_core.openai_support import register_openai_routes
 
 _PAGE_STYLE = """
 body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.55; color: #1c1c1c; }
@@ -80,6 +81,7 @@ def _error_redirect(redirect_uri: str, error: str, description: str, state: str)
     parsed = urlparse(redirect_uri)
     query = dict(parse_qsl(parsed.query, keep_blank_values=True))
     query["error"] = error
+    query["iss"] = oauth.public_origin()
     query["error_description"] = description
     if state:
         query["state"] = state
@@ -179,6 +181,7 @@ async def _form_map(request: Request) -> dict[str, str]:
 
 def register_oauth_routes(app: FastAPI) -> None:
     """Attach RFC 8414 / RFC 7591 / authorization-code routes to *app*."""
+    register_openai_routes(app)
 
     @app.middleware("http")
     async def protect_sign_in_pages(request: Request, call_next):

@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/main' && (github.repository == 'WarreAndVavasour/WorkspaceAlberta' || github.repository == 'HarleyCoops/WorkspaceAlberta')
+    if: github.ref == 'refs/heads/main' && github.repository == 'WarreAndVavasour/WorkspaceAlberta' && github.repository_id == '1400771945' && github.repository_owner_id == '323728381'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -59,10 +59,11 @@ jobs:
         if: inputs.action == 'stage'
         run: |
           python -m unittest \
+            tests.test_openai_plugin tests.test_openai_wire tests.test_openai_pipeline \
             tests.test_oauth tests.test_oauth_security tests.test_google_login \
             tests.test_agent_contract tests.test_procurement_http_app \
             tests.test_connector_review tests.test_blog tests.test_e2b_bid_room \
-            tests.test_apc_documents \
+            tests.test_apc_documents tests.test_local_bid_room \
             tests.test_canadabuys_mcp_smoke tests.test_procurement_fixtures \
             tests.test_search_relevance tests.test_query_planner tests.test_apc_workflow \
             tests.test_production_hardening tests.test_telemetry tests.test_gate_and_billing \
