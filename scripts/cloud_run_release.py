@@ -178,8 +178,10 @@ def stage(image, commit, suffix):
     require(runtime_identity(before["spec"]["template"]["spec"]) == runtime_identity(live["spec"]),
             "Service template differs from production credentials/config; inspect before staging")
     revision = f"{SERVICE}-{suffix}"
+    # Scale to zero: Cloud Run keeps min instances warm for every tagged revision,
+    # so a revision-level minimum multiplies idle cost by the number of tags.
     gcloud("run", "deploy", SERVICE, f"--image={image}", "--no-traffic", f"--tag={suffix}",
-           f"--revision-suffix={suffix}", f"--labels=source-commit={commit}")
+           f"--revision-suffix={suffix}", f"--labels=source-commit={commit}", "--min-instances=0")
     after = gcloud("run", "services", "describe", SERVICE)
     require(production_revision(after) == previous, "Production traffic changed during staging")
     report, details = candidate(after, revision)
@@ -215,7 +217,22 @@ def promote(revision, expected_current):
             print(f"Production check failed; restored {previous}", flush=True)
         raise
     report["status"] = "production; 100% traffic"
+    try:
+        report["removed_tags"] = remove_stale_tags(revision)
+    except Exception as error:  # Production is already verified; cleanup must not fail the release.
+        report["tag_cleanup_error"] = str(error)
+        print(f"Warning: stale tag cleanup failed: {error}", flush=True)
     return report
+
+
+def remove_stale_tags(keep):
+    """Drop verification tags from revisions that no longer serve production."""
+    service = gcloud("run", "services", "describe", SERVICE)
+    stale = sorted({entry["tag"] for entry in service["status"].get("traffic", [])
+                    if entry.get("tag") and entry.get("revisionName") != keep})
+    if stale:
+        gcloud("run", "services", "update-traffic", SERVICE, f"--remove-tags={','.join(stale)}")
+    return stale
 
 
 def main():

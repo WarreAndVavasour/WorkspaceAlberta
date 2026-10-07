@@ -142,11 +142,41 @@ class CloudRunReleaseTest(unittest.TestCase):
 
     @patch.object(release, "gcloud")
     def test_successful_promotion_checks_both_endpoints(self, gc):
-        gc.side_effect = [service(), {"spec": SPEC}, service(), {}, service(NEW)]
+        gc.side_effect = [service(), {"spec": SPEC}, service(), {}, service(NEW), service(NEW)]
         result = release.promote(NEW, OLD)
         self.assertEqual(result["status"], "production; 100% traffic")
         self.assertEqual([call.args[0] for call in self.verify.call_args_list],
                          ["https://candidate.invalid", release.ORIGIN])
+
+    @patch.object(release, "gcloud")
+    def test_promotion_removes_tags_from_retired_revisions(self, gc):
+        tagged = {"status": {"traffic": [
+            {"revisionName": NEW, "percent": 100},
+            {"revisionName": NEW, "tag": "git-new"},
+            {"revisionName": OLD, "tag": "git-old"},
+            {"revisionName": "workspacealberta-older", "tag": "git-older"}]}}
+        gc.side_effect = [service(), {"spec": SPEC}, service(), {}, service(NEW), tagged, {}]
+        result = release.promote(NEW, OLD)
+        self.assertEqual(result["removed_tags"], ["git-old", "git-older"])
+        self.assertEqual(gc.call_args_list[-1].args[-1], "--remove-tags=git-old,git-older")
+
+    @patch.object(release, "gcloud")
+    def test_tag_cleanup_failure_does_not_fail_release(self, gc):
+        gc.side_effect = [service(), {"spec": SPEC}, service(), {}, service(NEW), RuntimeError("quota")]
+        result = release.promote(NEW, OLD)
+        self.assertEqual(result["status"], "production; 100% traffic")
+        self.assertIn("quota", result["tag_cleanup_error"])
+
+    @patch.object(release, "gcloud")
+    def test_stage_deploys_with_scale_to_zero(self, gc):
+        image = release.IMAGE + "@sha256:" + "b" * 64
+        tagged = {"status": {"traffic": [{"revisionName": OLD, "percent": 100}]}, "spec": {"template": {"spec": SPEC}}}
+        gc.side_effect = [tagged, {"spec": SPEC}, {}, tagged]
+        with patch.object(release, "reviewed_commit", side_effect=lambda c: c), \
+             patch.object(release, "candidate", return_value=({"revision": NEW, "image": image, "url": "u"}, {"spec": SPEC})):
+            release.stage(image, "a" * 40, "git-abc")
+        deploy = next(call.args for call in gc.call_args_list if call.args[:2] == ("run", "deploy"))
+        self.assertIn("--min-instances=0", deploy)
 
 
 if __name__ == "__main__":
