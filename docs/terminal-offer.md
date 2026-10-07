@@ -24,7 +24,7 @@ The owner keeps running the business. Bring your own “Wouldn't it be great if�
 
 The physical workspace gives this work a home. The harness carries the task through tools, files, documents and review. The support relationship gives it continuity. Your people bring the knowledge of the business. We want that knowledge doing more.
 
-## The installed terminal — $4,800 CAD per month
+## The installed terminal — C$10,800/month
 
 One managed terminal, leased as part of the service: equipment, installation and onboarding, the WorkspaceAlberta workspace, updates, ongoing support, and help developing agreed workflows. Equipment returns when the lease ends. The installation schedule, final hardware, service scope, usage allowances, third-party costs and tax treatment are set out in the customer agreement. The monthly offer is available for enquiries; delivery is scheduled with the customer.
 

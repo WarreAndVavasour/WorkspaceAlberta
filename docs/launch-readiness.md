@@ -4,7 +4,7 @@
 
 - Personal story augmented in the WorkspaceAlberta, workspaceAlbertaSetup and workspacealberta-harness root READMEs. Existing historical image references in the procurement and harness READMEs are preserved. The harness Chinese README carries the new product chapter alongside its existing upstream material.
 - New `/terminal` page in `warre-vavasour`, linked from every main navigation and the home and procurement pages. Includes search/social metadata, a CAD service offer in JSON-LD, a sitemap entry, accessible FAQs, agent-discovery copy and a functional connection-copy button.
-- $4,800 CAD monthly terminal; locally deployed Pi projects; support over Tailscale; the personal family-doctor practice serving a small flock of approximately 20 devices.
+- C$10,800/month terminal; locally deployed Pi projects; support over Tailscale; the personal family-doctor practice serving a small flock of approximately 20 devices.
 - Separate one-company offer: 60 days to find, fix and deliver, or both sides walk away. Proposed 25% share of attributable new revenue actually earned, never savings. Revenue attribution and the collection period are agreed before starting.
 - Shared MCP initialization instructions, `get_server_guide`, tool side-effect annotations, discovery handoff fields and explicit MCP error flags for hosted denials and core errors. Cohere route guidance and a research protocol distinguish operational traces from future RL datasets.
 - [Announcement draft](launch-announcement.md) and [commercial draft](terminal-offer.md).

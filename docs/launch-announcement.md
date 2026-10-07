@@ -10,7 +10,7 @@ Think of the family doctor model of AI support. I'm the generalist who knows the
 
 The first connection is our MCP server: Canadian public work through CanadaBuys and Alberta Purchasing Connection. Cohere's model family is part of the Canadian provenance. The terminal brings the tools, the projects and the support relationship into one physical place.
 
-**Installed and supported: $4,800 CAD per month.**
+**Installed and supported: C$10,800/month.**
 
 And I'm offering one installed and supported terminal to one selected Canadian company with a million-dollar problem worth solving. We have **60 days to find, fix and deliver a solution**. If we can't, we both walk away. No monthly terminal fee for those 60 days; no terminal or success fee if we fail to deliver.
 

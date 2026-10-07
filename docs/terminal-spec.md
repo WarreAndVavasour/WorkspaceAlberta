@@ -47,7 +47,7 @@ mounts the Pi 5, NVMe module, exposed cooler, and rear cable exits as one delibe
 
 All tiers share the Pi 5 control-node core, Apple input set, and central-mast silhouette;
 they differ in displays, arm, and base finish. Commercial offer is one universal device at a
-single **$4,800 CAD/month managed lease** (see [the terminal offer](terminal-offer.md) for the service and agreed commercial terms).
+single **C$10,800/month managed lease** (see [the terminal offer](terminal-offer.md) for the service and agreed commercial terms).
 
 ## Software & support layer (what makes it a terminal)
 
@@ -67,4 +67,4 @@ These should all read from this spec so geometry and parts stay consistent:
 4. **Cable-routing diagram** — single white USB-C PD into the base, hidden power distribution,
    clean exits (mirrors the power-architecture rules in the research doc).
 5. **Brand-object close-up** — the exposed Pi as control node, brushed aluminum + copper accent.
-6. **Spec one-pager** — this BOM + the $4,800/mo offer, print/PDF for sales.
+6. **Spec one-pager** — this BOM + the C$10,800/month offer, print/PDF for sales.
