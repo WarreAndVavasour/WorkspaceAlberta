@@ -1,6 +1,14 @@
 name: Deploy to Cloud Run
 
 on:
+  # Every push to main stages, verifies and promotes to production.
+  # Docs-only commits skip deploy: the image is built only from Dockerfile,
+  # requirements.txt, procurement_core/ and mcp-servers/canadabuys/.
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
   workflow_dispatch:
     inputs:
       action:
@@ -35,7 +43,7 @@ jobs:
     env:
       CANADABUYS_LOAD_ENV_FILE: '0'
       IMAGE: northamerica-northeast1-docker.pkg.dev/workspacealberta-prod/cloud-run-source-deploy/workspacealberta
-      RELEASE_ACTION: ${{ inputs.action }}
+      RELEASE_ACTION: ${{ github.event_name == 'push' && 'stage' || inputs.action }}
       REVISION: ${{ inputs.revision }}
       EXPECTED_CURRENT: ${{ inputs.expected_current }}
     steps:
@@ -56,7 +64,7 @@ jobs:
           test -n '${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           test -n '${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}'
       - name: Test source before building
-        if: inputs.action == 'stage'
+        if: env.RELEASE_ACTION == 'stage'
         run: |
           python -m unittest \
             tests.test_openai_plugin tests.test_openai_wire tests.test_openai_pipeline tests.test_openai_acceptance \
@@ -69,7 +77,7 @@ jobs:
             tests.test_production_hardening tests.test_telemetry tests.test_gate_and_billing \
             tests.test_cloud_run_release
       - name: Build only tracked application files
-        if: inputs.action == 'stage'
+        if: env.RELEASE_ACTION == 'stage'
         run: |
           context_dir=$(mktemp -d)
           git archive "$GITHUB_SHA" Dockerfile requirements.txt procurement_core mcp-servers/canadabuys | tar -x -C "$context_dir"
@@ -84,7 +92,7 @@ jobs:
           service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
       - name: Push image and stage at zero production traffic
-        if: inputs.action == 'stage'
+        if: env.RELEASE_ACTION == 'stage'
         run: |
           gcloud auth configure-docker northamerica-northeast1-docker.pkg.dev --quiet
           docker push "$IMAGE_TAG"
@@ -93,8 +101,17 @@ jobs:
             --image "$image_digest" --commit "$GITHUB_SHA" \
             --suffix "git-${GITHUB_SHA:0:12}-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
             --output output/cloud-run/release.json
+      - name: Promote the staged revision after a push
+        if: github.event_name == 'push'
+        run: |
+          cp output/cloud-run/release.json output/cloud-run/stage.json
+          read -r staged previous < <(python -c "import json; r=json.load(open('output/cloud-run/stage.json')); print(r['revision'], r['previous_revision'])")
+          test -n "$staged" && test -n "$previous"
+          python scripts/cloud_run_release.py promote \
+            --revision "$staged" --expected-current "$previous" \
+            --output output/cloud-run/release.json
       - name: Verify and promote the specified revision
-        if: inputs.action == 'promote'
+        if: env.RELEASE_ACTION == 'promote'
         run: |
           python scripts/cloud_run_release.py promote \
             --revision "$REVISION" --expected-current "$EXPECTED_CURRENT" \
@@ -109,7 +126,11 @@ jobs:
               summary.write('## Cloud Run release\n\n')
               for key in ('status', 'revision', 'previous_revision', 'commit', 'image', 'url'):
                   summary.write(f'- **{key}:** `{report[key]}`\n')
-              if os.environ['RELEASE_ACTION'] == 'stage':
+              if os.environ.get('GITHUB_EVENT_NAME') == 'push':
+                  summary.write('\nPushed to main: staged, verified and promoted automatically. '
+                                'If a production check had failed, the helper would have restored '
+                                '`previous_revision` and failed this run.\n')
+              elif os.environ['RELEASE_ACTION'] == 'stage':
                   summary.write('\nTo release, run this workflow again on main with **promote**. '
                                 'Use `revision` and `previous_revision` above for the two revision inputs.\n')
           PY
@@ -117,7 +138,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: cloud-run-${{ inputs.action }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: cloud-run-${{ github.event_name == 'push' && 'push' || inputs.action }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: output/cloud-run/
           if-no-files-found: ignore
           retention-days: 30
