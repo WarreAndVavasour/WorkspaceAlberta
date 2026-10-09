@@ -29,14 +29,15 @@ class PipelineTests(unittest.TestCase):
         with patch.object(package,'probe',return_value=report), patch('sys.argv',['builder','probe','--require-ready']):
             self.assertEqual(package.main(),1)
 
-    def test_corporate_ownership_and_manual_deploy_are_preserved(self):
+    def test_corporate_ownership_and_deploy_triggers(self):
         root=Path(__file__).resolve().parents[1]
         workflow=(root/'.github/workflows/deploy-cloud-run.yml').read_text()
         self.assertIn("github.repository == 'WarreAndVavasour/WorkspaceAlberta'",workflow)
         self.assertIn("github.repository_id == '1400771945'",workflow)
         self.assertIn("github.repository_owner_id == '323728381'",workflow)
         self.assertNotIn('HarleyCoops/WorkspaceAlberta',workflow)
-        self.assertNotIn('  push:',workflow)
+        # Pushes to main deploy automatically; manual stage/promote stays available.
+        self.assertIn('  push:\n    branches: [main]',workflow)
         self.assertIn('workflow_dispatch:',workflow)
         manifest=json.loads((package.PACKAGE/'plugin.json').read_text())
         self.assertEqual(manifest['repository'],'https://github.com/WarreAndVavasour/WorkspaceAlberta')
