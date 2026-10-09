@@ -2480,11 +2480,21 @@ def process_bid_room_artifact(args: dict, *, deadline: float | None = None, canc
     # or leave a paid sandbox alive. They are no longer in the MCP schema.
     warnings: list[str] = []
 
+    upload_token = str(args.get("upload_token") or "").strip()
+    if upload_token and not is_alberta_reference(reference):
+        raise ValueError("upload_token applies only to an Alberta APC reference.")
+
     if is_alberta_reference(reference):
         try:
             details = get_alberta_api_details(reference)
         except (RuntimeError, ValueError) as exc:
             raise ValueError(f"Alberta opportunity not available: {exc}") from exc
+        if upload_token:
+            return _process_uploaded_bid_room(
+                reference, upload_token, details, profile,
+                business_context=business_context, max_attachments=max_attachments,
+                deadline=deadline, cancelled=cancelled,
+            )
         payload = build_apc_bid_room_payload(
             details,
             profile,
@@ -2511,6 +2521,10 @@ def process_bid_room_artifact(args: dict, *, deadline: float | None = None, canc
     if is_alberta_reference(reference) and max_attachments > 0 and not any(
         item.get("kind") in {"apc_document", "apc_addendum"} for item in payload.get("attachments", [])
     ):
+        from procurement_core import bid_room_uploads
+
+        if bid_room_uploads.uploads_available():
+            return _bid_room_upload_request(reference, payload)
         raise ValueError(f"No readable APC procurement files were resolved. No sandbox was started. {APC_ACCESS_MESSAGE}")
     result = run_live_bid_room_process(
         payload,
@@ -2520,6 +2534,86 @@ def process_bid_room_artifact(args: dict, *, deadline: float | None = None, canc
         result.artifact.setdefault("warnings", []).extend(warnings)
         from procurement_core.document_coverage import document_coverage
         result.artifact["coverage"] = document_coverage(result.artifact["documents"], result.artifact["warnings"])
+    return {
+        "sandbox_id": result.sandbox_id,
+        "sandbox_killed": result.killed,
+        "artifact": result.artifact,
+        "markdown": render_bid_room_markdown(result),
+    }
+
+
+def _bid_room_upload_request(reference: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """APC files need the user's own sign-in: hand back a private upload link."""
+    from procurement_core import bid_room_uploads, storage
+
+    token = bid_room_uploads.create_upload_token(reference, storage.current_tenant())
+    url = bid_room_uploads.upload_page_url(token)
+    listed = payload.get("document_manifest") or []
+    hours = bid_room_uploads.TOKEN_TTL_SECONDS // 3600
+    lines = [
+        f"# Bid room: upload the APC documents for {reference}",
+        "",
+        "Alberta Purchasing Connection only releases tender documents to a signed-in supplier "
+        "account, so WorkspaceAlberta does not download them for you.",
+        "",
+        f"1. Open the posting on APC with your own supplier account: {payload.get('opportunity', {}).get('url', '')}",
+        "2. Under **Document downloads**, choose **Download All** (or download each file, including every addendum). "
+        "APC adds your account to that posting's Interested Suppliers list when you do.",
+        f"3. Upload the files here: {url}",
+        f"4. Then run `process_bid_room` again with `reference` = `{reference}` and `upload_token` = `{token}`.",
+        "",
+        f"The link is private to your account and expires in {hours} hours. Uploaded files are deleted after processing.",
+    ]
+    if listed:
+        lines += ["", "APC lists these documents for this posting:"]
+        lines += [f"- {item.get('name')}" + (f" (addendum {item.get('amendment_number')})" if item.get("kind") == "apc_addendum" else "") for item in listed]
+    return {
+        "upload_required": True,
+        "upload_url": url,
+        "upload_token": token,
+        "expected_documents": [item.get("name") for item in listed],
+        "markdown": "\n".join(lines),
+    }
+
+
+def _process_uploaded_bid_room(
+    reference: str,
+    upload_token: str,
+    details: dict[str, Any],
+    profile: dict[str, Any],
+    *,
+    business_context: str,
+    max_attachments: int,
+    deadline: float,
+    cancelled=None,
+) -> dict[str, Any]:
+    from procurement_core import bid_room_uploads, storage
+    from procurement_core.apc_documents import apc_document_manifest
+    from procurement_core.e2b_bid_room import (
+        BID_ROOM_TIMEOUT_MESSAGE, BidRoomTimeout, remaining_bid_room_seconds,
+        render_bid_room_markdown, run_live_bid_room_process,
+    )
+    from procurement_core.local_bid_room import build_local_bid_room_payload
+
+    claims = bid_room_uploads.verify_upload_token(
+        upload_token, reference=reference, tenant=storage.current_tenant() or "",
+    )
+    download = bid_room_uploads.load_uploaded_files(claims, apc_manifest=apc_document_manifest(details))
+    download["provenance"] = "user_upload"
+    if max_attachments and not any(item["status"] == "verified" for item in download["files"]):
+        problems = "; ".join(f"{item['name']}: {item['error'] or item['status']}" for item in download["files"])
+        raise ValueError(f"None of the uploaded files can be processed ({problems}). No sandbox was started.")
+    payload, uploads = build_local_bid_room_payload(
+        download, profile,
+        business_context=business_context,
+        max_attachments=max_attachments,
+        details=details,
+    )
+    remaining_bid_room_seconds(deadline, reserve=5)
+    if cancelled is not None and cancelled.is_set():
+        raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE)
+    result = run_live_bid_room_process(payload, uploads=uploads, deadline=deadline)
+    bid_room_uploads.delete_session(claims)
     return {
         "sandbox_id": result.sandbox_id,
         "sandbox_killed": result.killed,

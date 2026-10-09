@@ -185,10 +185,15 @@ def build_local_bid_room_payload(
         }
         documents = []
         warnings.append("Public APC notice details were not loaded; the review uses the downloaded files only.")
-    opportunity = {**opportunity, "provenance": "local_apc_download"}
+    provenance = download.get("provenance") or "local_apc_download"
+    opportunity = {**opportunity, "provenance": provenance}
+    warnings.extend(download.get("warnings") or [])
 
     if not download["complete"]:
         warnings.append(
+            "The uploaded documents do not cover every file listed on APC; the review is incomplete. "
+            "Upload the missing files before relying on it."
+            if provenance == "user_upload" else
             "The local APC download is not marked complete; some posting documents may be missing. "
             "Resume the download before relying on this review."
         )
@@ -206,7 +211,7 @@ def build_local_bid_room_payload(
             "amendment_number": None,
             "expected_bytes": item["bytes"],
             "expected_mime_type": "application/pdf" if suffix == ".pdf" else "",
-            "provenance": "local_apc_download",
+            "provenance": provenance,
         }
         if item["status"] != "verified":
             entry.update(status=item["status"], error=item["error"])
@@ -218,7 +223,8 @@ def build_local_bid_room_payload(
             local_name = f"{item['sha256'][:16]}{suffix}"
             entry.update(status="selected")
             attachments.append({**entry, "url": "", "local_name": local_name, "expected_sha256": item["sha256"]})
-            uploads.append((f"{SANDBOX_LOCAL_DIR}/{local_name}", item["path"].read_bytes()))
+            data = item["data"] if item.get("data") is not None else item["path"].read_bytes()
+            uploads.append((f"{SANDBOX_LOCAL_DIR}/{local_name}", data))
         manifest.append(entry)
 
     payload = build_process_payload(
