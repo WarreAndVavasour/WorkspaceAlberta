@@ -74,7 +74,7 @@ jobs:
             tests.test_apc_documents tests.test_local_bid_room \
             tests.test_canadabuys_mcp_smoke tests.test_procurement_fixtures \
             tests.test_search_relevance tests.test_query_planner tests.test_apc_workflow \
-            tests.test_production_hardening tests.test_telemetry tests.test_gate_and_billing \
+            tests.test_production_hardening tests.test_telemetry tests.test_gate_and_billing tests.test_bid_room_uploads \
             tests.test_cloud_run_release
       - name: Build only tracked application files
         if: env.RELEASE_ACTION == 'stage'
