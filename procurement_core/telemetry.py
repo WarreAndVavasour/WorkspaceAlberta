@@ -23,7 +23,15 @@ daemon thread posts them with a short timeout. A full queue drops events and
 a PostHog outage is invisible to callers — telemetry must never slow down or
 break a tool call.
 
+Cloud Logging: independently of PostHog, every tool call and gate denial
+also writes one JSON line to stdout (``"event": "mcp_tool_call"`` /
+``"mcp_gate_denied"``). Cloud Run ingests it as ``jsonPayload`` and the
+``wa_tool_calls`` / ``wa_tool_latency`` log-based metrics read it for the
+"WorkspaceAlberta - MCP Usage" dashboard. Same privacy stance: the user is
+the truncated hash distinct_id, never an email, arguments or results.
+
 Environment variables:
+    WA_TOOL_LOG       set to "0" to turn the stdout tool-call line off
     POSTHOG_API_KEY   project API key (phc_...); telemetry is off without it
     POSTHOG_HOST      ingestion host, default https://us.i.posthog.com
     WA_ENVIRONMENT    environment tag on every event, default "prod"
@@ -34,6 +42,7 @@ from __future__ import annotations
 import json
 import os
 import queue
+import sys
 import threading
 from datetime import datetime, timezone
 from typing import Any
@@ -62,6 +71,34 @@ def enabled() -> bool:
 
 def environment() -> str:
     return os.environ.get("WA_ENVIRONMENT", "").strip() or "prod"
+
+
+def tool_log_enabled() -> bool:
+    return os.environ.get("WA_TOOL_LOG", "").strip() != "0"
+
+
+def log_structured(entry: dict[str, Any]) -> bool:
+    """Write one Cloud Logging-compatible JSON line to stdout. Never raises."""
+    if not tool_log_enabled():
+        return False
+    try:
+        sys.stdout.write(json.dumps(entry, separators=(",", ":"), default=str) + "\n")
+        sys.stdout.flush()
+    except Exception:
+        return False
+    return True
+
+
+def _log_user(record: dict[str, Any] | None) -> str:
+    """Pseudonymous metric label: the truncated hash id, or ``anon``."""
+    uid = _distinct_id(record)
+    return "anon" if uid == "anonymous" else uid
+
+
+def _tier(record: dict[str, Any] | None) -> str:
+    if not record:
+        return "anon"
+    return "pro" if record.get("pro_active") else "free"
 
 
 def capture(event: str, distinct_id: str = "server", properties: dict[str, Any] | None = None) -> bool:
@@ -93,6 +130,20 @@ def capture_tool_call(
 ) -> bool:
     """Emit ``tool_called`` for one MCP/REST tool invocation."""
     args = arguments or {}
+    ok = not result_text.startswith("Error:")
+    log_structured({
+        "severity": "INFO" if ok else "WARNING",
+        "message": f"mcp_tool_call {tool} ok={ok} {latency_ms}ms",
+        "event": "mcp_tool_call",
+        "tool": tool,
+        "transport": transport,
+        "user": _log_user(record),
+        "tier": _tier(record),
+        "plan": (record or {}).get("plan", ""),
+        "ok": ok,
+        "duration_ms": latency_ms,
+        "environment": environment(),
+    })
     return capture(
         "tool_called",
         distinct_id=_distinct_id(record),
@@ -102,7 +153,7 @@ def capture_tool_call(
             "source": "agent",
             "authenticated": record is not None,
             "plan": (record or {}).get("plan", ""),
-            "success": not result_text.startswith("Error:"),
+            "success": ok,
             "latency_ms": latency_ms,
             # Anonymous callers describing their business inline is the
             # activation signal in the funnel; the profile itself is not sent.
@@ -113,6 +164,15 @@ def capture_tool_call(
 
 def capture_gate_denied(tool: str, transport: str, status_code: int) -> bool:
     """Emit ``pro_tool_denied`` — the paywall-hit funnel moment."""
+    log_structured({
+        "severity": "NOTICE",
+        "message": f"mcp_gate_denied {tool} status={status_code}",
+        "event": "mcp_gate_denied",
+        "tool": tool,
+        "transport": transport,
+        "status_code": status_code,
+        "environment": environment(),
+    })
     return capture(
         "pro_tool_denied",
         distinct_id="anonymous",

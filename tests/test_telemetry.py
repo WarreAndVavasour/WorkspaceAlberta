@@ -91,5 +91,64 @@ class DeliveryTest(unittest.TestCase):
             self.assertFalse(telemetry.capture("tool_called"))
 
 
+class CloudLoggingLineTest(unittest.TestCase):
+    """The stdout JSON line feeds the Cloud Run log-based metrics."""
+
+    def setUp(self) -> None:
+        os.environ.pop("POSTHOG_API_KEY", None)
+        os.environ.pop("WA_TOOL_LOG", None)
+
+    def _lines(self, fn) -> list[dict]:
+        import io
+        import json
+        buf = io.StringIO()
+        with mock.patch("sys.stdout", buf):
+            fn()
+        return [json.loads(line) for line in buf.getvalue().splitlines() if line]
+
+    def test_tool_call_line_written_without_posthog(self) -> None:
+        (line,) = self._lines(lambda: telemetry.capture_tool_call(
+            "search_opportunities", "mcp",
+            {"user_id": "u" * 40, "plan": "pro", "pro_active": True, "email": "a@b.ca"},
+            {"profile": {"description": "steel"}, "query": "bridges"},
+            "# Results", 42,
+        ))
+        self.assertEqual(line["event"], "mcp_tool_call")
+        self.assertEqual(line["tool"], "search_opportunities")
+        self.assertEqual(line["user"], "user_" + "u" * 16)
+        self.assertEqual(line["tier"], "pro")
+        self.assertTrue(line["ok"])
+        self.assertEqual(line["duration_ms"], 42)
+        self.assertEqual(line["severity"], "INFO")
+        # Privacy: no email, arguments or result text.
+        raw = str(line)
+        for secret in ("a@b.ca", "steel", "bridges", "# Results"):
+            self.assertNotIn(secret, raw)
+
+    def test_anonymous_failure_line(self) -> None:
+        (line,) = self._lines(lambda: telemetry.capture_tool_call(
+            "get_opportunity_details", "rest", None, None, "Error: nope", 7))
+        self.assertEqual(line["user"], "anon")
+        self.assertEqual(line["tier"], "anon")
+        self.assertFalse(line["ok"])
+        self.assertEqual(line["severity"], "WARNING")
+
+    def test_free_tier_and_gate_denied(self) -> None:
+        (line,) = self._lines(lambda: telemetry.capture_tool_call(
+            "get_my_profile", "mcp", {"key_hash": "k" * 64}, {}, "ok", 1))
+        self.assertEqual(line["tier"], "free")
+        (denied,) = self._lines(lambda: telemetry.capture_gate_denied("process_bid_room", "mcp", 401))
+        self.assertEqual(denied["event"], "mcp_gate_denied")
+        self.assertEqual(denied["status_code"], 401)
+
+    def test_can_be_disabled(self) -> None:
+        os.environ["WA_TOOL_LOG"] = "0"
+        try:
+            self.assertEqual(self._lines(lambda: telemetry.capture_tool_call(
+                "search_opportunities", "mcp", None, {}, "ok", 1)), [])
+        finally:
+            os.environ.pop("WA_TOOL_LOG", None)
+
+
 if __name__ == "__main__":
     unittest.main()
