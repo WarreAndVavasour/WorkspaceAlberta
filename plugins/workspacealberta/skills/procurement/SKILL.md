@@ -33,8 +33,9 @@ of winning or a procurement eligibility decision.
 
 Public discovery works without sign-in. Saved profiles require free OAuth
 sign-in. `watch_opportunity`, `list_watchlist`, `unwatch_opportunity`,
-`bid_no_bid_scorecard`, `process_bid_room`, and `analyze_contract_with_cohere`
-require sign-in and an existing active Pro subscription. Signing in does not
+`bid_no_bid_scorecard`, `process_bid_room`, `classify_tender`, and
+`analyze_contract_with_cohere` require sign-in and an existing active Pro
+subscription. Signing in does not
 purchase a subscription. Let the host's OAuth flow collect credentials; never
 ask for secrets in conversation, tool arguments, files, or a skill archive.
 
@@ -48,7 +49,12 @@ materials and business context to the disclosed processors. The tool launches an
 E2B sandbox job and uses Cohere for document extraction and analysis. This is not
 a read-only lookup. Review the returned errors and extraction limits. A timeout
 or incomplete extraction is not a finished analysis; retry with fewer attachments
-only when appropriate and authorized. `check_cohere_status` reports configuration,
+only when appropriate and authorized. `classify_tender` sends tender clause and
+page text to TypeSafe AI for classification and returns a requirement list with
+connector, lead time, pages and evidence quotes. Its labels are classifier outputs:
+present them as a checklist to verify against the posting and amendments, and keep
+a partial result labelled partial. For an APC posting it shares the private upload
+link with `process_bid_room` and does not delete the uploads. `check_cohere_status` reports configuration,
 not a live guarantee of provider availability. Ordinary APC discovery may send
 search terms/capabilities to Cohere for commodity-filter selection when configured.
 Canadian model provenance does not establish Canadian processing residency for

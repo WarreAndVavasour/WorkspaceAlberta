@@ -19,6 +19,8 @@ class OpenAIWireTest(unittest.TestCase):
         self.assertEqual(protected['get_my_profile']['securitySchemes'],
                          [{'type': 'oauth2', 'scopes': ['pro']}])
         self.assertFalse(protected['process_bid_room']['annotations']['readOnlyHint'])
+        self.assertFalse(protected['classify_tender']['annotations']['readOnlyHint'])
+        self.assertEqual(protected['classify_tender']['securitySchemes'], [{'type': 'oauth2', 'scopes': ['pro']}])
 
     def test_handler_nested_json_serialization_keeps_extensions(self):
         result = asyncio.run(handle_list_tools(None, None))

@@ -26,6 +26,7 @@ EXPECTED_TOOLS = {
     "find_matching_opportunities",
     "daily_bid_brief",
     "process_bid_room",
+    "classify_tender",
     "check_cohere_status",
     "analyze_contract_with_cohere",
     "search_alberta_opportunities",

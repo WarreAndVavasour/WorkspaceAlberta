@@ -5,7 +5,7 @@
 """Page-level layer: classify each page of a tender package with Jev.
 
 One request per page, built from that page's units (no extra PDF parsing), two questions:
-- ``document_part``: Choice over requirement_tags.DOCUMENT_PARTS (instructions, bid forms,
+- ``document_part``: Choice over procurement_core.requirements.tags.DOCUMENT_PARTS (instructions, bid forms,
   contract terms, contract schedule, specifications, drawings, reference report, cover).
 - ``bid_content``: Noul, does this page tell the bidder what to prepare or submit WITH its bid?
 
@@ -31,9 +31,6 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TENDER = Path(os.environ.get("REQ_TENDER_DIR", REPO / "drive-downloads/tenders/AB-2026-06600"))
-PROMPT_VERSION = "jev-pages-v1"
-BID_CONTENT_THRESHOLD = 0.5
-MAX_CHARS = 6000
 
 
 def _load(name: str):
@@ -43,41 +40,16 @@ def _load(name: str):
     return module
 
 
-jc = _load("jev_classify")
-tags = _load("requirement_tags")
+jc = _load("jev_classify")  # also puts the repo root on sys.path
 
-QUESTIONS = {
-    "document_part": {
-        "type": "choice",
-        "instructions": "`page_text` is one page of a public-sector tender package. Which part of the package is this page?",
-        "criteria": dict(tags.DOCUMENT_PARTS),
-    },
-    "bid_content": {
-        "type": "noul",
-        "instructions": (
-            "Does this page tell the bidder what it must prepare, fill in, sign or submit WITH ITS BID, "
-            "before bids close? Pages about what the contractor must do or submit after award count as no."
-        ),
-        "criteria": {
-            "true": "The page sets out content, forms or documents the bidder submits with its bid.",
-            "false": "The page is about the process, the contract, the work, or anything due after award.",
-        },
-    },
-}
+from procurement_core.requirements import jev, tags  # noqa: E402,F401
 
-
-def page_states(units: list[dict], pages: int) -> dict[int, dict]:
-    by_page = collections.defaultdict(list)
-    for u in sorted(units, key=lambda u: u["unit_index"]):
-        by_page[u["page"]].append(u)
-    out = {}
-    for p in range(1, pages + 1):
-        us = by_page.get(p, [])
-        heads = list(dict.fromkeys(u["section"].split(" > ")[-1] for u in us if u.get("section")))[:8]
-        text = "\n".join(u["text"] for u in us)[:MAX_CHARS]
-        out[p] = {"document": us[0]["doc_name"] if us else "", "page": p, "headings": heads,
-                  "page_text": text or "(no text extracted on this page)"}
-    return out
+# Questions, gate and page state are shared with the hosted classify_tender tool.
+PROMPT_VERSION = jev.PAGES_PROMPT_VERSION
+BID_CONTENT_THRESHOLD = jev.BID_CONTENT_THRESHOLD
+MAX_CHARS = jev.PAGE_MAX_CHARS
+QUESTIONS = jev.PAGE_QUESTIONS
+page_states = jev.page_states
 
 
 def main() -> int:
@@ -101,13 +73,7 @@ def main() -> int:
         body, err, _ = jc.call_jev({"model": args.model, "state": states[p], "questions": QUESTIONS}, key, 6, 60.0)
         row = {"page": p, "prompt_version": PROMPT_VERSION, "error": err or None}
         if body:
-            a = body["answers"]
-            probs = {k: float(v) for k, v in a["document_part"]["probabilities"].items()}
-            part = a["document_part"]["choice"]
-            bc = float(a["bid_content"]["noul"])
-            row.update(part=part, part_prob=probs.get(part), part_probabilities=probs, bid_content_prob=bc,
-                       page_gate=part in tags.BID_PARTS or bc >= BID_CONTENT_THRESHOLD,
-                       input_tokens=(body.get("usage") or {}).get("input_tokens"))
+            row.update(**jev.parse_page(body), input_tokens=(body.get("usage") or {}).get("input_tokens"))
         return row
 
     with ThreadPoolExecutor(args.concurrency) as pool:

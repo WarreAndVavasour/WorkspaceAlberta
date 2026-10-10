@@ -221,6 +221,7 @@ The core tools are:
 - `daily_bid_brief` for the daily owner/operator summary
 - `analyze_contract_with_cohere` for optional Cohere Command A+ tender review
 - `process_bid_room` for live E2B attachment processing: Cohere Parse turns tender PDFs and images into markdown, then Command A+ reviews the evidence
+- `classify_tender` for a bidder-requirement checklist: tender PDFs are split into clauses, each clause and page is classified with TypeSafe Jev, and the results merge into one requirement per tag with connector, lead time, pages and evidence (see [`pipelines/requirement_classifier/`](pipelines/requirement_classifier/README.md))
 - `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
 - `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
 
@@ -230,11 +231,11 @@ MCP is the first-class interface because this is meant to be used by agents. The
 
 Underneath the endpoint is pure Python procurement logic. The data processing, filtering, matching, deadline ranking, and brief generation do not require an LLM. The model layer is added only where judgment helps: risk review, requirements explanation, and bid/no-bid reasoning.
 
-E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, turning attachments into evidence, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. Cohere Parse is the document layer — it converts PDF pages and images into structured markdown (tables, forms, drawings) before review. Command A+ is the review layer: it runs inside the short-lived sandbox with read-only evidence tools over that markdown. If Parse is unset, times out, or rejects a file, the existing pdfminer/python-docx/openpyxl extractors stay as fallback. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md), and the business-owner operating diagram lives in [`docs/bid-room-operating-diagram.md`](docs/bid-room-operating-diagram.md).
+E2B sandboxes are the isolated compute layer for heavier bid-room work: opening tender packages, turning attachments into evidence, and returning structured bid artifacts without putting unknown user files inside the always-on MCP service. `classify_tender` reads tender PDF text without E2B: each PDF is parsed in a separate OS process inside the Cloud Run container, with no secrets in its environment and CPU, memory and time limits. That is process isolation, not a sandbox VM. Cohere Parse is the document layer — it converts PDF pages and images into structured markdown (tables, forms, drawings) before review. Command A+ is the review layer: it runs inside the short-lived sandbox with read-only evidence tools over that markdown. If Parse is unset, times out, or rejects a file, the existing pdfminer/python-docx/openpyxl extractors stay as fallback. The build plan lives in [`docs/e2b-bid-room-plan.md`](docs/e2b-bid-room-plan.md), and the business-owner operating diagram lives in [`docs/bid-room-operating-diagram.md`](docs/bid-room-operating-diagram.md).
 
 ### Tool calling: how the MCP tools map to Cohere
 
-Every one of the 25 tools above is exposed to the model through one uniform
+Every one of the 26 tools above is exposed to the model through one uniform
 function-calling path. There is no per-tool glue: whatever the MCP server
 declares, the model sees.
 
@@ -247,11 +248,13 @@ declares, the model sees.
 Connection: `search_alberta_opportunities`, `get_alberta_opportunity_details`,
 `list_alberta_deadlines`, `summarize_alberta_opportunities`,
 `find_alberta_opportunities`. Model review and bid-room:
-`check_cohere_status`, `analyze_contract_with_cohere`, `process_bid_room`.
+`check_cohere_status`, `analyze_contract_with_cohere`, `process_bid_room`,
+`classify_tender`.
 Persistence and decisions: `watch_opportunity`, `list_watchlist`,
 `unwatch_opportunity`, `bid_no_bid_scorecard`. Search, details, deadlines,
 summaries, refresh, and profiles are free; the heavier judgment surfaces
-(bid rooms, Cohere tender review, the watchlist, bid/no-bid scorecards)
+(bid rooms, requirement classification, Cohere tender review, the watchlist,
+bid/no-bid scorecards)
 require the Pro key on the `Authorization` header.
 
 **The wire path, desk to model and back.** The MCP server is mounted in the

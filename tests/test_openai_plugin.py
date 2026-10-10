@@ -179,7 +179,7 @@ class OpenAIInteropTest(unittest.TestCase):
             else:self.assertIn({'type':'noauth'},wire['securitySchemes'])
             for hint in ('readOnlyHint','destructiveHint','openWorldHint'):
                 self.assertIsInstance(wire['annotations'][hint],bool)
-            if tool.name=='process_bid_room':self.assertFalse(wire['annotations']['readOnlyHint'])
+            if tool.name in {'process_bid_room','classify_tender'}:self.assertFalse(wire['annotations']['readOnlyHint'])
 
     def test_tool_auth_error_contains_challenge_but_payment_error_does_not(self):
         import asyncio

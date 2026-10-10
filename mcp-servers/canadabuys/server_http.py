@@ -11,7 +11,8 @@ One FastAPI app, two protocols, identical behaviour:
   the same tool schemas the MCP side declares; ``POST /tools/{tool_name}``
   calls any tool generically; and named convenience routes (``/search``,
   ``/details/{reference}``, ``/deadlines``, ``/matches``, ``/brief``,
-  ``/bid-room/process``, ``/profile``, ``/cohere/analyze``) map one-to-one
+  ``/bid-room/process``, ``/bid-room/classify``, ``/profile``,
+  ``/cohere/analyze``) map one-to-one
   onto the highest-value tools. Interactive docs at ``/docs``, schema at
   ``/openapi.json``, liveness at ``/health`` (no upstream calls).
 
@@ -23,10 +24,11 @@ user in; see ``docs/oauth.md``.
 
 Both paths dispatch into ``procurement_core.service.call_tool_text``, so a
 REST caller and an MCP agent always get byte-identical markdown for the same
-tool and arguments. The bid-room route is the one exception: it returns the
+tool and arguments. The bid-room routes are the exception: they return the
 full JSON artifact envelope from ``process_bid_room_artifact`` (sandbox id,
-artifact, rendered markdown) and maps payload errors to 400 and missing
-runtime dependencies (E2B/Cohere keys) to 503.
+artifact, rendered markdown) or ``classify_tender_artifact`` (artifact,
+rendered markdown) and map payload errors to 400 and missing runtime
+dependencies (E2B/Cohere/TypeSafe keys) to 503.
 
 Deploy: ``uvicorn server_http:app`` (see Dockerfile, Procfile, railway.json
 in this directory). Local run: ``python server_http.py`` serves on :8000.
@@ -67,7 +69,14 @@ from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: 
 from procurement_core.oauth_http import register_oauth_routes  # noqa: E402
 from procurement_core.bid_room_upload_http import register_bid_room_upload_routes  # noqa: E402
 from procurement_core.public_pages import register_public_pages  # noqa: E402
-from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact_bounded  # noqa: E402
+from procurement_core.service import (  # noqa: E402
+    TOOL_NAMES,
+    ClassifierNotConfigured,
+    call_tool_text,
+    call_tool_text_and_structured,
+    classify_tender_artifact_bounded,
+    process_bid_room_artifact_bounded,
+)
 from mcp_tools import get_mcp_tools  # noqa: E402
 from procurement_core.agent_contract import SERVER_INSTRUCTIONS, workflow_contract  # noqa: E402
 
@@ -691,6 +700,35 @@ async def bid_room_process(request: Request, arguments: dict[str, Any] | None = 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
     try:
         return await process_bid_room_artifact_bounded(arguments or {})
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    finally:
+        if token is not None:
+            storage.reset_tenant(token)
+
+
+@app.post("/bid-room/classify", tags=["bid-room"])
+async def bid_room_classify(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """List the bidder requirements in a tender package (TypeSafe Jev classification).
+
+    Pro-gated like ``/bid-room/process``. Returns the artifact envelope, or the private
+    upload link for an APC reference called without ``upload_token``.
+    """
+    try:
+        record = await asyncio.to_thread(check_tool_access, "classify_tender", _auth(request))
+    except GateError as exc:
+        headers = {}
+        if exc.status_code == 401:
+            headers["WWW-Authenticate"] = oauth.www_authenticate_challenge()
+        raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
+
+    token = storage.set_tenant(tenant_id_for(record)) if record else None
+    try:
+        return await classify_tender_artifact_bounded(arguments or {})
+    except ClassifierNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:

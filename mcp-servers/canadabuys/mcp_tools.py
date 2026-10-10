@@ -20,9 +20,10 @@ Tool groups, in declaration order:
   the primary surface — CanadaBuys and Alberta APC together.
 - **Alberta APC tools** (``search_alberta_opportunities``, etc.):
   Alberta-only variants for targeted provincial work.
-- **Sandbox & model tools** (``process_bid_room``, ``check_cohere_status``,
-  ``analyze_contract_with_cohere``): E2B bid-room processing and optional
-  Cohere Command A+ review.
+- **Sandbox & model tools** (``process_bid_room``, ``classify_tender``,
+  ``check_cohere_status``, ``analyze_contract_with_cohere``): E2B bid-room
+  processing, TypeSafe Jev requirement classification and optional Cohere
+  Command A+ review.
 
 When adding a tool: add the ``Tool`` entry here, implement the async handler
 in ``procurement_core/service.py``, add the name to ``TOOL_NAMES``, and cover
@@ -511,6 +512,41 @@ def get_mcp_tools() -> list[Tool]:
                         "description": "For APC only: the upload_token from an earlier process_bid_room result. APC releases documents only to the user's own signed-in supplier account, so the first call returns a private upload link; after the user uploads the files they downloaded from APC, call again with this token to process them."
                     },
                     "profile": PROFILE_ARG_SCHEMA
+                },
+                "required": ["reference"],
+                "additionalProperties": False
+            }
+        ),
+        Tool(
+            name="classify_tender",
+            title="List the bidder requirements in a tender",
+            description=(
+                "List what a bidder must supply for one tender: splits the tender PDFs into clauses, "
+                "classifies each clause and page with TypeSafe AI's Jev classifier, and groups the results "
+                "into one requirement per kind (for example key personnel, mandatory site visit, bid bond), "
+                "with a mandatory flag, the WorkspaceAlberta connector that would collect it, lead time, "
+                "page numbers and short evidence quotes. Clause and page text is sent to TypeSafe AI "
+                "(api.typesafe.ai) for classification; WorkspaceAlberta stores nothing beyond the existing "
+                "private upload bucket for APC files. PDFs only (PDFs inside ZIPs are read); up to 800 pages "
+                "and 8,000 clauses per call. CanadaBuys: reads the public tender attachments. Alberta APC: "
+                "the first call returns a private upload link (the same upload flow as process_bid_room); the user downloads "
+                "the documents with their own APC supplier account and uploads them, then you call again with "
+                "upload_token. The link expires as before (2 hours). This tool does not delete the uploads, so "
+                "process_bid_room can use the same upload_token afterwards. Returns within 140 seconds; a "
+                "result cut short by a limit is labelled partial. Results are classifier outputs: verify them "
+                "against the official posting and amendments."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "CanadaBuys or Alberta APC reference number"
+                    },
+                    "upload_token": {
+                        "type": "string",
+                        "description": "For APC only: the upload_token from an earlier classify_tender or process_bid_room result, after the user has uploaded the documents they downloaded from APC."
+                    }
                 },
                 "required": ["reference"],
                 "additionalProperties": False

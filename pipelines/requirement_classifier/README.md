@@ -81,9 +81,18 @@ Gates:
 - unit gate: type is not `none` and `in_bid` ≥ 0.5; attendance and submission rules exempt;
 - page gate: page part is cover, instructions or bid forms, or `bid_content` ≥ 0.5.
 
-`requirement_tags.py` holds everything that is not a model output: the sub-tags, the document
-parts, and the routing per tag (answer source, lead time, connector, question). Routing is fixed
-per tag on purpose; it does not vary by clause.
+`procurement_core/requirements/tags.py` holds everything that is not a model output: the
+response types, the sub-tags, the document parts, and the routing per tag (answer source, lead
+time, connector, question). Routing is fixed per tag on purpose; it does not vary by clause.
+
+One copy, two users. The PDF splitter (`procurement_core/requirements/extract.py`), the tag
+library and the Jev questions and gates (`procurement_core/requirements/jev.py`) are shared by
+these scripts and by the hosted `classify_tender` MCP tool (`procurement_core/requirements/`),
+so a change to a question or a tag changes both. The scripts add the repo root to `sys.path`;
+run them from a repo checkout. The scripts call the splitter in-process (local research use);
+the hosted tool runs it in a separate, resource-limited OS process (`child.py`). The scripts keep their own `requests`-based HTTP client, files
+and resume logic; the hosted tool uses a stdlib client with the same retry rules, a page and
+unit cap, and a wall-clock deadline.
 
 A requirement is one canonical tag (`<type>.<sub_tag>`) with all its evidence units and pages.
 `other_*` share (12.9% here) shows where the tag library needs new tags.

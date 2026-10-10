@@ -91,6 +91,9 @@ The cache self-heals: unified tools refresh it automatically the first time they
 ### `process_bid_room`
 **required:** `reference`. The heavy tool: boots an E2B sandbox, downloads up to `max_attachments` (5 cap) tender attachments (25 MB/file cap), then two Cohere layers run inside the sandbox. **Parse** (`parse-v5.0`, `POST /v2/parse`) turns PDF pages and images into structured markdown; DOCX/XLSX and Parse failures stay on the deterministic extractors. **Command A+** then reviews that evidence with read-only tools and a strict JSON schema. Returns a structured review: bid recommendation, fit score, requirements, risks, missing information, deadlines, questions to ask, next actions. The artifact lists which files used Parse vs fallback. Optional: `business_context` (defaults to saved profile), `timeout_seconds` (900), `command_timeout_seconds` (420). Requires `E2B_API_KEY`; the same `COHERE_API_KEY` covers Parse and the review. Without the key it still extracts with the fallback extractors and skips the model review. REST route `/bid-room/process` returns the full JSON artifact envelope instead of markdown.
 
+### `classify_tender`
+**required:** `reference`; optional `upload_token` (APC only). Lists the bidder requirements in a tender package. Tender PDFs (and PDFs inside ZIPs) are split into clauses with PyMuPDF in a separate OS process per file (no secrets in its environment; CPU, 1.5 GB memory and 60 s time limits; at most 2 at once); each clause gets a TypeSafe Jev L0 classification (response type, in bid?, mandatory?), each page a document-part classification, and clauses that pass both gates get an L1 sub-tag (with a reject option). Results merge into one requirement per canonical tag `<type>.<sub_tag>` with routing from the tag library (connector, answer source, lead time, question), pages and evidence quotes (≤240 chars). Limits: 800 pages, 8,000 clauses, 140 s per call (a result cut short is labelled `partial`). CanadaBuys: up to 5 public PDF or ZIP attachments (same URL resolution and public-HTTPS checks as the bid room; Word and Excel files are skipped). Alberta APC: the first call returns the bid room's private upload link; the uploads are not deleted, so `process_bid_room` can reuse the token. Requires `TYPESAFE_API_KEY`; without it the tool fails before any download. Pro. REST route `/bid-room/classify` returns the JSON artifact envelope. Code: `procurement_core/requirements/`.
+
 ### `analyze_contract_with_cohere`
 **required:** `reference`. Lightweight model review of a cached federal tender (no sandbox, no attachments): fit, why it may be worth a look, risks/missing details, next actions. Optional: `business_context`, `question`, `max_tokens` (1200; 400–2000). Uses the Cohere failover chain (direct key → prod key → HF router).
 
@@ -112,6 +115,7 @@ Reports which model route is configured (Cohere direct vs HF router), model IDs,
 | `/matches` | POST | `find_matching_opportunities` |
 | `/brief` | POST | `daily_bid_brief` |
 | `/bid-room/process` | POST | `process_bid_room` (JSON artifact) |
+| `/bid-room/classify` | POST | `classify_tender` (JSON artifact) |
 | `/profile` | POST / GET | `set_business_profile` / `get_my_profile` |
 | `/cohere/analyze` | POST | `analyze_contract_with_cohere` |
 | `/docs`, `/openapi.json` | GET | Swagger UI / OpenAPI schema |

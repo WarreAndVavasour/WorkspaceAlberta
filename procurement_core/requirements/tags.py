@@ -1,4 +1,14 @@
-"""L1 tag library: sub-tags for each L0 response type, plus two routing questions.
+"""Requirement tag library: the single source of truth for every label that is not a model output.
+
+Used by the hosted ``classify_tender`` tool (procurement_core.requirements) and by the research
+scripts in ``pipelines/requirement_classifier/``.
+
+Contents:
+- ``RESPONSE_TYPES``: the 11 L0 response types (definition shown to the classifier, tool that
+  collects it). ``none`` is the catch-all.
+- ``SUB_TAGS``: the L1 sub-tags for each response type, plus the reject option.
+- routing per canonical tag (answer source, lead time, connector, question);
+- ``DOCUMENT_PARTS``: the page-level layer.
 
 Written for Canadian public-sector RFPs in general (construction, professional services,
 goods, IT, maintenance), not for one document. Jurisdiction-specific names (COR, WCB) are
@@ -13,6 +23,67 @@ A canonical tag is "<response_type>.<sub_tag>", e.g. "attach_document.workers_co
 """
 
 from __future__ import annotations
+
+# Response type -> (definition shown to the model, tool that collects it).
+RESPONSE_TYPES: dict[str, tuple[str, str]] = {
+    "none": (
+        "The bidder puts nothing in its bid because of this clause: background, definitions, the buyer's "
+        "own process, specifications of the work, the printed wording of a form, bond or contract, or any "
+        "duty of the contractor after award.",
+        "",
+    ),
+    "attach_document": (
+        "Bidder must attach an existing document to its bid: certificate (e.g. COR), licence, proof of "
+        "WCB registration, insurance or bonding letter, financial statement, resume, permit. Not documents "
+        "the contractor delivers after award (shop drawings, clearance letters before payment).",
+        "document_vault",
+    ),
+    "form_field": (
+        "Bidder must fill in a fact about its company on a bid form: legal name, address, business or GST "
+        "number, contact person, ownership, years in business.",
+        "business_profile",
+    ),
+    "declaration": (
+        "Bidder must sign, certify or acknowledge something as part of its bid: declaration form, conflict "
+        "of interest, receipt of addenda, acceptance of terms, authority to bind. Not the signature blocks "
+        "of the contract signed after award.",
+        "signature_confirmation",
+    ),
+    "compliance_confirm": (
+        "Bidder must state in its bid that it meets a stated requirement (yes/no, comply/does not comply).",
+        "compliance_checklist",
+    ),
+    "narrative": (
+        "Bidder must write a description in its proposal: its approach, methodology, work plan, proposed "
+        "schedule, quality or safety plan, understanding of the project. Not a specification or schedule "
+        "that tells the contractor how to do the work after award.",
+        "drafting_interview",
+    ),
+    "pricing": (
+        "Bidder must state prices in its bid: lump sum, unit rates, hourly or labour rates, a fee schedule. "
+        "Not definitions of price terms, and not payment procedures after award.",
+        "pricing_worksheet",
+    ),
+    "experience_reference": (
+        "Bidder must list in its proposal past projects, client references, key personnel or subcontractors "
+        "and their experience.",
+        "project_and_people_records",
+    ),
+    "security_bond": (
+        "Bidder must submit bid security with its bid: bid bond, deposit, or a surety's consent or agreement "
+        "to bond. Not the printed wording of a bond form, and not bonds the contractor provides after award.",
+        "surety_request",
+    ),
+    "attendance": (
+        "Bidder must or may attend a site visit, information meeting or interview before bids close.",
+        "calendar",
+    ),
+    "submission_instruction": (
+        "A rule on how, when or where to submit the bid or ask questions: deadline, format, page limit, "
+        "file naming, number of copies, question period.",
+        "submission_checklist",
+    ),
+}
 
 NOT_A_REQUIREMENT = (
     "not_a_bid_requirement",

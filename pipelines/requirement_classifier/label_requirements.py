@@ -35,6 +35,10 @@ Run on HF Jobs (documents in a private dataset, mounted read-only):
 Test extraction only, on any machine, with no GPU and no model:
 
     uv run label_requirements.py --input 'docs/*.pdf' --dry-run
+
+The response types and the PDF splitter are imported from procurement_core.requirements
+(shared with the hosted classify_tender tool), so run this script from a repo checkout.
+Uploading this file alone to HF Jobs no longer works; the job needs the repo as well.
 """
 
 from __future__ import annotations
@@ -44,73 +48,19 @@ import collections
 import glob
 import hashlib
 import json
-import re
-import statistics
 import sys
 from pathlib import Path
 
-PROMPT_VERSION = "req-v2"
+# The tag library and the PDF splitter live in procurement_core (one copy, shared with the
+# hosted classify_tender tool). Run this script from a repo checkout.
+REPO = Path(__file__).resolve().parents[2]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
 
-# Response type -> (definition shown to the model, tool that collects it).
-RESPONSE_TYPES: dict[str, tuple[str, str]] = {
-    "none": (
-        "The bidder puts nothing in its bid because of this clause: background, definitions, the buyer's "
-        "own process, specifications of the work, the printed wording of a form, bond or contract, or any "
-        "duty of the contractor after award.",
-        "",
-    ),
-    "attach_document": (
-        "Bidder must attach an existing document to its bid: certificate (e.g. COR), licence, proof of "
-        "WCB registration, insurance or bonding letter, financial statement, resume, permit. Not documents "
-        "the contractor delivers after award (shop drawings, clearance letters before payment).",
-        "document_vault",
-    ),
-    "form_field": (
-        "Bidder must fill in a fact about its company on a bid form: legal name, address, business or GST "
-        "number, contact person, ownership, years in business.",
-        "business_profile",
-    ),
-    "declaration": (
-        "Bidder must sign, certify or acknowledge something as part of its bid: declaration form, conflict "
-        "of interest, receipt of addenda, acceptance of terms, authority to bind. Not the signature blocks "
-        "of the contract signed after award.",
-        "signature_confirmation",
-    ),
-    "compliance_confirm": (
-        "Bidder must state in its bid that it meets a stated requirement (yes/no, comply/does not comply).",
-        "compliance_checklist",
-    ),
-    "narrative": (
-        "Bidder must write a description in its proposal: its approach, methodology, work plan, proposed "
-        "schedule, quality or safety plan, understanding of the project. Not a specification or schedule "
-        "that tells the contractor how to do the work after award.",
-        "drafting_interview",
-    ),
-    "pricing": (
-        "Bidder must state prices in its bid: lump sum, unit rates, hourly or labour rates, a fee schedule. "
-        "Not definitions of price terms, and not payment procedures after award.",
-        "pricing_worksheet",
-    ),
-    "experience_reference": (
-        "Bidder must list in its proposal past projects, client references, key personnel or subcontractors "
-        "and their experience.",
-        "project_and_people_records",
-    ),
-    "security_bond": (
-        "Bidder must submit bid security with its bid: bid bond, deposit, or a surety's consent or agreement "
-        "to bond. Not the printed wording of a bond form, and not bonds the contractor provides after award.",
-        "surety_request",
-    ),
-    "attendance": (
-        "Bidder must or may attend a site visit, information meeting or interview before bids close.",
-        "calendar",
-    ),
-    "submission_instruction": (
-        "A rule on how, when or where to submit the bid or ask questions: deadline, format, page limit, "
-        "file naming, number of copies, question period.",
-        "submission_checklist",
-    ),
-}
+from procurement_core.requirements.extract import extract_units, looks_scanned  # noqa: E402
+from procurement_core.requirements.tags import RESPONSE_TYPES  # noqa: E402
+
+PROMPT_VERSION = "req-v2"
 
 SCHEMA = {
     "type": "object",
@@ -147,110 +97,7 @@ SYSTEM_PROMPT = (
     "'evaluation_points' gives the points or weight if stated, else empty. Answer in JSON only."
 )
 
-# --------------------------------------------------------------------------- extraction
-
-NUMBERED = re.compile(r"^\s*(?:(?:Section|Article|Part)\s+)?(\d+(?:\.\d+){0,5})[.)]?\s+\S")
-LETTERED = re.compile(r"^\s*(?:\(?[a-z]{1,3}\)|[a-z]\.|[•\-–▪●○])\s+\S", re.I)
-SENTENCE_SPLIT = re.compile(r"(?<=[.;:])\s+(?=[A-Z(])")
-WS = re.compile(r"\s+")
-
-
-def normalize(text: str) -> str:
-    return WS.sub(" ", text).strip()
-
-
-def repeated_lines(pages: list[list[str]], share: float = 0.3) -> set[str]:
-    """Header/footer lines: same margin text (digits removed) on many pages."""
-    if len(pages) < 4:
-        return set()
-    counts = collections.Counter()
-    for blocks in pages:
-        counts.update({re.sub(r"\d+", "#", b) for b in blocks if len(b) < 160})
-    limit = max(3, int(len(pages) * share))
-    return {text for text, n in counts.items() if n >= limit}
-
-
-def is_heading(text: str, size: float, body_size: float) -> bool:
-    if len(text) > 120 or text.endswith((".", ";", ",")):
-        return False
-    if size >= body_size + 1.5:
-        return True
-    letters = [c for c in text if c.isalpha()]
-    if len(letters) >= 4 and sum(c.isupper() for c in letters) / len(letters) > 0.8:
-        return True
-    return bool(NUMBERED.match(text)) and len(text.split()) <= 12
-
-
-def split_long(text: str, limit: int = 700) -> list[str]:
-    if len(text) <= limit:
-        return [text]
-    parts, current = [], ""
-    for sentence in SENTENCE_SPLIT.split(text):
-        if current and len(current) + len(sentence) > limit:
-            parts.append(current)
-            current = sentence
-        else:
-            current = f"{current} {sentence}".strip()
-    if current:
-        parts.append(current)
-    return parts
-
-
-def extract_units(pdf_path: Path, min_chars: int = 25) -> tuple[list[dict], dict]:
-    import pymupdf
-
-    doc = pymupdf.open(pdf_path)
-    raw_pages: list[list[tuple[str, float, bool]]] = []
-    sizes: list[float] = []
-    for page in doc:
-        blocks = []
-        for block in page.get_text("dict")["blocks"]:
-            spans = [s for line in block.get("lines", []) for s in line.get("spans", [])]
-            text = normalize(" ".join(s["text"] for s in spans))
-            if not text:
-                continue
-            size = max((s["size"] for s in spans), default=0.0)
-            sizes.extend(s["size"] for s in spans if s["text"].strip())
-            y0, y1 = block["bbox"][1], block["bbox"][3]
-            in_margin = y1 < page.rect.height * 0.06 or y0 > page.rect.height * 0.94
-            blocks.append((text, size, in_margin))
-        raw_pages.append(blocks)
-
-    body_size = statistics.median(sizes) if sizes else 10.0
-    noise = repeated_lines([[t for t, _, margin in blocks if margin] for blocks in raw_pages])
-    headings: list[tuple[int, str]] = []  # (depth, text)
-    units: list[dict] = []
-    empty_pages = 0
-
-    for page_no, blocks in enumerate(raw_pages, 1):
-        if not blocks:
-            empty_pages += 1
-        for text, size, in_margin in blocks:
-            if in_margin and re.sub(r"\d+", "#", text) in noise:
-                continue
-            if is_heading(text, size, body_size):
-                match = NUMBERED.match(text)
-                depth = match.group(1).count(".") + 1 if match else 1
-                headings = [h for h in headings if h[0] < depth] + [(depth, text)]
-                continue
-            if len(text) < min_chars:
-                continue
-            for piece in split_long(text):
-                units.append({
-                    "page": page_no,
-                    "section": " > ".join(h for _, h in headings)[-300:],
-                    "kind": "numbered" if NUMBERED.match(piece) else "list_item" if LETTERED.match(piece) else "paragraph",
-                    "text": piece,
-                })
-
-    for i, unit in enumerate(units):
-        unit["unit_index"] = i
-        unit["prev_text"] = units[i - 1]["text"][-300:] if i else ""
-        unit["next_text"] = units[i + 1]["text"][:300] if i + 1 < len(units) else ""
-
-    stats = {"pages": len(raw_pages), "pages_without_text": empty_pages, "units": len(units)}
-    return units, stats
-
+# Extraction (extract_units) is imported from procurement_core.requirements.extract above.
 
 # --------------------------------------------------------------------------- labelling
 
@@ -342,7 +189,7 @@ def main() -> int:
         digest = hashlib.sha256(pdf.read_bytes()).hexdigest()
         units, stats = extract_units(pdf)
         print(f"{pdf.name}: {stats}")
-        if stats["pages_without_text"] > stats["pages"] / 2:
+        if looks_scanned(stats):
             print(f"  WARNING: {pdf.name} looks scanned; it needs OCR before labelling.")
         for unit in units:
             rows.append({"doc_name": pdf.name, "doc_sha256": digest, **unit})

@@ -51,6 +51,7 @@ MAX_CACHE_ENTRIES = 4096
 PRO_TOOLS = frozenset(
     {
         "process_bid_room",
+        "classify_tender",
         "analyze_contract_with_cohere",
         "watch_opportunity",
         "list_watchlist",

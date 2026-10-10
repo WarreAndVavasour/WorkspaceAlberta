@@ -6,8 +6,8 @@ Use tools/list for current schemas; prefer unified tools over legacy federal-onl
 Hosted authentication is partial: connect without credentials and upgrade through OAuth
 when a protected tool returns HTTP 401. set_business_profile and get_my_profile require
 sign-in only (free). watch_opportunity, list_watchlist, unwatch_opportunity,
-bid_no_bid_scorecard, process_bid_room and analyze_contract_with_cohere require sign-in
-and an active Pro subscription. Other tools are public; anonymous matching uses an
+bid_no_bid_scorecard, process_bid_room, classify_tender and analyze_contract_with_cohere
+require sign-in and an active Pro subscription. Other tools are public; anonymous matching uses an
 inline profile. Signing in never starts a paid subscription.
 Use an inline profile for anonymous hosted matching. Do not invent certifications,
 bonding, capacity or business facts. Saving a profile and changing a watchlist are
@@ -22,7 +22,11 @@ configuration, not provider health. Cohere analysis and process_bid_room are opt
 paid hosted capabilities; bid-room processing sends attachments to E2B and extracted
 evidence, PDF page images and business context to Cohere. process_bid_room returns
 within 145 seconds, including setup; an incomplete/timeout response is not an analysis.
-Retry with fewer attachments after a timeout. See /privacy for subprocessors and
+Retry with fewer attachments after a timeout. classify_tender sends tender clause and
+page text to TypeSafe AI for classification and returns a requirement list with page
+evidence; its labels are classifier outputs to verify, and a partial result says so.
+For APC, process_bid_room and classify_tender share one upload link; classify_tender
+does not delete the uploads. See /privacy for subprocessors and
 processing locations. Verify the user's authority to send those materials. Canadian
 model provenance does not establish Canadian processing or residency for every route.
 

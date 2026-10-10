@@ -68,7 +68,7 @@ def annotate_tools(tools: list[Tool]) -> list[OpenAITool]:
         schemes = [authenticated] if tool.name in PRO_TOOLS | SIGN_IN_TOOLS else [{"type": "noauth"}, authenticated]
         payload["securitySchemes"] = schemes
         payload.setdefault("_meta", {})["securitySchemes"] = schemes
-        if tool.name == "process_bid_room":
+        if tool.name in {"process_bid_room", "classify_tender"}:  # send documents to processors
             payload["annotations"]["readOnlyHint"] = False
         result.append(OpenAITool.model_validate(payload))
     return result
