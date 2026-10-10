@@ -481,7 +481,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="process_bid_room",
             title="Process bid documents",
-            description="Process tender attachments in E2B: sends documents and business context to E2B, PDF page images/images and extracted evidence to Cohere Parse and Command A+. See /privacy for processing locations. Returns within 145 seconds including setup; large packages may time out. Retry with fewer attachments; a timeout is not a completed analysis.",
+            description="Process tender attachments in E2B: sends documents and business context to E2B, PDF page images/images and extracted evidence to Cohere Parse and Command A+. See /privacy for processing locations. For Alberta APC postings, the first call returns a private upload link: the user downloads the documents with their own APC supplier account and uploads them, then you call again with upload_token. Returns within 145 seconds including setup; large packages may time out. Retry with fewer attachments; a timeout is not a completed analysis.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -505,6 +505,10 @@ def get_mcp_tools() -> list[Tool]:
                         "description": "For APC only: map document IDs from get_opportunity_details to already authorized, publicly accessible HTTPS copies. This tool never signs in to APC, registers supplier interest, subscribes notifications, or accepts authenticated download URLs. Copies are sent to E2B and their contents to Cohere.",
                         "additionalProperties": {"type": "string", "format": "uri"},
                         "maxProperties": 5
+                    },
+                    "upload_token": {
+                        "type": "string",
+                        "description": "For APC only: the upload_token from an earlier process_bid_room result. APC releases documents only to the user's own signed-in supplier account, so the first call returns a private upload link; after the user uploads the files they downloaded from APC, call again with this token to process them."
                     },
                     "profile": PROFILE_ARG_SCHEMA
                 },

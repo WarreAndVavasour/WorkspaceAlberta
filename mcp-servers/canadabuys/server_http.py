@@ -65,6 +65,7 @@ from procurement_core.auth import (  # noqa: E402
 from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
 from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: E402
 from procurement_core.oauth_http import register_oauth_routes  # noqa: E402
+from procurement_core.bid_room_upload_http import register_bid_room_upload_routes  # noqa: E402
 from procurement_core.public_pages import register_public_pages  # noqa: E402
 from procurement_core.service import TOOL_NAMES, call_tool_text, call_tool_text_and_structured, process_bid_room_artifact_bounded  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
@@ -185,6 +186,7 @@ app.add_middleware(
     expose_headers=["mcp-session-id", "mcp-protocol-version", "WWW-Authenticate"],
 )
 register_oauth_routes(app)
+register_bid_room_upload_routes(app)
 register_public_pages(app)
 
 
