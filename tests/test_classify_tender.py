@@ -470,7 +470,7 @@ class ChildProcessTest(JevTestCase):
                              env=child.child_env(), check=True).stdout
         self.assertEqual(json.loads(out), [[7, 7], [child.MEMORY_LIMIT_BYTES] * 2, [0, 0], [0, 0]])
 
-    def test_at_most_two_files_are_parsed_at_once(self):
+    def test_files_are_parsed_one_at_a_time(self):
         lock, active, peak = threading.Lock(), [0], [0]
         real = child.extract_in_child
 
@@ -489,7 +489,7 @@ class ChildProcessTest(JevTestCase):
             result = self.classify(files=[(f"f{i}.pdf", self.pdf) for i in range(5)])
         self.assertEqual(result["counts"]["files_read"], 5)
         self.assertEqual(peak[0], pipeline.PARALLEL_FILES)
-        self.assertEqual(pipeline.PARALLEL_FILES, 2)
+        self.assertEqual(pipeline.PARALLEL_FILES, 1)
 
     def test_global_page_cap_trims_a_later_file(self):
         result = self.classify(files=[("a.pdf", self.pdf), ("b.pdf", self.pdf)], max_pages=4)

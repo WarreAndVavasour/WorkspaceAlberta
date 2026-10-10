@@ -8,7 +8,7 @@ question) comes from the tag library, not from the model.
 Bounds:
 
 - PDFs only (callers expand ZIPs first). Each PDF is split in a separate OS process
-  (:mod:`.child`) with CPU, memory and wall-clock limits, two files at a time; a file that
+  (:mod:`.child`) with CPU, memory and wall-clock limits, one file at a time; a file that
   fails, times out or has no text layer is skipped with a warning;
 - at most ``max_pages`` pages and ``max_units`` units in total, with a warning when a cap
   cuts the package short;
@@ -42,7 +42,10 @@ MERGE_RESERVE_SECONDS = 2.0
 MIN_L1_SECONDS = 10.0  # L0 + pages stop at least this long before the deadline, for L1
 LEAD_ORDER = {"minutes": 0, "days": 1, "weeks": 2}
 PDF_SIGNATURE = b"%PDF-"
-PARALLEL_FILES = 2  # PDFs parsed at the same time (each in its own child process)
+# PDFs parsed at the same time, each in its own child process. One at a time: a 473-page,
+# 13 MB tender peaks at ~180 MB RSS in the child, and Cloud Run instances may have 512 MiB.
+# Parsing takes seconds; the Jev calls dominate the run time.
+PARALLEL_FILES = 1
 
 class ClassificationError(RuntimeError):
     """The classifier gave no usable answer (for example every call failed)."""
