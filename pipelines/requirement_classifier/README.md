@@ -89,7 +89,8 @@ One copy, two users. The PDF splitter (`procurement_core/requirements/extract.py
 library and the Jev questions and gates (`procurement_core/requirements/jev.py`) are shared by
 these scripts and by the hosted `classify_tender` MCP tool (`procurement_core/requirements/`),
 so a change to a question or a tag changes both. The scripts add the repo root to `sys.path`;
-run them from a repo checkout. The scripts keep their own `requests`-based HTTP client, files
+run them from a repo checkout. The scripts call the splitter in-process (local research use);
+the hosted tool runs it in a separate, resource-limited OS process (`child.py`). The scripts keep their own `requests`-based HTTP client, files
 and resume logic; the hosted tool uses a stdlib client with the same retry rules, a page and
 unit cap, and a wall-clock deadline.
 

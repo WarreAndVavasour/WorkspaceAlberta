@@ -7,8 +7,9 @@ question) comes from the tag library, not from the model.
 
 Bounds:
 
-- PDFs only (callers expand ZIPs first); a file that fails to open or has no text layer is
-  skipped with a warning;
+- PDFs only (callers expand ZIPs first). Each PDF is split in a separate OS process
+  (:mod:`.child`) with CPU, memory and wall-clock limits, two files at a time; a file that
+  fails, times out or has no text layer is skipped with a warning;
 - at most ``max_pages`` pages and ``max_units`` units in total, with a warning when a cap
   cuts the package short;
 - a wall-clock ``deadline``: L0 and the page layer run together and stop early enough to
@@ -27,8 +28,8 @@ import time
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from typing import Any
 
-from procurement_core.requirements import jev, tags
-from procurement_core.requirements.extract import extract_units, looks_scanned
+from procurement_core.requirements import child, jev, tags
+from procurement_core.requirements.extract import looks_scanned  # pure function; no PDF parsing here
 
 MAX_PAGES = 800
 MAX_UNITS = 8000
@@ -41,7 +42,7 @@ MERGE_RESERVE_SECONDS = 2.0
 MIN_L1_SECONDS = 10.0  # L0 + pages stop at least this long before the deadline, for L1
 LEAD_ORDER = {"minutes": 0, "days": 1, "weeks": 2}
 PDF_SIGNATURE = b"%PDF-"
-PDF_LOCK = threading.Lock()
+PARALLEL_FILES = 2  # PDFs parsed at the same time (each in its own child process)
 
 class ClassificationError(RuntimeError):
     """The classifier gave no usable answer (for example every call failed)."""
@@ -99,36 +100,65 @@ def _run_calls(
         pool.shutdown(wait=False, cancel_futures=True)
 
 
-def _quiet_mupdf() -> None:
-    """MuPDF prints repair messages for damaged PDFs to stdout; keep them out of server logs."""
+def _extract(name: str, data: bytes, max_pages: int, deadline: float) -> tuple[str, Any]:
+    """Split one PDF in a child process. Returns ``("ok", (units, stats))`` or ``(status, None)``."""
+    remaining = deadline - time.monotonic()
+    if remaining < 1:
+        return "time", None
     try:
-        import pymupdf
+        return "ok", child.extract_in_child(data, max_pages=max_pages,
+                                            timeout=min(child.FILE_TIMEOUT_SECONDS, remaining))
+    except child.WorkerTimeout:
+        return "slow", None
+    except (child.WorkerFailed, OSError):
+        return "failed", None
 
-        pymupdf.TOOLS.mupdf_display_errors(False)
-        pymupdf.TOOLS.mupdf_display_warnings(False)
-    except Exception:
-        pass
+
+def _cap_pages(units: list[dict], stats: dict, allowed: int) -> tuple[list[dict], dict]:
+    """Keep only pages 1..allowed of a file that was split with a larger page cap."""
+    kept = [u for u in units if u["page"] <= allowed]
+    if kept:
+        kept[-1]["next_text"] = ""  # as if the file ended there
+    empty = [p for p in stats["empty_pages"] if p <= allowed]
+    return kept, {**stats, "pages": allowed, "pages_without_text": len(empty), "empty_pages": empty,
+                  "units": len(kept)}
 
 
 def _split(files: list[tuple[str, bytes]], max_pages: int, max_units: int, warnings: list[str],
            deadline: float) -> tuple[list[dict], list[dict], collections.Counter]:
-    """Extract units from every readable PDF, within the page and unit caps.
+    """Split every PDF (in child processes, two at a time) within the page and unit caps.
 
     ``counts["truncated"]`` is set when a cap or the deadline cut the package short.
     """
-    _quiet_mupdf()
     units: list[dict] = []
     documents: list[dict] = []
     counts: collections.Counter = collections.Counter()
-    pages_left = max_pages
+
+    pdfs: list[tuple[int, str, bytes]] = []
     for doc_index, (name, data) in enumerate(files):
-        if time.monotonic() >= deadline:
-            warnings.append(f"Time limit reached while reading documents; {name} and later files were not read.")
-            counts["files_skipped"] += len(files) - doc_index
-            counts["truncated"] = 1
-            break
-        if not bytes(data[:5]) == PDF_SIGNATURE:
+        if bytes(data[:5]) == PDF_SIGNATURE:
+            pdfs.append((doc_index, name, data))
+        else:
             warnings.append(f"{name}: skipped, not a PDF file (only PDFs are classified).")
+            counts["files_skipped"] += 1
+
+    with ThreadPoolExecutor(max_workers=PARALLEL_FILES, thread_name_prefix="pdf") as pool:
+        futures = [pool.submit(_extract, name, data, max_pages, deadline) for _i, name, data in pdfs]
+        outcomes = [future.result() for future in futures]  # each bounded by its own timeout
+
+    pages_left = max_pages
+    for (doc_index, name, _data), (status, value) in zip(pdfs, outcomes):
+        if status == "time":
+            warnings.append(f"Time limit reached while reading documents; {name} was not read.")
+            counts["files_skipped"] += 1
+            counts["truncated"] = 1
+            continue
+        if status == "slow":
+            warnings.append(f"{name}: skipped, the PDF took too long to read.")
+            counts["files_skipped"] += 1
+            continue
+        if status == "failed":
+            warnings.append(f"{name}: skipped, the PDF could not be read.")
             counts["files_skipped"] += 1
             continue
         if pages_left <= 0:
@@ -136,20 +166,9 @@ def _split(files: list[tuple[str, bytes]], max_pages: int, max_units: int, warni
             counts["files_skipped"] += 1
             counts["truncated"] = 1
             continue
-        # PyMuPDF is not thread-safe: one PDF at a time across concurrent requests.
-        if not PDF_LOCK.acquire(timeout=max(0.0, deadline - time.monotonic())):
-            warnings.append(f"Time limit reached while waiting to read {name}; it and later files were not read.")
-            counts["files_skipped"] += len(files) - doc_index
-            counts["truncated"] = 1
-            break
-        try:
-            doc_units, stats = extract_units(data, max_pages=pages_left)
-        except Exception as exc:  # corrupt, encrypted or unsupported PDF
-            warnings.append(f"{name}: skipped, the PDF could not be read ({type(exc).__name__}).")
-            counts["files_skipped"] += 1
-            continue
-        finally:
-            PDF_LOCK.release()
+        doc_units, stats = value
+        if stats["pages"] > pages_left:
+            doc_units, stats = _cap_pages(doc_units, stats, pages_left)
         if stats["pages_in_file"] > stats["pages"]:
             warnings.append(
                 f"{name}: only the first {stats['pages']} of {stats['pages_in_file']} pages were read "

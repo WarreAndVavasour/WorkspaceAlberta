@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import socket
+import sys
 import tempfile
 import threading
 import time
@@ -29,7 +30,7 @@ os.environ.setdefault("CANADABUYS_LOAD_ENV_FILE", "0")
 import pymupdf  # noqa: E402
 
 from procurement_core import auth, bid_room_uploads as up, service, storage  # noqa: E402
-from procurement_core.requirements import NoTextError, classify_documents, jev, pipeline, tags  # noqa: E402
+from procurement_core.requirements import NoTextError, child, classify_documents, jev, pipeline, tags  # noqa: E402
 from procurement_core.requirements.extract import extract_units  # noqa: E402
 from tests.test_bid_room_uploads import ENV, FIXTURE, PDF_NAME, REFERENCE, TENANT, FakeStorage  # noqa: E402
 
@@ -353,6 +354,150 @@ class PipelineTest(JevTestCase):
         people = next(q for q in result["requirements"] if q["tag"] == "experience_reference.key_personnel")
         self.assertEqual(people["pages"], [{"document": "a.pdf", "page": 2}, {"document": "b.pdf", "page": 1}])
         self.assertIn("a.pdf p. 2; b.pdf p. 1", pipeline.render_markdown(result))
+
+
+SLEEP = [sys.executable, "-c", "import sys, time; sys.stdin.buffer.read(); time.sleep(30)"]
+EMPTY_RESULT = ('{"units": [], "stats": {"pages": 0, "pages_without_text": 0, "pages_in_file": 0, '
+                '"empty_pages": []}}')
+
+
+class ChildProcessTest(JevTestCase):
+    """PDF parsing runs in a separate process with limits, never in the service process."""
+
+    def run_with(self, commands: dict, timeout: float | None = None, **kwargs):
+        """Classify, replacing the worker command (and optionally the timeout) for the named files."""
+        real = child.extract_in_child
+        override = timeout
+        names = {}
+
+        def fake_extract(name, data, max_pages, deadline):
+            names[threading.get_ident()] = name
+            return original_extract(name, data, max_pages, deadline)
+
+        def extract_in_child(data, *, max_pages, timeout):
+            name = names[threading.get_ident()]
+            if name in commands:
+                return real(data, max_pages=max_pages, timeout=override or timeout, command=commands[name])
+            return real(data, max_pages=max_pages, timeout=timeout)
+
+        original_extract = pipeline._extract
+        with patch.object(pipeline, "_extract", fake_extract), \
+                patch.object(child, "extract_in_child", extract_in_child):
+            return self.classify(**kwargs)
+
+    def test_happy_path_uses_the_real_worker_not_the_service_process(self):
+        units, stats = child.extract_in_child(self.pdf, max_pages=800, timeout=60)
+        self.assertEqual((units, stats), extract_units(self.pdf, max_pages=800))
+        boom = AssertionError("PDF parsed in the service process")
+        with patch("procurement_core.requirements.extract.extract_units", side_effect=boom), \
+                patch("procurement_core.requirements.extract._open", side_effect=boom):
+            result = self.classify()
+        self.assertEqual(result["status"], "complete", result["warnings"])
+        self.assertEqual(result["counts"]["requirements"], 4)
+
+    def test_worker_command_is_isolated_and_limited(self):
+        command = child.worker_command(800, 42.2)
+        self.assertEqual(command[:4], [sys.executable, "-I", "-B", str(child.WORKER)])
+        self.assertEqual(command[4:], ["800", "43", str(child.MEMORY_LIMIT_BYTES)])
+        self.assertEqual(child.MEMORY_LIMIT_BYTES, 1536 * 1024 * 1024)
+
+    def test_child_env_has_no_secrets(self):
+        secrets = {"TYPESAFE_API_KEY": API_KEY, "SUPABASE_SERVICE_ROLE_KEY": "srk", "COHERE_API_KEY": "ck",
+                   "E2B_API_KEY": "ek", "PYTHONPATH": "/evil", "HOME": "/root"}
+        with patch.dict(os.environ, secrets):
+            env = child.child_env()
+            self.assertTrue(set(env) <= set(child.ENV_ALLOWLIST), env)
+            self.assertNotIn(API_KEY, json.dumps(env))
+            # and the process really does not see it
+            probe = [sys.executable, "-c",
+                     "import os, sys; sys.stdin.buffer.read(); "
+                     "sys.exit(5) if any(k in os.environ for k in ('TYPESAFE_API_KEY', 'SUPABASE_SERVICE_ROLE_KEY', "
+                     f"'COHERE_API_KEY', 'E2B_API_KEY', 'PYTHONPATH')) else print({EMPTY_RESULT!r})"]
+            with patch.object(child.subprocess, "Popen", wraps=child.subprocess.Popen) as popen:
+                self.assertEqual(child.extract_in_child(self.pdf, max_pages=1, timeout=30, command=probe)[0], [])
+                self.assertEqual(child.extract_in_child(self.pdf, max_pages=1, timeout=30)[1]["pages"], 1)
+        for call in popen.call_args_list:
+            self.assertEqual(call.kwargs["env"], env)
+            self.assertTrue(call.kwargs["start_new_session"])
+
+    def test_timeout_kills_the_process_group_and_skips_only_that_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            pidfile = Path(folder) / "grandchild.pid"
+            spawn = [sys.executable, "-c",
+                     "import subprocess, sys, time; sys.stdin.buffer.read(); "
+                     "p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+                     f"open({str(pidfile)!r}, 'w').write(str(p.pid)); time.sleep(60)"]
+            started = time.monotonic()
+            result = self.run_with({"slow.pdf": spawn}, timeout=1.5,
+                                   files=[("slow.pdf", self.pdf), ("tender.pdf", self.pdf)])
+            self.assertLess(time.monotonic() - started, 15)
+            self.assertIn("slow.pdf: skipped, the PDF took too long to read.", result["warnings"])
+            self.assertEqual([d["document"] for d in result["documents"]], ["tender.pdf"])
+            self.assertEqual(result["counts"]["requirements"], 4)
+            grandchild = int(pidfile.read_text())
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:  # gone, or a zombie waiting for init
+            try:
+                state = Path(f"/proc/{grandchild}/stat").read_text().split(")")[-1].split()[0]
+            except (FileNotFoundError, ProcessLookupError):
+                break
+            if state == "Z":
+                break
+            time.sleep(0.1)
+        else:
+            self.fail("the worker's child process survived the timeout")
+
+    def test_crash_garbage_and_worker_errors_are_warnings(self):
+        crash = [sys.executable, "-c", "import sys; sys.stdin.buffer.read(); sys.stderr.write('SECRET TRACE'); sys.exit(3)"]
+        garbage = [sys.executable, "-c", "import sys; sys.stdin.buffer.read(); print('not json')"]
+        wrong = [sys.executable, "-c", "import sys; sys.stdin.buffer.read(); print('{\"units\": 1}')"]
+        result = self.run_with({"crash.pdf": crash, "garbage.pdf": garbage, "wrong.pdf": wrong},
+                               files=[("crash.pdf", self.pdf), ("garbage.pdf", self.pdf), ("wrong.pdf", self.pdf),
+                                      ("broken.pdf", b"%PDF-1.7 this is not really a pdf"), ("tender.pdf", self.pdf)])
+        for name in ("crash.pdf", "garbage.pdf", "wrong.pdf", "broken.pdf"):
+            self.assertIn(f"{name}: skipped, the PDF could not be read.", result["warnings"])
+        self.assertNotIn("SECRET TRACE", json.dumps(result))
+        self.assertEqual([d["document"] for d in result["documents"]], ["tender.pdf"])
+
+    def test_worker_sets_cpu_memory_and_file_limits(self):
+        import subprocess
+
+        probe = ("import json, resource, runpy, sys; "
+                 f"runpy.run_path({str(child.WORKER)!r})['_set_limits'](7, {child.MEMORY_LIMIT_BYTES}); "
+                 "print(json.dumps([resource.getrlimit(r) for r in "
+                 "(resource.RLIMIT_CPU, resource.RLIMIT_AS, resource.RLIMIT_FSIZE, resource.RLIMIT_CORE)]))")
+        out = subprocess.run([sys.executable, "-I", "-B", "-c", probe], capture_output=True, timeout=30,
+                             env=child.child_env(), check=True).stdout
+        self.assertEqual(json.loads(out), [[7, 7], [child.MEMORY_LIMIT_BYTES] * 2, [0, 0], [0, 0]])
+
+    def test_at_most_two_files_are_parsed_at_once(self):
+        lock, active, peak = threading.Lock(), [0], [0]
+        real = child.extract_in_child
+
+        def counting(*args, **kwargs):
+            with lock:
+                active[0] += 1
+                peak[0] = max(peak[0], active[0])
+            try:
+                time.sleep(0.2)
+                return real(*args, **kwargs)
+            finally:
+                with lock:
+                    active[0] -= 1
+
+        with patch.object(child, "extract_in_child", counting):
+            result = self.classify(files=[(f"f{i}.pdf", self.pdf) for i in range(5)])
+        self.assertEqual(result["counts"]["files_read"], 5)
+        self.assertEqual(peak[0], pipeline.PARALLEL_FILES)
+        self.assertEqual(pipeline.PARALLEL_FILES, 2)
+
+    def test_global_page_cap_trims_a_later_file(self):
+        result = self.classify(files=[("a.pdf", self.pdf), ("b.pdf", self.pdf)], max_pages=4)
+        self.assertEqual([d["pages"] for d in result["documents"]], [3, 1])
+        self.assertIn("b.pdf: only the first 1 of 3 pages were read (limit 4 pages per request).", result["warnings"])
+        self.assertEqual(result["counts"]["pages"], 4)
+        b_pages = {loc["page"] for q in result["requirements"] for loc in q["pages"] if loc["document"] == "b.pdf"}
+        self.assertEqual(b_pages, {1})
 
 
 class JevClientTest(JevTestCase):

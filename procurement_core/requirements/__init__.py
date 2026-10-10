@@ -3,7 +3,9 @@
 Modules:
 
 - ``tags``     — tag library: response types, sub-tags, routing per tag, document parts;
-- ``extract``  — PDF text blocks -> units (PyMuPDF);
+- ``extract``  — PDF text blocks -> units (PyMuPDF; in-process, for the research scripts);
+- ``child`` / ``extract_worker`` — the hosted path: ``extract`` run in a separate OS process
+  with CPU, memory, file-size and wall-clock limits and no secrets in its environment;
 - ``jev``      — TypeSafe Jev questions and a stdlib HTTP client with retries;
 - ``pipeline`` — :func:`classify_documents` (split -> L0 -> pages -> L1 -> merge) and markdown.
 

@@ -81,8 +81,11 @@ def extract_units(
     """Return ``(units, stats)`` for one PDF given as a path or as bytes.
 
     ``max_pages`` (default: no limit) reads only the first N pages; ``stats`` then also
-    reports ``pages_in_file``. Without it the output is exactly what the research
-    pipeline has always produced.
+    reports ``pages_in_file`` and ``empty_pages`` (page numbers with no text). Without it
+    the output is exactly what the research pipeline has always produced.
+
+    This parses the PDF in the calling process. The hosted service never calls it on
+    request input directly; it runs :mod:`.extract_worker` in a child process instead.
     """
     doc = _open(source)
     try:
@@ -112,10 +115,12 @@ def extract_units(
     headings: list[tuple[int, str]] = []  # (depth, text)
     units: list[dict] = []
     empty_pages = 0
+    empty_page_numbers: list[int] = []
 
     for page_no, blocks in enumerate(raw_pages, 1):
         if not blocks:
             empty_pages += 1
+            empty_page_numbers.append(page_no)
         for text, size, in_margin in blocks:
             if in_margin and re.sub(r"\d+", "#", text) in noise:
                 continue
@@ -142,6 +147,7 @@ def extract_units(
     stats = {"pages": len(raw_pages), "pages_without_text": empty_pages, "units": len(units)}
     if max_pages is not None:
         stats["pages_in_file"] = page_count
+        stats["empty_pages"] = empty_page_numbers
     return units, stats
 
 
