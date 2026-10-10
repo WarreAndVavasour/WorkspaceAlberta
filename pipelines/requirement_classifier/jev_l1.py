@@ -10,11 +10,11 @@ Input units must pass two gates:
 - page gate (jev_pages.py): the page is a bid part, or it says what to submit with the bid.
 
 L1 asks one Jev question per unit: ``sub_tag``, a Choice over the sub-tags of its L0 response
-type (requirement_tags.SUB_TAGS) plus "not_a_bid_requirement". The canonical tag is
+type (procurement_core.requirements.tags.SUB_TAGS) plus "not_a_bid_requirement". The canonical tag is
 "<response_type>.<sub_tag>".
 
 Merge: one requirement per canonical tag across the whole document. Routing (answer source,
-lead time, connector, question) comes from requirement_tags.routing(), not from the model.
+lead time, connector, question) comes from tags.routing(), not from the model.
 
     python jev_l1.py                 # writes jev_l1.jsonl and requirements.json in the tender folder
     python jev_l1.py --no-page-gate  # skip the page gate
@@ -35,7 +35,6 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TENDER = Path(os.environ.get("REQ_TENDER_DIR", REPO / "drive-downloads/tenders/AB-2026-06600"))
-PROMPT_VERSION = "jev-l1-v2"
 
 
 def _load(name: str):
@@ -45,23 +44,14 @@ def _load(name: str):
     return module
 
 
-jc = _load("jev_classify")
-tags = _load("requirement_tags")
+jc = _load("jev_classify")  # also puts the repo root on sys.path
+
+from procurement_core.requirements import jev, tags  # noqa: E402
+
+# The L1 question is shared with the hosted classify_tender tool.
+PROMPT_VERSION = jev.L1_PROMPT_VERSION
 LEAD_ORDER = {"minutes": 0, "days": 1, "weeks": 2}
-
-
-def questions_for(l0_label: str) -> dict:
-    return {
-        "sub_tag": {
-            "type": "choice",
-            "instructions": (
-                f"`clause` comes from a public-sector tender and was classified as '{l0_label}': "
-                f"{jc.RESPONSE_TYPES[l0_label][0]} Which kind of '{l0_label}' does the bidder have to "
-                "supply in its bid because of `clause`? Use the other fields only as context."
-            ),
-            "criteria": tags.sub_tag_options(l0_label),  # reject option is last (first-option bias)
-        },
-    }
+questions_for = jev.l1_questions
 
 
 def merge(rows: list[dict], units: dict[int, dict]) -> list[dict]:
@@ -128,11 +118,7 @@ def main() -> int:
                "mandatory": bool(base.get("mandatory")), "in_bid_prob": base.get("in_bid_prob"),
                "prompt_version": PROMPT_VERSION, "error": err or None}
         if body:
-            a = body["answers"]["sub_tag"]
-            probs = {k: float(v) for k, v in a["probabilities"].items()}
-            st = a["choice"]
-            row.update(sub_tag=st, sub_prob=probs.get(st), sub_probabilities=probs,
-                       tag=None if st == tags.NOT_A_REQUIREMENT[0] else f"{base['label']}.{st}",
+            row.update(**jev.parse_l1(body, base["label"]),
                        input_tokens=(body.get("usage") or {}).get("input_tokens"))
         return row
 

@@ -221,6 +221,7 @@ The core tools are:
 - `daily_bid_brief` for the daily owner/operator summary
 - `analyze_contract_with_cohere` for optional Cohere Command A+ tender review
 - `process_bid_room` for live E2B attachment processing: Cohere Parse turns tender PDFs and images into markdown, then Command A+ reviews the evidence
+- `classify_tender` for a bidder-requirement checklist: tender PDFs are split into clauses, each clause and page is classified with TypeSafe Jev, and the results merge into one requirement per tag with connector, lead time, pages and evidence (see [`pipelines/requirement_classifier/`](pipelines/requirement_classifier/README.md))
 - `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
 - `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
 
@@ -234,7 +235,7 @@ E2B sandboxes are the isolated compute layer for heavier bid-room work: opening 
 
 ### Tool calling: how the MCP tools map to Cohere
 
-Every one of the 25 tools above is exposed to the model through one uniform
+Every one of the 26 tools above is exposed to the model through one uniform
 function-calling path. There is no per-tool glue: whatever the MCP server
 declares, the model sees.
 
@@ -247,11 +248,13 @@ declares, the model sees.
 Connection: `search_alberta_opportunities`, `get_alberta_opportunity_details`,
 `list_alberta_deadlines`, `summarize_alberta_opportunities`,
 `find_alberta_opportunities`. Model review and bid-room:
-`check_cohere_status`, `analyze_contract_with_cohere`, `process_bid_room`.
+`check_cohere_status`, `analyze_contract_with_cohere`, `process_bid_room`,
+`classify_tender`.
 Persistence and decisions: `watch_opportunity`, `list_watchlist`,
 `unwatch_opportunity`, `bid_no_bid_scorecard`. Search, details, deadlines,
 summaries, refresh, and profiles are free; the heavier judgment surfaces
-(bid rooms, Cohere tender review, the watchlist, bid/no-bid scorecards)
+(bid rooms, requirement classification, Cohere tender review, the watchlist,
+bid/no-bid scorecards)
 require the Pro key on the `Authorization` header.
 
 **The wire path, desk to model and back.** The MCP server is mounted in the

@@ -7,9 +7,10 @@
 Reads the units.jsonl written by label_requirements.py (stage 1) and asks Jev
 two questions per unit in one request:
 
-- ``response_type``: a Choice over the same 11 response types as
-  label_requirements.py (RESPONSE_TYPES, imported from that file so the label
-  set and definitions cannot drift). Jev's Choice is single-select: the answer
+- ``response_type``: a Choice over the 11 response types in
+  procurement_core.requirements.tags (RESPONSE_TYPES, shared with
+  label_requirements.py and the hosted classify_tender tool so the label set
+  and definitions cannot drift). Jev's Choice is single-select: the answer
   is the top option plus the full probability distribution over all 11.
 - ``in_bid``: a Noul (probability that the bidder must put something in its bid or act before
   bids close). ``requires_response`` = label is not 'none' and in_bid >= 0.5.
@@ -37,7 +38,6 @@ from __future__ import annotations
 
 import argparse
 import collections
-import importlib.util
 import json
 import os
 import random
@@ -50,91 +50,28 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+
+# Questions, gates and constants are shared with the hosted classify_tender tool.
+from procurement_core.requirements.jev import (  # noqa: E402,F401
+    API_URL,
+    DEFAULT_MODEL,
+    GATE_EXEMPT,
+    IN_BID_THRESHOLD,
+    L0_PROMPT_VERSION as PROMPT_VERSION,
+    OPTION_ORDER,
+    PRICE_PER_MTOK,
+    QUESTIONS,
+    RETRY_STATUSES,
+    build_state,
+    derive,
+)
+from procurement_core.requirements.tags import RESPONSE_TYPES  # noqa: E402,F401
+
 # Tender folder (git-ignored). Set REQ_TENDER_DIR to work on another tender.
 TENDER_DIR = Path(os.environ.get("REQ_TENDER_DIR", REPO / "drive-downloads/tenders/AB-2026-06600"))
 DEFAULT_INPUT = TENDER_DIR / "units.jsonl"
-API_URL = "https://api.typesafe.ai/v1/systemone"
-DEFAULT_MODEL = "jev-1.13.0"  # pinned; "jev-latest" moves when a new release ships
-PRICE_PER_MTOK = 0.042  # USD per million input tokens, output free (docs.typesafe.ai/models)
-RETRY_STATUSES = {408, 429} | set(range(500, 600))  # same set as the Python SDK's RetryPolicy
-PROMPT_VERSION = "jev-req-v2"
-
-
-def load_response_types() -> dict[str, tuple[str, str]]:
-    spec = importlib.util.spec_from_file_location("label_requirements", HERE / "label_requirements.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # heavy imports in that file are inside functions
-    return module.RESPONSE_TYPES
-
-
-RESPONSE_TYPES = load_response_types()
-
-# Jev 1.13 can lean toward the first Choice option (docs: model-jaggedness/jev-1.13),
-# so the catch-all "none" goes last rather than first.
-OPTION_ORDER = [k for k in RESPONSE_TYPES if k != "none"] + ["none"]
-
-# Dates and submission logistics are acted on before bids close (calendar, checklist), but Jev's
-# in_bid score for them is low because nothing is "put in" the bid. They skip the in_bid gate.
-GATE_EXEMPT = {"attendance", "submission_instruction"}
-IN_BID_THRESHOLD = 0.5
-
-
-def derive(row: dict) -> dict:
-    """requires_response = a response type was chosen and it passes the in_bid gate."""
-    label, ib = row.get("label"), row.get("in_bid_prob")
-    if label:
-        row["requires_response"] = label != "none" and (ib is None or ib >= IN_BID_THRESHOLD or label in GATE_EXEMPT)
-    return row
-
-QUESTIONS = {
-    "response_type": {
-        "type": "choice",
-        "instructions": (
-            "`clause` is one clause from a Canadian public-sector tender document. "
-            "What must the bidder put in its bid submission, before bids close, because of `clause`? "
-            "Judge what the bidder must do, not what the clause is about. "
-            "Use `section`, `text_before` and `text_after` only as context. "
-            "Pick 'none' for background, definitions, the buyer's process, specifications of the work, "
-            "the printed wording of a form, bond or contract, and any duty of the contractor after award."
-        ),
-        "criteria": {k: RESPONSE_TYPES[k][0] for k in OPTION_ORDER},
-    },
-    "in_bid": {
-        "type": "noul",
-        "instructions": (
-            "Must the bidder include something in its bid or proposal, or do something before bids close "
-            "(such as attend a site visit), because of `clause`? Duties after contract award, definitions, "
-            "specifications of the work and printed form wording do not count."
-        ),
-        "criteria": {
-            "true": "The bidder must put something in its bid, or act before bids close, because of this clause.",
-            "false": "Nothing goes in the bid because of this clause, or it only applies after award.",
-        },
-    },
-    "mandatory": {
-        "type": "noul",
-        "instructions": (
-            "Does `clause` say that something the bidder must put in its bid is mandatory or required, "
-            "or that a bid will be rejected or disqualified without it? Mandatory duties after award do not count."
-        ),
-        "criteria": {
-            "true": "The clause states the item is mandatory or required, or a bid without it is rejected.",
-            "false": "The clause does not make anything mandatory for the bid, or the bidder supplies nothing.",
-        },
-    },
-}
-
-
-def build_state(unit: dict) -> dict:
-    """Same content as label_requirements.build_messages, as named fields."""
-    return {
-        "document": unit.get("doc_name", ""),
-        "section": unit.get("section") or "(none)",
-        "page": unit.get("page"),
-        "text_before": unit.get("prev_text") or "(start)",
-        "clause": unit.get("text", ""),
-        "text_after": unit.get("next_text") or "(end)",
-    }
 
 
 def build_request(unit: dict, model: str) -> dict:

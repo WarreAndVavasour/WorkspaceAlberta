@@ -138,6 +138,7 @@ Optional:
 - `ALBERTA_APC_API_BASE`: override the Alberta Purchasing Connection API base, currently `https://purchasing.alberta.ca/api`
 - `ALBERTA_APC_APP_BASE`: override the Alberta Purchasing Connection app base, currently `https://purchasing.alberta.ca`
 - `COHERE_API_KEY` or `COHERE_PROD_API_KEY`: enable Cohere Command A+ analysis through Cohere's API
+- `TYPESAFE_API_KEY`: enable `classify_tender` (TypeSafe Jev requirement classification)
 - `HF_TOKEN` or `HUGGINGFACEHUB_API_TOKEN`: fallback route for Cohere Command A+ analysis through Hugging Face Inference Providers
 - `CANADABUYS_COHERE_MODEL`: override the default Cohere model, currently `command-a-plus-05-2026`
 - `CANADABUYS_COHERE_HF_MODEL`: override the default HF model route, currently `CohereLabs/command-a-plus-05-2026-w4a4:cohere`

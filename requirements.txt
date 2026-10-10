@@ -7,3 +7,4 @@ e2b>=2.49.1
 duckdb>=1.5.5
 markdown-it-py>=4.0.0,<5
 tzdata>=2026.3
+pymupdf==1.28.2

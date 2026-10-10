@@ -38,6 +38,10 @@ class ConnectorDeclarationTest(unittest.TestCase):
         self.assertNotIn("timeout_seconds", properties)
         self.assertNotIn("command_timeout_seconds", properties)
         self.assertFalse(tools["process_bid_room"].input_schema["additionalProperties"])
+        classify = tools["classify_tender"].input_schema
+        self.assertEqual(set(classify["properties"]), {"reference", "upload_token"})
+        self.assertFalse(classify["additionalProperties"])
+        self.assertIn("TypeSafe AI", tools["classify_tender"].description)
 
 
 class PartialAuthenticationTest(unittest.TestCase):

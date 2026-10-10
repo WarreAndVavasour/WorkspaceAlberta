@@ -1873,6 +1873,7 @@ TOOL_NAMES = (
     "summarize_alberta_opportunities",
     "find_alberta_opportunities",
     "process_bid_room",
+    "classify_tender",
     "check_cohere_status",
     "analyze_contract_with_cohere",
     # Extension tools (procurement_core/extensions.py)
@@ -1906,8 +1907,8 @@ async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> 
         return asyncio.run(handler(args))
 
     try:
-        if name == "process_bid_room":
-            return await handler(args)  # This handler owns its complete deadline.
+        if name in {"process_bid_room", "classify_tender"}:
+            return await handler(args)  # These handlers own their complete deadline.
         return await asyncio.to_thread(_run_in_thread)
     except Exception as exc:
         return f"Error: {exc}"
@@ -2054,6 +2055,14 @@ async def call_tool_text_and_structured(
     handler = handlers.get(name)
     if not handler:
         return f"Unknown tool: {name}", None
+
+    if name == "classify_tender":
+        # Markdown for the conversation, the artifact (or upload link) as structured content.
+        try:
+            envelope = await classify_tender_artifact_bounded(args)
+        except Exception as exc:
+            return f"Error: {exc}", None
+        return envelope["markdown"], {key: value for key, value in envelope.items() if key != "markdown"}
 
     if name not in STRUCTURED_TOOLS:
         return await call_tool_text(name, args), None
@@ -2542,16 +2551,28 @@ def process_bid_room_artifact(args: dict, *, deadline: float | None = None, canc
     }
 
 
-def _bid_room_upload_request(reference: str, payload: dict[str, Any]) -> dict[str, Any]:
-    """APC files need the user's own sign-in: hand back a private upload link."""
+def _bid_room_upload_request(reference: str, payload: dict[str, Any], *, tool: str = "process_bid_room") -> dict[str, Any]:
+    """APC files need the user's own sign-in: hand back a private upload link.
+
+    Shared by ``process_bid_room`` and ``classify_tender``: one upload serves both tools,
+    because the token is bound to the reference and the tenant, not to a tool.
+    """
     from procurement_core import bid_room_uploads, storage
 
     token = bid_room_uploads.create_upload_token(reference, storage.current_tenant())
     url = bid_room_uploads.upload_page_url(token)
     listed = payload.get("document_manifest") or []
     hours = bid_room_uploads.TOKEN_TTL_SECONDS // 3600
+    if tool == "process_bid_room":
+        retention = "Uploaded files are deleted after processing."
+    else:
+        retention = (
+            f"`{tool}` does not delete the uploaded files, so `process_bid_room` can use the same "
+            "`upload_token` afterwards; `process_bid_room` deletes them after processing."
+        )
+    heading = "Bid room" if tool == "process_bid_room" else "Tender requirements"
     lines = [
-        f"# Bid room: upload the APC documents for {reference}",
+        f"# {heading}: upload the APC documents for {reference}",
         "",
         "Alberta Purchasing Connection only releases tender documents to a signed-in supplier "
         "account, so WorkspaceAlberta does not download them for you.",
@@ -2560,9 +2581,9 @@ def _bid_room_upload_request(reference: str, payload: dict[str, Any]) -> dict[st
         "2. Under **Document downloads**, choose **Download All** (or download each file, including every addendum). "
         "APC adds your account to that posting's Interested Suppliers list when you do.",
         f"3. Upload the files here: {url}",
-        f"4. Then run `process_bid_room` again with `reference` = `{reference}` and `upload_token` = `{token}`.",
+        f"4. Then run `{tool}` again with `reference` = `{reference}` and `upload_token` = `{token}`.",
         "",
-        f"The link is private to your account and expires in {hours} hours. Uploaded files are deleted after processing.",
+        f"The link is private to your account and expires in {hours} hours. {retention}",
     ]
     if listed:
         lines += ["", "APC lists these documents for this posting:"]
@@ -2653,6 +2674,235 @@ async def process_bid_room(args: dict) -> str:
         return (await process_bid_room_artifact_bounded(args))["markdown"]
     except (RuntimeError, ValueError) as exc:
         return f"Error: Bid room processing is not available: {exc}"
+
+
+# ============== Tender requirement classification (TypeSafe Jev) ==============
+
+CLASSIFY_CALL_SECONDS = 140
+CLASSIFY_WORK_SECONDS = 120  # Leave time to finish the response inside the call limit.
+CLASSIFY_MAX_FILES = 5  # CanadaBuys PDF/ZIP attachments downloaded per call
+CLASSIFY_MAX_URLS = 10  # attachment URLs looked at (Word/Excel files are skipped without download)
+CLASSIFY_MIN_SECONDS_TO_CLASSIFY = 45  # Stop downloading when less than this is left.
+CLASSIFY_NOT_CONFIGURED_MESSAGE = "Requirement classification is not configured on this server."
+CLASSIFY_TIMEOUT_MESSAGE = (
+    "Requirement classification reached its time limit; no requirement list is available. "
+    "Do not treat this response as a completed review."
+)
+
+
+class ClassifierNotConfigured(ValueError):
+    """TYPESAFE_API_KEY is not set: nothing was downloaded or sent anywhere."""
+
+
+def _typesafe_api_key() -> str:
+    key = os.environ.get("TYPESAFE_API_KEY", "").strip()
+    if not key:
+        raise ClassifierNotConfigured(CLASSIFY_NOT_CONFIGURED_MESSAGE)
+    return key
+
+
+def _download_public_document(url: str, timeout: float) -> bytes:
+    """Download one public HTTPS document with the bid room's URL and size checks.
+
+    Every URL and every redirect target must be a public HTTPS address
+    (``apc_documents.public_document_url`` with DNS resolution); the body is capped at
+    the bid room's per-file limit.
+    """
+    from urllib.request import HTTPRedirectHandler, build_opener
+
+    from procurement_core.apc_documents import public_document_url
+    from procurement_core.e2b_bid_room import MAX_FILE_BYTES
+
+    class PublicRedirects(HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            public_document_url(newurl, resolve=True)
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+    public_document_url(url, resolve=True)
+    request = Request(url, headers={
+        "User-Agent": "WorkspaceAlberta/1.0 (+https://elbowsupknivesout.warreandvavasour.com)",
+        "Accept": "application/pdf,application/zip,*/*",
+    })
+    limit_mb = MAX_FILE_BYTES // (1024 * 1024)
+    with build_opener(PublicRedirects()).open(request, timeout=timeout) as response:
+        length = str(response.headers.get("Content-Length") or "")
+        if length.isdigit() and int(length) > MAX_FILE_BYTES:
+            raise ValueError(f"larger than the {limit_mb} MB limit")
+        data = response.read(MAX_FILE_BYTES + 1)
+    if len(data) > MAX_FILE_BYTES:
+        raise ValueError(f"larger than the {limit_mb} MB limit")
+    return data
+
+
+def _classify_canadabuys_files(reference: str, deadline: float, cancelled=None) -> tuple[list[tuple[str, bytes]], list[str]]:
+    """Public first-party CanadaBuys attachments, PDFs only (PDFs inside ZIPs included)."""
+    import http.client
+    from urllib.parse import urlparse
+
+    from procurement_core import bid_room_uploads
+    from procurement_core.e2b_bid_room import MAX_FILE_BYTES, _name_from_url, resolve_canadabuys_attachment_urls
+
+    contracts, warnings = load_contracts_for_unified()
+    contract = find_contract_by_reference(reference, contracts)
+    if not contract:
+        raise ValueError(f"Opportunity not found: {reference}")
+    urls = resolve_canadabuys_attachment_urls(contract, max_attachments=CLASSIFY_MAX_URLS)
+    if not urls:
+        raise ValueError(
+            f"No tender attachments are published for {reference} in the CanadaBuys data or on its "
+            "official detail page, so there is nothing to classify. Nothing was sent to the classifier."
+        )
+    warnings = list(warnings)
+    files: list[tuple[str, bytes]] = []
+    downloads = 0
+    for index, url in enumerate(urls, 1):
+        name = _name_from_url(url, f"canadabuys-attachment-{index}")
+        suffix = Path(urlparse(url).path).suffix.lower()
+        if suffix and suffix not in {".pdf", ".zip"}:
+            warnings.append(f"{name}: skipped, only PDF files are classified.")
+            continue
+        if downloads >= CLASSIFY_MAX_FILES:
+            warnings.append(f"{name}: not downloaded, at most {CLASSIFY_MAX_FILES} attachments are read per call.")
+            continue
+        if cancelled is not None and cancelled.is_set():
+            raise RuntimeError(CLASSIFY_TIMEOUT_MESSAGE)
+        remaining = deadline - time.monotonic() - CLASSIFY_MIN_SECONDS_TO_CLASSIFY
+        if remaining < 3:
+            warnings.append(f"Time limit: {name} and later attachments were not downloaded.")
+            break
+        downloads += 1
+        try:
+            data = _download_public_document(url, timeout=min(30.0, remaining))
+        except (ValueError, OSError, http.client.HTTPException) as exc:
+            warnings.append(f"{name}: could not be downloaded ({exc}).")
+            continue
+        expanded: list[tuple[str, bytes]] = []
+        bid_room_uploads._expand(name, data, expanded, warnings)  # same ZIP rules as uploads
+        for member_name, content in expanded:
+            if not content.startswith(b"%PDF-"):
+                warnings.append(f"{member_name}: skipped, only PDF files are classified.")
+            elif len(content) > MAX_FILE_BYTES:
+                warnings.append(f"{member_name}: skipped, larger than the {MAX_FILE_BYTES // (1024 * 1024)} MB limit.")
+            else:
+                files.append((member_name, content))
+    if not files:
+        raise ValueError(
+            f"No PDF tender documents could be downloaded for {reference}. "
+            + " ".join(warnings[-5:])
+        )
+    return files, warnings
+
+
+def _classify_uploaded_files(
+    reference: str, upload_token: str, details: dict[str, Any],
+) -> tuple[list[tuple[str, bytes]], list[str]]:
+    """The user's own APC uploads, verified exactly as ``process_bid_room`` does.
+
+    The uploads are not deleted: ``process_bid_room`` may run on the same token next.
+    """
+    from procurement_core import bid_room_uploads, storage
+    from procurement_core.apc_documents import apc_document_manifest
+
+    claims = bid_room_uploads.verify_upload_token(
+        upload_token, reference=reference, tenant=storage.current_tenant() or "",
+    )
+    download = bid_room_uploads.load_uploaded_files(claims, apc_manifest=apc_document_manifest(details))
+    warnings = list(download["warnings"])
+    files: list[tuple[str, bytes]] = []
+    for item in download["files"]:
+        if item["status"] != "verified":
+            warnings.append(f"{item['name']}: skipped ({item['error'] or item['status']}).")
+        elif Path(item["name"]).suffix.lower() != ".pdf":
+            warnings.append(f"{item['name']}: skipped, only PDF files are classified.")
+        else:
+            files.append((item["name"], item["data"]))
+    if not files:
+        problems = "; ".join(f"{item['name']}: {item['error'] or item['status']}" for item in download["files"])
+        raise ValueError(
+            f"None of the uploaded files is a PDF that can be classified ({problems}). "
+            "Nothing was sent to the classifier."
+        )
+    return files, warnings
+
+
+def classify_tender_artifact(args: dict, *, deadline: float | None = None, cancelled=None) -> dict[str, Any]:
+    """Classify a tender package into bidder requirements; return markdown + artifact.
+
+    For an APC reference without ``upload_token`` this returns the same private upload
+    link as ``process_bid_room``. Raises :class:`ClassifierNotConfigured` before any
+    download when ``TYPESAFE_API_KEY`` is not set.
+    """
+    from procurement_core.requirements import classify_documents, render_markdown
+    from procurement_core.requirements.jev import AuthError
+
+    deadline = deadline if deadline is not None else time.monotonic() + CLASSIFY_WORK_SECONDS
+    reference = str(args.get("reference") or "").strip()
+    if not reference:
+        raise ValueError("Please provide a reference number.")
+    upload_token = str(args.get("upload_token") or "").strip()
+    if upload_token and not is_alberta_reference(reference):
+        raise ValueError("upload_token applies only to an Alberta APC reference.")
+    api_key = _typesafe_api_key()
+
+    if is_alberta_reference(reference):
+        try:
+            details = get_alberta_api_details(reference)
+        except (RuntimeError, ValueError) as exc:
+            raise ValueError(f"Alberta opportunity not available: {exc}") from exc
+        if not upload_token:
+            from procurement_core import bid_room_uploads
+            from procurement_core.e2b_bid_room import build_apc_bid_room_payload
+
+            if not bid_room_uploads.uploads_available():
+                raise ValueError(
+                    "APC releases tender documents only to a signed-in supplier account, and private "
+                    "document uploads are not available on this server, so there is nothing to classify."
+                )
+            payload = build_apc_bid_room_payload(details, {}, max_attachments=0)
+            return _bid_room_upload_request(reference, payload, tool="classify_tender")
+        files, warnings = _classify_uploaded_files(reference, upload_token, details)
+        source = "uploaded by the user from APC"
+    else:
+        files, warnings = _classify_canadabuys_files(reference, deadline, cancelled)
+        source = "CanadaBuys public attachments"
+
+    if cancelled is not None and cancelled.is_set():
+        raise RuntimeError(CLASSIFY_TIMEOUT_MESSAGE)
+    try:
+        result = classify_documents(files, deadline=deadline, api_key=api_key, stop=cancelled)
+    except AuthError:
+        raise RuntimeError(
+            "The classifier (TypeSafe AI) refused this server's credentials; requirement classification "
+            "is unavailable. Nothing else was changed."
+        ) from None
+    result = {"reference": reference, "source": source, **result,
+              "warnings": [*warnings, *result["warnings"]]}
+    return {"artifact": result, "markdown": render_markdown(result, reference=reference, source=source)}
+
+
+async def classify_tender_artifact_bounded(args: dict) -> dict[str, Any]:
+    """Bound the whole call, source lookups and downloads included (as process_bid_room)."""
+    from threading import Event
+
+    cancelled = Event()
+    deadline = time.monotonic() + CLASSIFY_WORK_SECONDS
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(classify_tender_artifact, args, deadline=deadline, cancelled=cancelled),
+            timeout=CLASSIFY_CALL_SECONDS,
+        )
+    except TimeoutError as exc:
+        raise RuntimeError(CLASSIFY_TIMEOUT_MESSAGE) from exc
+    finally:
+        cancelled.set()
+
+
+async def classify_tender(args: dict) -> str:
+    """List the bidder requirements in a tender package (TypeSafe Jev classification)."""
+    try:
+        return (await classify_tender_artifact_bounded(args))["markdown"]
+    except (RuntimeError, ValueError) as exc:
+        return f"Error: {exc}"
 
 
 # ============== Alberta Purchasing Connection Handlers ==============

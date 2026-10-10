@@ -41,7 +41,7 @@ class BlogTest(unittest.TestCase):
             self.assertEqual(client.get("/blog/nonexistent").status_code, 404)
             self.assertIn('href="/blog"', client.get("/").text)
             privacy = client.get("/privacy").text
-            self.assertIn("Cohere and E2B are subprocessors", privacy)
+            self.assertIn("Cohere, E2B and TypeSafe AI are subprocessors", privacy)
             self.assertIn("US-Central", privacy)
             self.assertIn("us-west1", privacy)
 

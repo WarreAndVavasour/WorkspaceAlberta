@@ -255,6 +255,7 @@ class HttpGateIntegrationTest(unittest.TestCase):
         body = self.client.get("/health").json()
         self.assertIn("gate", body)
         self.assertIn("process_bid_room", body["gate"]["pro_tools"])
+        self.assertIn("classify_tender", body["gate"]["pro_tools"])
 
     def test_pro_tool_blocked_without_key(self):
         env = {"SUPABASE_URL": "https://x.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "k"}

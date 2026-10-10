@@ -7,6 +7,7 @@ The engine. Pure Python, no MCP dependency — every adapter (stdio MCP, Streama
 | `service.py` | All 21 tool handlers, `TOOL_NAMES` registry, `call_tool_text()` dispatch, CanadaBuys CSV client + cache, Alberta APC API client, unified normalizer, deterministic profile scoring, Cohere model routing with key failover |
 | `fixtures.py` | Offline CanadaBuys CSV + APC JSON ingest when `PROCUREMENT_FIXTURE_DIR` is set (tests only; hosted MCP stays live) |
 | `e2b_bid_room.py` | E2B sandbox bid-room processing: payload builders, self-contained sandbox processor script, Cohere Parse document layer, in-sandbox Command A+ review, artifact validation and rendering |
+| `requirements/` | `classify_tender`: PyMuPDF split of tender PDFs into clauses (`extract.py`), the requirement tag library (`tags.py`), TypeSafe Jev questions and stdlib client (`jev.py`), and the bounded L0 → pages → L1 → merge pipeline with markdown rendering (`pipeline.py`). Shared with `pipelines/requirement_classifier/` |
 | `cohere_parse.py` | Official Cohere Parse helpers (`POST /v2/parse`, `parse-v5.0`, `image_url` documents only). Injected into the sandbox processor; unit-tested with a mocked HTTP call |
 
 ## Contract for adding a tool
@@ -20,7 +21,7 @@ The engine. Pure Python, no MCP dependency — every adapter (stdio MCP, Streama
 
 - Deterministic logic first. Cohere Parse is the bid-room document layer (PDF/image → markdown). Command A+ is only for judgment tools.
 - Sources degrade independently — a failing upstream produces a warning line, not a failed tool call.
-- Untrusted tender attachments are only ever opened inside an E2B sandbox with hard size/count/timeout limits.
+- Untrusted tender attachments are opened inside an E2B sandbox with hard size/count/timeout limits for `process_bid_room`. The exception is `classify_tender`, which reads PDF text in the service process with PyMuPDF: PDFs only, 25 MB per file, at most 800 pages and 8,000 clauses per call, one PDF at a time.
 - User-provided integers are clamped (`clamp_int`), never trusted.
 
 Full details: `docs/architecture.md` and `docs/mcp-tool-reference.md`.

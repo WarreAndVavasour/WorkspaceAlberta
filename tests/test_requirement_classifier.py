@@ -14,8 +14,9 @@ def load(name):
     return module
 
 
-tags = load("requirement_tags")
-jc = load("jev_classify")
+jc = load("jev_classify")  # puts the repo root on sys.path
+
+from procurement_core.requirements import tags  # noqa: E402  (the tag library moved here)
 
 
 class RequirementTagsTest(unittest.TestCase):

@@ -30,6 +30,8 @@ class AgentContractTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(guide["training"]["automatic_training"])
         self.assertIn("does not submit bids", SERVER_INSTRUCTIONS[:512])
         self.assertEqual({t.name for t in get_mcp_tools()}, set(TOOL_NAMES))
+        self.assertIn("classify_tender", guide["authentication"]["pro_tools"])
+        self.assertIn("classify_tender sends tender clause", SERVER_INSTRUCTIONS)
 
     async def test_persistent_actions_are_distinguishable_from_search(self):
         tools = {t.name: t for t in get_mcp_tools()}
