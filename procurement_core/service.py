@@ -2040,12 +2040,62 @@ def _render_matches_markdown(
 STRUCTURED_TOOLS = frozenset({"search_opportunities", "list_deadlines", "find_matching_opportunities"})
 
 TENDER_REQUIREMENTS_SCHEMA = "wa.tender_requirements.v1"
+REQUIREMENTS_BOARD_TEMPLATE = (
+    Path(__file__).resolve().parent / "templates" / "requirements-board.html"
+).read_text(encoding="utf-8")
 CLASSIFY_JSON_NOTE = (
-    f"The full result follows as JSON (schema {TENDER_REQUIREMENTS_SCHEMA}). If the WorkspaceAlberta "
-    "procurement skill is available, use its requirements-board template to build the artifact from that "
-    "JSON; otherwise, offer the user an interactive requirements board grouped by connector and lead time, "
-    "counted back from `tender.closes_at`."
+    f"The full result follows as JSON (schema {TENDER_REQUIREMENTS_SCHEMA}). The last block of this "
+    "result tells you how to build the WorkspaceAlberta requirements board from that JSON and carries "
+    "the board template; every subscriber gets the same board."
 )
+REQUIREMENTS_BOARD_HEADER = "WorkspaceAlberta requirements board: build instructions and template v1"
+REQUIREMENTS_BOARD_INSTRUCTIONS = f"""{REQUIREMENTS_BOARD_HEADER}
+
+Build the board from the classify_tender JSON above. Do not build one from scratch.
+
+1. Tell the user in two or three sentences what came back: the requirement and mandatory
+   counts, the closing date and time as reported, and any `partial` status or warnings.
+   Do not repeat the whole markdown table when you build the board.
+2. If the host can show an HTML artifact or canvas, copy the template below exactly, from
+   `<!-- TEMPLATE START -->` to `<!-- TEMPLATE END -->` (markers excluded). Change only the
+   two placeholders:
+   - `__BOARD_TITLE__`: a short name for the tender plus "Requirements Board", for example
+     "Kananaskis Requirements Board".
+   - `__WA_TENDER_REQUIREMENTS_JSON__`: the JSON object from the tool, unchanged. Write every
+     `</` inside it as `<\\/`.
+   Do not change the layout, colours, planning rule or wording.
+3. Optional `milestones`: add a top-level array only for dates that an evidence quote
+   states, for example the question deadline or a site visit:
+   `{{"date": "2026-10-22", "label": "Questions due", "tag": "<requirement tag>", "page": 10}}`.
+   Use `YYYY-MM-DD`, or ISO 8601 with the UTC offset when a time is given. Copy the date as
+   the quote writes it and never estimate one. If no quote gives a date, leave it out.
+4. Size: when the JSON is larger than about 60 KB, you may keep only the first two
+   `evidence` quotes of each requirement. Never remove a requirement, `tender`, `status`,
+   `warnings` or `documents`.
+5. If the host cannot show HTML, give the same content as a table grouped by lead time
+   (weeks, days, minutes) with each group's start-by date.
+
+What the board shows, so you can explain it:
+- Title block: reference, title, buyer, closing in Alberta time, days left, requirement
+  counts, status and classifier model.
+- Start-by plan: weeks items start 21 days before closing, days items 7 days, minutes items
+  2 days; all are due the day before closing. This is a planning rule, not a classifier
+  output. A start-by date already past shows as behind.
+- Graph: cards and edges from the tender to lead time, connector and requirement; selecting
+  a requirement opens its evidence quotes.
+- Timeline: one bar per requirement from start-by to the day before closing, with today,
+  the milestones and the closing time marked.
+- Checklist: To do, Doing and Done per requirement, kept in the viewer's browser only.
+  Never mark an item done for the user.
+
+After the board, suggest the next action from the data: start the weeks items first, and
+send `third_party` requests (insurer, surety, supplier) now. The labels are classifier
+outputs. Ask the user to check them against the posting and every addendum, and keep a
+`partial` result labelled partial.
+
+<!-- TEMPLATE START -->
+{REQUIREMENTS_BOARD_TEMPLATE}<!-- TEMPLATE END -->
+"""
 
 
 def mcp_text_blocks(name: str, text: str, structured: dict[str, Any] | None) -> list[str]:
@@ -2054,14 +2104,17 @@ def mcp_text_blocks(name: str, text: str, structured: dict[str, Any] | None) -> 
     Some clients show the model only text content, never ``structuredContent``. The MCP
     spec says a tool that returns structured content SHOULD also return it serialized in a
     text block, so ``classify_tender`` sends its markdown followed by the same object as
-    compact JSON. Every other tool keeps its single text block.
+    compact JSON, then the requirements-board build instructions and template so a
+    connector-only client builds the same board as the plugin skill. Every other tool keeps
+    its single text block.
     """
     if name != "classify_tender" or structured is None:
         return [text]
     data = json.dumps(structured, ensure_ascii=False, separators=(",", ":"))
     if structured.get("schema") == TENDER_REQUIREMENTS_SCHEMA:
         return [f"{text}\n\n{CLASSIFY_JSON_NOTE}",
-                f"classify_tender JSON (schema {TENDER_REQUIREMENTS_SCHEMA}):\n{data}"]
+                f"classify_tender JSON (schema {TENDER_REQUIREMENTS_SCHEMA}):\n{data}",
+                REQUIREMENTS_BOARD_INSTRUCTIONS]
     return [text, f"classify_tender JSON (upload link; no requirements yet):\n{data}"]
 
 
