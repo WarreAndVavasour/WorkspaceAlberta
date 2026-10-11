@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 import time
+import re
 import unittest
 import zipfile
 from pathlib import Path
@@ -212,6 +213,11 @@ class UploadPageTest(UploadTestCase):
             page = self.client.get(f"/bid-room/upload/{self.token}")
         self.assertEqual(page.status_code, 200)
         self.assertIn(REFERENCE, page.text)
+        self.assertIn("100 MB per file", page.text)  # matches MAX_UPLOAD_BYTES and the bucket limit
+        self.assertIn(f'data-name="{PDF_NAME}"', page.text)  # APC's list, ticked off as files arrive
+        self.assertIn('class="auth-world wide"', page.text)  # the sign-in page's archive shell
+        self.assertNotIn("deleted after processing", page.text)  # classify_tender keeps uploads
+        self.assertIsNone(re.search(r"__[A-Z_]+__", page.text))
         self.assertIn("no-store", page.headers["cache-control"])
         self.assertEqual(page.headers["referrer-policy"], "no-referrer")
         signed = self.client.post(f"/bid-room/upload/{self.token}/sign", json={"name": "Spec.pdf", "size": 100})
