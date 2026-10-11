@@ -160,13 +160,6 @@ h1 { font: 44px/1.06 var(--serif); font-weight: 400; letter-spacing: -1.6px; mar
 .auth-world.wide { --card: 580px; }
 .wide h1 { font-size: 40px; }
 .wide .ledger { margin-bottom: 20px; }
-.why { margin: -4px 0 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.why summary { list-style: none; cursor: pointer; padding: 10px 24px 10px 0; position: relative; font: italic 15px/1.4 var(--serif); color: var(--gold-deep); }
-.why summary::-webkit-details-marker { display: none; }
-.why summary::after { content: "+"; position: absolute; right: 2px; top: 8px; font: 18px/1 var(--serif); font-style: normal; color: var(--gold-deep); }
-.why[open] summary::after { content: "\2212"; }
-.why summary:hover { color: var(--ink); }
-.why p { margin: 0 0 10px; font-size: 13px; line-height: 1.65; color: #3f555d; }
 .upload-steps-title, .expected h2 { margin: 0 0 8px; font: italic 15px/1.3 var(--serif); letter-spacing: -.1px; }
 .upload-steps { list-style: none; counter-reset: step; margin: 0 0 20px; padding: 0; }
 .upload-steps li { counter-increment: step; position: relative; padding-left: 30px; margin: 9px 0; font-size: 12.5px; color: #3f555d; }

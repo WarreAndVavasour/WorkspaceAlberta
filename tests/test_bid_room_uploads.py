@@ -216,7 +216,6 @@ class UploadPageTest(UploadTestCase):
         self.assertIn("100 MB per file", page.text)  # matches MAX_UPLOAD_BYTES and the bucket limit
         self.assertIn(f'data-name="{PDF_NAME}"', page.text)  # APC's list, ticked off as files arrive
         self.assertIn('class="auth-world wide"', page.text)  # the sign-in page's archive shell
-        self.assertIn('<details class="why">', page.text)  # why the upload is not a chat attachment
         self.assertNotIn("deleted after processing", page.text)  # classify_tender keeps uploads
         self.assertIsNone(re.search(r"__[A-Z_]+__", page.text))
         self.assertIn("no-store", page.headers["cache-control"])
