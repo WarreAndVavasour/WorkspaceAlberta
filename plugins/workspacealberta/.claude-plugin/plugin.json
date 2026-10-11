@@ -1,0 +1,14 @@
+{
+  "name": "workspacealberta",
+  "displayName": "WorkspaceAlberta",
+  "version": "1.1.0",
+  "description": "Find and assess Canadian public tenders from CanadaBuys and Alberta Purchasing Connection, and turn a tender package into a requirements board.",
+  "author": {
+    "name": "Warre & Vavasour",
+    "url": "https://warreandvavasour.com"
+  },
+  "homepage": "https://warreandvavasour.com/workspacealberta",
+  "repository": "https://github.com/WarreAndVavasour/WorkspaceAlberta",
+  "license": "Apache-2.0",
+  "keywords": ["procurement", "canadabuys", "alberta", "tenders", "small-business"]
+}

@@ -22,11 +22,14 @@ PACKAGE = ROOT / 'plugins/workspacealberta'
 ORIGIN = 'https://elbowsupknivesout.warreandvavasour.com'
 FILES = ('plugin.json', 'mcp.json', 'skills/procurement/SKILL.md',
          'skills/procurement/requirements-board.html', 'assets/icon.png')
+# The same folder is also the Claude directory plugin bundle. These files are checked by the
+# Claude portal, not packaged into the OpenAI archive.
+CLAUDE_FILES = ('.claude-plugin/plugin.json', '.mcp.json', 'README.md')
 
 
 def validate(package: Path = PACKAGE) -> dict:
     actual = {str(p.relative_to(package)) for p in package.rglob('*') if p.is_file() or p.is_symlink()}
-    if actual != set(FILES) or any(p.is_symlink() for p in package.rglob('*')):
+    if actual != set(FILES) | set(CLAUDE_FILES) or any(p.is_symlink() for p in package.rglob('*')):
         raise ValueError('Package must contain exactly the allowlisted files, without symlinks.')
     manifest = json.loads((package / 'plugin.json').read_text())
     if manifest.get('name') != 'workspacealberta' or not re.fullmatch(r'\d+\.\d+\.\d+', manifest.get('version', '')):
@@ -46,6 +49,12 @@ def validate(package: Path = PACKAGE) -> dict:
     mcp=json.loads((package/'mcp.json').read_text())
     if mcp['mcpServers'] != {'workspacealberta': {'type':'streamable-http','url':ORIGIN+'/mcp'}}:
         raise ValueError('Unexpected MCP endpoint or credentials in MCP configuration')
+    claude=json.loads((package/'.claude-plugin/plugin.json').read_text())
+    if claude.get('name') != manifest['name'] or claude.get('version') != manifest['version']:
+        raise ValueError('Claude and OpenAI manifests disagree on name or version.')
+    claude_mcp=json.loads((package/'.mcp.json').read_text())
+    if claude_mcp != {'mcpServers': {'workspacealberta': {'type':'http','url':ORIGIN+'/mcp'}}}:
+        raise ValueError('Unexpected MCP endpoint or credentials in the Claude MCP configuration')
     skill=(package/'skills/procurement/SKILL.md').read_text()
     if not skill.startswith('---\nname: procurement\ndescription: ') or '\n---\n' not in skill[4:]:
         raise ValueError('Missing skill frontmatter')
