@@ -27,6 +27,18 @@ class PackageTest(unittest.TestCase):
         self.assertIn('requirements-board.html',skill)
         self.assertIn('wa.tender_requirements.v1',skill)
 
+    def test_claude_bundle_matches_openai_package(self):
+        import json, zipfile
+        root=package.PACKAGE
+        claude=json.loads((root/'.claude-plugin/plugin.json').read_text())
+        self.assertEqual((claude['name'],claude['version']),('workspacealberta',json.loads((root/'plugin.json').read_text())['version']))
+        self.assertEqual(claude['license'],'Apache-2.0')
+        self.assertGreaterEqual(len((root/'README.md').read_text().split()),40)
+        with tempfile.TemporaryDirectory() as directory:
+            package.build(Path(directory)/'p.zip')
+            with zipfile.ZipFile(Path(directory)/'p.zip') as archive:
+                self.assertEqual(sorted(archive.namelist()),sorted(package.FILES))  # Claude-only files stay out
+
     def test_build_is_reproducible(self):
         with tempfile.TemporaryDirectory() as directory:
             a=package.build(Path(directory)/'a.zip')

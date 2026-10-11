@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "type": "http",
+      "url": "https://elbowsupknivesout.warreandvavasour.com/mcp"
+    }
+  }
+}
