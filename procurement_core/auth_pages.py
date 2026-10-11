@@ -87,7 +87,17 @@ _ARCHIVE = _archive()
 _BAND = _band()
 
 
-def auth_page(title: str, content: str, *, step: str, step_label: str) -> str:
-    """Wrap trusted markup; callers must escape all interpolated user values."""
-    return _SHELL.substitute(title=escape(title), style=_STYLE, archive=_ARCHIVE, band=_BAND,
-                             content=content, step=escape(step), step_label=escape(step_label))
+def auth_page(title: str, content: str, *, step: str, step_label: str, step_total: str = "02",
+              product_label: str = "Your account connection",
+              caption: str = "A connection to your next possibility.", variant: str = "",
+              script: str = "") -> str:
+    """Wrap trusted markup; callers must escape all interpolated user values.
+
+    The bid-room upload page reuses this shell with ``variant="wide"`` (a wider card) and its own
+    ``script``, which must be trusted, static code.
+    """
+    page = _SHELL.substitute(title=escape(title), style=_STYLE, archive=_ARCHIVE, band=_BAND,
+                             content=content, step=escape(f"{step} / {step_total}" if step_total else step),
+                             step_label=escape(step_label), product_label=escape(product_label),
+                             caption=escape(caption), variant=escape(variant))
+    return page.replace("</body>", f"{script}\n</body>", 1) if script else page
