@@ -45,6 +45,11 @@ def _expected_documents(reference: str) -> list[str]:
 
 CONTENT = """
 <h1>Upload the tender package.</h1>
+<details class="why">
+  <summary>Wait, why can&rsquo;t I just upload the files through Claude? What is this?</summary>
+  <p>Files you attach in a chat stay with the chat app. Your assistant can&rsquo;t hand a whole tender package to a connected tool, so workspaceAlberta takes the files here instead.</p>
+  <p>Here they go to workspaceAlberta&rsquo;s own procurement tools. Those tools read every page and sort out what you must supply, by when and from whom. Your assistant then gets the results through the workspaceAlberta connection. This is how workspaceAlberta works with Claude, ChatGPT and other AI assistants: the assistant talks with you, and workspaceAlberta&rsquo;s tools do the tender work.</p>
+</details>
 <p class="intro">Download the files for <strong>__REF__</strong> from Alberta Purchasing Connection with your own supplier account, then add them here. Your assistant reads them from this private bid room.</p>
 <dl class="ledger">
   <div><dt>Reference</dt><dd>__REF__</dd></div>
