@@ -262,7 +262,9 @@ class PipelineTest(JevTestCase):
         self.assertTrue(people["mandatory"])
         self.assertEqual((people["connector"], people["lead_time"], people["answer_source"]),
                          ("project_and_people_records", "days", "person_input"))
-        self.assertEqual(people["pages"], [{"document": "tender.pdf", "page": 2}])
+        self.assertEqual(people["pages"], [{"doc": 0, "page": 2}])
+        self.assertEqual(people["page_count"], 1)
+        self.assertEqual(people["evidence"][0]["doc"], 0)
         self.assertEqual(people["evidence"][0]["page"], 2)
         self.assertEqual([q["id"] for q in result["requirements"]], ["R01", "R02", "R03", "R04"])
         self.assertEqual([q["mandatory"] for q in result["requirements"]], [True, True, False, False])
@@ -352,7 +354,8 @@ class PipelineTest(JevTestCase):
     def test_multiple_documents_keep_their_own_pages(self):
         result = self.classify(files=[("a.pdf", self.pdf), ("b.pdf", make_pdf(pages=PAGES[1:2]))])
         people = next(q for q in result["requirements"] if q["tag"] == "experience_reference.key_personnel")
-        self.assertEqual(people["pages"], [{"document": "a.pdf", "page": 2}, {"document": "b.pdf", "page": 1}])
+        self.assertEqual(people["pages"], [{"doc": 0, "page": 2}, {"doc": 1, "page": 1}])
+        self.assertEqual([(d["doc"], d["document"]) for d in result["documents"]], [(0, "a.pdf"), (1, "b.pdf")])
         self.assertIn("a.pdf p. 2; b.pdf p. 1", pipeline.render_markdown(result))
 
 
@@ -496,7 +499,7 @@ class ChildProcessTest(JevTestCase):
         self.assertEqual([d["pages"] for d in result["documents"]], [3, 1])
         self.assertIn("b.pdf: only the first 1 of 3 pages were read (limit 4 pages per request).", result["warnings"])
         self.assertEqual(result["counts"]["pages"], 4)
-        b_pages = {loc["page"] for q in result["requirements"] for loc in q["pages"] if loc["document"] == "b.pdf"}
+        b_pages = {loc["page"] for q in result["requirements"] for loc in q["pages"] if loc["doc"] == 1}
         self.assertEqual(b_pages, {1})
 
 
@@ -861,20 +864,33 @@ class WiringTest(unittest.TestCase):
 
     def test_large_result_is_sent_whole(self):
         """About 30 requirements with 5 evidence quotes of 240 characters: nothing is trimmed."""
-        name = PDF_NAME
         requirements = [{
             "id": f"R{i:02d}", "tag": "experience_reference.key_personnel",
             **tags.routing("experience_reference.key_personnel"), "mandatory": i % 2 == 0,
-            "pages": [{"document": name, "page": 10 + p} for p in range(5)],
-            "evidence": [{"document": name, "page": 10 + e, "text": "é" + "x" * 239, "mandatory": True}
+            "pages": [{"doc": 0, "page": 10 + p} for p in range(5)], "page_count": 5,
+            "evidence": [{"doc": 0, "page": 10 + e, "text": "é" + "x" * 239, "mandatory": True}
                          for e in range(5)],
-            "evidence_units": 7, "headline": "y" * 200,
+            "evidence_units": 7,
         } for i in range(1, 31)]
         artifact = {"schema": service.TENDER_REQUIREMENTS_SCHEMA, "kind": "tender_requirements",
-                    "status": "complete", "requirements": requirements, "warnings": []}
+                    "status": "complete", "requirements": requirements,
+                    "documents": [{"doc": 0, "document": PDF_NAME, "pages": 40, "pages_in_file": 40, "units": 900}],
+                    "warnings": []}
         block = service.mcp_text_blocks("classify_tender", "# md", artifact)[1]
         self.assertEqual(json.loads(block.split("\n", 1)[1]), artifact)
-        self.assertGreater(len(block.encode("utf-8")), 60_000)  # see docs/mcp-tool-reference.md
+        self.assertLess(len(block.encode("utf-8")), 60_000)  # see docs/mcp-tool-reference.md
+
+    def test_page_refs_are_capped_and_counted(self):
+        pages = [{"page": p, "text": "Provide a list of Key Personnel with resumes. This information is mandatory."}
+                 for p in range(1, 31)]
+        units = {i: {"doc": 0, "doc_name": "t.pdf", "text": u["text"]} for i, u in enumerate(pages)}
+        rows = [{"unit_index": i, "page": u["page"], "tag": "experience_reference.key_personnel",
+                 "mandatory": True, "sub_prob": 0.9} for i, u in enumerate(pages)]
+        (req,) = pipeline.merge(rows, units)
+        self.assertEqual(len(req["pages"]), pipeline.MAX_PAGE_REFS)
+        self.assertEqual(req["page_count"], 30)
+        self.assertEqual(len(req["evidence"]), pipeline.MAX_EVIDENCE)
+        self.assertNotIn("document", req["evidence"][0])
 
     def test_privacy_page_lists_typesafe(self):
         from procurement_core.public_pages import PRIVACY, SUPPORT

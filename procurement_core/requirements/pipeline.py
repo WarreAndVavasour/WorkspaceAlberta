@@ -36,6 +36,7 @@ MAX_UNITS = 8000
 DEFAULT_CONCURRENCY = 16
 EVIDENCE_CHARS = 240
 MAX_EVIDENCE = 5
+MAX_PAGE_REFS = 20  # per requirement; page_count keeps the full number
 REQUEST_TIMEOUT = 30.0
 MAX_RETRIES = 4
 MERGE_RESERVE_SECONDS = 2.0
@@ -186,11 +187,13 @@ def _split(files: list[tuple[str, bytes]], max_pages: int, max_units: int, warni
         pages_left -= stats["pages"]
         counts["pages"] += stats["pages"]
         counts["pages_without_text"] += stats["pages_without_text"]
-        documents.append({"document": name, "pages": stats["pages"],
+        doc = len(documents)  # requirement pages and evidence point here by "doc"
+        documents.append({"doc": doc, "document": name, "pages": stats["pages"],
                           "pages_in_file": stats["pages_in_file"], "units": len(doc_units)})
         for unit in doc_units:
             unit["doc_name"] = name
             unit["doc_index"] = doc_index
+            unit["doc"] = doc
             unit["doc_unit_index"] = unit.pop("unit_index")
         units.extend(doc_units)
         counts["files_read"] += 1
@@ -215,21 +218,20 @@ def merge(rows: list[dict], units: dict[int, dict]) -> list[dict]:
     reqs = []
     for tag, rs in by_tag.items():
         rs.sort(key=lambda r: r["unit_index"])
-        best = max(rs, key=lambda r: (r["mandatory"], r.get("sub_prob") or 0))
-        locations = sorted({(units[r["unit_index"]]["doc_index"], units[r["unit_index"]]["doc_name"], r["page"]) for r in rs})
+        locations = sorted({(units[r["unit_index"]]["doc"], r["page"]) for r in rs})
         reqs.append({
             "tag": tag,
             **tags.routing(tag),
             "mandatory": any(r["mandatory"] for r in rs),
-            "pages": [{"document": name, "page": page} for _i, name, page in locations],
+            "pages": [{"doc": doc, "page": page} for doc, page in locations[:MAX_PAGE_REFS]],
+            "page_count": len(locations),
             "evidence": [
-                {"document": units[r["unit_index"]]["doc_name"], "page": r["page"],
+                {"doc": units[r["unit_index"]]["doc"], "page": r["page"],
                  "text": units[r["unit_index"]]["text"][:EVIDENCE_CHARS], "mandatory": r["mandatory"]}
                 for r in sorted(rs, key=lambda r: (not r["mandatory"], -(r.get("sub_prob") or 0), r["unit_index"]))[:MAX_EVIDENCE]
             ],
             "evidence_units": len(rs),
-            "headline": units[best["unit_index"]]["text"][:200],
-            "_first": (locations[0][0], locations[0][2]),
+            "_first": locations[0],
         })
     reqs.sort(key=lambda q: (not q["mandatory"], -LEAD_ORDER.get(q["lead_time"], 1), q["_first"]))
     for i, q in enumerate(reqs, 1):
@@ -418,13 +420,14 @@ def classify_documents(
 
 # --------------------------------------------------------------------------- markdown
 
-def _locations(req: dict) -> str:
+def _locations(req: dict, names: dict[int, str]) -> str:
     by_doc: dict[str, list[int]] = collections.defaultdict(list)
     for loc in req["pages"]:
-        by_doc[loc["document"]].append(loc["page"])
+        by_doc[names.get(loc["doc"], "?")].append(loc["page"])
+    more = req.get("page_count", len(req["pages"])) > len(req["pages"])
     parts = []
     for name, pages in by_doc.items():
-        shown = ", ".join(str(p) for p in pages[:8]) + (" …" if len(pages) > 8 else "")
+        shown = ", ".join(str(p) for p in pages[:8]) + (" …" if len(pages) > 8 or more else "")
         parts.append(f"{name} p. {shown}" if len(by_doc) > 1 else f"p. {shown}")
     return "; ".join(parts)
 
@@ -442,6 +445,7 @@ def render_markdown(result: dict, *, reference: str = "", source: str = "") -> s
         lines += ["**Partial result.** Some of the package was not classified; see Warnings below. "
                   "Do not treat this as a complete requirement list.", ""]
     docs = ", ".join(d["document"] for d in result["documents"]) or "none"
+    names = {d["doc"]: d["document"] for d in result["documents"]}
     lines += [
         f"Source documents{f' ({source})' if source else ''}: {docs}.",
         f"{counts['pages']} pages, {counts['units']} text units → {counts['units_gated']} candidate clauses → "
@@ -459,7 +463,7 @@ def render_markdown(result: dict, *, reference: str = "", source: str = "") -> s
             evidence = q["evidence"][0]["text"] if q["evidence"] else ""
             lines.append(
                 f"| {q['id']} | {_cell(q['question'])} (`{q['tag']}`) | {q['connector']} | {q['lead_time']} | "
-                f"{_cell(_locations(q))} | {_cell(evidence[:160])} |"
+                f"{_cell(_locations(q, names))} | {_cell(evidence[:160])} |"
             )
         lines.append("")
     if not result["requirements"]:

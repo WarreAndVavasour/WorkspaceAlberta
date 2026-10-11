@@ -97,7 +97,7 @@ The cache self-heals: unified tools refresh it automatically the first time they
 **Output.** Over MCP the result has two text blocks and `structuredContent`, because some clients show the model only text content:
 
 1. The markdown requirements table, ending with one sentence that says the JSON follows and how to use it (the procurement skill's requirements-board template, or a requirements board grouped by connector and lead time, counted back from `tender.closing`).
-2. One line, `classify_tender JSON (schema wa.tender_requirements.v1):`, then the full artifact as compact JSON. It is the same object as `structuredContent`. Nothing is trimmed: about 30 requirements with 5 evidence quotes each come to roughly 60–90 KB, depending on document-name length.
+2. One line, `classify_tender JSON (schema wa.tender_requirements.v1):`, then the full artifact as compact JSON. It is the same object as `structuredContent`. Nothing is trimmed: about 30 requirements with 5 evidence quotes each come to roughly 55–60 KB. Document names appear once, in `documents`; pages and quotes point to them by `doc`.
 
 Artifact fields (schema `wa.tender_requirements.v1`):
 
@@ -107,8 +107,9 @@ Artifact fields (schema `wa.tender_requirements.v1`):
 | `reference`, `source` | The requested reference; `source` describes where the PDFs came from (`CanadaBuys public attachments` or `uploaded by the user from APC`) |
 | `tender` | `reference`, `source` (`apc` or `canadabuys`), `title`, `buyer`, `closing` (exactly as the source reports it), `closing_timezone` (how to read `closing`), `closes_at` (the same moment as ISO 8601 in Alberta time with its UTC offset, as in the search tools), `posting_url`. Built from the APC details or the CanadaBuys row the call already fetched; missing values are `null`. |
 | `kind`, `status` | `tender_requirements`; `complete` or `partial` |
-| `requirements[]` | `id`, `tag`, `answer_source`, `lead_time`, `connector`, `question`, `mandatory`, `pages[]`, `evidence[]` (≤5 quotes of ≤240 chars with document and page), `evidence_units`, `headline` |
-| `documents`, `counts`, `cost`, `model`, `prompt_versions`, `limits`, `elapsed_seconds`, `warnings` | Files read, pipeline counts, classifier usage and any limits or skipped files |
+| `requirements[]` | `id`, `tag`, `answer_source`, `lead_time`, `connector`, `question`, `mandatory`, `pages[]` (`{doc, page}`, first 20), `page_count`, `evidence[]` (≤5 quotes of ≤240 chars with `doc` and page, strongest first), `evidence_units` |
+| `documents[]` | `doc` (the index that `pages` and `evidence` use), `document` (file name), `pages`, `pages_in_file`, `units` |
+| `counts`, `cost`, `model`, `prompt_versions`, `limits`, `elapsed_seconds`, `warnings` | Files read, pipeline counts, classifier usage and any limits or skipped files |
 
 For an APC reference without `upload_token`, `structuredContent` is the upload link (`upload_required`, `upload_url`, `upload_token`, `expected_documents`), repeated as a second text block after the line `classify_tender JSON (upload link; no requirements yet):`. Errors return a single text block.
 
