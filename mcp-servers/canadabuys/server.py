@@ -25,7 +25,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from procurement_core.service import call_tool_text_and_structured  # noqa: E402
+from procurement_core.service import call_tool_text_and_structured, mcp_text_blocks  # noqa: E402
 from mcp_tools import get_mcp_tools  # noqa: E402
 from procurement_core.agent_contract import SERVER_INSTRUCTIONS  # noqa: E402
 
@@ -97,7 +97,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
         return await call_local_bid_room(params.arguments or {})
     text, structured = await call_tool_text_and_structured(params.name, params.arguments or {})
     return CallToolResult(
-        content=[TextContent(type="text", text=text)],
+        content=[TextContent(type="text", text=block) for block in mcp_text_blocks(params.name, text, structured)],
         structured_content=structured,
         is_error=text.startswith("Error:"),
     )

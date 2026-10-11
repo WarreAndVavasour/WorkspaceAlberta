@@ -262,7 +262,9 @@ class PipelineTest(JevTestCase):
         self.assertTrue(people["mandatory"])
         self.assertEqual((people["connector"], people["lead_time"], people["answer_source"]),
                          ("project_and_people_records", "days", "person_input"))
-        self.assertEqual(people["pages"], [{"document": "tender.pdf", "page": 2}])
+        self.assertEqual(people["pages"], [{"doc": 0, "page": 2}])
+        self.assertEqual(people["page_count"], 1)
+        self.assertEqual(people["evidence"][0]["doc"], 0)
         self.assertEqual(people["evidence"][0]["page"], 2)
         self.assertEqual([q["id"] for q in result["requirements"]], ["R01", "R02", "R03", "R04"])
         self.assertEqual([q["mandatory"] for q in result["requirements"]], [True, True, False, False])
@@ -352,7 +354,8 @@ class PipelineTest(JevTestCase):
     def test_multiple_documents_keep_their_own_pages(self):
         result = self.classify(files=[("a.pdf", self.pdf), ("b.pdf", make_pdf(pages=PAGES[1:2]))])
         people = next(q for q in result["requirements"] if q["tag"] == "experience_reference.key_personnel")
-        self.assertEqual(people["pages"], [{"document": "a.pdf", "page": 2}, {"document": "b.pdf", "page": 1}])
+        self.assertEqual(people["pages"], [{"doc": 0, "page": 2}, {"doc": 1, "page": 1}])
+        self.assertEqual([(d["doc"], d["document"]) for d in result["documents"]], [(0, "a.pdf"), (1, "b.pdf")])
         self.assertIn("a.pdf p. 2; b.pdf p. 1", pipeline.render_markdown(result))
 
 
@@ -496,7 +499,7 @@ class ChildProcessTest(JevTestCase):
         self.assertEqual([d["pages"] for d in result["documents"]], [3, 1])
         self.assertIn("b.pdf: only the first 1 of 3 pages were read (limit 4 pages per request).", result["warnings"])
         self.assertEqual(result["counts"]["pages"], 4)
-        b_pages = {loc["page"] for q in result["requirements"] for loc in q["pages"] if loc["document"] == "b.pdf"}
+        b_pages = {loc["page"] for q in result["requirements"] for loc in q["pages"] if loc["doc"] == 1}
         self.assertEqual(b_pages, {1})
 
 
@@ -597,6 +600,23 @@ class ServiceTest(ServiceTestCase):
         result = self.run_tool({"reference": REFERENCE, "upload_token": upload_token})
         artifact = result["artifact"]
         self.assertEqual(artifact["reference"], REFERENCE)
+        self.assertEqual(artifact["schema"], "wa.tender_requirements.v1")
+        opp = self.details["opportunity"]
+        self.assertEqual(artifact["tender"], {
+            "reference": REFERENCE,
+            "source": "apc",
+            "title": opp["title"],
+            "buyer": None,  # the fixture has no contractingOrganization: null, never invented
+            "closing": "2026-10-14T11:00:00",
+            "closing_timezone": service.APC_CLOSING_TIMEZONE,
+            "closes_at": "2026-10-14T11:00:00-06:00",
+            "posting_url": service.apc_posting_url(REFERENCE, service.ALBERTA_APC_APP_BASE),
+        })
+        self.assertEqual(artifact["tender"]["closing"], opp["closeDateTime"])  # passed through unchanged
+        self.assertEqual(self.get_details.call_count, 1)  # the tender comes from the token-check lookup
+        self.assertTrue({"kind", "status", "requirements", "documents", "counts", "cost", "model", "prompt_versions",
+                         "limits", "elapsed_seconds", "warnings", "reference", "source"} <= set(artifact))
+        self.assertEqual(artifact["source"], "uploaded by the user from APC")
         self.assertEqual(artifact["documents"][0]["document"], PDF_NAME)
         self.assertIn("experience_reference.key_personnel", {q["tag"] for q in artifact["requirements"]})
         self.assertTrue(any("Pricing.xlsx: skipped, only PDF files" in w for w in artifact["warnings"]))
@@ -639,6 +659,36 @@ class ServiceTest(ServiceTestCase):
         self.assertTrue(any("pricing.xlsx: skipped" in w for w in artifact["warnings"]))
         self.assertTrue(any("readme.txt: skipped" in w for w in artifact["warnings"]))
         self.assertEqual(artifact["source"], "CanadaBuys public attachments")
+        self.assertEqual(artifact["schema"], "wa.tender_requirements.v1")
+        self.assertEqual(artifact["tender"], {
+            "reference": "PW-26-0001", "source": "canadabuys", "title": None, "buyer": None,
+            "closing": None, "closing_timezone": None, "closes_at": None, "posting_url": None,
+        })
+
+    def test_canadabuys_tender_comes_from_the_contract_row(self):
+        contract = {
+            "referenceNumber-numeroReference": "PW-26-0001",
+            "title-titre-eng": "Snow removal, Banff townsite",
+            "contractingEntityName-nomEntitContractante-eng": "Parks Canada",
+            "tenderClosingDate-appelOffresDateCloture": "2026-11-20T14:00:00",
+            "noticeURL-URLavis-eng": "https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/pw-26-0001",
+        }
+        with patch.object(service, "load_contracts_for_unified", return_value=([contract], [])) as contracts, \
+                patch("procurement_core.e2b_bid_room.resolve_canadabuys_attachment_urls",
+                      return_value=["https://canadabuys.canada.ca/x/rfp-en.pdf"]), \
+                patch.object(service, "_download_public_document", return_value=self.pdf):
+            tender = self.run_tool({"reference": "PW-26-0001"})["artifact"]["tender"]
+        contracts.assert_called_once()  # no second lookup for the tender
+        self.assertEqual(tender, {
+            "reference": "PW-26-0001",
+            "source": "canadabuys",
+            "title": "Snow removal, Banff townsite",
+            "buyer": "Parks Canada",
+            "closing": "2026-11-20T14:00:00",
+            "closing_timezone": service.CANADABUYS_CLOSING_TIMEZONE,
+            "closes_at": "2026-11-20T13:00:00-06:00",
+            "posting_url": "https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/pw-26-0001",
+        })
 
     def test_download_refuses_non_public_urls_before_connecting(self):
         for url in ("http://canadabuys.canada.ca/a.pdf", "https://127.0.0.1/a.pdf", "https://10.0.0.5/a.pdf",
@@ -656,8 +706,99 @@ class ServiceTest(ServiceTestCase):
         finally:
             storage.reset_tenant(token)
         self.assertTrue(text.startswith("# Bidder requirements for AB-2026-06584"), text[:200])
-        self.assertEqual(structured["artifact"]["kind"], "tender_requirements")
+        self.assertEqual(structured["kind"], "tender_requirements")
+        self.assertEqual(structured["schema"], "wa.tender_requirements.v1")
         self.assertNotIn("markdown", structured)
+        self.assertNotIn("artifact", structured)
+        blocks = service.mcp_text_blocks("classify_tender", text, structured)
+        self.assertEqual(len(blocks), 2)
+        self.assertTrue(blocks[0].startswith(text))
+        self.assertTrue(blocks[0].endswith(service.CLASSIFY_JSON_NOTE))
+        prefix, data = blocks[1].split("\n", 1)
+        self.assertEqual(prefix, "classify_tender JSON (schema wa.tender_requirements.v1):")
+        self.assertEqual(json.loads(data), structured)
+        self.assertEqual(data, json.dumps(structured, ensure_ascii=False, separators=(",", ":")))
+
+    def call_mcp(self, module_name, arguments):
+        """Call a real MCP handler (stdio or hosted) for the test tenant."""
+        import importlib
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mcp-servers" / "canadabuys"))
+        module = importlib.import_module(module_name)
+        from mcp.types import CallToolRequestParams
+
+        token = storage.set_tenant(TENANT)
+        try:
+            with patch.object(module, "check_tool_access", return_value=None, create=True):
+                return run_async(module.handle_call_tool(None, CallToolRequestParams(
+                    name="classify_tender", arguments=arguments)))
+        finally:
+            storage.reset_tenant(token)
+
+    def test_mcp_result_carries_the_json_as_a_second_text_block(self):
+        upload_token = up.create_upload_token(REFERENCE, TENANT)
+        self.storage_fake.put(up.verify_upload_token(upload_token), PDF_NAME, self.pdf)
+        for module_name in ("server_http", "server"):
+            with self.subTest(server=module_name):
+                result = self.call_mcp(module_name, {"reference": REFERENCE, "upload_token": upload_token})
+                self.assertFalse(result.is_error)
+                self.assertEqual([c.type for c in result.content], ["text", "text"])
+                markdown, json_block = (c.text for c in result.content)
+                self.assertTrue(markdown.startswith("# Bidder requirements for AB-2026-06584"))
+                self.assertIn("| R01 |", markdown)
+                self.assertTrue(markdown.endswith(
+                    "The full result follows as JSON (schema wa.tender_requirements.v1). If the WorkspaceAlberta "
+                    "procurement skill is available, use its requirements-board template to build the artifact "
+                    "from that JSON; otherwise, offer the user an interactive requirements board grouped by "
+                    "connector and lead time, counted back from `tender.closes_at`."))
+                prefix, data = json_block.split("\n", 1)
+                self.assertEqual(prefix, "classify_tender JSON (schema wa.tender_requirements.v1):")
+                parsed = json.loads(data)
+                self.assertEqual(parsed, result.structured_content)
+                self.assertEqual(parsed["schema"], "wa.tender_requirements.v1")
+                self.assertEqual(parsed["tender"]["closing"], self.details["opportunity"]["closeDateTime"])
+                self.assertEqual(parsed["requirements"][0]["id"], "R01")
+                self.assertNotIn(API_KEY, json_block)
+                self.assertNotIn(upload_token, json_block)
+
+    def test_upload_link_response_also_carries_its_json(self):
+        for module_name in ("server_http", "server"):
+            with self.subTest(server=module_name):
+                result = self.call_mcp(module_name, {"reference": REFERENCE})
+                self.assertFalse(result.is_error)
+                self.assertEqual(len(result.content), 2)
+                markdown, json_block = (c.text for c in result.content)
+                self.assertIn("run `classify_tender` again", markdown)
+                self.assertNotIn("follows as JSON", markdown)
+                prefix, data = json_block.split("\n", 1)
+                self.assertEqual(prefix, "classify_tender JSON (upload link; no requirements yet):")
+                parsed = json.loads(data)
+                self.assertEqual(parsed, result.structured_content)
+                self.assertEqual(set(parsed), {"upload_required", "upload_url", "upload_token", "expected_documents"})
+                self.assertTrue(parsed["upload_required"])
+                self.assertIn(parsed["upload_token"], markdown)
+                self.assertIn(parsed["upload_url"], markdown)
+                self.assertEqual(parsed["expected_documents"], [PDF_NAME])
+        self.assertEqual(self.jev.requests, [])
+
+    def test_rest_classify_returns_schema_and_tender(self):
+        from fastapi.testclient import TestClient
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mcp-servers" / "canadabuys"))
+        import server_http
+
+        upload_token = up.create_upload_token(REFERENCE, TENANT)
+        self.storage_fake.put(up.verify_upload_token(upload_token), PDF_NAME, self.pdf)
+        with patch("server_http.check_tool_access", return_value={"tenant_id": TENANT}):
+            response = TestClient(server_http.app).post(
+                "/bid-room/classify", json={"reference": REFERENCE, "upload_token": upload_token})
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertEqual(set(body), {"artifact", "markdown"})
+        self.assertEqual(body["artifact"]["schema"], "wa.tender_requirements.v1")
+        self.assertEqual(body["artifact"]["tender"]["source"], "apc")
+        self.assertEqual(body["artifact"]["tender"]["closing"], "2026-10-14T11:00:00")
+        self.assertTrue(body["markdown"].startswith("# Bidder requirements for AB-2026-06584"))
 
     def test_timeout_is_an_error_not_a_result(self):
         with patch.object(service, "classify_tender_artifact_bounded",
@@ -700,15 +841,56 @@ class WiringTest(unittest.TestCase):
         import server_http
         from mcp.types import CallToolRequestParams
 
-        envelope = {"artifact": {"kind": "tender_requirements", "status": "partial", "requirements": []},
+        envelope = {"artifact": {"schema": "wa.tender_requirements.v1", "kind": "tender_requirements",
+                                 "status": "partial", "requirements": [], "warnings": ["Délai: partial"]},
                     "markdown": "# Bidder requirements\n\n**Partial result.**"}
         with patch("server_http.check_tool_access", return_value=None), \
                 patch.object(service, "classify_tender_artifact_bounded", new=AsyncMock(return_value=envelope)):
             result = run_async(server_http.handle_call_tool(None, CallToolRequestParams(
                 name="classify_tender", arguments={"reference": "PW-26-0001"})))
         self.assertFalse(result.is_error)
-        self.assertEqual(result.content[0].text, envelope["markdown"])
-        self.assertEqual(result.structured_content, {"artifact": envelope["artifact"]})
+        self.assertEqual(result.content[0].text, f"{envelope['markdown']}\n\n{service.CLASSIFY_JSON_NOTE}")
+        self.assertEqual(result.structured_content, envelope["artifact"])
+        self.assertEqual(result.content[1].text,
+                         'classify_tender JSON (schema wa.tender_requirements.v1):\n'
+                         '{"schema":"wa.tender_requirements.v1","kind":"tender_requirements","status":"partial",'
+                         '"requirements":[],"warnings":["Délai: partial"]}')
+
+    def test_errors_and_other_tools_keep_one_text_block(self):
+        self.assertEqual(service.mcp_text_blocks("classify_tender", "Error: boom", None), ["Error: boom"])
+        structured = {"kind": "opportunities", "count": 0, "warnings": [], "opportunities": []}
+        self.assertEqual(service.mcp_text_blocks("search_opportunities", "# Results", structured), ["# Results"])
+        self.assertEqual(service.mcp_text_blocks("get_my_profile", "profile", None), ["profile"])
+
+    def test_large_result_is_sent_whole(self):
+        """About 30 requirements with 5 evidence quotes of 240 characters: nothing is trimmed."""
+        requirements = [{
+            "id": f"R{i:02d}", "tag": "experience_reference.key_personnel",
+            **tags.routing("experience_reference.key_personnel"), "mandatory": i % 2 == 0,
+            "pages": [{"doc": 0, "page": 10 + p} for p in range(5)], "page_count": 5,
+            "evidence": [{"doc": 0, "page": 10 + e, "text": "é" + "x" * 239, "mandatory": True}
+                         for e in range(5)],
+            "evidence_units": 7,
+        } for i in range(1, 31)]
+        artifact = {"schema": service.TENDER_REQUIREMENTS_SCHEMA, "kind": "tender_requirements",
+                    "status": "complete", "requirements": requirements,
+                    "documents": [{"doc": 0, "document": PDF_NAME, "pages": 40, "pages_in_file": 40, "units": 900}],
+                    "warnings": []}
+        block = service.mcp_text_blocks("classify_tender", "# md", artifact)[1]
+        self.assertEqual(json.loads(block.split("\n", 1)[1]), artifact)
+        self.assertLess(len(block.encode("utf-8")), 60_000)  # see docs/mcp-tool-reference.md
+
+    def test_page_refs_are_capped_and_counted(self):
+        pages = [{"page": p, "text": "Provide a list of Key Personnel with resumes. This information is mandatory."}
+                 for p in range(1, 31)]
+        units = {i: {"doc": 0, "doc_name": "t.pdf", "text": u["text"]} for i, u in enumerate(pages)}
+        rows = [{"unit_index": i, "page": u["page"], "tag": "experience_reference.key_personnel",
+                 "mandatory": True, "sub_prob": 0.9} for i, u in enumerate(pages)]
+        (req,) = pipeline.merge(rows, units)
+        self.assertEqual(len(req["pages"]), pipeline.MAX_PAGE_REFS)
+        self.assertEqual(req["page_count"], 30)
+        self.assertEqual(len(req["evidence"]), pipeline.MAX_EVIDENCE)
+        self.assertNotIn("document", req["evidence"][0])
 
     def test_privacy_page_lists_typesafe(self):
         from procurement_core.public_pages import PRIVACY, SUPPORT

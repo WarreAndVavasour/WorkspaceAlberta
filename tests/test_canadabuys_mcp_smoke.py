@@ -47,6 +47,7 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                 env={
                     **os.environ,
                     "CANADABUYS_DATA_DIR": data_dir,
+                    "TYPESAFE_API_KEY": "",  # set, so a local .env cannot supply one
                 },
             )
 
@@ -81,6 +82,17 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                     ]
                     self.assertTrue(status_chunks)
                     self.assertIn("This status check does not call the model", status_chunks[0])
+
+                    # Without a classifier key classify_tender fails before any download:
+                    # an error keeps its single text block and has no structured content.
+                    classify_result = await session.call_tool("classify_tender", {"reference": "AB-2026-06584"})
+                    self.assertTrue(classify_result.is_error)
+                    self.assertEqual(len(classify_result.content), 1)
+                    self.assertEqual(
+                        classify_result.content[0].text,
+                        "Error: Requirement classification is not configured on this server.",
+                    )
+                    self.assertIsNone(classify_result.structured_content)
 
     async def test_search_returns_structured_content(self) -> None:
         fixture_dir = ROOT / "tests" / "fixtures" / "procurement"

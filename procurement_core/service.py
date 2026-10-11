@@ -2039,6 +2039,31 @@ def _render_matches_markdown(
 
 STRUCTURED_TOOLS = frozenset({"search_opportunities", "list_deadlines", "find_matching_opportunities"})
 
+TENDER_REQUIREMENTS_SCHEMA = "wa.tender_requirements.v1"
+CLASSIFY_JSON_NOTE = (
+    f"The full result follows as JSON (schema {TENDER_REQUIREMENTS_SCHEMA}). If the WorkspaceAlberta "
+    "procurement skill is available, use its requirements-board template to build the artifact from that "
+    "JSON; otherwise, offer the user an interactive requirements board grouped by connector and lead time, "
+    "counted back from `tender.closes_at`."
+)
+
+
+def mcp_text_blocks(name: str, text: str, structured: dict[str, Any] | None) -> list[str]:
+    """Text content blocks for an MCP tool result.
+
+    Some clients show the model only text content, never ``structuredContent``. The MCP
+    spec says a tool that returns structured content SHOULD also return it serialized in a
+    text block, so ``classify_tender`` sends its markdown followed by the same object as
+    compact JSON. Every other tool keeps its single text block.
+    """
+    if name != "classify_tender" or structured is None:
+        return [text]
+    data = json.dumps(structured, ensure_ascii=False, separators=(",", ":"))
+    if structured.get("schema") == TENDER_REQUIREMENTS_SCHEMA:
+        return [f"{text}\n\n{CLASSIFY_JSON_NOTE}",
+                f"classify_tender JSON (schema {TENDER_REQUIREMENTS_SCHEMA}):\n{data}"]
+    return [text, f"classify_tender JSON (upload link; no requirements yet):\n{data}"]
+
 
 async def call_tool_text_and_structured(
     name: str, arguments: dict[str, Any] | None = None
@@ -2057,11 +2082,14 @@ async def call_tool_text_and_structured(
         return f"Unknown tool: {name}", None
 
     if name == "classify_tender":
-        # Markdown for the conversation, the artifact (or upload link) as structured content.
+        # Markdown for the conversation; the artifact itself (or the upload link) as structured
+        # content. mcp_text_blocks repeats the structured content as a JSON text block.
         try:
             envelope = await classify_tender_artifact_bounded(args)
         except Exception as exc:
             return f"Error: {exc}", None
+        if "artifact" in envelope:
+            return envelope["markdown"], envelope["artifact"]
         return envelope["markdown"], {key: value for key, value in envelope.items() if key != "markdown"}
 
     if name not in STRUCTURED_TOOLS:
@@ -2734,8 +2762,14 @@ def _download_public_document(url: str, timeout: float) -> bytes:
     return data
 
 
-def _classify_canadabuys_files(reference: str, deadline: float, cancelled=None) -> tuple[list[tuple[str, bytes]], list[str]]:
-    """Public first-party CanadaBuys attachments, PDFs only (PDFs inside ZIPs included)."""
+def _classify_canadabuys_files(
+    reference: str, deadline: float, cancelled=None,
+) -> tuple[list[tuple[str, bytes]], list[str], dict[str, Any]]:
+    """Public first-party CanadaBuys attachments, PDFs only (PDFs inside ZIPs included).
+
+    Also returns the CanadaBuys row, so the result can describe the tender without
+    another lookup.
+    """
     import http.client
     from urllib.parse import urlparse
 
@@ -2790,7 +2824,7 @@ def _classify_canadabuys_files(reference: str, deadline: float, cancelled=None) 
             f"No PDF tender documents could be downloaded for {reference}. "
             + " ".join(warnings[-5:])
         )
-    return files, warnings
+    return files, warnings, contract
 
 
 def _classify_uploaded_files(
@@ -2825,9 +2859,63 @@ def _classify_uploaded_files(
     return files, warnings
 
 
+APC_CLOSING_TIMEZONE = "America/Edmonton (APC reports Alberta local time without a UTC offset)"
+CANADABUYS_CLOSING_TIMEZONE = "UTC-05:00 when no offset is given (CanadaBuys open data uses a fixed offset)"
+
+
+def _reported(value: Any) -> str | None:
+    """A source value exactly as reported, or None when the source left it empty."""
+    if value is None:
+        return None
+    text = str(value)
+    return text if text.strip() else None
+
+
+def _tender_closing(raw: Any, source_tz: tzinfo, timezone_note: str) -> dict[str, Any]:
+    """``closing`` as the source reported it; ``closes_at`` the same moment in Alberta time.
+
+    Same convention as the search tools' structured records.
+    """
+    closing = _reported(raw)
+    parsed = parse_closing(closing, source_tz) if closing else None
+    return {
+        "closing": closing,
+        "closing_timezone": timezone_note if closing else None,
+        "closes_at": parsed.astimezone(ALBERTA_TZ).isoformat() if parsed else None,
+    }
+
+
+def _apc_tender(reference: str, details: dict[str, Any]) -> dict[str, Any]:
+    """The tender as described by the APC details already fetched for the token check."""
+    opp = details.get("opportunity") or {}
+    return {
+        "reference": reference,
+        "source": "apc",
+        "title": _reported(opp.get("title") or opp.get("shortTitle")),
+        "buyer": _reported(opp.get("contractingOrganization")),
+        **_tender_closing(opp.get("closeDateTime"), APC_SOURCE_TZ, APC_CLOSING_TIMEZONE),
+        "posting_url": apc_posting_url(reference, ALBERTA_APC_APP_BASE),
+    }
+
+
+def _canadabuys_tender(reference: str, contract: dict[str, Any]) -> dict[str, Any]:
+    """The tender as described by the CanadaBuys row used to find its attachments."""
+    return {
+        "reference": _reported(get_field(contract, "referenceNumber-numeroReference")) or reference,
+        "source": "canadabuys",
+        "title": _reported(get_field(contract, "title-titre-eng", "title-titre-fra")),
+        "buyer": _reported(get_field(contract, "contractingEntityName-nomEntitContractante-eng")),
+        **_tender_closing(get_field(contract, "tenderClosingDate-appelOffresDateCloture"),
+                          CANADABUYS_SOURCE_TZ, CANADABUYS_CLOSING_TIMEZONE),
+        "posting_url": _reported(get_field(contract, "noticeURL-URLavis-eng")),
+    }
+
+
 def classify_tender_artifact(args: dict, *, deadline: float | None = None, cancelled=None) -> dict[str, Any]:
     """Classify a tender package into bidder requirements; return markdown + artifact.
 
+    The artifact follows ``TENDER_REQUIREMENTS_SCHEMA``: its ``tender`` object comes from the
+    APC details or CanadaBuys row this call already fetched, with no extra lookup.
     For an APC reference without ``upload_token`` this returns the same private upload
     link as ``process_bid_room``. Raises :class:`ClassifierNotConfigured` before any
     download when ``TYPESAFE_API_KEY`` is not set.
@@ -2862,9 +2950,11 @@ def classify_tender_artifact(args: dict, *, deadline: float | None = None, cance
             return _bid_room_upload_request(reference, payload, tool="classify_tender")
         files, warnings = _classify_uploaded_files(reference, upload_token, details)
         source = "uploaded by the user from APC"
+        tender = _apc_tender(reference, details)
     else:
-        files, warnings = _classify_canadabuys_files(reference, deadline, cancelled)
+        files, warnings, contract = _classify_canadabuys_files(reference, deadline, cancelled)
         source = "CanadaBuys public attachments"
+        tender = _canadabuys_tender(reference, contract)
 
     if cancelled is not None and cancelled.is_set():
         raise RuntimeError(CLASSIFY_TIMEOUT_MESSAGE)
@@ -2875,8 +2965,8 @@ def classify_tender_artifact(args: dict, *, deadline: float | None = None, cance
             "The classifier (TypeSafe AI) refused this server's credentials; requirement classification "
             "is unavailable. Nothing else was changed."
         ) from None
-    result = {"reference": reference, "source": source, **result,
-              "warnings": [*warnings, *result["warnings"]]}
+    result = {"schema": TENDER_REQUIREMENTS_SCHEMA, "reference": reference, "source": source,
+              "tender": tender, **result, "warnings": [*warnings, *result["warnings"]]}
     return {"artifact": result, "markdown": render_markdown(result, reference=reference, source=source)}
 
 
