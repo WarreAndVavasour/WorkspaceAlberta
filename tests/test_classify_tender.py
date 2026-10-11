@@ -711,13 +711,14 @@ class ServiceTest(ServiceTestCase):
         self.assertNotIn("markdown", structured)
         self.assertNotIn("artifact", structured)
         blocks = service.mcp_text_blocks("classify_tender", text, structured)
-        self.assertEqual(len(blocks), 2)
+        self.assertEqual(len(blocks), 3)
         self.assertTrue(blocks[0].startswith(text))
         self.assertTrue(blocks[0].endswith(service.CLASSIFY_JSON_NOTE))
         prefix, data = blocks[1].split("\n", 1)
         self.assertEqual(prefix, "classify_tender JSON (schema wa.tender_requirements.v1):")
         self.assertEqual(json.loads(data), structured)
         self.assertEqual(data, json.dumps(structured, ensure_ascii=False, separators=(",", ":")))
+        self.assertEqual(blocks[2], service.REQUIREMENTS_BOARD_INSTRUCTIONS)
 
     def call_mcp(self, module_name, arguments):
         """Call a real MCP handler (stdio or hosted) for the test tenant."""
@@ -742,15 +743,16 @@ class ServiceTest(ServiceTestCase):
             with self.subTest(server=module_name):
                 result = self.call_mcp(module_name, {"reference": REFERENCE, "upload_token": upload_token})
                 self.assertFalse(result.is_error)
-                self.assertEqual([c.type for c in result.content], ["text", "text"])
-                markdown, json_block = (c.text for c in result.content)
+                self.assertEqual([c.type for c in result.content], ["text", "text", "text"])
+                markdown, json_block, board = (c.text for c in result.content)
+                self.assertTrue(board.startswith(service.REQUIREMENTS_BOARD_HEADER))
+                self.assertIn("__WA_TENDER_REQUIREMENTS_JSON__", board)
                 self.assertTrue(markdown.startswith("# Bidder requirements for AB-2026-06584"))
                 self.assertIn("| R01 |", markdown)
                 self.assertTrue(markdown.endswith(
-                    "The full result follows as JSON (schema wa.tender_requirements.v1). If the WorkspaceAlberta "
-                    "procurement skill is available, use its requirements-board template to build the artifact "
-                    "from that JSON; otherwise, offer the user an interactive requirements board grouped by "
-                    "connector and lead time, counted back from `tender.closes_at`."))
+                    "The full result follows as JSON (schema wa.tender_requirements.v1). The last block of this "
+                    "result tells you how to build the WorkspaceAlberta requirements board from that JSON and "
+                    "carries the board template; every subscriber gets the same board."))
                 prefix, data = json_block.split("\n", 1)
                 self.assertEqual(prefix, "classify_tender JSON (schema wa.tender_requirements.v1):")
                 parsed = json.loads(data)
@@ -855,6 +857,18 @@ class WiringTest(unittest.TestCase):
                          'classify_tender JSON (schema wa.tender_requirements.v1):\n'
                          '{"schema":"wa.tender_requirements.v1","kind":"tender_requirements","status":"partial",'
                          '"requirements":[],"warnings":["Délai: partial"]}')
+        self.assertEqual(result.content[2].text, service.REQUIREMENTS_BOARD_INSTRUCTIONS)
+
+    def test_board_template_matches_the_plugin_skill_copy(self):
+        root = Path(__file__).resolve().parents[1]
+        server_copy = (root / "procurement_core/templates/requirements-board.html").read_text(encoding="utf-8")
+        plugin_copy = (root / "plugins/workspacealberta/skills/procurement/requirements-board.html").read_text(
+            encoding="utf-8")
+        self.assertEqual(server_copy, plugin_copy)
+        board = service.REQUIREMENTS_BOARD_INSTRUCTIONS
+        self.assertIn(f"<!-- TEMPLATE START -->\n{plugin_copy}<!-- TEMPLATE END -->", board)
+        self.assertEqual(board.count("__BOARD_TITLE__"), 2)
+        self.assertIn("weeks items start 21 days before closing", board)
 
     def test_errors_and_other_tools_keep_one_text_block(self):
         self.assertEqual(service.mcp_text_blocks("classify_tender", "Error: boom", None), ["Error: boom"])
