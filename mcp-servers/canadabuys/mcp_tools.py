@@ -532,7 +532,9 @@ def get_mcp_tools() -> list[Tool]:
                 "the first call returns a private upload link (the same upload flow as process_bid_room); the user downloads "
                 "the documents with their own APC supplier account and uploads them, then you call again with "
                 "upload_token. The link expires as before (2 hours). This tool does not delete the uploads, so "
-                "process_bid_room can use the same upload_token afterwards. Returns within 140 seconds; a "
+                "process_bid_room can use the same upload_token afterwards. Returns markdown followed by the full "
+                "result as JSON (schema wa.tender_requirements.v1, with tender closing time and posting link). "
+                "Returns within 140 seconds; a "
                 "result cut short by a limit is labelled partial. Results are classifier outputs: verify them "
                 "against the official posting and amendments."
             ),

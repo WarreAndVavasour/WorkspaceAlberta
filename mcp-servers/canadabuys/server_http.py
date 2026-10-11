@@ -28,7 +28,9 @@ tool and arguments. The bid-room routes are the exception: they return the
 full JSON artifact envelope from ``process_bid_room_artifact`` (sandbox id,
 artifact, rendered markdown) or ``classify_tender_artifact`` (artifact,
 rendered markdown) and map payload errors to 400 and missing runtime
-dependencies (E2B/Cohere/TypeSafe keys) to 503.
+dependencies (E2B/Cohere/TypeSafe keys) to 503. Over MCP, ``classify_tender``
+also returns its structured content as a second, JSON text block
+(``mcp_text_blocks``).
 
 Deploy: ``uvicorn server_http:app`` (see Dockerfile, Procfile, railway.json
 in this directory). Local run: ``python server_http.py`` serves on :8000.
@@ -74,6 +76,7 @@ from procurement_core.service import (  # noqa: E402
     ClassifierNotConfigured,
     call_tool_text,
     call_tool_text_and_structured,
+    mcp_text_blocks,
     classify_tender_artifact_bounded,
     process_bid_room_artifact_bounded,
 )
@@ -137,7 +140,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
         name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000)
     )
     return CallToolResult(
-        content=[TextContent(type="text", text=text)],
+        content=[TextContent(type="text", text=block) for block in mcp_text_blocks(name, text, structured)],
         structured_content=structured,
         is_error=text.startswith("Error:"),
     )
