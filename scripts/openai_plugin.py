@@ -20,7 +20,8 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / 'plugins/workspacealberta'
 ORIGIN = 'https://elbowsupknivesout.warreandvavasour.com'
-FILES = ('plugin.json', 'mcp.json', 'skills/procurement/SKILL.md', 'assets/icon.png')
+FILES = ('plugin.json', 'mcp.json', 'skills/procurement/SKILL.md',
+         'skills/procurement/requirements-board.html', 'assets/icon.png')
 
 
 def validate(package: Path = PACKAGE) -> dict:

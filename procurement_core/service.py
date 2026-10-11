@@ -2044,7 +2044,7 @@ CLASSIFY_JSON_NOTE = (
     f"The full result follows as JSON (schema {TENDER_REQUIREMENTS_SCHEMA}). If the WorkspaceAlberta "
     "procurement skill is available, use its requirements-board template to build the artifact from that "
     "JSON; otherwise, offer the user an interactive requirements board grouped by connector and lead time, "
-    "counted back from `tender.closing`."
+    "counted back from `tender.closes_at`."
 )
 
 

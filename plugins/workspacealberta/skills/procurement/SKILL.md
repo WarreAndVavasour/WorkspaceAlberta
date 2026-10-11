@@ -80,6 +80,56 @@ failed authentication; do not repeat unchanged calls indefinitely.
 
 For handoffs include the objective, constraints, tools called, source references
 and URLs, deadlines/timezones, evidence gaps, artifact locations, and proposed
-next action. Return ordinary conversation text or tables, not a live artifact.
+next action. Return ordinary conversation text or tables. The one exception is
+the requirements board below, when the host can show an HTML artifact or canvas.
 Customer material is not automatically training data. Do not claim agent-to-agent
 task execution or learning from a successful tool response.
+
+## Requirements board after `classify_tender`
+
+`classify_tender` returns two text blocks: a markdown table, then a line
+`classify_tender JSON (schema wa.tender_requirements.v1):` followed by the
+result as JSON. That JSON is the data for the board. Every subscriber gets the
+same board, so build it from the template in this skill folder, not from scratch.
+
+1. Tell the user in two or three sentences what came back: the requirement and
+   mandatory counts, the closing date and time as reported, and any `partial`
+   status or warnings. Do not repeat the whole markdown table when you build
+   the board.
+2. If the host can show an HTML artifact or canvas, read
+   `requirements-board.html` from this skill folder and copy it exactly. Change
+   only the two placeholders:
+   - `__BOARD_TITLE__`: a short name for the tender plus "Requirements Board",
+     for example "Kananaskis Requirements Board".
+   - `__WA_TENDER_REQUIREMENTS_JSON__`: the JSON object from the tool, unchanged.
+     Write every `</` inside it as `<\/`.
+   Do not change the layout, colours, planning rule or wording.
+3. Optional `milestones`: add a top-level array only for dates that an evidence
+   quote states, for example the question deadline or a site visit:
+   `{"date": "2026-10-22", "label": "Questions due", "tag": "<requirement tag>", "page": 10}`.
+   Use `YYYY-MM-DD`, or ISO 8601 with the UTC offset when a time is given.
+   Copy the date as the quote writes it and never estimate one. If no quote
+   gives a date, leave `milestones` out.
+4. Size: when the JSON is larger than about 60 KB, you may keep only the first
+   two `evidence` quotes of each requirement. Never remove a requirement,
+   `tender`, `status`, `warnings` or `documents`.
+5. If the host cannot show HTML, give the same content as a table grouped by
+   lead time (weeks, days, minutes) with each group's start-by date.
+
+What the board shows, so you can explain it:
+- Title block: reference, title, buyer, closing in Alberta time, days left,
+  requirement counts, status and classifier model.
+- Start-by plan: weeks items start 21 days before closing, days items 7 days,
+  minutes items 2 days; all are due the day before closing. This is a planning
+  rule, not a classifier output. A start-by date already past shows as behind.
+- Graph: cards and edges from the tender to lead time, connector and
+  requirement; selecting a requirement opens its evidence quotes.
+- Timeline: one bar per requirement from start-by to the day before closing,
+  with today, the milestones and the closing time marked.
+- Checklist: To do, Doing and Done per requirement, kept in the viewer's
+  browser only. Never mark an item done for the user.
+
+After the board, suggest the next action from the data: start the weeks items
+first, and send `third_party` requests (insurer, surety, supplier) now. The
+labels are classifier outputs. Ask the user to check them against the posting
+and every addendum, and keep a `partial` result labelled partial.

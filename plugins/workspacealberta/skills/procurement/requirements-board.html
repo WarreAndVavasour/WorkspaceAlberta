@@ -1,0 +1,562 @@
+<title>__BOARD_TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* WorkspaceAlberta requirements board, template v1 (schema wa.tender_requirements.v1).
+   Layout: a construction-sheet title block, then one working view (graph, timeline or checklist) beside a detail panel.
+   Dark blueprint first; light is a whiteprint. Response-type colours match the requirement map. */
+:root {
+  --bg: #0a1624; --panel: #0f2033; --rule: #24425f; --rule-soft: #183049;
+  --fg: #dbe7f3; --muted: #8aa3bf; --accent: #9fd0ff; --on-accent: #0a1624; --mark: #ffe08a; --late: #ff8a7a;
+  --v-str: #a8e2b6; --v-num: #ffbf80; --v-bool: #cdb0ff;
+  --t-narrative: #f2c14e; --t-attach_document: #5ec8e5; --t-pricing: #7bd389; --t-declaration: #ee6c9a;
+  --t-compliance_confirm: #b794f6; --t-submission_instruction: #f08a4b; --t-form_field: #6f95ff;
+  --t-security_bond: #ff5a5f; --t-experience_reference: #3fd9b8; --t-attendance: #f4f7fb; --t-other: #8aa3bf;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #eef3f8; --panel: #ffffff; --rule: #b4c6da; --rule-soft: #dce6f0;
+  --fg: #10243a; --muted: #4d6782; --accent: #1d5fa8; --on-accent: #ffffff; --mark: #8a5a00; --late: #b8322a;
+  --v-str: #1f7a3a; --v-num: #a5520c; --v-bool: #6b3fc4;
+  --t-narrative: #9a6a00; --t-attach_document: #0b7a99; --t-pricing: #2b7a3d; --t-declaration: #b02a5e;
+  --t-compliance_confirm: #6b44b8; --t-submission_instruction: #b5531a; --t-form_field: #2f55c9;
+  --t-security_bond: #c4262c; --t-experience_reference: #0f8a72; --t-attendance: #3a4a5c; --t-other: #5b6f8c;
+  color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #eef3f8; --panel: #ffffff; --rule: #b4c6da; --rule-soft: #dce6f0;
+  --fg: #10243a; --muted: #4d6782; --accent: #1d5fa8; --on-accent: #ffffff; --mark: #8a5a00; --late: #b8322a;
+  --v-str: #1f7a3a; --v-num: #a5520c; --v-bool: #6b3fc4;
+  --t-narrative: #9a6a00; --t-attach_document: #0b7a99; --t-pricing: #2b7a3d; --t-declaration: #b02a5e;
+  --t-compliance_confirm: #6b44b8; --t-submission_instruction: #b5531a; --t-form_field: #2f55c9;
+  --t-security_bond: #c4262c; --t-experience_reference: #0f8a72; --t-attendance: #3a4a5c; --t-other: #5b6f8c;
+  color-scheme: light; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 13px/1.45 var(--body); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.app { max-width: 1480px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 32px; display: grid; gap: 12px; }
+.k { display: block; font: 500 9.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.v { font: 500 13px/1.35 var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+h1 { font: 700 clamp(22px, 3vw, 30px)/1.02 var(--display); letter-spacing: .02em; text-transform: uppercase; margin: 2px 0 0; text-wrap: balance; }
+h2 { font: 600 14px/1.1 var(--display); letter-spacing: .08em; text-transform: uppercase; margin: 0; }
+a { color: var(--accent); }
+
+/* Title block: drawn like the corner block of a construction sheet */
+.tb { display: grid; grid-template-columns: minmax(0, 2.2fr) repeat(4, minmax(0, 1fr)); border: 1px solid var(--rule); background: var(--panel); }
+.tb > div { padding: 8px 12px; border-left: 1px solid var(--rule); min-width: 0; }
+.tb > div:first-child { border-left: 0; grid-row: span 2; padding: 12px; }
+.tb > div:nth-child(n+6) { border-top: 1px solid var(--rule); }
+.tb .big { font: 600 26px/1 var(--display); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.tb .late { color: var(--late); }
+.sub { color: var(--muted); margin: 6px 0 0; font-size: 12px; }
+
+/* Lead-time plan: three start-by blocks */
+.plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.lead { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: grid; gap: 4px; cursor: pointer; text-align: left; }
+.lead:hover { border-color: var(--accent); }
+.lead .row1 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.lead .n { font: 600 28px/1 var(--display); font-variant-numeric: tabular-nums; }
+.lead .when { font: 500 12px/1.3 var(--mono); }
+.lead .when.behind { color: var(--late); }
+.lead .lh { font: 600 14px/1.1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.lead .ln { color: var(--muted); font-size: 12px; }
+.mix { display: flex; height: 5px; background: var(--rule-soft); }
+.mix i { display: block; height: 100%; }
+
+/* Toolbar */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.seg { display: inline-flex; border: 1px solid var(--rule); }
+.seg button { background: none; border: 0; padding: 7px 14px; font: 600 13px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.ctl { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.ctl select, .ctl input[type="search"] { background: var(--panel); border: 1px solid var(--rule); padding: 5px 8px; min-width: 0; }
+.ctl input[type="search"] { width: 200px; max-width: 46vw; }
+.ctl input[type="checkbox"] { accent-color: var(--accent); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; align-items: start; }
+.view { border: 1px solid var(--rule); background: var(--panel); min-width: 0; }
+
+/* Graph: node cards and edges, after JSON Crack */
+.canvas { position: relative; height: clamp(440px, 72vh, 820px); overflow: hidden; cursor: grab; touch-action: none;
+  background-color: var(--bg); background-image: radial-gradient(var(--rule) 1px, transparent 1.2px); background-size: 22px 22px; }
+.canvas.drag { cursor: grabbing; }
+.world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.world svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.edge { fill: none; stroke: var(--rule); stroke-width: 1.4; }
+.edge.on { stroke: var(--accent); stroke-width: 2; }
+.node { position: absolute; background: var(--panel); border: 1px solid var(--rule); font: 12px/22px var(--mono); cursor: pointer; }
+.node:hover { border-color: var(--muted); }
+.node.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.nh { height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; overflow: hidden; }
+.nh b { font: 600 14px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.nh span { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.nh em { margin-left: auto; font: 500 9px/1 var(--mono); font-style: normal; letter-spacing: .08em; padding: 3px 4px; background: var(--fg); color: var(--bg); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c, var(--muted)); flex: none; }
+.nr { display: flex; gap: 8px; padding: 0 10px; height: 22px; white-space: nowrap; overflow: hidden; width: 100%; background: none; border: 0; text-align: left; font: inherit; }
+.nr:last-child { margin-bottom: 8px; }
+.nk { color: var(--accent); flex: none; }
+.nv { overflow: hidden; text-overflow: ellipsis; }
+.s { color: var(--v-str); } .n { color: var(--v-num); } .b { color: var(--v-bool); } .z { color: var(--muted); }
+button.nr { cursor: pointer; } button.nr:hover { background: var(--rule-soft); }
+.nr .r { color: var(--muted); }
+.zoom { position: absolute; right: 10px; bottom: 10px; display: flex; border: 1px solid var(--rule); background: var(--panel); z-index: 2; }
+.zoom button { background: none; border: 0; border-left: 1px solid var(--rule); padding: 6px 10px; cursor: pointer; font: 12px var(--mono); }
+.zoom button:first-child { border-left: 0; }
+.hint { position: absolute; left: 10px; bottom: 10px; font: 11px var(--mono); color: var(--muted); background: var(--panel); padding: 4px 7px; border: 1px solid var(--rule); z-index: 2; }
+
+/* Timeline */
+.tl { overflow-x: auto; }
+.tl svg { display: block; }
+.tl text { fill: var(--fg); font: 11px var(--mono); }
+.tl .mut { fill: var(--muted); }
+.tl .hd { font: 600 13px var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.tl .row { cursor: pointer; }
+.tl .row:hover .hit { fill: var(--rule-soft); }
+.tl .row.sel .hit { fill: var(--rule-soft); }
+.tl-note { padding: 10px 12px; margin: 0; border-top: 1px solid var(--rule); color: var(--muted); font-size: 12px; }
+
+/* Checklist */
+.cl { padding: 4px 12px 12px; }
+.cl h3 { font: 600 13px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; margin: 14px 0 6px; display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.cl h3 small { font: 500 11px var(--mono); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.cl ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ci { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 8px; border: 1px solid var(--rule-soft); border-left: 3px solid var(--c, var(--rule)); }
+.ci.sel { border-color: var(--accent); }
+.ci.st-done .cbody { opacity: .55; }
+.st { border: 1px solid var(--rule); background: none; padding: 4px 6px; font: 500 10.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; align-self: start; }
+.st[data-v="doing"] { border-color: var(--mark); color: var(--mark); }
+.st[data-v="done"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.cbody { min-width: 0; cursor: pointer; }
+.cbody p { margin: 2px 0; }
+.meta { font: 11px/1.4 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.prog { display: flex; align-items: center; gap: 10px; padding: 12px 0 0; font: 12px var(--mono); color: var(--muted); }
+.prog .track { flex: 1; height: 6px; background: var(--rule-soft); }
+.prog .track i { display: block; height: 100%; background: var(--accent); }
+
+/* Detail panel */
+.detail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; }
+.sec { padding: 12px; }
+.sec + .sec { border-top: 1px solid var(--rule); }
+.dq { font-size: 15px; font-weight: 500; margin: 6px 0 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 500 11px/1 var(--mono); padding: 4px 7px; border: 1px solid var(--rule); }
+.mand { font: 500 10px/1 var(--mono); letter-spacing: .06em; background: var(--fg); color: var(--bg); padding: 3px 5px; }
+.ev { margin: 8px 0 0; padding: 8px 10px; border-left: 2px solid var(--c, var(--rule)); background: var(--bg); font-size: 12.5px; }
+.ev .meta { margin-bottom: 4px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 8px 0 0; }
+.kv dt { font: 11px var(--mono); color: var(--muted); } .kv dd { margin: 0; font: 12px var(--mono); overflow-wrap: anywhere; }
+.btn { background: none; border: 1px solid var(--rule); padding: 5px 9px; cursor: pointer; font: 11px var(--mono); }
+.btn:hover { border-color: var(--accent); }
+.legend { display: grid; gap: 4px; margin-top: 8px; }
+.legend div { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; font-size: 12px; }
+.legend b { font: 12px var(--mono); color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.funnel { font: 12px/1.6 var(--mono); color: var(--muted); margin: 6px 0 0; }
+.funnel strong { color: var(--fg); font-weight: 500; }
+.warn { border: 1px solid var(--late); color: var(--fg); padding: 8px 12px; }
+.warn strong { color: var(--late); }
+pre.copy { white-space: pre-wrap; overflow-wrap: anywhere; font: 11px var(--mono); max-height: 200px; overflow: auto; background: var(--bg); padding: 8px; }
+
+@media (max-width: 1060px) {
+  .main { grid-template-columns: minmax(0, 1fr); }
+  .detail { position: static; max-height: none; }
+  .tb { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tb > div:first-child { grid-column: 1 / -1; grid-row: auto; }
+  .tb > div { border-top: 1px solid var(--rule); }
+  .tb > div:nth-child(2n) { border-left: 0; }
+  .tb > div:first-child { border-top: 0; }
+}
+@media (max-width: 640px) { .plan { grid-template-columns: minmax(0, 1fr); } .canvas { height: 62vh; } .hint { display: none; } }
+@media (prefers-reduced-motion: no-preference) { .world.ease { transition: transform .25s ease; } }
+</style>
+
+<div class="app" id="app">
+  <header class="tb" id="tb"></header>
+  <div class="warn" id="warn" hidden></div>
+  <section class="plan" id="plan" aria-label="Start-by plan"></section>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" id="tab-graph" data-view="graph" aria-pressed="true">Graph</button>
+      <button type="button" id="tab-timeline" data-view="timeline" aria-pressed="false">Timeline</button>
+      <button type="button" id="tab-checklist" data-view="checklist" aria-pressed="false">Checklist</button>
+    </div>
+    <label class="ctl" id="groupctl">Group by
+      <select id="group"><option value="lead">Lead time, then connector</option><option value="connector">Connector</option><option value="type">Response type</option></select>
+    </label>
+    <label class="ctl"><input type="checkbox" id="mand"> Mandatory only</label>
+    <label class="ctl"><span>Find</span><input type="search" id="q" placeholder="R04, insurance, page 36"></label>
+  </div>
+  <div class="main">
+    <div class="view" id="view">
+      <div class="canvas" id="canvas"><div class="world" id="world"></div>
+        <div class="hint">Drag to move · Ctrl + scroll or pinch to zoom</div>
+        <div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button><button type="button" id="zfit">Fit</button></div>
+      </div>
+      <div id="timeline" hidden></div>
+      <div id="checklist" hidden></div>
+    </div>
+    <aside class="view detail" id="detail" aria-live="polite"></aside>
+  </div>
+</div>
+
+<script id="wa-data" type="application/json">__WA_TENDER_REQUIREMENTS_JSON__</script>
+<script>
+(() => {
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+let D = null;
+try { D = JSON.parse($("#wa-data").textContent); } catch (e) { D = null; }
+if (!D || !Array.isArray(D.requirements)) {
+  $("#app").innerHTML = '<div class="warn"><strong>No requirement data.</strong> Put the classify_tender JSON (schema wa.tender_requirements.v1) in the wa-data script block.</div>';
+  return;
+}
+
+// ---- vocabulary (from the WorkspaceAlberta tag library) ----
+const TZ = "America/Edmonton";
+const LEAD = [
+  { k: "weeks", name: "Weeks", days: 21, note: "Needs a week or more: third-party documents, plans, quotes, approvals." },
+  { k: "days", name: "Days", days: 7, note: "Needs work or a reply within a few days." },
+  { k: "minutes", name: "Minutes", days: 2, note: "Can be answered from stored information or in a few minutes." },
+];
+const TYPES = {
+  narrative: "Write a narrative", pricing: "Give prices", security_bond: "Bond or security",
+  experience_reference: "Projects and references", attach_document: "Attach a document", compliance_confirm: "Confirm compliance",
+  declaration: "Sign or declare", form_field: "Company fact", attendance: "Attend a meeting", submission_instruction: "Submission rule",
+};
+const SOURCES = { company_profile: "Company profile", document_on_file: "Document on file", person_input: "Person decides or writes",
+  calculation: "Calculation", third_party: "Third party", calendar_action: "Calendar" };
+const human = (s) => { s = String(s || "").replace(/_/g, " "); return s.charAt(0).toUpperCase() + s.slice(1); };
+const typeOf = (q) => String(q.tag || "").split(".")[0];
+const subOf = (q) => human(String(q.tag || "").split(".")[1] || q.tag);
+const tcol = (q) => `var(--t-${TYPES[typeOf(q)] ? typeOf(q) : "other"})`;
+const docs = Object.fromEntries((D.documents || []).map((d, i) => [d.doc ?? i, d.document]));
+const pagesText = (q) => {
+  const ps = q.pages || [], many = new Set(ps.map((p) => p.doc)).size > 1;
+  const t = ps.map((p) => (many ? `${docs[p.doc] ?? "doc " + p.doc} ` : "") + p.page).join(", ");
+  const more = (q.page_count || ps.length) - ps.length;
+  return ps.length ? "p. " + t + (more > 0 ? ` (+${more} more)` : "") : "no page";
+};
+
+// ---- dates in Alberta time, counted in whole days ----
+function local(date) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date).map((x) => [x.type, x.value]));
+  return { day: Date.UTC(+p.year, +p.month - 1, +p.day) / 864e5, frac: (+p.hour * 60 + +p.minute) / 1440 };
+}
+const dayLabel = (d, o = { weekday: "short", month: "short", day: "numeric" }) => new Date(d * 864e5).toLocaleDateString("en-CA", { timeZone: "UTC", ...o });
+const T = D.tender || {};
+const closeDate = T.closes_at ? new Date(T.closes_at) : null;
+const CL = closeDate && !isNaN(closeDate) ? local(closeDate) : null;
+const closeTime = CL ? closeDate.toLocaleTimeString("en-CA", { timeZone: TZ, hour: "numeric", minute: "2-digit" }) : "";
+const TODAY = local(new Date()).day;
+const startBy = (lead) => CL ? CL.day - (LEAD.find((l) => l.k === lead) || LEAD[1]).days : null;
+const DUE = CL ? CL.day - 1 : null;
+const MS = (D.milestones || []).map((m) => {
+  const s = String(m.date || "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return { ...m, day: Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5, time: "" };
+  const d = new Date(s); if (isNaN(d)) return null;
+  return { ...m, ...local(d), time: d.toLocaleTimeString("en-CA", { timeZone: TZ, hour: "numeric", minute: "2-digit" }) };
+}).filter(Boolean);
+function startText(lead) {
+  const s = startBy(lead); if (s == null) return { t: "No closing time", behind: false };
+  const gap = TODAY - s;
+  if (CL && TODAY > CL.day) return { t: "Closed", behind: true };
+  if (gap > 0) return { t: `Start by ${dayLabel(s)} · ${gap} day${gap > 1 ? "s" : ""} behind`, behind: true };
+  if (gap === 0) return { t: `Start today, ${dayLabel(s)}`, behind: false };
+  return { t: `Start by ${dayLabel(s)} · in ${-gap} day${gap < -1 ? "s" : ""}`, behind: false };
+}
+
+// ---- state ----
+const KEY = "wa-board:" + (T.reference || D.reference || "tender");
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
+const S = { view: "graph", group: saved.group || "lead", mand: false, q: "", sel: null, collapsed: new Set(), status: saved.status || {} };
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ group: S.group, status: S.status })); } catch (e) {} };
+const REQS = D.requirements;
+const byId = Object.fromEntries(REQS.map((q) => [q.id, q]));
+function visible() {
+  const q = S.q.trim().toLowerCase();
+  return REQS.filter((r) => (!S.mand || r.mandatory) && (!q || [r.id, r.tag, r.question, r.connector, pagesText(r), ...(r.evidence || []).map((e) => e.text)].join(" ").toLowerCase().includes(q.replace(/^page /, "p. ").replace(/^p\. ?/, "")) ));
+}
+
+// ---- header ----
+function header() {
+  const n = REQS.length, m = REQS.filter((q) => q.mandatory).length;
+  const left = CL ? CL.day - TODAY : null;
+  const title = T.title || D.reference || "Tender";
+  const posting = /^https:\/\//.test(T.posting_url || "") ? `<a href="${esc(T.posting_url)}" target="_blank" rel="noopener">Official posting</a> · ` : "";
+  $("#tb").innerHTML = `
+    <div><span class="k">Bidder requirements · ${esc(T.reference || D.reference || "")}</span><h1>${esc(title)}</h1>
+      <p class="sub">${posting}${esc(T.buyer || "Buyer not reported")}. Labels are classifier output: check them against the posting and every addendum.</p></div>
+    <div><span class="k">Closes</span><span class="v">${CL ? esc(dayLabel(CL.day, { weekday: "short", month: "short", day: "numeric", year: "numeric" })) : "Not reported"}</span></div>
+    <div><span class="k">Time</span><span class="v">${CL ? esc(closeTime) + " Alberta time" : esc(T.closing || "—")}</span></div>
+    <div><span class="k">Days left</span><span class="big ${left != null && left < 7 ? "late" : ""}">${left == null ? "—" : left < 0 ? "Closed" : left}</span></div>
+    <div><span class="k">Requirements</span><span class="big">${n}</span><span class="v"> · ${m} mandatory</span></div>
+    <div><span class="k">Status</span><span class="v">${esc(D.status || "unknown")}</span></div>
+    <div><span class="k">Source</span><span class="v">${esc(T.source || D.source || "—")}</span></div>
+    <div><span class="k">Classifier</span><span class="v">${esc(D.model || "—")}</span></div>
+    <div><span class="k">Reported closing</span><span class="v">${esc(T.closing || "—")}</span></div>`;
+  const warns = [...(D.status === "partial" ? ["Partial result: part of the package was not classified, so this list is incomplete."] : []), ...(D.warnings || [])];
+  if (warns.length) { $("#warn").hidden = false; $("#warn").innerHTML = "<strong>Check before relying on this list.</strong> " + warns.map(esc).join(" "); }
+  $("#plan").innerHTML = LEAD.map((L) => {
+    const rs = REQS.filter((q) => q.lead_time === L.k), st = startText(L.k);
+    const mix = Object.keys(TYPES).map((t) => { const c = rs.filter((q) => typeOf(q) === t).length; return c ? `<i style="width:${(100 * c) / rs.length}%;background:var(--t-${t})"></i>` : ""; }).join("");
+    return `<button type="button" class="lead" data-lead="${L.k}"><span class="row1"><span class="lh">${L.name}</span><span class="n">${rs.length}</span></span>
+      <span class="when ${st.behind ? "behind" : ""}">${esc(st.t)}</span><span class="mix">${mix}</span><span class="ln">${esc(L.note)}</span></button>`;
+  }).join("");
+}
+
+// ---- graph ----
+const RH = 22, HH = 30, PADB = 8, VG = 14, HG = 72;
+const W = { root: 290, group: 240, sub: 240, req: 300, ev: 330 };
+const nodeH = (n) => HH + n.rows.length * RH + PADB;
+const str = (v, max = 34) => { v = String(v); return '"' + (v.length > max ? v.slice(0, max - 1) + "…" : v) + '"'; };
+function reqNode(q) {
+  const ev = q.evidence || [];
+  const n = { id: q.id, kind: "req", q, head: q.id, sub: q.tag, color: tcol(q), mand: q.mandatory, w: W.req, rows: [
+    { k: "question", v: str(q.question), c: "s" },
+    { k: "answer_source", v: str(q.answer_source), c: "s" },
+    { k: "lead_time", v: str(q.lead_time), c: "s" },
+    { k: "pages", v: `[${q.page_count || (q.pages || []).length}]  ${pagesText(q)}`, c: "n" },
+    { k: "evidence", v: `[${ev.length}] ${S.sel === q.id ? "▾" : "▸"}`, c: "r", ref: true },
+  ], children: [] };
+  if (S.sel === q.id) n.children = ev.map((e, i) => ({ id: q.id + ":" + i, kind: "ev", head: `evidence[${i}]`, sub: docs[e.doc] || "", color: tcol(q), w: W.ev, children: [], rows: [
+    { k: "page", v: e.page, c: "n" }, { k: "mandatory", v: String(!!e.mandatory), c: "b" }, { k: "text", v: str(e.text, 38), c: "s" } ] }));
+  return n;
+}
+function groupNode(id, head, sub, color, kids, extra) {
+  const coll = S.collapsed.has(id);
+  return { id, kind: "group", head, sub, color, w: W.group, children: coll ? [] : kids, rows: [...extra,
+    { k: "items", v: `[${kids.length}] ${coll ? "▸" : "▾"}`, c: "r", ref: true, toggle: id }] };
+}
+function buildTree() {
+  const rs = visible();
+  const byConn = (list, prefix) => {
+    const order = [...new Set(list.map((q) => q.connector))];
+    return order.map((c) => { const qs = list.filter((q) => q.connector === c);
+      return groupNode(prefix + c, human(c), c, "var(--accent)", qs.map(reqNode), [{ k: "answer_source", v: str([...new Set(qs.map((q) => q.answer_source))].join(", "), 24), c: "s" }]); });
+  };
+  let kids = [];
+  if (S.group === "lead") kids = LEAD.map((L) => { const qs = rs.filter((q) => q.lead_time === L.k); if (!qs.length) return null;
+      const s = startBy(L.k);
+      return groupNode("lead:" + L.k, L.name, "lead_time", "var(--mark)", byConn(qs, L.k + ":"), [
+        { k: "start_by", v: s == null ? "null" : str(new Date(s * 864e5).toISOString().slice(0, 10)), c: s == null ? "z" : "s" },
+        { k: "due", v: DUE == null ? "null" : str(new Date(DUE * 864e5).toISOString().slice(0, 10)), c: DUE == null ? "z" : "s" }]); }).filter(Boolean);
+  else if (S.group === "connector") kids = byConn(rs, "c:");
+  else kids = [...new Set(rs.map(typeOf))].map((t) => { const qs = rs.filter((q) => typeOf(q) === t);
+      return groupNode("t:" + t, TYPES[t] || human(t), t, `var(--t-${TYPES[t] ? t : "other"})`, qs.map(reqNode), []); });
+  const coll = S.collapsed.has("root");
+  return { id: "root", kind: "root", head: T.reference || D.reference || "tender", sub: D.schema || "", color: "var(--fg)", w: W.root, children: coll ? [] : kids, rows: [
+    { k: "title", v: str(T.title || "", 30), c: T.title ? "s" : "z" },
+    { k: "buyer", v: T.buyer ? str(T.buyer, 30) : "null", c: T.buyer ? "s" : "z" },
+    { k: "closes_at", v: T.closes_at ? str(T.closes_at) : "null", c: T.closes_at ? "s" : "z" },
+    { k: "status", v: str(D.status || "unknown"), c: "s" },
+    { k: "requirements", v: `[${rs.length}] ${coll ? "▸" : "▾"}`, c: "r", ref: true, toggle: "root" } ] };
+}
+function layout(root) {
+  const nodes = [], edges = [], colW = [];
+  let cursor = 0;
+  (function walk(n, depth) {
+    n.depth = depth; nodes.push(n); colW[depth] = Math.max(colW[depth] || 0, n.w);
+    const start = cursor;
+    if (!n.children.length) { n.y = cursor; cursor += nodeH(n) + VG; return; }
+    n.children.forEach((c) => walk(c, depth + 1));
+    n.y = Math.max(start, n.children[0].y);
+    cursor = Math.max(cursor, n.y + nodeH(n) + VG);
+  })(root, 0);
+  const colX = colW.map((_, d) => colW.slice(0, d).reduce((a, w) => a + w + HG, 0));
+  nodes.forEach((n) => { n.x = colX[n.depth]; n.children.forEach((c) => edges.push([n, c])); });
+  return { nodes, edges, width: colX.at(-1) + colW.at(-1), height: cursor };
+}
+const V = { k: 0.85, x: 20, y: 20, ready: false };
+function applyView(ease) { const w = $("#world"); w.classList.toggle("ease", !!ease); w.style.transform = `translate(${V.x}px,${V.y}px) scale(${V.k})`; }
+let G = null;
+function renderGraph() {
+  G = layout(buildTree());
+  const pathOn = new Set();
+  if (S.sel) { let n = G.nodes.find((x) => x.id === S.sel); const parent = (c) => G.edges.find((e) => e[1] === c)?.[0];
+    while (n) { pathOn.add(n.id); n = parent(n); } }
+  const svg = G.edges.map(([a, b]) => {
+    const ri = a.rows.findIndex((r) => r.ref); const x1 = a.x + a.w, y1 = a.y + HH + ri * RH + RH / 2, x2 = b.x, y2 = b.y + HH / 2, mx = (x2 - x1) / 2;
+    return `<path class="edge ${pathOn.has(a.id) && pathOn.has(b.id) ? "on" : ""}" d="M${x1},${y1} C${x1 + mx},${y1} ${x2 - mx},${y2} ${x2},${y2}"/>`;
+  }).join("");
+  const cards = G.nodes.map((n) => `<div class="node ${n.id === S.sel ? "sel" : ""}" data-node="${esc(n.id)}" style="left:${n.x}px;top:${n.y}px;width:${n.w}px">
+    <div class="nh"><i class="dot" style="--c:${n.color}"></i><b>${esc(n.head)}</b><span>${esc(n.sub)}</span>${n.mand ? "<em>MAND</em>" : ""}</div>
+    ${n.rows.map((r) => r.ref ? `<button type="button" class="nr" data-toggle="${esc(r.toggle || n.id)}"><span class="nk">${r.k}</span><span class="nv r">${esc(r.v)}</span></button>`
+      : `<div class="nr"><span class="nk">${r.k}</span><span class="nv ${r.c}">${esc(r.v)}</span></div>`).join("")}</div>`).join("");
+  $("#world").innerHTML = `<svg width="${G.width}" height="${G.height}" aria-hidden="true">${svg}</svg>${cards}`;
+  $("#world").style.width = G.width + "px"; $("#world").style.height = G.height + "px";
+  if (!V.ready) { V.ready = true; V.k = innerWidth < 640 ? 0.62 : 0.85; applyView(); } else applyView();
+}
+function fit() {
+  const c = $("#canvas").getBoundingClientRect();
+  V.k = Math.min(1, (c.width - 40) / G.width, (c.height - 40) / G.height); V.x = 20; V.y = 20; applyView(true);
+}
+function zoomAt(f, cx, cy) {
+  const k = Math.min(1.6, Math.max(0.12, V.k * f)); V.x = cx - ((cx - V.x) * k) / V.k; V.y = cy - ((cy - V.y) * k) / V.k; V.k = k; applyView();
+}
+function focusNode(id) {
+  const n = G && G.nodes.find((x) => x.id === id); if (!n) return;
+  const c = $("#canvas").getBoundingClientRect();
+  V.k = Math.max(V.k, 0.7); V.x = c.width * 0.35 - (n.x + n.w / 2) * V.k; V.y = c.height * 0.3 - n.y * V.k; applyView(true);
+}
+(function panZoom() {
+  const cv = $("#canvas"), pts = new Map(); let last = null, pinch = null, moved = 0;
+  cv.addEventListener("pointerdown", (e) => { if (e.target.closest("button") || (e.target.closest(".zoom,.hint"))) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0; last = { x: e.clientX, y: e.clientY }; cv.classList.add("drag");
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+  cv.addEventListener("pointermove", (e) => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = cv.getBoundingClientRect();
+      zoomAt(d / pinch, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top); pinch = d; moved += 10; return; }
+    if (moved > 3 && !cv.hasPointerCapture(e.pointerId)) cv.setPointerCapture(e.pointerId);
+    V.x += e.clientX - last.x; V.y += e.clientY - last.y; moved += Math.abs(e.clientX - last.x) + Math.abs(e.clientY - last.y); last = { x: e.clientX, y: e.clientY }; applyView(); });
+  const up = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) cv.classList.remove("drag");
+    if (pts.size === 1) last = [...pts.values()][0]; };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  cv.addEventListener("click", (e) => { if (moved > 6) { moved = 0; return; }
+    const t = e.target.closest("[data-toggle]"); const card = e.target.closest("[data-node]");
+    if (t) { const id = t.dataset.toggle; if (byId[id]) select(S.sel === id ? null : id); else { S.collapsed.has(id) ? S.collapsed.delete(id) : S.collapsed.add(id); renderGraph(); } return; }
+    if (card) { const id = card.dataset.node.split(":")[0]; if (byId[id]) select(id); } }, true);
+  cv.addEventListener("wheel", (e) => { e.preventDefault(); const r = cv.getBoundingClientRect();
+    if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX - r.left, e.clientY - r.top);
+    else { V.x -= e.deltaX; V.y -= e.deltaY; applyView(); } }, { passive: false });
+  $("#zin").onclick = () => { const r = cv.getBoundingClientRect(); zoomAt(1.2, r.width / 2, r.height / 2); };
+  $("#zout").onclick = () => { const r = cv.getBoundingClientRect(); zoomAt(1 / 1.2, r.width / 2, r.height / 2); };
+  $("#zfit").onclick = fit;
+})();
+
+// ---- timeline ----
+function renderTimeline() {
+  const host = $("#timeline");
+  if (!CL) { host.innerHTML = '<p class="tl-note">The result has no closing time (tender.closes_at), so there is nothing to count back from.</p>'; return; }
+  const rs = visible();
+  const d0 = Math.min(TODAY, CL.day - LEAD[0].days, ...MS.map((m) => m.day)) - 1, d1 = CL.day + 2, nd = d1 - d0;
+  const LW = 250, Wd = Math.max(host.clientWidth || 900, 780), dw = (Wd - LW - 16) / nd, X = (d) => LW + (d - d0) * dw;
+  const TOP = 78, RHT = 24, GH = 30;
+  let y = TOP, rows = "";
+  const ms = (q) => MS.find((m) => m.tag === q.tag) || (q.tag === "submission_instruction.closing_deadline" ? { day: CL.day, frac: CL.frac } : null);
+  for (const L of LEAD) {
+    const qs = rs.filter((q) => q.lead_time === L.k); if (!qs.length) continue;
+    const st = startText(L.k), s = startBy(L.k);
+    rows += `<text class="hd" x="8" y="${y + 19}">${L.name} · ${qs.length}</text><text x="${LW - 8}" y="${y + 19}" text-anchor="end" style="fill:var(${st.behind ? "--late" : "--muted"})">${esc(st.t.replace(/^Start by [^·]+· /, ""))}</text>`;
+    y += GH;
+    for (const q of qs) {
+      const m = ms(q), col = tcol(q), cy = y + RHT / 2;
+      let mark;
+      if (m) { const mx = X(m.day + (m.frac ?? 0.5)); mark = `<path d="M${mx},${cy - 7} l7,7 l-7,7 l-7,-7z" style="fill:${col}"/>`; }
+      else {
+        const a = X(s), b = X(DUE + 1), t = Math.min(Math.max(X(TODAY), a), b);
+        mark = (t > a ? `<rect x="${a}" y="${cy - 6}" width="${t - a}" height="12" fill="url(#hatch)" style="stroke:var(--late)" stroke-width="1"/>` : "") +
+          `<rect x="${t}" y="${cy - 6}" width="${Math.max(0, b - t)}" height="12" style="fill:${q.mandatory ? col : "none"};stroke:${col}" stroke-width="1.5"/>`;
+      }
+      rows += `<g class="row ${S.sel === q.id ? "sel" : ""}" data-id="${esc(q.id)}"><rect class="hit" x="0" y="${y}" width="${Wd}" height="${RHT}" style="fill:transparent"/>
+        <circle cx="14" cy="${cy}" r="4" style="fill:${q.mandatory ? col : "none"};stroke:${col}" stroke-width="1.5"/>
+        <text x="26" y="${cy + 4}">${esc(q.id)}</text><text class="mut" x="62" y="${cy + 4}">${esc(subOf(q).slice(0, 26))}</text>${mark}</g>`;
+      y += RHT;
+    }
+  }
+  y += 8;
+  rows += `<text class="hd" x="8" y="${y + 17}">Assemble and submit</text><rect x="${X(DUE)}" y="${y + 6}" width="${X(CL.day + CL.frac) - X(DUE)}" height="12" style="fill:var(--accent)"/>`;
+  y += 32;
+  let grid = "", ticks = "";
+  for (let d = d0; d < d1; d++) {
+    const wd = new Date(d * 864e5).getUTCDay();
+    if (wd === 0 || wd === 6) grid += `<rect x="${X(d)}" y="${TOP - 8}" width="${dw}" height="${y - TOP + 8}" style="fill:var(--rule-soft)" opacity=".55"/>`;
+    const lab = dw >= 24 || wd === 1;
+    ticks += `<line x1="${X(d)}" x2="${X(d)}" y1="${TOP - 14}" y2="${TOP - 8}" style="stroke:var(--rule)"/>` +
+      (lab ? `<text class="mut" x="${X(d) + 3}" y="${TOP - 18}">${dw >= 24 ? new Date(d * 864e5).getUTCDate() : esc(dayLabel(d, { month: "short", day: "numeric" }))}</text>` : "");
+    if (dw >= 24 && (new Date(d * 864e5).getUTCDate() === 1 || d === d0)) ticks += `<text x="${X(d) + 3}" y="14">${esc(dayLabel(d, { month: "long" }))}</text>`;
+  }
+  const lines = [{ d: TODAY + 0.5, t: "Today", c: "--accent" }, ...MS.map((m) => ({ d: m.day + (m.frac ?? 0.5), t: m.label + (m.time ? " " + m.time : ""), c: "--mark" })),
+    { d: CL.day + CL.frac, t: "Closes " + closeTime, c: "--late" }].sort((a, b) => a.d - b.d);
+  let lastX = -1e9, lvl = 0, marks = "";
+  for (const l of lines) { const x = X(l.d); lvl = x - lastX < 120 ? (lvl + 1) % 2 : 0; lastX = x;
+    marks += `<line x1="${x}" x2="${x}" y1="${TOP - 8}" y2="${y}" style="stroke:var(${l.c})" stroke-dasharray="${l.c === "--accent" ? "0" : "4 3"}"/>` +
+      `<text x="${x > Wd - 150 ? x - 4 : x + 4}" y="${32 + lvl * 14}" text-anchor="${x > Wd - 150 ? "end" : "start"}" style="fill:var(${l.c})">${esc(l.t)}</text>`; }
+  host.innerHTML = `<div class="tl"><svg width="${Wd}" height="${y + 6}" role="img" aria-label="Start-by timeline counted back from closing">
+    <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:transparent"/><line x1="0" y1="0" x2="0" y2="6" style="stroke:var(--late)" stroke-width="2"/></pattern></defs>
+    ${grid}${ticks}${marks}${rows}</svg></div>
+    <p class="tl-note">Bars run from the start-by date to the day before closing. Start-by is a planning rule, not a classifier output: ${LEAD.map((L) => `${L.name.toLowerCase()} ${L.days} days before closing`).join(", ")}. Hatched: days already behind plan. Diamonds: a dated event. Hollow: not mandatory.</p>`;
+  host.querySelectorAll(".row").forEach((g) => g.addEventListener("click", () => select(g.dataset.id)));
+}
+
+// ---- checklist ----
+const STATUS = ["todo", "doing", "done"], SNAME = { todo: "To do", doing: "Doing", done: "Done" };
+function renderChecklist() {
+  const rs = visible(), done = REQS.filter((q) => S.status[q.id] === "done").length;
+  let h = `<div class="cl"><div class="prog"><span>${done} of ${REQS.length} done</span><span class="track"><i style="width:${(100 * done) / REQS.length}%"></i></span></div>`;
+  for (const L of LEAD) {
+    const qs = rs.filter((q) => q.lead_time === L.k); if (!qs.length) continue;
+    const st = startText(L.k);
+    h += `<h3>${L.name} <small style="color:var(${st.behind ? "--late" : "--muted"})">${esc(st.t)}</small></h3><ul>` + qs.map((q) => {
+      const v = S.status[q.id] || "todo";
+      return `<li class="ci st-${v} ${S.sel === q.id ? "sel" : ""}" style="--c:${tcol(q)}"><button type="button" class="st" data-st="${esc(q.id)}" data-v="${v}" aria-label="${esc(q.id)} status: ${SNAME[v]}">${SNAME[v]}</button>
+        <div class="cbody" data-id="${esc(q.id)}"><div><b class="v">${esc(q.id)}</b> ${esc(subOf(q))} ${q.mandatory ? '<span class="mand">MANDATORY</span>' : ""}</div>
+        <p>${esc(q.question)}</p><div class="meta">${esc(human(q.connector))} · ${esc(SOURCES[q.answer_source] || q.answer_source)} · ${esc(pagesText(q))}</div></div></li>`;
+    }).join("") + "</ul>";
+  }
+  $("#checklist").innerHTML = h + (rs.length ? "" : '<p class="meta">No requirement matches the filter.</p>') + "</div>";
+}
+$("#checklist").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-st]");
+  if (b) { const id = b.dataset.st, v = S.status[id] || "todo"; S.status[id] = STATUS[(STATUS.indexOf(v) + 1) % 3]; persist(); renderChecklist(); return; }
+  const c = e.target.closest(".cbody"); if (c) select(c.dataset.id);
+});
+
+// ---- detail ----
+function renderDetail() {
+  const q = S.sel && byId[S.sel], el = $("#detail");
+  if (!q) {
+    const c = D.counts || {};
+    const types = Object.keys(TYPES).map((t) => [t, REQS.filter((q) => typeOf(q) === t).length]).filter((x) => x[1]);
+    el.innerHTML = `<div class="sec"><h2>How this list was made</h2>
+      <p class="funnel">${c.units != null ? `<strong>${Number(c.units).toLocaleString("en-CA")}</strong> text units from <strong>${c.pages ?? "?"}</strong> pages → <strong>${c.units_gated ?? "?"}</strong> that ask the bidder for something → <strong>${c.units_after_page_gate ?? "?"}</strong> on bid pages → ` : ""}<strong>${REQS.length}</strong> requirements, one per tag.</p>
+      <p class="meta">Select a card, bar or row to see where the package asks for it.</p></div>
+      <div class="sec"><h2>Response types</h2><div class="legend">${types.map(([t, n]) => `<div><i class="dot" style="--c:var(--t-${t})"></i><span>${TYPES[t]}</span><b>${n}</b></div>`).join("")}</div></div>
+      <div class="sec"><h2>Documents</h2>${(D.documents || []).map((d) => `<p class="meta">${esc(d.document)} · ${d.pages ?? "?"} pages</p>`).join("") || '<p class="meta">Not listed.</p>'}</div>`;
+    return;
+  }
+  const s = startBy(q.lead_time), v = S.status[q.id] || "todo";
+  el.innerHTML = `<div class="sec"><span class="k">${esc(q.id)} · ${esc(q.tag)}</span><p class="dq">${esc(q.question)}</p>
+    <div class="chips"><span class="chip" style="color:${tcol(q)}"><i class="dot" style="--c:${tcol(q)}"></i><span style="color:var(--fg)">${esc(TYPES[typeOf(q)] || typeOf(q))}</span></span>${q.mandatory ? '<span class="mand">MANDATORY</span>' : ""}</div>
+    <dl class="kv"><dt>Collect with</dt><dd>${esc(human(q.connector))}</dd><dt>Answer from</dt><dd>${esc(SOURCES[q.answer_source] || q.answer_source)}</dd>
+      <dt>Lead time</dt><dd>${esc(q.lead_time)}</dd><dt>Start by</dt><dd>${s == null ? "—" : esc(dayLabel(s))}</dd><dt>Status</dt><dd>${SNAME[v]}</dd>
+      <dt>Found on</dt><dd>${esc(pagesText(q))}</dd><dt>Clauses</dt><dd>${q.evidence_units ?? (q.evidence || []).length}</dd></dl></div>
+    <div class="sec"><h2>Evidence, strongest first</h2>${(q.evidence || []).map((e) => `<div class="ev" style="--c:${tcol(q)}"><div class="meta">p. ${esc(e.page)}${e.mandatory ? " · mandatory wording" : ""}</div>${esc(e.text)}${String(e.text || "").length >= 240 ? "…" : ""}</div>`).join("") || '<p class="meta">No quote.</p>'}</div>
+    <div class="sec"><button type="button" class="btn" id="copy">Copy requirement JSON</button> <button type="button" class="btn" id="clear">Close</button><pre class="copy" id="copytext" hidden></pre></div>`;
+  $("#clear").onclick = () => select(null);
+  $("#copy").onclick = () => { const t = JSON.stringify(q, null, 2), b = $("#copy");
+    const show = () => { const p = $("#copytext"); p.hidden = false; p.textContent = t; const r = document.createRange(); r.selectNodeContents(p); const sl = getSelection(); sl.removeAllRanges(); sl.addRange(r); b.textContent = "Select and copy the text below"; };
+    try { navigator.clipboard.writeText(t).then(() => { b.textContent = "Copied"; }, show); } catch (e) { show(); } };
+}
+
+// ---- wiring ----
+function render() { if (S.view === "graph") renderGraph(); if (S.view === "timeline") renderTimeline(); if (S.view === "checklist") renderChecklist(); renderDetail(); }
+function select(id) {
+  S.sel = id; render();
+  if (id && S.view === "graph") focusNode(id);
+  if (id && innerWidth <= 1060) $("#detail").scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+function setView(v) {
+  S.view = v;
+  document.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
+  $("#canvas").hidden = v !== "graph"; $("#timeline").hidden = v !== "timeline"; $("#checklist").hidden = v !== "checklist"; $("#groupctl").hidden = v !== "graph";
+  render();
+}
+document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+$("#group").value = S.group;
+$("#group").addEventListener("change", (e) => { S.group = e.target.value; persist(); V.ready = false; render(); });
+$("#mand").addEventListener("change", (e) => { S.mand = e.target.checked; render(); });
+$("#q").addEventListener("input", (e) => { S.q = e.target.value; render(); });
+$("#plan").addEventListener("click", (e) => { const b = e.target.closest("[data-lead]"); if (!b) return;
+  if (S.view === "graph" && S.group === "lead") { S.collapsed.delete("root"); S.collapsed.delete("lead:" + b.dataset.lead); renderGraph(); focusNode("lead:" + b.dataset.lead); }
+  else if (S.view === "checklist") { const h = [...document.querySelectorAll(".cl h3")].find((x) => x.textContent.toLowerCase().startsWith(b.dataset.lead)); h && h.scrollIntoView({ block: "start" }); } });
+addEventListener("resize", () => { if (S.view === "timeline") renderTimeline(); });
+header();
+const h0 = (location.hash || "").slice(1);
+setView(["graph", "timeline", "checklist"].includes(h0) ? h0 : innerWidth < 640 ? "checklist" : "graph");
+})();
+</script>

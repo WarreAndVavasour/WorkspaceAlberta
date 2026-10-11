@@ -750,7 +750,7 @@ class ServiceTest(ServiceTestCase):
                     "The full result follows as JSON (schema wa.tender_requirements.v1). If the WorkspaceAlberta "
                     "procurement skill is available, use its requirements-board template to build the artifact "
                     "from that JSON; otherwise, offer the user an interactive requirements board grouped by "
-                    "connector and lead time, counted back from `tender.closing`."))
+                    "connector and lead time, counted back from `tender.closes_at`."))
                 prefix, data = json_block.split("\n", 1)
                 self.assertEqual(prefix, "classify_tender JSON (schema wa.tender_requirements.v1):")
                 parsed = json.loads(data)

@@ -6,9 +6,9 @@ release source for this change. The harness and Cohere adapter are unaffected.
 
 ## Package and checks
 
-The portable package is `plugins/workspacealberta/`, version 1.0.1. It contains
-one remote Streamable HTTP MCP connection, a provider-neutral procurement skill,
-the existing icon, listing copy and five positive/three negative review scenarios.
+The portable package is `plugins/workspacealberta/`, version 1.1.0. It contains
+one remote Streamable HTTP MCP connection, a provider-neutral procurement skill
+with its requirements-board HTML template, the existing icon, listing copy and five positive/three negative review scenarios.
 It does not contain credentials, customer records, server source or local hooks.
 The scenarios describe expected behavior; they are not a completed OpenAI review.
 

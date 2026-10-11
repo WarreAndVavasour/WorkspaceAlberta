@@ -17,6 +17,16 @@ class PackageTest(unittest.TestCase):
         self.assertIn('mcp.json', package.validate()['files'])
         self.assertIn('skills/procurement/SKILL.md', package.validate()['files'])
 
+    def test_skill_ships_requirements_board_template(self):
+        self.assertIn('skills/procurement/requirements-board.html', package.validate()['files'])
+        board=(package.PACKAGE/'skills/procurement/requirements-board.html').read_text()
+        self.assertEqual(board.count('__WA_TENDER_REQUIREMENTS_JSON__'),1)
+        self.assertEqual(board.count('__BOARD_TITLE__'),1)
+        self.assertNotIn('<script src=',board)  # data and code stay inline in the artifact
+        skill=(package.PACKAGE/'skills/procurement/SKILL.md').read_text()
+        self.assertIn('requirements-board.html',skill)
+        self.assertIn('wa.tender_requirements.v1',skill)
+
     def test_build_is_reproducible(self):
         with tempfile.TemporaryDirectory() as directory:
             a=package.build(Path(directory)/'a.zip')

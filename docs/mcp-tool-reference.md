@@ -96,7 +96,7 @@ The cache self-heals: unified tools refresh it automatically the first time they
 
 **Output.** Over MCP the result has two text blocks and `structuredContent`, because some clients show the model only text content:
 
-1. The markdown requirements table, ending with one sentence that says the JSON follows and how to use it (the procurement skill's requirements-board template, or a requirements board grouped by connector and lead time, counted back from `tender.closing`).
+1. The markdown requirements table, ending with one sentence that says the JSON follows and how to use it (the procurement skill's requirements-board template, or a requirements board grouped by connector and lead time, counted back from `tender.closes_at`).
 2. One line, `classify_tender JSON (schema wa.tender_requirements.v1):`, then the full artifact as compact JSON. It is the same object as `structuredContent`. Nothing is trimmed: about 30 requirements with 5 evidence quotes each come to roughly 55–60 KB. Document names appear once, in `documents`; pages and quotes point to them by `doc`.
 
 Artifact fields (schema `wa.tender_requirements.v1`):
