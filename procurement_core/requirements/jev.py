@@ -33,6 +33,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from procurement_core import usage
 from procurement_core.requirements import tags
 
 API_URL = "https://api.typesafe.ai/v1/systemone"
@@ -290,6 +291,7 @@ def call_jev(
         })
         attempts = attempt + 1
         headers = None
+        usage.record("typesafe", requests=1)
         try:
             with urlopen(request, timeout=request_timeout) as response:
                 raw = response.read()
@@ -299,6 +301,7 @@ def call_jev(
                 return None, "invalid JSON in the classifier response", attempts
             if not isinstance(body, dict):
                 return None, "unexpected classifier response (not a JSON object)", attempts
+            usage.record("typesafe", input_tokens=input_tokens(body))
             return body, "", attempts
         except HTTPError as exc:
             headers = exc.headers

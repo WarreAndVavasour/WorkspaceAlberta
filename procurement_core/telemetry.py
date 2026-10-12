@@ -30,6 +30,17 @@ also writes one JSON line to stdout (``"event": "mcp_tool_call"`` /
 "WorkspaceAlberta - MCP Usage" dashboard. Same privacy stance: the user is
 the truncated hash distinct_id, never an email, arguments or results.
 
+Two additions on ``mcp_tool_call`` lines:
+
+- ``upstream``: what the call used from paid APIs, as counts only (from
+  :mod:`.usage`), e.g. ``{"typesafe": {"requests": 5712, "input_tokens":
+  7.9e6}, "e2b": {"sandboxes": 1, "sandbox_seconds": 41.2}}``, plus
+  ``typesafe_est_usd``. Omitted when the call used no paid API.
+- ``reference``: the public tender reference the call was about, when the
+  arguments name one. Posting references are public identifiers, not user
+  data; they let a run of calls (search, details, classify) be read as one
+  task. No other argument is logged.
+
 Environment variables:
     WA_TOOL_LOG       set to "0" to turn the stdout tool-call line off
     POSTHOG_API_KEY   project API key (phc_...); telemetry is off without it
@@ -127,11 +138,15 @@ def capture_tool_call(
     arguments: dict[str, Any] | None,
     result_text: str,
     latency_ms: int,
+    upstream: dict[str, Any] | None = None,
 ) -> bool:
-    """Emit ``tool_called`` for one MCP/REST tool invocation."""
+    """Emit ``tool_called`` for one MCP/REST tool invocation.
+
+    ``upstream`` is :meth:`usage.Meter.log_fields` for the call (paid-API counts).
+    """
     args = arguments or {}
     ok = not result_text.startswith("Error:")
-    log_structured({
+    entry: dict[str, Any] = {
         "severity": "INFO" if ok else "WARNING",
         "message": f"mcp_tool_call {tool} ok={ok} {latency_ms}ms",
         "event": "mcp_tool_call",
@@ -143,7 +158,13 @@ def capture_tool_call(
         "ok": ok,
         "duration_ms": latency_ms,
         "environment": environment(),
-    })
+    }
+    reference = _reference(args)
+    if reference:
+        entry["reference"] = reference
+    if upstream:
+        entry.update(upstream)
+    log_structured(entry)
     return capture(
         "tool_called",
         distinct_id=_distinct_id(record),
@@ -158,8 +179,17 @@ def capture_tool_call(
             # Anonymous callers describing their business inline is the
             # activation signal in the funnel; the profile itself is not sent.
             "has_inline_profile": bool(args.get("profile")),
+            "typesafe_est_usd": (upstream or {}).get("typesafe_est_usd", 0),
         },
     )
+
+
+def _reference(args: dict[str, Any]) -> str:
+    """The public posting reference named in the arguments, if any (max 80 chars)."""
+    value = args.get("reference") if isinstance(args, dict) else None
+    if not isinstance(value, (str, int)):
+        return ""
+    return str(value).strip()[:80]
 
 
 def capture_gate_denied(tool: str, transport: str, status_code: int) -> bool:

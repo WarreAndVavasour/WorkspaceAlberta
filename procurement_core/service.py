@@ -66,7 +66,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from . import fixtures
+from . import fixtures, usage
 from .apc_documents import APC_ACCESS_MESSAGE, apc_document_manifest, apc_posting_url
 
 
@@ -510,9 +510,11 @@ def call_cohere_hf_chat(
         method="POST",
     )
 
+    usage.record("huggingface", requests=1)
     try:
         with urlopen(request, timeout=120) as response:
             body = json.loads(response.read().decode("utf-8"))
+        usage.record("huggingface", **usage.openai_style_tokens(body))
     except HTTPError as exc:
         raw_body = exc.read().decode("utf-8", errors="replace")
         try:
@@ -588,9 +590,11 @@ def call_cohere_direct_chat(
         method="POST",
     )
 
+    usage.record("cohere", requests=1)
     try:
         with urlopen(request, timeout=120) as response:
             body = json.loads(response.read().decode("utf-8"))
+        usage.record("cohere", **usage.openai_style_tokens(body))
     except HTTPError as exc:
         raw_body = exc.read().decode("utf-8", errors="replace")
         try:
