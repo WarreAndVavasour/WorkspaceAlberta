@@ -60,6 +60,7 @@ from typing import Any
 from urllib.parse import quote, unquote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
+from procurement_core import usage
 from procurement_core.apc_documents import apc_posting_url, resolve_apc_documents
 from procurement_core.document_coverage import coverage_warnings, document_coverage
 from procurement_core.cohere_parse import (
@@ -1847,6 +1848,8 @@ def _run_e2b_payload(
         remaining = remaining_bid_room_seconds(deadline, reserve=5)
         timeout_seconds = max(1, min(130, int(remaining)))
         keep_alive = False
+    sandbox_started = time.monotonic()
+    usage.record("e2b", sandboxes=1)
     sandbox = Sandbox.create(
         timeout=timeout_seconds,
         **({"request_timeout": min(10, remaining), "retries": 0} if bounded else {}),
@@ -1886,6 +1889,7 @@ def _run_e2b_payload(
     except TimeoutException as exc:
         raise BidRoomTimeout(BID_ROOM_TIMEOUT_MESSAGE) from exc
     finally:
+        usage.record("e2b", sandbox_seconds=round(time.monotonic() - sandbox_started, 1))
         killed = False
         if not keep_alive:
             try:

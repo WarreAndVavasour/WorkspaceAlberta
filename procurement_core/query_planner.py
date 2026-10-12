@@ -25,6 +25,8 @@ import os
 import urllib.request
 from typing import Any
 
+from procurement_core import usage
+
 # UNSPSC segment titles, derived from the codes APC actually returns. Segment
 # level (first two digits + "000000") is the right granularity here: it is
 # stable, small enough to put in a prompt, and matches how APC facets.
@@ -188,8 +190,11 @@ def _post_chat(payload: dict, api_key: str, url: str, timeout: float = 6) -> dic
         },
         method="POST",
     )
+    usage.record("cohere", requests=1)
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
+        body = json.loads(response.read().decode("utf-8"))
+    usage.record("cohere", **usage.openai_style_tokens(body))
+    return body
 
 
 def plan_query(

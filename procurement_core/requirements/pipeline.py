@@ -28,6 +28,7 @@ import time
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from typing import Any
 
+from procurement_core import usage
 from procurement_core.requirements import child, jev, tags
 from procurement_core.requirements.extract import looks_scanned  # pure function; no PDF parsing here
 
@@ -80,7 +81,8 @@ def _run_calls(
 
     pool = ThreadPoolExecutor(max_workers=max(1, concurrency), thread_name_prefix="jev")
     try:
-        futures = {pool.submit(work, payload): key for key, payload in jobs}
+        # bind() per job: worker threads record into the tool call's usage meter.
+        futures = {pool.submit(usage.bind(work), payload): key for key, payload in jobs}
         pending = set(futures)
         while pending and not stop.is_set():
             remaining = cutoff - time.monotonic()

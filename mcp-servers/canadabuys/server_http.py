@@ -56,7 +56,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from procurement_core import identity, oauth, storage, telemetry  # noqa: E402
+from procurement_core import identity, oauth, storage, telemetry, usage  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
     GateError,
     PRO_TOOLS,
@@ -132,12 +132,14 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
     token = storage.set_tenant(tenant_id_for(record)) if record else None
     started = time.monotonic()
     try:
-        text, structured = await call_tool_text_and_structured(name, arguments)
+        with usage.metering() as meter:
+            text, structured = await call_tool_text_and_structured(name, arguments)
     finally:
         if token is not None:
             storage.reset_tenant(token)
     telemetry.capture_tool_call(
-        name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000)
+        name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000),
+        upstream=meter.log_fields(),
     )
     return CallToolResult(
         content=[TextContent(type="text", text=block) for block in mcp_text_blocks(name, text, structured)],
@@ -236,12 +238,14 @@ async def run_tool(
     token = storage.set_tenant(tenant_id_for(record)) if record else None
     started = time.monotonic()
     try:
-        content = await call_tool_text(tool_name, arguments or {})
+        with usage.metering() as meter:
+            content = await call_tool_text(tool_name, arguments or {})
     finally:
         if token is not None:
             storage.reset_tenant(token)
     telemetry.capture_tool_call(
-        tool_name, "rest", record, arguments, content, int((time.monotonic() - started) * 1000)
+        tool_name, "rest", record, arguments, content, int((time.monotonic() - started) * 1000),
+        upstream=meter.log_fields(),
     )
     return {
         "tool": tool_name,
