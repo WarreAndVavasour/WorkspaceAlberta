@@ -31,6 +31,13 @@ notice lists (TypeSafe AI, Cohere, E2B). APC documents are uploaded by you throu
 expiring upload link. See the [privacy notice](https://elbowsupknivesout.warreandvavasour.com/privacy)
 and [support page](https://elbowsupknivesout.warreandvavasour.com/support).
 
+## Manifests
+
+Claude reads only `.claude-plugin/plugin.json`. The root `plugin.json` (and `mcp.json`) follow the
+[agent-plugins.org](https://agent-plugins.org) format and are used to build the workspaceAlberta
+OpenAI plugin package (`scripts/openai_plugin.py`); Claude ignores them. Keep the `version` in both
+manifests in sync.
+
 ## License
 
 Apache-2.0. Published by Warre & Vavasour, Bow Valley, Alberta.
