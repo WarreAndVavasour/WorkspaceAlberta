@@ -2122,6 +2122,44 @@ def mcp_text_blocks(name: str, text: str, structured: dict[str, Any] | None) -> 
     return [text, f"classify_tender JSON (upload link; no requirements yet):\n{data}"]
 
 
+BOARD_TEMPLATE_URL_PATH = "/requirements-board-template"
+BOARD_TEMPLATE_FALLBACK_ORIGIN = "https://elbowsupknivesout.warreandvavasour.com"
+
+
+def board_template_url() -> str:
+    """Canonical public URL of the requirements-board template."""
+    origin = os.environ.get("WA_PUBLIC_ORIGIN", "").strip().rstrip("/") or BOARD_TEMPLATE_FALLBACK_ORIGIN
+    return f"{origin}{BOARD_TEMPLATE_URL_PATH}"
+
+
+def board_field() -> dict[str, Any]:
+    """Compact board build instructions inside the artifact itself.
+
+    Some clients surface only ``structuredContent`` and drop the text blocks, so the
+    instructions and the template URL also ride in the JSON (compact form; the full
+    template is served at ``board_template_url``).
+    """
+    return {
+        "title": REQUIREMENTS_BOARD_HEADER,
+        "purpose": "Build the WorkspaceAlberta requirements board from this JSON; do not build one from scratch.",
+        "how": [
+            "Tell the user in two or three sentences what came back: requirement and mandatory counts, "
+            "the closing date and time as reported, and any partial status or warnings.",
+            "Fetch the board template from template_url, or take it from the last text block of this tool "
+            "result between <!-- TEMPLATE START --> and <!-- TEMPLATE END --> (markers excluded).",
+            "Replace __BOARD_TITLE__ with a short tender name plus \"Requirements Board\".",
+            "Replace __WA_TENDER_REQUIREMENTS_JSON__ with this JSON object without this board field, "
+            "unchanged otherwise; write every </ inside it as <\\/.",
+            "Add an optional milestones array only for dates an evidence quote states; copy dates exactly "
+            "and never estimate one.",
+            "If the host cannot show HTML, present the same content as a table grouped by lead time "
+            "(weeks, days, minutes) with each group's start-by date.",
+        ],
+        "template_url": board_template_url(),
+        "template_version": 1,
+    }
+
+
 async def call_tool_text_and_structured(
     name: str, arguments: dict[str, Any] | None = None
 ) -> tuple[str, dict[str, Any] | None]:
@@ -3024,6 +3062,7 @@ def classify_tender_artifact(args: dict, *, deadline: float | None = None, cance
         ) from None
     result = {"schema": TENDER_REQUIREMENTS_SCHEMA, "reference": reference, "source": source,
               "tender": tender, **result, "warnings": [*warnings, *result["warnings"]]}
+    result["board"] = board_field()
     return {"artifact": result, "markdown": render_markdown(result, reference=reference, source=source)}
 
 

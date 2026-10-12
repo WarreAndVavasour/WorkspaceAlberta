@@ -28,7 +28,9 @@ evidence; its labels are classifier outputs to verify, and a partial result says
 For APC, process_bid_room and classify_tender share one upload link; classify_tender
 does not delete the uploads. After classify_tender, build the requirements board from
 the build instructions and template in the last block of its result: copy the template
-exactly and fill only its two placeholders. Without an HTML artifact or canvas, give a
+exactly and fill only its two placeholders. A client that surfaces only the JSON must
+follow the artifact's `board` field and fetch the template from its `template_url`.
+Without an HTML artifact or canvas, give a
 table grouped by lead time instead. See /privacy for subprocessors and
 processing locations. Verify the user's authority to send those materials. Canadian
 model provenance does not establish Canadian processing or residency for every route.

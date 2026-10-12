@@ -719,6 +719,18 @@ class ServiceTest(ServiceTestCase):
         self.assertEqual(json.loads(data), structured)
         self.assertEqual(data, json.dumps(structured, ensure_ascii=False, separators=(",", ":")))
         self.assertEqual(blocks[2], service.REQUIREMENTS_BOARD_INSTRUCTIONS)
+        self.assertEqual(structured["board"]["template_url"], service.board_template_url())
+
+    def test_board_template_is_served_publicly(self):
+        """The template URL points at a public route that serves the server copy."""
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mcp-servers" / "canadabuys"))
+        import server_http
+
+        route = next(r for r in server_http.app.routes if getattr(r, "path", "") == service.BOARD_TEMPLATE_URL_PATH)
+        response = run_async(route.endpoint())
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("__WA_TENDER_REQUIREMENTS_JSON__", response.body.decode("utf-8"))
+        self.assertIn("__BOARD_TITLE__", response.body.decode("utf-8"))
 
     def call_mcp(self, module_name, arguments):
         """Call a real MCP handler (stdio or hosted) for the test tenant."""
@@ -760,6 +772,11 @@ class ServiceTest(ServiceTestCase):
                 self.assertEqual(parsed["schema"], "wa.tender_requirements.v1")
                 self.assertEqual(parsed["tender"]["closing"], self.details["opportunity"]["closeDateTime"])
                 self.assertEqual(parsed["requirements"][0]["id"], "R01")
+                self.assertEqual(parsed["board"]["title"], service.REQUIREMENTS_BOARD_HEADER)
+                self.assertEqual(parsed["board"]["template_version"], 1)
+                self.assertTrue(parsed["board"]["template_url"].startswith("https://"))
+                self.assertTrue(parsed["board"]["template_url"].endswith(service.BOARD_TEMPLATE_URL_PATH))
+                self.assertIn("__WA_TENDER_REQUIREMENTS_JSON__", " ".join(parsed["board"]["how"]))
                 self.assertNotIn(API_KEY, json_block)
                 self.assertNotIn(upload_token, json_block)
 

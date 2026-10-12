@@ -150,7 +150,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
 
 mcp_server = Server(
     "canadabuys",
-    version="1.1.0",
+    version="1.1.1",
     instructions=SERVER_INSTRUCTIONS,
     on_list_tools=handle_list_tools,
     on_call_tool=handle_call_tool,
@@ -186,7 +186,7 @@ app = FastAPI(
         "Alberta Purchasing Connection, business-profile matching, daily bid "
         "briefs, and optional Cohere Command A+ analysis."
     ),
-    version="1.1.0",
+    version="1.1.1",
     lifespan=lifespan,
 )
 
