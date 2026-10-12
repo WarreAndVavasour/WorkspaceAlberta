@@ -91,6 +91,17 @@ def register_public_pages(app: FastAPI) -> None:
     async def support():
         return HTMLResponse(_page("workspaceAlberta setup and support", SUPPORT))
 
+    @app.get("/requirements-board-template", include_in_schema=True)
+    async def requirements_board_template():
+        """Serve the requirements-board template classify_tender points at."""
+        from procurement_core.service import REQUIREMENTS_BOARD_TEMPLATE
+
+        return Response(
+            REQUIREMENTS_BOARD_TEMPLATE,
+            media_type="text/html",
+            headers={"Cache-Control": "public, max-age=3600"},
+        )
+
     @app.get("/icon.svg", include_in_schema=False)
     async def icon():
         return Response(ICON, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=3600"})
