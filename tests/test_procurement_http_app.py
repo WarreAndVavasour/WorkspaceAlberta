@@ -256,3 +256,85 @@ class InlineProfileTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FirstRunQaPagesTest(unittest.TestCase):
+    """Regression tests for the October 2026 first-run QA pass."""
+
+    def setUp(self) -> None:
+        from fastapi.testclient import TestClient
+        import server_http
+
+        self.client = TestClient(server_http.app)
+
+    def test_landing_shows_one_public_url_and_paths_to_try_and_pricing(self) -> None:
+        html = self.client.get("/").text
+        self.assertIn("https://elbowsupknivesout.warreandvavasour.com/mcp", html)
+        self.assertNotIn("run.app", html)
+        self.assertIn('href="/try"', html)
+        self.assertIn('href="/pricing"', html)
+        self.assertNotIn('href="/me"', html)
+        self.assertIn('lang="fr"', html)
+
+    def test_pricing_has_price_checkout_and_terms(self) -> None:
+        html = self.client.get("/pricing").text
+        self.assertIn("C$85", html)
+        self.assertIn("buy.stripe.com", html)
+        self.assertIn('id="terms"', html)
+        self.assertEqual(self.client.get("/terms", follow_redirects=False).status_code, 302)
+
+    def test_me_in_browser_is_a_page_not_json(self) -> None:
+        response = self.client.get("/me", headers={"accept": "text/html"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Sign-in happens inside your AI app", response.text)
+        self.assertEqual(self.client.get("/me", headers={"accept": "application/json"}).status_code, 401)
+
+    def test_browser_404_is_html_and_api_404_is_json(self) -> None:
+        html = self.client.get("/no-such-page", headers={"accept": "text/html"})
+        self.assertEqual(html.status_code, 404)
+        self.assertIn("Page not found", html.text)
+        api = self.client.get("/no-such-page", headers={"accept": "application/json"})
+        self.assertEqual(api.json(), {"detail": "Not Found"})
+
+    def test_rest_rejects_unknown_fields_and_wrong_types(self) -> None:
+        unknown = self.client.post("/search", json={"query": "concrete"})
+        self.assertEqual(unknown.status_code, 422)
+        self.assertIn("keywords", str(unknown.json()))
+        wrong = self.client.post("/search", json={"keywords": ["x"]})
+        self.assertEqual(wrong.status_code, 422)
+        negative = self.client.post("/deadlines", json={"days": -30})
+        self.assertEqual(negative.status_code, 422)
+        too_long = self.client.post("/search", json={"keywords": "x" * 5000})
+        self.assertEqual(too_long.status_code, 422)
+
+    def test_docs_show_real_search_fields_and_hide_internal_routes(self) -> None:
+        schema = self.client.get("/openapi.json").json()
+        body = schema["paths"]["/search"]["post"]["requestBody"]["content"]["application/json"]
+        self.assertIn("keywords", body["schema"]["properties"])
+        self.assertEqual(body["example"]["keywords"], "concrete")
+        self.assertNotIn("/stripe/webhook", schema["paths"])
+        self.assertNotIn("/requirements-board-template", schema["paths"])
+
+    def test_try_search_requires_a_word(self) -> None:
+        response = self.client.post("/try/search", json={"keywords": "  "})
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("message", response.json())
+
+    def test_authorize_unknown_client_never_redirects(self) -> None:
+        response = self.client.get(
+            "/authorize",
+            params={"response_type": "code", "client_id": "wa_cli_unknown", "redirect_uri": "http://127.0.0.1:9/x",
+                    "code_challenge": "a" * 43, "code_challenge_method": "S256", "state": "s"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("This sign-in link did not work", response.text)
+
+    def test_terms_supports_head(self) -> None:
+        self.assertEqual(self.client.head("/terms", follow_redirects=False).status_code, 302)
+
+    def test_canadabuys_record_without_notice_url_gets_notice_page(self) -> None:
+        from procurement_core.service import _opportunity_record
+
+        record = _opportunity_record({"reference": "cb-922-97825427", "source": "CanadaBuys"})
+        self.assertEqual(record["url"], "https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/cb-922-97825427")
