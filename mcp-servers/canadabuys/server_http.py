@@ -41,13 +41,15 @@ import contextlib
 import json
 import sys
 import time
+from datetime import datetime, timezone
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from mcp.server import Server, ServerRequestContext
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent, Tool
@@ -71,6 +73,7 @@ from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: 
 from procurement_core.oauth_http import register_oauth_routes  # noqa: E402
 from procurement_core.bid_room_upload_http import register_bid_room_upload_routes  # noqa: E402
 from procurement_core.public_pages import register_public_pages  # noqa: E402
+from procurement_core import web_pages  # noqa: E402
 from procurement_core.service import (  # noqa: E402
     TOOL_NAMES,
     ClassifierNotConfigured,
@@ -188,6 +191,15 @@ app = FastAPI(
     ),
     version="1.1.1",
     lifespan=lifespan,
+    # Swagger lists tags in this order: what a first-time visitor wants first.
+    openapi_tags=[
+        {"name": "procurement", "description": "Search tenders, details, deadlines, matches and briefs. Free."},
+        {"name": "profile", "description": "Save or read your business profile (free sign-in)."},
+        {"name": "bid-room", "description": "Pro: tender document review."},
+        {"name": "analysis", "description": "Pro: Cohere tender analysis."},
+        {"name": "tools", "description": "Call any tool by its MCP name."},
+        {"name": "system", "description": "Health, tool list and token status."},
+    ],
 )
 
 # Browser-based MCP clients (web inspectors, playgrounds) need CORS to pass
@@ -210,6 +222,70 @@ def serialize_tool(tool: Tool) -> dict[str, Any]:
     return tool.model_dump(by_alias=True, exclude_none=True)
 
 
+MAX_REST_STRING = 2000
+
+
+def _tool_schema(tool_name: str) -> dict[str, Any]:
+    for tool in get_mcp_tools():
+        if tool.name == tool_name:
+            return getattr(tool, "input_schema", None) or getattr(tool, "inputSchema", None) or {}
+    return {}
+
+
+_JSON_TYPES = {
+    "string": (str,),
+    "integer": (int,),
+    "number": (int, float),
+    "boolean": (bool,),
+    "array": (list,),
+    "object": (dict,),
+}
+
+
+def validate_rest_arguments(tool_name: str, arguments: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Check REST arguments against the tool's input schema.
+
+    REST callers (people in /docs, scripts) get a 422 that names the bad field
+    instead of a silently ignored field or an internal error string. The MCP
+    path is unchanged.
+    """
+    if arguments is None:
+        return []
+    if not isinstance(arguments, dict):
+        return [{"loc": ["body"], "msg": "The request body must be a JSON object."}]
+    schema = _tool_schema(tool_name)
+    properties: dict[str, Any] = schema.get("properties") or {}
+    errors: list[dict[str, Any]] = []
+    for key, value in arguments.items():
+        spec = properties.get(key)
+        if spec is None:
+            if isinstance(schema.get("additionalProperties"), dict):
+                continue  # schema explicitly allows typed extra fields
+            if properties:
+                errors.append({
+                    "loc": ["body", key],
+                    "msg": f"Unknown field '{key}'. Valid fields: {', '.join(sorted(properties))}.",
+                })
+            continue
+        expected = spec.get("type")
+        allowed = _JSON_TYPES.get(expected) if isinstance(expected, str) else None
+        if value is None:
+            continue
+        if allowed and (not isinstance(value, allowed) or (expected in {"integer", "number"} and isinstance(value, bool))):
+            errors.append({"loc": ["body", key], "msg": f"'{key}' must be {'an' if expected[0] in 'aeiou' else 'a'} {expected}."})
+            continue
+        if isinstance(value, str) and len(value) > MAX_REST_STRING:
+            errors.append({"loc": ["body", key], "msg": f"'{key}' is too long (max {MAX_REST_STRING} characters)."})
+        if expected == "integer" and key in {"limit", "days"} and value < 1:
+            errors.append({"loc": ["body", key], "msg": f"'{key}' must be 1 or more."})
+        if spec.get("enum") and value not in spec["enum"]:
+            errors.append({"loc": ["body", key], "msg": f"'{key}' must be one of: {', '.join(map(str, spec['enum']))}."})
+    if "source" in properties and isinstance(arguments.get("source"), str):
+        if arguments["source"].strip().lower() not in {"", "all", "both", "federal", "canadabuys", "canada", "national", "alberta", "apc"}:
+            errors.append({"loc": ["body", "source"], "msg": "'source' must be all, federal or alberta."})
+    return errors
+
+
 async def run_tool(
     tool_name: str,
     arguments: dict[str, Any] | None = None,
@@ -223,6 +299,9 @@ async def run_tool(
     """
     if tool_name not in TOOL_NAMES:
         raise HTTPException(status_code=404, detail=f"Unknown tool: {tool_name}")
+    errors = validate_rest_arguments(tool_name, arguments)
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
 
     try:
         # Key validation hits Supabase/Stripe with blocking urlopen on cache
@@ -343,71 +422,84 @@ class MCPStreamableHTTPApp:
 app.add_route("/mcp", MCPStreamableHTTPApp(), methods=["GET", "POST", "DELETE"])
 
 
-
-
-LANDING_PAGE_TEMPLATE = """<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WorkspaceAlberta Procurement MCP</title>
-<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<style>
-  body {{ font-family: system-ui, sans-serif; max-width: 44rem; margin: 3rem auto; padding: 0 1rem; line-height: 1.55; color: #1c1c1c; }}
-  code, pre {{ background: #f4f4f4; border-radius: 6px; }}
-  code {{ padding: 0.1rem 0.35rem; }}
-  pre {{ padding: 1rem; overflow-x: auto; }}
-  a {{ color: #0b57d0; }}
-  h1 {{ margin-bottom: 0.2rem; }}
-  .sub {{ color: #555; margin-top: 0; }}
-</style>
-</head>
-<body>
-<h1>workspaceAlberta</h1>
-<p class="sub">Canadian procurement intelligence over MCP: CanadaBuys + Alberta Purchasing Connection.</p>
-<p>This service is live. Search federal and Alberta public tenders, list deadlines,
-rank opportunities against your business, and get daily bid briefs — free, no key needed.
-Pro tools (bid-room processing, Cohere tender analysis, watchlists) require sign-in and an active subscription.</p>
-<h2>Connect an MCP client</h2>
-<p>Add this server to Claude Desktop, Cursor, Cline, VS Code, Zed, or any MCP-capable client:</p>
-<pre>{{
-  "mcpServers": {{
-    "workspaceAlberta": {{
-      "type": "http",
-      "url": "{mcp_url}"
-    }}
-  }}
-}}</pre>
-<p>Free search, deadline, and brief tools need no sign-in. Pro tools (bid rooms,
-Cohere analysis, watchlists) start your client's OAuth sign-in flow, or still accept a
-legacy <code>Authorization: Bearer wa_live_...</code> subscriber key. Check
-status at <a href="/me">/me</a>.</p>
-<h2>Prefer plain REST?</h2>
-<p>The same tools are exposed over REST/OpenAPI:
-<a href="/docs">interactive docs</a> &middot; <a href="/openapi.json">openapi.json</a> &middot;
-<a href="/tools">tool schemas</a> &middot; <a href="/health">health</a></p>
-<p>Agent registries: <a href="/.well-known/agent.json">agent card (A2A)</a> &middot;
-<a href="/.well-known/mcp.json">mcp.json</a> &middot;
-<a href="/.well-known/oauth-protected-resource">protected-resource metadata</a></p>
-<p>Always open and verify the original tender documents before bidding. This tool triages
-and summarizes; it does not replace the source posting.</p>
-<p><a href="/blog">News and notes</a> &middot; <a href="/support">Setup and support</a> &middot; <a href="/privacy">Privacy</a> &middot;
-<a href="https://github.com/WarreAndVavasour/WorkspaceAlberta">Source and documentation on GitHub</a></p>
-</body>
-</html>
-"""
-
-
 @app.get("/", include_in_schema=False)
 async def landing(request: Request) -> HTMLResponse:
     """Human-friendly landing page with MCP connect instructions."""
     telemetry.capture("landing_page_viewed", properties={"source": "direct"})
-    base = str(request.base_url).rstrip("/")
-    # Cloud Run terminates TLS at the proxy, so the app sees http; the
-    # public URL a client must paste is always https (localhost excepted).
-    if base.startswith("http://") and "localhost" not in base and "127.0.0.1" not in base:
-        base = "https://" + base[len("http://"):]
-    return HTMLResponse(LANDING_PAGE_TEMPLATE.format(mcp_url=f"{base}/mcp"))
+    return HTMLResponse(web_pages.landing_page(_public_mcp_url(request)))
+
+
+def _public_mcp_url(request: Request) -> str:
+    """The one connection URL shown to people.
+
+    Always the public origin (custom domain, or ``WA_PUBLIC_MCP_URL``) —
+    never the Cloud Run host the proxy forwards to — so every page shows the
+    same address and the OAuth resource check matches what clients paste.
+    """
+    return oauth.public_mcp_resource()
+
+
+@app.get("/pricing", include_in_schema=False)
+async def pricing_page() -> HTMLResponse:
+    telemetry.capture("pricing_page_viewed", properties={"source": "direct"})
+    return HTMLResponse(web_pages.pricing_page())
+
+
+@app.api_route("/terms", methods=["GET", "HEAD"], include_in_schema=False)
+async def terms_page() -> RedirectResponse:
+    return RedirectResponse("/pricing#terms", status_code=302)
+
+
+@app.get("/developers", include_in_schema=False)
+async def developers_page(request: Request) -> HTMLResponse:
+    return HTMLResponse(web_pages.developers_page(_public_mcp_url(request)))
+
+
+@app.get("/try", include_in_schema=False)
+async def try_page() -> HTMLResponse:
+    return HTMLResponse(web_pages.try_page())
+
+
+@app.post("/try/search", include_in_schema=False)
+async def try_search(arguments: dict[str, Any] | None = Body(default=None)) -> JSONResponse:
+    """Browser search for the /try page: structured records, plain-language errors."""
+    args = arguments if isinstance(arguments, dict) else {}
+    keywords = args.get("keywords")
+    if not isinstance(keywords, str) or not keywords.strip():
+        return JSONResponse({"message": "Type a word to search for, for example: concrete."}, status_code=422)
+    if len(keywords) > 200:
+        return JSONResponse({"message": "Please use 200 characters or fewer."}, status_code=422)
+    source = args.get("source") if args.get("source") in {"all", "federal", "alberta"} else "all"
+    started = time.monotonic()
+    try:
+        _, structured = await call_tool_text_and_structured(
+            "search_opportunities", {"keywords": keywords.strip(), "source": source, "limit": 20}
+        )
+    except Exception:  # noqa: BLE001 - never show internals to a browser visitor
+        structured = None
+    telemetry.capture("try_search", properties={"source": source, "ms": int((time.monotonic() - started) * 1000)})
+    if not structured:
+        return JSONResponse({"message": "Search did not work just now. Please try again in a minute."}, status_code=502)
+    now = datetime.now(timezone.utc)
+
+    def _still_open(record: dict[str, Any]) -> bool:
+        closes_at = record.get("closes_at")
+        if not closes_at:
+            return True
+        try:
+            return datetime.fromisoformat(closes_at) >= now
+        except ValueError:
+            return True
+
+    records = [r for r in structured.get("opportunities") or [] if _still_open(r)]
+    sources = sorted({r.get("source") for r in records if r.get("source")})
+    summary = (f"{len(records)} open tender{'s' if len(records) != 1 else ''} for “{keywords.strip()}” "
+               f"from {' and '.join(sources) or 'the sources'}.")
+    return JSONResponse({
+        "summary": summary,
+        "opportunities": records,
+        "warnings": [w for w in structured.get("warnings") or [] if not any(t in w.lower() for t in ("fallback", "cache", "planner"))][:3],
+    })
 
 
 @app.get("/health", tags=["system"])
@@ -426,9 +518,17 @@ async def health() -> dict[str, Any]:
     }
 
 
-@app.get("/me", tags=["system"])
-async def me(request: Request) -> dict[str, Any]:
+def _wants_html(request: Request) -> bool:
+    """True for a person's browser navigating to a page (not fetch/API/MCP calls)."""
+    accept = request.headers.get("accept", "")
+    return request.method == "GET" and "text/html" in accept
+
+
+@app.get("/me", tags=["system"], response_model=None)
+async def me(request: Request) -> dict[str, Any] | HTMLResponse:
     """Validate the caller's OAuth token or legacy key and report status."""
+    if not extract_bearer_key(request.headers.get("authorization")) and _wants_html(request):
+        return HTMLResponse(web_pages.me_page(), status_code=200)
     if not extract_bearer_key(request.headers.get("authorization")):
         raise HTTPException(
             status_code=401,
@@ -616,7 +716,7 @@ async def mcp_well_known(request: Request) -> JSONResponse:
     )
 
 
-@app.post("/stripe/webhook", tags=["billing"])
+@app.post("/stripe/webhook", tags=["billing"], include_in_schema=False)
 async def stripe_webhook(request: Request) -> JSONResponse:
     """Stripe webhook: provisions subscribers and revokes cancelled ones.
 
@@ -762,6 +862,72 @@ async def get_profile(request: Request) -> dict[str, Any]:
 async def cohere_analyze(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Analyze a CanadaBuys tender with Cohere Command A+ when configured."""
     return await run_tool("analyze_contract_with_cohere", arguments, _auth(request))
+
+
+# ---------------------------------------------------------------------------
+# Browser-facing errors and /docs request examples.
+# ---------------------------------------------------------------------------
+
+_HTML_ERROR_COPY = {
+    400: ("This link is not complete", "Something in this address is missing or wrong."),
+    401: ("Sign-in happens in your AI app", "You do not need to sign in on this website. Your AI app asks you to sign in when you use a Pro feature."),
+    403: ("This page is not available", "You do not have access to this page."),
+    404: ("Page not found", "We could not find that page. It may have moved, or the address may have a typo."),
+    410: ("This link has expired", "This link is no longer valid. Start again from your AI app."),
+}
+
+
+@app.exception_handler(StarletteHTTPException)
+async def html_friendly_http_errors(request: Request, exc: StarletteHTTPException):
+    """People navigating in a browser get a readable page; API clients keep JSON."""
+    if _wants_html(request) and exc.status_code in _HTML_ERROR_COPY:
+        heading, message = _HTML_ERROR_COPY[exc.status_code]
+        detail = exc.detail if isinstance(exc.detail, str) and exc.status_code != 404 else ""
+        if exc.status_code == 401:
+            detail = ""
+        return HTMLResponse(
+            web_pages.message_page(heading, heading, message, status_hint=detail),
+            status_code=exc.status_code,
+            headers=getattr(exc, "headers", None),
+        )
+    from fastapi.exception_handlers import http_exception_handler
+
+    return await http_exception_handler(request, exc)
+
+
+_EXAMPLE_PROFILE = {"description": "Concrete and excavation contractor", "location": "Calgary, Alberta"}
+_DOCS_EXAMPLES = {
+    "/search": ("search_opportunities", {"keywords": "concrete", "source": "all", "limit": 10}),
+    "/deadlines": ("list_deadlines", {"days": 14, "source": "alberta", "limit": 10}),
+    "/matches": ("find_matching_opportunities", {"profile": _EXAMPLE_PROFILE, "days": 60, "limit": 10}),
+    "/brief": ("daily_bid_brief", {"profile": _EXAMPLE_PROFILE, "days": 14}),
+    "/profile": ("set_business_profile", {"company_name": "Example Concrete Ltd", **_EXAMPLE_PROFILE}),
+}
+
+
+def _openapi_with_examples() -> dict[str, Any]:
+    """Show each REST body's real fields and a working example in /docs."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    from fastapi.openapi.utils import get_openapi
+
+    schema = get_openapi(title=app.title, version=app.version, description=app.description,
+                         routes=app.routes, tags=app.openapi_tags)
+    for path, (tool_name, example) in _DOCS_EXAMPLES.items():
+        operation = schema.get("paths", {}).get(path, {}).get("post")
+        tool_schema = _tool_schema(tool_name)
+        if not operation or not tool_schema:
+            continue
+        body_schema = dict(tool_schema)
+        operation["requestBody"] = {
+            "required": False,
+            "content": {"application/json": {"schema": body_schema, "example": example}},
+        }
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = _openapi_with_examples  # type: ignore[method-assign]
 
 
 if __name__ == "__main__":
