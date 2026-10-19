@@ -2,7 +2,7 @@
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, Response, FileResponse
-from procurement_core.oauth_http import _page
+from procurement_core.web_pages import COPY_SCRIPT, page as _web_page
 from procurement_core.auth_pages import ARTWORK
 
 PRIVACY = """
@@ -26,29 +26,39 @@ PRIVACY = """
 <p>We use this data to provide procurement results, save your settings, authenticate connections, manage subscriptions and operate the service. Google sign-in is separate from marketing or outreach; this flow does not enroll you in a SendGrid campaign.</p>
 <p>Saved account information persists until removed. Authorization sessions and tokens expire, but expiry does not automatically erase their database records or provider logs. You can remove watched opportunities with the connector, disconnect it in your AI client, and contact us to request account-data access, correction, deletion or revocation of outstanding connections. Some billing and operational records may need separate handling.</p>
 <p>Your AI client's handling of conversations and tool results is governed by that client's policies. Revoking Google access does not itself cancel a workspaceAlberta subscription or immediately revoke previously issued MCP tokens; contact us if you need those revoked.</p>
-<p>Contact: <a href="mailto:christian@warreandvavasour.com">christian@warreandvavasour.com</a>.</p>
-<p><a href="/support">Setup and support</a> · <a href="/">Home</a></p>
+<h2>Which policy applies</h2>
+<p>This notice covers the workspaceAlberta connector, its sign-in and Pro subscription. The <a href="https://warreandvavasour.com/privacy-policy">Warre &amp; Vavasour website privacy policy</a> covers the company website only. If they differ for the connector, this notice applies.</p>
+<p>Privacy contact for the connector: <a href="mailto:christian@warreandvavasour.com">christian@warreandvavasour.com</a>.</p>
 """
 
 SUPPORT = """
-<h1>Connect workspaceAlberta</h1>
-<p>Wouldn't it be great if the next contract was easier to find? Search CanadaBuys and Alberta Purchasing Connection from your compatible AI client.</p>
-<ol><li>Add a remote HTTP MCP server with the URL <code>https://elbowsupknivesout.warreandvavasour.com/mcp</code>.</li>
-<li>Try: “Find open Alberta construction opportunities closing in the next 30 days.” Public search does not require an account.</li>
-<li>For saved watchlists, bid scorecards or document analysis, follow your client's Connect prompt. Continue with your Gmail or Google Workspace account, then approve access for the client shown.</li>
-<li>Pro tools require an active workspaceAlberta Pro subscription with the same email. Signing in is free and does not charge you. Subscription payments use our separate Stripe checkout.</li></ol>
-<p>Claude: add the URL in Customize → Connectors. Claude Code: add it as an HTTP MCP server, then use <code>/mcp</code> to authenticate. Other clients need remote MCP and OAuth with PKCE support.</p>
-<p>Google accounts using an external email address without Gmail or Google Workspace are not currently supported, because we must verify ownership of the subscription email. If an email is already attached to another sign-in, contact support to link accounts.</p>
-<h2>Which tools need sign-in?</h2>
-<p>The connector is <strong>authless with partial authentication</strong>: connect and use public tools first; a protected tool returns HTTP 401 so your client can start OAuth sign-in.</p>
-<ul><li><strong>Free sign-in:</strong> <code>set_business_profile</code> and <code>get_my_profile</code> save or read your own profile. No Pro subscription is needed.</li>
-<li><strong>Sign-in and active Pro:</strong> <code>watch_opportunity</code>, <code>list_watchlist</code>, <code>unwatch_opportunity</code>, <code>bid_no_bid_scorecard</code>, <code>process_bid_room</code>, <code>classify_tender</code> and <code>analyze_contract_with_cohere</code>.</li>
-<li><strong>Public:</strong> all remaining tools, including combined search, details, deadlines, daily briefs and matching with an inline profile. Legacy federal tools cover CanadaBuys only; prefer the combined opportunity tools for CanadaBuys and Alberta APC together.</li></ul>
-<p>APC search and matching may send your search terms or business capabilities to Cohere for commodity-filter selection. Document analysis sends data to the providers described in our <a href="/privacy">privacy notice</a>. Bid-room processing has a 145-second overall limit and may ask you to retry a large package with fewer attachments. A timeout means no completed analysis is available.</p>
-<p>Always verify deadlines, eligibility and requirements in the original tender documents. Summaries and scores assist your review; they do not submit a bid.</p>
-<p>For sign-in help, account-data requests or subscription questions: <a href="mailto:christian@warreandvavasour.com">christian@warreandvavasour.com</a>. Include the client name and a description of the issue; never send passwords, API keys or access tokens.</p>
-<p><a href="/blog">News and notes</a> · <a href="/privacy">Privacy</a> · <a href="https://github.com/WarreAndVavasour/WorkspaceAlberta">Source and documentation</a></p>
-"""
+<h1>Help: connect workspaceAlberta</h1>
+<p class="lead">Find the next contract faster: search CanadaBuys and Alberta Purchasing Connection from your AI app.</p>
+<h2>Set up</h2>
+<ol class="steps"><li>Copy this address:
+<div class="urlbox"><code>https://elbowsupknivesout.warreandvavasour.com/mcp</code><button type="button" class="btn primary" data-copy="https://elbowsupknivesout.warreandvavasour.com/mcp">Copy address</button></div></li>
+<li>Add it to your AI app as a connector.
+<ul><li><strong>Claude:</strong> on claude.ai or Claude Desktop, open Customize → Connectors → Add custom connector. It then also works in the Claude phone app.</li>
+<li><strong>Claude Code:</strong> add it as an HTTP MCP server, then type <code>/mcp</code> to sign in.</li>
+<li><strong>Other apps:</strong> the app must support remote MCP servers with OAuth sign-in.</li></ul></li>
+<li>Ask: “Find open Alberta construction opportunities closing in the next 30 days.” Searching does not need an account.</li></ol>
+<p>Want to try first? <a href="/try">Search in your browser</a>.</p>
+<h2>Sign-in and Pro</h2>
+<ul><li>You sign in inside your AI app, not on this website. The app asks the first time you use a feature that needs it.</li>
+<li>Sign in with a <strong>Gmail</strong> or <strong>Google Workspace</strong> account. Other email addresses do not work yet. If you use another email, write to us before you subscribe.</li>
+<li>Pro features need a Pro subscription with the <strong>same email</strong> you sign in with. Signing in is free and does not charge you.</li>
+<li>Subscribe on the <a href="/pricing">pricing page</a> ({price}).</li></ul>
+<h2>Which features need sign-in?</h2>
+<ul><li><strong>Free, no sign-in:</strong> search, tender details, deadlines, daily briefs, and matching against a business description you type in.</li>
+<li><strong>Free sign-in:</strong> save and read your business profile (<code>set_business_profile</code>, <code>get_my_profile</code>).</li>
+<li><strong>Pro:</strong> watchlist (<code>watch_opportunity</code>, <code>list_watchlist</code>, <code>unwatch_opportunity</code>), bid/no-bid scorecard (<code>bid_no_bid_scorecard</code>), document review (<code>process_bid_room</code>), requirements list (<code>classify_tender</code>) and Cohere analysis (<code>analyze_contract_with_cohere</code>).</li></ul>
+<h2>Good to know</h2>
+<ul><li>Some searches send your search words or business description to Cohere, an AI provider, to choose Alberta categories. Document review sends documents to the providers listed in the <a href="/privacy">privacy notice</a>.</li>
+<li>Document review stops after 145 seconds. For a large tender, try again with fewer attachments. If it stops early, no analysis was made.</li>
+<li>Always check deadlines, eligibility and requirements in the original tender documents. Summaries and scores help your review; they do not submit a bid.</li></ul>
+<h2>Contact</h2>
+<p>Sign-in help, account data or subscription questions: <a href="mailto:christian@warreandvavasour.com">christian@warreandvavasour.com</a>. Tell us which AI app you use and what happened. Never send passwords, API keys or access tokens.</p>
+""".replace("{price}", "C$85 / month")
 
 # The listing mark as outlined paths, so it renders the same without any installed font.
 ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#16382d"/><path fill="#fff7e8" d="M236.400390625 315.0H210.296875L195.1796875 256.9921875Q194.125 253.037109375 191.048828125 237.48046875L186.478515625 257.16796875L171.185546875 315.0H145.08203125L120.47265625 219.90234375H143.67578125L159.3203125 292.587890625L160.55078125 286.083984375L162.748046875 275.80078125L177.689453125 219.90234375H204.14453125L218.734375 275.80078125Q219.96484375 280.37109375 222.337890625 292.587890625L224.798828125 280.986328125L238.509765625 219.90234375H261.361328125ZM360.58984375 315.0 349.603515625 283.359375H302.40625L291.419921875 315.0H265.4921875L310.66796875 191.162109375H341.25390625L386.25390625 315.0ZM325.9609375 210.234375 325.43359375 212.16796875Q324.5546875 215.33203125 323.32421875 219.375Q322.09375 223.41796875 308.20703125 263.84765625H343.802734375L331.5859375 228.251953125L327.806640625 216.298828125Z"/></svg>'
@@ -85,13 +95,13 @@ def register_public_pages(app: FastAPI) -> None:
 
     @app.get("/privacy", include_in_schema=False)
     async def privacy():
-        return HTMLResponse(_page("workspaceAlberta privacy", PRIVACY))
+        return HTMLResponse(_web_page("workspaceAlberta privacy notice", PRIVACY))
 
     @app.get("/support", include_in_schema=False)
     async def support():
-        return HTMLResponse(_page("workspaceAlberta setup and support", SUPPORT))
+        return HTMLResponse(_web_page("workspaceAlberta help and setup", SUPPORT, current="/support", script=COPY_SCRIPT))
 
-    @app.get("/requirements-board-template", include_in_schema=True)
+    @app.get("/requirements-board-template", include_in_schema=False)
     async def requirements_board_template():
         """Serve the requirements-board template classify_tender points at."""
         from procurement_core.service import REQUIREMENTS_BOARD_TEMPLATE
