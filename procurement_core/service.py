@@ -1727,8 +1727,11 @@ def render_unified_opportunity_line(opportunity: dict, index: int, extra: str = 
         f"   Reference: `{opportunity.get('reference', '')}`\n"
         f"   Buyer: {buyer}\n"
         f"   Category: {opportunity.get('category', '')}\n"
-        f"   Closing: {closing_text}\n"
+        f"   Closing: {closing_text or 'Not stated in the posting'}\n"
     )
+    posting_url = opportunity.get("url") or _fallback_posting_url(opportunity)
+    if posting_url:
+        output += f"   Posting: {posting_url}\n"
     if extra:
         output += f"   {extra}\n"
     return output
@@ -1918,6 +1921,17 @@ async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> 
         return f"Error: {exc}"
 
 
+CANADABUYS_NOTICE_URL = "https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/{reference}"
+
+
+def _fallback_posting_url(opportunity: dict) -> str:
+    """CanadaBuys rows without a notice URL still have a public notice page by reference."""
+    reference = str(opportunity.get("reference") or "")
+    if re.fullmatch(r"cb-\d+-\d+", reference, flags=re.IGNORECASE):
+        return CANADABUYS_NOTICE_URL.format(reference=reference.lower())
+    return ""
+
+
 def _opportunity_record(opportunity: dict) -> dict[str, Any]:
     """Return a JSON-safe normalized opportunity record for structured output.
 
@@ -1935,6 +1949,8 @@ def _opportunity_record(opportunity: dict) -> dict[str, Any]:
         "closes_at": closing.astimezone(ALBERTA_TZ).isoformat() if closing else "",
         "region": str(opportunity.get("region") or ""),
         "solicitation": str(opportunity.get("solicitation") or ""),
+        "url": str(opportunity.get("url") or "") or _fallback_posting_url(opportunity),
+        "closing_text": format_opportunity_closing(opportunity),
     }
 
 
@@ -1973,7 +1989,8 @@ def _render_search_markdown(opportunities: list[dict], warnings: list[str]) -> s
         return output
 
     output = "# Opportunities\n\n"
-    output += f"Showing {len(opportunities)} combined results from CanadaBuys and Alberta Purchasing Connection.\n\n"
+    sources = sorted({str(o.get("source") or "") for o in opportunities if o.get("source")})
+    output += f"Showing {len(opportunities)} result{'s' if len(opportunities) != 1 else ''} from {' and '.join(sources) or 'CanadaBuys and Alberta Purchasing Connection'}.\n\n"
     for i, opportunity in enumerate(opportunities, 1):
         output += render_unified_opportunity_line(opportunity, i) + "\n"
 
@@ -1989,12 +2006,12 @@ def _render_search_markdown(opportunities: list[dict], warnings: list[str]) -> s
 def _render_deadlines_markdown(opportunities: list[dict], warnings: list[str], days: int) -> str:
     """Render the closing-soon listing (single source for the handler + MCP)."""
     if not opportunities:
-        output = f"No opportunities closing within {days} days."
+        output = f"No opportunities closing within {days} day{'s' if days != 1 else ''}."
         if warnings:
             output += "\n\nWarnings:\n" + "\n".join(f"- {warning}" for warning in warnings)
         return output
 
-    output = f"# Opportunities Closing Within {days} Days\n\n"
+    output = f"# Opportunities Closing Within {days} Day{'s' if days != 1 else ''}\n\n"
     for i, opportunity in enumerate(opportunities, 1):
         time_left = describe_closing(opportunity_closing(opportunity))
         extra = time_left[:1].upper() + time_left[1:] if time_left else ""
