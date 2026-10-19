@@ -43,6 +43,16 @@ def _page(title: str, body: str) -> str:
     )
 
 
+def _authorize_error_body(description: str) -> str:
+    return (
+        "<h1>This sign-in link did not work</h1>"
+        "<p>Start sign-in again from your AI app. Sign-in links open automatically when you use a Pro feature; "
+        "you cannot start them from this website.</p>"
+        f"<p class='error'>Details: {escape(description)}</p>"
+        "<p><a href='/'>Home</a> · <a href='/support'>Get help</a></p>"
+    )
+
+
 def _hidden_params(params: dict[str, str]) -> str:
     parts = []
     for key, value in params.items():
@@ -76,6 +86,10 @@ def _params_from_form(form: dict[str, str]) -> dict[str, str]:
 
 
 def _error_redirect(redirect_uri: str, error: str, description: str, state: str) -> str | None:
+    # RFC 6749 4.1.2.1: never redirect when the client or its redirect_uri is not
+    # verified; show the error page instead.
+    if error in {"invalid_client", "invalid_redirect_uri"} or "redirect_uri" in description:
+        return None
     if not oauth.redirect_uri_allowed(redirect_uri):
         return None
     parsed = urlparse(redirect_uri)
@@ -109,8 +123,17 @@ def _email_form(params: dict[str, str], *, error: str = "", notice: str = "") ->
     )
 
 
+def _consent_target(params: dict[str, str]) -> str:
+    """Name the app being connected in words a person recognises."""
+    host = oauth.consent_hostname(params.get("redirect_uri", ""))
+    name = str(params.get("client_name") or "").strip()
+    if host in oauth.LOOPBACK_HOSTS:
+        return f"{name} (an app on this computer)" if name else "an app on this computer"
+    return f"{name} ({host})" if name and params.get("cimd") != "1" else host
+
+
 def _google_form(params: dict[str, str]) -> str:
-    host = escape(oauth.consent_hostname(params.get("redirect_uri", "")))
+    host = escape(_consent_target(params))
     return auth_page("Sign in to workspaceAlberta", f"""
 <div class="signin-body">
 <h1>Your next<br>possibility awaits.</h1>
@@ -210,7 +233,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             )
             if target:
                 return RedirectResponse(target, status_code=302)
-            return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
+            return HTMLResponse(_page("Sign-in link problem", _authorize_error_body(exc.description)), 400)
         return HTMLResponse(_google_form(checked) if oauth.login_provider() == "google" else _email_form(checked))
 
     @app.post("/authorize/google", include_in_schema=False, response_model=None)
@@ -221,7 +244,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             browser_secret = secrets.token_urlsafe(32)
             target = await asyncio.to_thread(google_login.start, checked, browser_secret)
         except oauth.OAuthError as exc:
-            return HTMLResponse(_page("Sign-in error", f"<p>{escape(exc.description)}</p>"), exc.status_code)
+            return HTMLResponse(_page("Sign-in error", _authorize_error_body(exc.description)), exc.status_code)
         response = RedirectResponse(target, status_code=303)
         response.set_cookie(google_login.BROWSER_COOKIE, browser_secret, max_age=oauth.LOGIN_TTL_SECONDS,
                             secure=True, httponly=True, samesite="lax", path="/")
@@ -234,7 +257,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             result = await asyncio.to_thread(google_login.finish, query.get("state", ""), query.get("code", ""),
                                              request.cookies.get(google_login.BROWSER_COOKIE, ""), query.get("error", ""))
         except oauth.OAuthError as exc:
-            return HTMLResponse(_page("Sign-in error", f"<p>{escape(exc.description)}</p>"), exc.status_code)
+            return HTMLResponse(_page("Sign-in error", _authorize_error_body(exc.description)), exc.status_code)
         return HTMLResponse(_consent_form(result))
 
     @app.post("/authorize", include_in_schema=False, response_model=None)
@@ -250,7 +273,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             try:
                 checked = await asyncio.to_thread(oauth.validate_authorize_params, params)
             except oauth.OAuthError:
-                return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
+                return HTMLResponse(_page("Sign-in link problem", _authorize_error_body(exc.description)), 400)
             return HTMLResponse(_email_form(checked, error=exc.description), 400)
         notice = ""
         if not started.get("delivered") and not started.get("dev_code"):
@@ -289,7 +312,7 @@ def register_oauth_routes(app: FastAPI) -> None:
             session = await asyncio.to_thread(oauth.take_consent, form.get("consent_id", ""),
                                                request.cookies.get(google_login.BROWSER_COOKIE, ""))
         except oauth.OAuthError as exc:
-            return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
+            return HTMLResponse(_page("Sign-in link problem", _authorize_error_body(exc.description)), 400)
         params = session["authorize_params"]
         if form.get("decision") != "approve":
             target = _error_redirect(
@@ -304,7 +327,7 @@ def register_oauth_routes(app: FastAPI) -> None:
         try:
             checked = await asyncio.to_thread(oauth.validate_authorize_params, params)
         except oauth.OAuthError as exc:
-            return HTMLResponse(_page("Authorization error", f"<p class='error'>{escape(exc.description)}</p>"), 400)
+            return HTMLResponse(_page("Sign-in link problem", _authorize_error_body(exc.description)), 400)
         code = await asyncio.to_thread(oauth.issue_authorization_code, session["user"], checked)
         return RedirectResponse(oauth.authorization_redirect(checked, code), status_code=302)
 
