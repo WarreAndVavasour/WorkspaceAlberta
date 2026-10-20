@@ -5,6 +5,17 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    # Wait a week after a release before proposing it. Merged updates deploy
+    # to production automatically, so new releases get time to be checked
+    # (and pulled, if malicious) before they reach the live endpoint.
+    cooldown:
+      default-days: 7
     groups:
       all-dependencies:
         patterns: ["*"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7

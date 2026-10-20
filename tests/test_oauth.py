@@ -129,6 +129,8 @@ class PkceFlowTest(unittest.TestCase):
                 "scope": "pro",
             }
         )
+        # Many tests sign the same address in; the per-email code limit is tested separately.
+        oauth.login_code_limiter().reset()
         started = oauth.start_login("Owner@Shop.ca", params)
         self.assertIn("dev_code", started)
         verified = oauth.verify_login(started["login_id"], started["dev_code"])

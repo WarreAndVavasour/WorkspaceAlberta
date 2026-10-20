@@ -59,6 +59,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from procurement_core import identity, oauth, storage, telemetry, usage  # noqa: E402
+from procurement_core import http_hardening  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
     GateError,
     PRO_TOOLS,
@@ -215,6 +216,9 @@ app.add_middleware(
 register_oauth_routes(app)
 register_bid_room_upload_routes(app)
 register_public_pages(app)
+# Added last, so it is the outermost layer: it sees every response, and keeps
+# any header a route (such as the OAuth sign-in pages) already set.
+app.add_middleware(http_hardening.SecurityHeadersMiddleware)
 
 
 def serialize_tool(tool: Tool) -> dict[str, Any]:
@@ -333,15 +337,21 @@ async def run_tool(
     }
 
 
-async def _read_http_body(receive: Any) -> bytes:
+async def _read_http_body(receive: Any, limit: int | None = None) -> bytes:
+    """Read the whole request body; raise ``BodyTooLarge`` past ``limit`` bytes."""
     chunks: list[bytes] = []
+    size = 0
     more = True
     while more:
         message = await receive()
         if message["type"] == "http.disconnect":
             return b""
         if message["type"] == "http.request":
-            chunks.append(message.get("body") or b"")
+            chunk = message.get("body") or b""
+            size += len(chunk)
+            if limit is not None and size > limit:
+                raise http_hardening.BodyTooLarge(size)
+            chunks.append(chunk)
             more = bool(message.get("more_body"))
         else:
             more = False
@@ -387,7 +397,20 @@ class MCPStreamableHTTPApp:
             return
         body = b""
         if scope.get("type") == "http":
-            body = await _read_http_body(receive)
+            limit = http_hardening.body_limit_bytes()
+            declared = _header_value(scope, "content-length") or ""
+            try:
+                if declared.isdigit() and int(declared) > limit:
+                    raise http_hardening.BodyTooLarge(int(declared))
+                body = await _read_http_body(receive, limit)
+            except http_hardening.BodyTooLarge:
+                http_hardening.security_event("mcp_body_too_large", limit=limit)
+                response = JSONResponse(
+                    {"error": "request_too_large", "error_description": f"MCP request bodies are limited to {limit} bytes."},
+                    status_code=413,
+                )
+                await response(scope, _replay_receive(b""), send)
+                return
             # Partial auth: all protected tools must 401 at the
             # HTTP layer *before* the SDK wraps the refusal in a 200 tool
             # result. initialize, tools/list, and free tools stay open.
