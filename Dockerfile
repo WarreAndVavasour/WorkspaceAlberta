@@ -14,6 +14,12 @@ COPY mcp-servers/canadabuys ./mcp-servers/canadabuys
 
 WORKDIR /app/mcp-servers/canadabuys
 
+# Run as an unprivileged user. The app writes only to $HOME/.canadabuys
+# (CANADABUYS_DATA_DIR default) and /tmp; the code stays root-owned and read-only.
+RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin app
+USER 10001:10001
+ENV HOME=/home/app
+
 ENV PORT=8080
 EXPOSE 8080
 

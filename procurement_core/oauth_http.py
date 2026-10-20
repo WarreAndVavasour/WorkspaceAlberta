@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from procurement_core import oauth, google_login
+from procurement_core.http_hardening import pseudonym, security_event
 from procurement_core.auth_pages import CONSENT, auth_page
 from procurement_core.openai_support import register_openai_routes
 
@@ -299,6 +300,7 @@ def register_oauth_routes(app: FastAPI) -> None:
         try:
             result = await asyncio.to_thread(oauth.verify_login, form.get("login_id", ""), form.get("code", ""))
         except oauth.OAuthError as exc:
+            security_event("login_code_rejected", severity="WARNING", error=exc.error)
             return HTMLResponse(
                 _code_form(form.get("login_id", ""), "", error=exc.description),
                 400,
@@ -314,6 +316,8 @@ def register_oauth_routes(app: FastAPI) -> None:
         except oauth.OAuthError as exc:
             return HTMLResponse(_page("Sign-in link problem", _authorize_error_body(exc.description)), 400)
         params = session["authorize_params"]
+        security_event("oauth_consent", decision="approve" if form.get("decision") == "approve" else "deny",
+                       client=pseudonym(str(params.get("client_id", ""))))
         if form.get("decision") != "approve":
             target = _error_redirect(
                 params.get("redirect_uri", ""),
@@ -345,10 +349,14 @@ def register_oauth_routes(app: FastAPI) -> None:
             form = {str(key): str(value) for key, value in dict(payload or {}).items()}
         else:
             form = await _form_map(request)
+        grant = form.get("grant_type", "")
+        client = pseudonym(form.get("client_id", ""))
         try:
             tokens = await asyncio.to_thread(oauth.issue_tokens, form)
         except oauth.OAuthError as exc:
+            security_event("oauth_token_denied", severity="WARNING", grant_type=grant, client=client, error=exc.error)
             return _oauth_error_response(exc)
+        security_event("oauth_token_issued", grant_type=grant, client=client)
         return JSONResponse(tokens, headers={"Cache-Control": "no-store"})
 
     @app.post("/register", include_in_schema=False)
@@ -359,5 +367,9 @@ def register_oauth_routes(app: FastAPI) -> None:
                 raise oauth.OAuthError(400, "invalid_client_metadata", "JSON object required.")
             created = await asyncio.to_thread(oauth.register_client, payload)
         except oauth.OAuthError as exc:
+            security_event("oauth_client_rejected", severity="WARNING", error=exc.error)
             return _oauth_error_response(exc)
+        hosts = sorted({urlparse(str(uri)).hostname or "" for uri in created.get("redirect_uris") or []})
+        security_event("oauth_client_registered", client=pseudonym(str(created.get("client_id", ""))),
+                       redirect_hosts=",".join(hosts))
         return JSONResponse(created, status_code=201)

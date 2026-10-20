@@ -811,10 +811,31 @@ def send_login_code(email: str, code: str) -> bool:
     return True
 
 
+# At most this many sign-in codes per email address per window, per instance.
+# Stops one client from flooding a mailbox with codes.
+LOGIN_CODES_PER_EMAIL = int(os.environ.get("WA_LOGIN_CODES_PER_EMAIL", "5") or 5)
+LOGIN_CODE_WINDOW_SECONDS = 15 * 60
+_login_code_limiter = None
+
+
+def login_code_limiter():
+    global _login_code_limiter
+    if _login_code_limiter is None:
+        from procurement_core.http_hardening import SlidingWindowLimiter
+
+        _login_code_limiter = SlidingWindowLimiter(LOGIN_CODES_PER_EMAIL, LOGIN_CODE_WINDOW_SECONDS)
+    return _login_code_limiter
+
+
 def start_login(email: str, authorize_params: dict[str, Any]) -> dict[str, Any]:
     email = normalize_email(email)
     if "@" not in email or "." not in email.split("@")[-1]:
         raise OAuthError(400, "invalid_request", "Enter a valid email address.")
+    if not login_code_limiter().allow(email):
+        from procurement_core.http_hardening import pseudonym, security_event
+
+        security_event("login_code_throttled", email=pseudonym(email))
+        raise OAuthError(429, "slow_down", "Too many sign-in codes for this email. Wait 15 minutes and try again.")
     code = f"{secrets.randbelow(1_000_000):06d}"
     login_id = secrets.token_urlsafe(24)
     row = {
