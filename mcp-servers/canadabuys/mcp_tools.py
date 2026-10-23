@@ -57,7 +57,11 @@ PROFILE_ARG_SCHEMA = {
         "industries": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "Optional industries such as steel, lumber, aluminum, construction",
+            "description": (
+                "Optional sector labels for any business. Steel, lumber, aluminum, and "
+                "construction still work. So do software, healthcare, energy, mining, "
+                "training, or your own wording. Labels rank matches. They do not hide other contracts."
+            ),
         },
     },
 }
@@ -78,6 +82,18 @@ _OPPORTUNITY_RECORD_SCHEMA = {
         },
         "region": {"type": "string"},
         "solicitation": {"type": "string"},
+        "unspsc": {"type": "string", "description": "UNSPSC code or codes from the source, when published"},
+        "unspsc_description": {"type": "string"},
+        "gsin": {"type": "string", "description": "GSIN code from CanadaBuys, when published"},
+        "gsin_description": {"type": "string"},
+        "trade_agreements": {"type": "string"},
+        "procurement_method": {"type": "string"},
+        "selection_criteria": {"type": "string"},
+        "domestic_policies": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Buy Canadian and domestic-preference flags read from the notice",
+        },
     },
 }
 
@@ -123,7 +139,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="get_server_guide",
             title="Read the WorkspaceAlberta guide",
-            description="Start here when connecting an agent: explains what WorkspaceAlberta does, the search-to-bid-review workflow, handoff fields, data boundaries and unsupported actions. No model or network call.",
+            description="Start here when connecting an agent: explains what workspaceAlberta does, the search-to-bid-review workflow, handoff fields, data boundaries and unsupported actions. No model or network call.",
             inputSchema={"type": "object", "properties": {}, "additionalProperties": False},
         ),
         Tool(
@@ -135,7 +151,7 @@ def get_mcp_tools() -> list[Tool]:
                 "properties": {
                     "keywords": {
                         "type": "string",
-                        "description": "Search keywords (e.g., 'steel', 'construction', 'IT services')"
+                        "description": "Search keywords for any sector, such as software, training, steel, healthcare, or logistics"
                     },
                     "province": {
                         "type": "string",
@@ -259,7 +275,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="search_opportunities",
             title="Search procurement opportunities",
-            description="Search CanadaBuys and Alberta Purchasing Connection together.",
+            description="Search every open CanadaBuys and Alberta Purchasing Connection notice for any business. Results are not limited to steel, lumber, aluminum, or construction.",
             output_schema=OPPORTUNITIES_OUTPUT_SCHEMA,
             input_schema={
                 "type": "object",
@@ -279,7 +295,7 @@ def get_mcp_tools() -> list[Tool]:
                     },
                     "category": {
                         "type": "string",
-                        "description": "Optional category such as services, goods, construction, steel, lumber"
+                        "description": "Optional category or sector words. Federal search treats this as free text across the full notice, including UNSPSC and GSIN descriptions. Alberta maps services, goods, and construction to APC codes and still searches other words."
                     },
                     "limit": {
                         "type": "integer",
@@ -292,7 +308,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="get_opportunity_details",
             title="Get procurement opportunity details",
-            description="Get details for a federal CanadaBuys or Alberta APC opportunity by reference number.",
+            description="Get details for any federal CanadaBuys or Alberta APC opportunity by reference number, including UNSPSC, GSIN, trade agreements, and Buy Canadian flags when the source published them.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -341,7 +357,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="find_matching_opportunities",
             title="Match procurement opportunities to my business",
-            description="Rank CanadaBuys and Alberta APC opportunities against a business profile. Pass an inline `profile` to describe the business per call.",
+            description="Rank CanadaBuys and Alberta APC opportunities for any business profile, in any sector. Pass an inline `profile` to describe the business per call. Steel, lumber, aluminum, and construction remain valid labels.",
             output_schema=MATCHES_OUTPUT_SCHEMA,
             input_schema={
                 "type": "object",
@@ -363,7 +379,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="daily_bid_brief",
             title="Get my daily bid brief",
-            description="Generate a free daily bid brief from CanadaBuys and Alberta APC for a business profile. Pass an inline `profile` to describe the business per call.",
+            description="Generate a free daily bid brief from the full CanadaBuys and Alberta APC catalogues for any business. Pass an inline `profile` to describe the business per call. Domestic-preference flags are included when a matched notice carries them.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -592,6 +608,46 @@ def get_mcp_tools() -> list[Tool]:
                 "required": ["reference"]
             }
         ),
+        Tool(
+            name="match_industrial_support_programs",
+            title="Match industrial and tariff support",
+            description=(
+                "Read-only catalog of industrial and tariff support for any Canadian business, "
+                "including the October 2026 $8.72 billion federal-provincial package and national "
+                "programs an Alberta firm can ask about: PrairiesCan Regional Tariff Response Initiative, "
+                "the Strategic Response Fund, the Canada Strong Diversification Fund, BDC Pivot to Grow "
+                "and its metals envelope, NRCan First and Last Mile Fund, the Critical Minerals Accelerator, "
+                "and the PSPC Buy Canadian Policy Framework. Ontario-only streams are labeled so an Alberta "
+                "firm can see they do not apply. workspaceAlberta does not apply for funding or decide eligibility."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "description": "What the business does. Any sector, in the business's own words.",
+                    },
+                    "industry": {
+                        "type": "string",
+                        "description": "Optional sector label, such as software, healthcare, steel, or critical minerals.",
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Where the business is located, such as Edmonton, Alberta. Empty assumes Alberta.",
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "description": "Optional company name for the heading.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum programs in the applies section (default 12, max 20).",
+                        "default": 12,
+                    },
+                    "profile": PROFILE_ARG_SCHEMA,
+                },
+            },
+        ),
         # ===== Extension Tools (watchlist + scorecard) =====
         Tool(
             name="watch_opportunity",
@@ -639,7 +695,7 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="bid_no_bid_scorecard",
             title="Assess whether to bid",
-            description="Fast deterministic bid/no-bid checklist for one opportunity: profile fit, runway to closing, region match, and a go/caution/no-go verdict with reasons. No model call.",
+            description="Fast deterministic bid/no-bid checklist for one opportunity in any sector: profile fit, runway to closing, region match, Buy Canadian or other domestic-preference flags, and a go/caution/no-go verdict with reasons. No model call.",
             input_schema={
                 "type": "object",
                 "properties": {
@@ -664,7 +720,11 @@ def get_mcp_tools() -> list[Tool]:
             title=tool.title,
             readOnlyHint=not persistent,
             destructiveHint=tool.name in {"set_business_profile", "unwatch_opportunity"},
-            openWorldHint=tool.name not in {"get_server_guide", "get_my_profile", "check_cohere_status", "list_watchlist", "unwatch_opportunity", "set_business_profile"},
+            openWorldHint=tool.name not in {
+                "get_server_guide", "get_my_profile", "check_cohere_status",
+                "list_watchlist", "unwatch_opportunity", "set_business_profile",
+                "match_industrial_support_programs",
+            },
         )
     from procurement_core.openai_support import annotate_tools
     return annotate_tools(tools)

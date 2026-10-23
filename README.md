@@ -224,6 +224,7 @@ The core tools are:
 - `classify_tender` for a bidder-requirement checklist: tender PDFs are split into clauses, each clause and page is classified with TypeSafe Jev, and the results merge into one requirement per tag with connector, lead time, pages and evidence (see [`pipelines/requirement_classifier/`](pipelines/requirement_classifier/README.md))
 - `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
 - `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
+- `match_industrial_support_programs` for a read-only industrial and tariff support catalog, with Ontario-only streams labeled for Alberta firms
 
 The full tool and REST reference lives in [`docs/mcp-tool-reference.md`](docs/mcp-tool-reference.md); the architecture walkthrough is [`docs/architecture.md`](docs/architecture.md).
 
@@ -235,7 +236,7 @@ E2B sandboxes are the isolated compute layer for heavier bid-room work: opening 
 
 ### Tool calling: how the MCP tools map to Cohere
 
-Every one of the 26 tools above is exposed to the model through one uniform
+Every one of the 27 tools above is exposed to the model through one uniform
 function-calling path. There is no per-tool glue: whatever the MCP server
 declares, the model sees.
 
@@ -244,7 +245,8 @@ declares, the model sees.
 `refresh_data`. Unified search across both sources: `search_opportunities`,
 `get_opportunity_details`, `list_deadlines`. Profile and matching:
 `set_business_profile`, `get_my_profile`, `find_opportunities`,
-`find_matching_opportunities`, `daily_bid_brief`. Alberta Purchasing
+`find_matching_opportunities`, `daily_bid_brief`,
+`match_industrial_support_programs`. Alberta Purchasing
 Connection: `search_alberta_opportunities`, `get_alberta_opportunity_details`,
 `list_alberta_deadlines`, `summarize_alberta_opportunities`,
 `find_alberta_opportunities`. Model review and bid-room:

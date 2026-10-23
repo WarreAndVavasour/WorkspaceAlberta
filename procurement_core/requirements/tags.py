@@ -128,6 +128,11 @@ SUB_TAGS: dict[str, dict[str, str]] = {
         "insurance_requirements": "Can meet the stated insurance types and limits.",
         "safety_requirements": "Meets stated safety program requirements.",
         "schedule_delivery": "Can meet the stated schedule, completion date or delivery time.",
+        "canadian_materials_origin": (
+            "Confirms Canadian origin of steel, aluminum, wood, or other materials, "
+            "including a mill test report or certificate of origin, when a Buy Canadian "
+            "or domestic-materials rule applies."
+        ),
         "other_compliance": "Confirms another stated requirement.",
     },
     "narrative": {
@@ -233,6 +238,7 @@ TAG_ROUTING: dict[str, tuple[str, str, str]] = {
     "declaration.conflict_of_interest": ("person_input", "days", "signature_confirmation"),
     "compliance_confirm.insurance_requirements": ("third_party", "days", "insurer_request"),
     "compliance_confirm.mandatory_qualification": ("document_on_file", "minutes", "compliance_checklist"),
+    "compliance_confirm.canadian_materials_origin": ("third_party", "days", "supplier_request"),
     "narrative.project_understanding": ("person_input", "days", "drafting_interview"),
     "narrative.team_organization": ("person_input", "days", "drafting_interview"),
     "narrative.value_innovation": ("person_input", "days", "drafting_interview"),

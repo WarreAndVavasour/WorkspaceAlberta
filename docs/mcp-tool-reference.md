@@ -19,7 +19,7 @@ Search CanadaBuys and Alberta Purchasing Connection together.
 
 | Arg | Type | Default | Notes |
 |---|---|---|---|
-| `keywords` | string | — | Matched against title, buyer, category, region, description, reference |
+| `keywords` | string | — | Matched against title, buyer, category, region, description, reference, UNSPSC, GSIN, trade agreements, procurement method, and selection criteria |
 | `source` | string | `all` | `all`, `federal` (aliases: canadabuys, canada, national), `alberta` (alias: apc) |
 | `province` | string | — | Region filter; a non-Alberta province skips the APC source with a warning |
 | `category` | string | — | Free text for federal; mapped to APC codes (services→SRV, goods→GD, construction→CNST) for Alberta |
@@ -34,17 +34,20 @@ Results sort newest-posted first. Degraded sources produce warnings, not failure
 Opportunities closing soon across both sources. Args: `days` (30; 1–365), `source`, `province`, `category`, `limit` (20; 1–50). Sorted soonest-closing first with days-remaining annotations.
 
 ### `find_matching_opportunities`
-Ranks both sources against the saved business profile. Args: `days` (60; 1–365), `limit` (15; 1–30). Requires `set_business_profile` first. Scoring is deterministic: title keyword hits (10 pts each), description hits (5), UNSPSC/commodity matches (15/8), delivery-region match (10), closing within 14 days (+5). Each result explains *why* it matched.
+Ranks both sources against any business profile. Args: `days` (60; 1–365), `limit` (15; 1–30), plus an inline `profile` when nothing is saved. Scoring is deterministic and sector-neutral: title keyword hits (10 pts each), description hits (5), classification or commodity hits (8), legacy UNSPSC prefix hits for steel, lumber, aluminum, and construction (15), an industry label in the classification text (12), delivery-region match (10), closing within 14 days (+5), and a domestic-preference bonus (10) for a Canadian or Alberta business when the notice already matches on content. Each result explains *why* it matched. Domestic preference alone does not create a match.
 
 ### `daily_bid_brief`
-The flagship free tool: market snapshot (open federal + Alberta counts), best-fit matches with reasons, closing-soon list, and one suggested action. Args: `days` (14; 1–60), `limit` per section (5; 1–10). Requires a saved profile.
+The flagship free tool: market snapshot (open federal + Alberta counts), best-fit matches with reasons, closing-soon list, and one suggested action. Args: `days` (14; 1–60), `limit` per section (5; 1–10). Uses a saved profile or an inline `profile`. Matched notices that carry a Buy Canadian or other domestic-preference flag say so on the line.
+
+### `match_industrial_support_programs`
+Public and read-only. Matches a description, an `industry`, a `location`, or an inline `profile` to `procurement_core/content/industrial_programs.json`. Covers the 21 October 2026 $8.72 billion federal-provincial package and national programs an Alberta firm can ask about (PrairiesCan Regional Tariff Response Initiative, ISED Strategic Response Fund, Canada Strong Diversification Fund, BDC Pivot to Grow, the BDC metals envelope, NRCan First and Last Mile Fund, the Critical Minerals Accelerator, and the PSPC Buy Canadian Policy Framework). Ontario-only streams are returned in their own section. An empty location is read as Alberta. This does not apply for funding or decide eligibility. REST route: `POST /industrial-programs`.
 
 ---
 
 ## Business Profile Tools
 
 ### `set_business_profile`
-**required:** `description` (what the business does). Optional: `company_name`, `location`. Extracts up to 20 capability keywords, infers industries (steel, lumber, aluminum, construction) from a curated keyword map, and persists to `profile.json`. Single-tenant: one profile per deployment.
+**required:** `description` (what the business does, in any sector). Optional: `company_name`, `location`. Extracts up to 20 capability keywords. Infers sector labels from a hint list that still includes steel, lumber, aluminum, and construction, and keeps a free-text label when the description matches none of those hints. Explicit `industries` on an inline profile are kept as given. Persists to `profile.json` for a signed-in tenant or a local install.
 
 ### `get_my_profile`
 Shows the saved profile: company, location, description, detected industries, keywords used for matching.
@@ -133,6 +136,7 @@ Reports which model route is configured (Cohere direct vs HF router), model IDs,
 | `/deadlines` | POST | `list_deadlines` |
 | `/matches` | POST | `find_matching_opportunities` |
 | `/brief` | POST | `daily_bid_brief` |
+| `/industrial-programs` | POST | `match_industrial_support_programs` |
 | `/bid-room/process` | POST | `process_bid_room` (JSON artifact) |
 | `/bid-room/classify` | POST | `classify_tender` (JSON artifact) |
 | `/profile` | POST / GET | `set_business_profile` / `get_my_profile` |

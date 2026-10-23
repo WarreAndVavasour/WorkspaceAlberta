@@ -4,7 +4,9 @@ The engine. Pure Python, no MCP dependency — every adapter (stdio MCP, Streama
 
 | File | Role |
 |---|---|
-| `service.py` | All 21 tool handlers, `TOOL_NAMES` registry, `call_tool_text()` dispatch, CanadaBuys CSV client + cache, Alberta APC API client, unified normalizer, deterministic profile scoring, Cohere model routing with key failover |
+| `service.py` | All tool handlers, `TOOL_NAMES` registry, `call_tool_text()` dispatch, CanadaBuys CSV client + cache, Alberta APC API client, unified normalizer, deterministic profile scoring for any sector, Cohere model routing with key failover |
+| `domestic_policy.py` | Buy Canadian and domestic-preference flags parsed from CanadaBuys trade agreements and notice text |
+| `industrial_programs.py` | Read-only matcher for `content/industrial_programs.json` |
 | `fixtures.py` | Offline CanadaBuys CSV + APC JSON ingest when `PROCUREMENT_FIXTURE_DIR` is set (tests only; hosted MCP stays live) |
 | `e2b_bid_room.py` | E2B sandbox bid-room processing: payload builders, self-contained sandbox processor script, Cohere Parse document layer, in-sandbox Command A+ review, artifact validation and rendering |
 | `requirements/` | `classify_tender`: PyMuPDF split of tender PDFs into clauses (`extract.py`), the child-process runner and worker that do the parsing (`child.py`, `extract_worker.py`), the requirement tag library (`tags.py`), TypeSafe Jev questions and stdlib client (`jev.py`), and the bounded L0 → pages → L1 → merge pipeline with markdown rendering (`pipeline.py`). Shared with `pipelines/requirement_classifier/` |

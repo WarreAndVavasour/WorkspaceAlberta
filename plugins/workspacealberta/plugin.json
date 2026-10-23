@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "workspacealberta",
-  "version": "1.1.1",
-  "description": "Canadian procurement intelligence from CanadaBuys and Alberta Purchasing Connection.",
+  "version": "1.2.0",
+  "description": "workspaceAlberta reads every CanadaBuys and Alberta Purchasing Connection notice and ranks them for any business.",
   "author": {
     "name": "Warre & Vavasour",
     "url": "https://warreandvavasour.com"
@@ -20,7 +20,7 @@
       "interface": {
         "displayName": "WorkspaceAlberta",
         "shortDescription": "Find Canadian public work",
-        "longDescription": "Wouldn't it be great if your business could find the public work that fits? WorkspaceAlberta connects Canadian companies with CanadaBuys and Alberta Purchasing Connection. Search tenders, compare capability matches, inspect details, and review closing deadlines and daily bid briefs. Public discovery is free. Saving business profiles requires free sign-in; watchlists, scorecards, and advanced bid-room and Cohere reviews require an existing Pro subscription. Results include source evidence and uncertainty; verify official postings and amendments before bidding. WorkspaceAlberta does not submit bids, contact buyers, or guarantee awards. Optional processing uses the subprocessors described in the privacy policy.",
+        "longDescription": "Wouldn't it be great if your business could find the public work that fits? workspaceAlberta reads every CanadaBuys and Alberta Purchasing Connection notice for any business, in any sector. Search tenders, compare capability matches, inspect UNSPSC and GSIN classifications, and review closing deadlines, Buy Canadian signals, and daily bid briefs. A read-only industrial and tariff catalog labels Ontario-only streams so an Alberta firm can see what does not apply. Public discovery is free. Saving business profiles requires free sign-in; watchlists, scorecards, and advanced bid-room and Cohere reviews require an existing Pro subscription. Results include source evidence and uncertainty; verify official postings and amendments before bidding. workspaceAlberta does not submit bids, contact buyers, guarantee awards, or decide funding eligibility. Optional processing uses the subprocessors described in the privacy policy.",
         "developerName": "Warre & Vavasour",
         "category": "Business & Operations",
         "capabilities": [
@@ -94,7 +94,7 @@
         }
       },
       "publication": {
-        "release_notes": "Corporate release from WarreAndVavasour/WorkspaceAlberta. Reuses the production MCP service and adds a provider-neutral procurement skill, scoped verified-email UserInfo, exact OAuth callbacks, and wire-tested tool authentication metadata. Directory publication requires completed publisher verification and review."
+        "release_notes": "v1.2.0: workspaceAlberta matches any business to the full CanadaBuys and Alberta Purchasing Connection catalogues, keeps UNSPSC, GSIN, and trade-agreement fields, surfaces Buy Canadian and domestic-preference signals, and adds a read-only industrial and tariff support catalog. Ontario-only streams are labeled so an Alberta firm can see what does not apply."
       }
     }
   },
