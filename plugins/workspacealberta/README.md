@@ -1,26 +1,28 @@
-# WorkspaceAlberta
+# workspaceAlberta
 
 Wouldn't it be great if the companies doing the work could find the public work that fits them?
-WorkspaceAlberta helps Canadian owners and teams find and assess tenders from CanadaBuys and
-Alberta Purchasing Connection (APC). It amplifies their judgment; it does not submit bids,
-contact buyers or guarantee awards.
+workspaceAlberta helps any Canadian business find and assess tenders from the full CanadaBuys
+and Alberta Purchasing Connection (APC) catalogues. Steel, lumber, aluminum, and construction
+are examples, not a limit. It amplifies their judgment; it does not submit bids, contact buyers,
+guarantee awards, or decide funding eligibility.
 
 ## What the plugin contains
 
-- **The `procurement` skill** (`skills/procurement/SKILL.md`): how to search tenders, match them
-  to a business, read closing dates as reported, and present evidence and uncertainty.
+- **The `procurement` skill** (`skills/procurement/SKILL.md`): how to search tenders for any
+  business, match them across the full catalogues, read closing dates as reported, surface
+  Buy Canadian signals, and present evidence and uncertainty.
 - **The requirements board template** (`skills/procurement/requirements-board.html`): after the
   `classify_tender` tool returns its JSON (schema `wa.tender_requirements.v1`), Claude fills this
   self-contained page with the result. It shows the tender's requirements as a graph, a
   start-by timeline counted back from the closing time, and a checklist. The page loads only
   Google Fonts from outside; the data stays inside the page.
-- **One MCP server reference** (`.mcp.json`): the hosted WorkspaceAlberta server at
-  `https://elbowsupknivesout.warreandvavasour.com/mcp`, the same server as the WorkspaceAlberta
+- **One MCP server reference** (`.mcp.json`): the hosted workspaceAlberta server at
+  `https://elbowsupknivesout.warreandvavasour.com/mcp`, the same server as the workspaceAlberta
   connector.
 
 ## What it runs, sends and fetches
 
-The plugin runs no local code, hooks or scripts. All tools run on the hosted WorkspaceAlberta
+The plugin runs no local code, hooks or scripts. All tools run on the hosted workspaceAlberta
 server. Search, deadlines, matching and daily briefs are free and need no account. Saving a
 business profile needs a free sign-in. Watchlists, bid/no-bid scorecards, bid-room processing,
 tender classification and contract analysis need sign-in and an active Pro subscription;

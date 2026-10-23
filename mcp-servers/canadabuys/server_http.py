@@ -154,7 +154,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
 
 mcp_server = Server(
     "canadabuys",
-    version="1.1.1",
+    version="1.2.0",
     instructions=SERVER_INSTRUCTIONS,
     on_list_tools=handle_list_tools,
     on_call_tool=handle_call_tool,
@@ -186,11 +186,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="WorkspaceAlberta Procurement API",
     description=(
-        "Custom procurement MCP server and REST API for CanadaBuys, "
-        "Alberta Purchasing Connection, business-profile matching, daily bid "
-        "briefs, and optional Cohere Command A+ analysis."
+        "workspaceAlberta procurement API for every CanadaBuys and Alberta "
+        "Purchasing Connection notice, matched to any business, with Buy "
+        "Canadian signals, daily bid briefs, and a read-only industrial "
+        "support catalog."
     ),
-    version="1.1.1",
+    version="1.2.0",
     lifespan=lifespan,
     # Swagger lists tags in this order: what a first-time visitor wants first.
     openapi_tags=[
@@ -729,8 +730,8 @@ async def mcp_well_known(request: Request) -> JSONResponse:
             "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
             "name": "io.github.HarleyCoops/workspace-alberta",
             "description": (
-                "Canadian procurement intelligence: CanadaBuys and Alberta "
-                "tenders, ranked for your shop."
+                "workspaceAlberta reads every CanadaBuys and Alberta "
+                "Purchasing Connection notice and ranks them for any business."
             ),
             "version": app.version,
             "repository": {"url": REPO_URL, "source": "github"},
@@ -812,6 +813,12 @@ async def matches(request: Request, arguments: dict[str, Any] | None = Body(defa
 async def brief(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Generate the daily bid brief."""
     return await run_tool("daily_bid_brief", arguments, _auth(request))
+
+
+@app.post("/industrial-programs", tags=["procurement"])
+async def industrial_programs(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Match a business to the read-only industrial and tariff support catalog."""
+    return await run_tool("match_industrial_support_programs", arguments, _auth(request))
 
 
 @app.post("/bid-room/process", tags=["bid-room"])
@@ -924,6 +931,10 @@ _DOCS_EXAMPLES = {
     "/deadlines": ("list_deadlines", {"days": 14, "source": "alberta", "limit": 10}),
     "/matches": ("find_matching_opportunities", {"profile": _EXAMPLE_PROFILE, "days": 60, "limit": 10}),
     "/brief": ("daily_bid_brief", {"profile": _EXAMPLE_PROFILE, "days": 14}),
+    "/industrial-programs": (
+        "match_industrial_support_programs",
+        {"description": "Steel fabrication and welding", "location": "Edmonton, Alberta"},
+    ),
     "/profile": ("set_business_profile", {"company_name": "Example Concrete Ltd", **_EXAMPLE_PROFILE}),
 }
 

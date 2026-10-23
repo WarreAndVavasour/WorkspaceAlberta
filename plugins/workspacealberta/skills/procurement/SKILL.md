@@ -1,17 +1,17 @@
 ---
 name: procurement
-description: Find and assess Canadian public procurement work through WorkspaceAlberta, using CanadaBuys and Alberta Purchasing Connection. Use for tender searches, capability matching, closing deadlines, bid briefs, saved business profiles, watchlists, and evidence-grounded bid reviews.
+description: Find and assess Canadian public procurement for any business through workspaceAlberta, using the full CanadaBuys and Alberta Purchasing Connection catalogues. Use for tender searches, capability matching, Buy Canadian signals, closing deadlines, bid briefs, industrial support, saved business profiles, watchlists, and evidence-grounded bid reviews.
 ---
 
-# WorkspaceAlberta procurement
+# workspaceAlberta procurement
 
 Wouldn't it be great if the companies doing the work could find the public work
-that fits them? Help Canadian owners and teams discover and assess tenders. This
+that fits them? Help any Canadian business discover and assess tenders. This
 connection amplifies their judgment; it does not submit bids or guarantee awards.
 
 ## Start with the connected service
 
-Use the WorkspaceAlberta MCP tools. Discover their current schemas and consult
+Use the workspaceAlberta MCP tools. Discover their current schemas and consult
 `get_server_guide` for supported behavior and data boundaries. Do not require a
 local checkout, shell, API key in chat, Claude-specific feature, or installed
 package. When the connection is unavailable, report that and do not invent a
@@ -21,6 +21,27 @@ For combined CanadaBuys and Alberta Purchasing Connection discovery, prefer
 `search_opportunities`, `find_matching_opportunities`, `list_deadlines`, and
 `daily_bid_brief`. Use `get_opportunity_details` to inspect promising references.
 Legacy federal-only tools omit Alberta APC; use them only for federal-only work.
+
+## Any business, both catalogues
+
+workspaceAlberta matches the full CanadaBuys and Alberta Purchasing Connection
+catalogues. Steel, lumber, aluminum, and construction are examples, not a
+limit. Software, training, engineering, healthcare, energy, mining, logistics,
+agriculture, defence, manufacturing, and any other description are matched
+the same way. Use the UNSPSC, GSIN, trade-agreement, procurement-method, and
+selection-criteria fields when they are present.
+
+When a notice carries Buy Canadian or domestic-preference flags, show them
+with the source wording: Canadian materials, strategic Canadian suppliers and
+content, Canadian suppliers only, reciprocal procurement, or CFTA-only
+coverage. A flag is evidence from the notice. It is not proof the business
+qualifies.
+
+`match_industrial_support_programs` is a public read-only catalog of industrial
+and tariff support, including the October 2026 federal-provincial package and
+national programs an Alberta firm can ask about. Ontario-only streams are
+labeled so an Alberta firm can see they do not apply. Do not present the
+catalog as an application, an award, or an eligibility decision.
 
 Use business facts already supplied. Ask only for missing constraints needed for
 the requested task. For anonymous matching, pass an inline `profile`; do not save

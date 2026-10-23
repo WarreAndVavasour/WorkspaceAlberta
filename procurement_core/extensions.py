@@ -25,6 +25,8 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from procurement_core.domestic_policy import format_domestic_policies, is_canadian_business
+
 WATCHLIST_FILENAME = "watchlist.json"
 
 
@@ -277,6 +279,26 @@ async def bid_no_bid_scorecard(args: dict) -> str:
     # 4. Buyer
     buyer = opportunity.get("buyer", "")
     checks.append(("Buyer", "info", f"{buyer[:70] or 'not listed'} ({opportunity.get('source', '')})"))
+
+    # 5. Buy Canadian / domestic preference, read from the notice
+    policies = list(opportunity.get("domestic_policies") or [])
+    if policies:
+        detail = format_domestic_policies(policies, short=True)
+        if is_canadian_business(location):
+            checks.append(("Domestic preference", "favourable", detail))
+            positives += 1
+        elif location:
+            checks.append((
+                "Domestic preference",
+                "check",
+                f"{detail}. The location on the profile does not read as Canadian or Alberta.",
+            ))
+        else:
+            checks.append((
+                "Domestic preference",
+                "info",
+                f"{detail}. Add a Canadian or Alberta location for a supplier read.",
+            ))
 
     # Verdict
     net = positives - negatives

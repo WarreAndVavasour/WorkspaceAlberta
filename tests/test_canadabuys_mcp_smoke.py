@@ -25,6 +25,7 @@ EXPECTED_TOOLS = {
     "list_deadlines",
     "find_matching_opportunities",
     "daily_bid_brief",
+    "match_industrial_support_programs",
     "process_bid_room",
     "classify_tender",
     "check_cohere_status",

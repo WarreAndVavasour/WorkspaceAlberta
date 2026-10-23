@@ -21,9 +21,10 @@ Layout (top to bottom):
 3.  **Alberta Purchasing Connection client** — filter/payload builders,
     search (:func:`search_alberta_api`), public detail fetch, markdown
     renderers, and profile scoring for APC rows.
-4.  **Business profile** — keyword extraction, industry inference,
-    UNSPSC-prefix maps, and deterministic contract scoring
-    (:func:`score_contract`). Profiles persist to ``DATA_DIR/profile.json``.
+4.  **Business profile** — keyword extraction, open industry inference
+    (the four legacy sectors plus any other description), UNSPSC and GSIN
+    hints, and deterministic contract scoring (:func:`score_contract`).
+    Profiles persist to ``DATA_DIR/profile.json``.
 5.  **Unified opportunity layer** — normalizes CanadaBuys CSV rows and APC
     JSON into one shared shape (see :func:`normalize_canadabuys_contract` and
     :func:`normalize_alberta_opportunity`) so search, deadlines, matching, and
@@ -68,6 +69,13 @@ from urllib.request import Request, urlopen
 
 from . import fixtures, usage
 from .apc_documents import APC_ACCESS_MESSAGE, apc_document_manifest, apc_posting_url
+from .domestic_policy import (
+    detect_domestic_policies,
+    domestic_preference_bonus,
+    format_domestic_policies,
+    render_domestic_policy_section,
+)
+from .industrial_programs import render_program_matches
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -392,6 +400,19 @@ def get_field(contract: dict, *field_names: str) -> str:
         if val:
             return str(val)
     return ""
+
+
+def _flat_text(value: Any) -> str:
+    """Flatten a commodity code or title list into one string."""
+    if isinstance(value, list):
+        parts: list[str] = []
+        for item in value:
+            if isinstance(item, dict):
+                parts.append(" ".join(str(piece) for piece in item.values() if piece))
+            elif item:
+                parts.append(str(item))
+        return ", ".join(part for part in parts if part)
+    return str(value or "")
 
 
 def get_cohere_api_key() -> tuple[str, str]:
@@ -1105,6 +1126,13 @@ def render_alberta_details_markdown(data: dict) -> str:
         lines.append(str(description)[:3000])
         lines.append("")
 
+    lines.extend(render_domestic_policy_section(detect_domestic_policies(
+        "",
+        str(title),
+        str(description),
+        _flat_text(commodity_codes),
+    )))
+
     requirements = opp.get("additionalRequirements") or ""
     if requirements:
         lines.append("## Additional Requirements")
@@ -1225,6 +1253,23 @@ def score_alberta_opportunity(opp: dict, profile: dict) -> tuple[int, list[str]]
         score += 8 * len(commodity_matches)
         reasons.append(f"commodity matches: {', '.join(commodity_matches[:3])}")
 
+    content_fit = bool(title_matches or desc_matches or commodity_matches)
+    codes = _flat_text(opp.get("commodityCodes")).lower()
+    for industry in profile.get("industries") or []:
+        label = str(industry).strip().lower()
+        if not label:
+            continue
+        prefixes = INDUSTRY_UNSPSC.get(label, [])
+        if any(prefix and prefix in codes for prefix in prefixes):
+            score += 15
+            reasons.append(f"UNSPSC code matches {industry}")
+            content_fit = True
+            continue
+        if len(label) >= 4 and label in f"{commodity_titles} {desc}":
+            score += 12
+            reasons.append(f"commodity matches: {industry}")
+            content_fit = True
+
     if location:
         loc_parts = [p.strip().lower() for p in location.replace(",", " ").split()]
         for part in loc_parts:
@@ -1240,12 +1285,23 @@ def score_alberta_opportunity(opp: dict, profile: dict) -> tuple[int, list[str]]
             score += 5
             reasons.append(describe_days_until(days_until))
 
+    if content_fit:
+        notice = " ".join([
+            title, desc, commodity_titles,
+            str(opp.get("additionalRequirements") or ""),
+        ])
+        bonus, bonus_reasons = domestic_preference_bonus(detect_domestic_policies("", notice), location)
+        score += bonus
+        reasons.extend(bonus_reasons)
+
     return score, reasons
 
 
 # ============== Business Profile ==============
 
-# Industry keywords for matching (from pipeline config)
+# Hint lexicon only. A business outside this list is still matched: callers
+# may pass any industry string, and descriptions that miss the lexicon keep
+# a free-text label. Nothing here hides a contract.
 INDUSTRY_KEYWORDS = {
     "steel": ["steel", "stainless", "carbon steel", "structural steel", "metal fabrication",
               "welding", "iron", "metalwork", "rebar", "girder", "beam"],
@@ -1254,15 +1310,74 @@ INDUSTRY_KEYWORDS = {
     "aluminum": ["aluminum", "aluminium", "bauxite", "smelting", "extrusion"],
     "construction": ["construction", "building", "demolition", "renovation", "contractor",
                      "infrastructure", "excavation", "concrete", "masonry"],
+    "information technology": ["software", "artificial intelligence", "machine learning",
+                               "information technology", "cybersecurity", "saas",
+                               "cloud computing", "data analytics", "it services", "ai"],
+    "training": ["training", "corporate training", "curriculum", "workshop",
+                 "professional development", "e-learning"],
+    "engineering": ["engineering", "engineer", "engineers"],
+    "consulting": ["consulting", "advisory", "management consulting"],
+    "energy": ["energy", "renewable", "solar", "wind power", "electricity", "power generation"],
+    "oil and gas": ["oil and gas", "petroleum", "pipeline", "bitumen", "natural gas",
+                    "oil sands", "oilsands", "lng"],
+    "mining": ["mining", "critical minerals", "mineral", "lithium", "potash", "ore"],
+    "healthcare": ["healthcare", "health care", "hospital", "hospitals", "clinical",
+                   "medical", "nursing"],
+    "facilities": ["janitorial", "custodial", "facilities management", "cleaning services"],
+    "logistics": ["logistics", "freight", "warehousing", "trucking"],
+    "agriculture": ["agriculture", "farming", "livestock", "agri-food", "agrifood"],
+    "defence": ["defence", "defense", "military", "ammunition"],
+    "manufacturing": ["manufacturing", "manufacturer", "machining"],
 }
 
-# UNSPSC code prefixes by industry (from pipeline config)
+# Optional UNSPSC prefixes. A hit is a bonus for these legacy sectors.
+# Every other industry matches on the code description, GSIN text, or the
+# industry words themselves. Prefixes never exclude a contract.
 INDUSTRY_UNSPSC = {
     "steel": ["111017", "301017", "111016", "232400", "251000", "221000", "301000"],
     "lumber": ["1112", "301515", "111215", "301524", "301521"],
     "aluminum": ["1111", "111106", "301116"],
     "construction": ["721", "301", "221", "251"],
 }
+
+_PROFILE_STOPWORDS = frozenset({
+    "that", "this", "with", "from", "have", "been", "will", "your", "they",
+    "their", "about", "which", "would", "could", "should", "these", "those",
+    "other", "some", "into", "also", "make", "made", "and", "the", "for",
+    "our", "are", "was", "business", "company", "provide", "provides",
+    "providing", "including", "based", "located",
+})
+
+
+def keyword_in_text(keyword: str, text: str) -> bool:
+    """True when a lexicon keyword appears as a word or a phrase, not inside another word."""
+    token = keyword.lower().strip()
+    if not token or not text:
+        return False
+    if " " in token or "-" in token:
+        return token in text
+    return re.search(rf"\b{re.escape(token)}\b", text) is not None
+
+
+def free_text_industries(description: str) -> list[str]:
+    """Turn an unmatched description into a few sector labels.
+
+    Used only when the hint lexicon matches nothing, so an arbitrary business
+    still has an industry string to score against notice text.
+    """
+    labels: list[str] = []
+    clauses = re.split(r"[.;:\n]|\band\b", description.lower())
+    for clause in clauses:
+        words = re.findall(r"[a-z][a-z0-9+/-]{2,}", clause)
+        content = [word for word in words if word not in _PROFILE_STOPWORDS and len(word) >= 4]
+        if not content:
+            continue
+        label = " ".join(content[:4])
+        if label not in labels:
+            labels.append(label)
+        if len(labels) >= 3:
+            break
+    return labels
 
 
 def load_profile() -> dict:
@@ -1335,44 +1450,67 @@ def resolve_profile(args: dict) -> dict:
 
 
 def extract_keywords(description: str) -> list[str]:
-    """Extract relevant keywords from business description."""
+    """Extract up to 20 capability keywords from any business description."""
     if not description:
         return []
 
     desc_lower = description.lower()
     found = []
 
-    # Check for industry keywords
-    for industry, keywords in INDUSTRY_KEYWORDS.items():
+    for _industry, keywords in INDUSTRY_KEYWORDS.items():
         for kw in keywords:
-            if kw in desc_lower and kw not in found:
+            if keyword_in_text(kw, desc_lower) and kw not in found:
                 found.append(kw)
 
-    # Also extract significant words (nouns likely to appear in contracts)
     words = re.findall(r'\b[a-z]{4,}\b', desc_lower)
     for word in words:
-        if word not in found and word not in ["that", "this", "with", "from", "have", "been", "will", "your", "they", "their", "about", "which", "would", "could", "should", "these", "those", "other", "some", "into", "also", "make", "made"]:
+        if word not in found and word not in _PROFILE_STOPWORDS:
             found.append(word)
 
-    return found[:20]  # Limit to 20 keywords
+    return found[:20]
 
 
 def infer_industries(keywords: list[str], description: str = "") -> list[str]:
-    """Infer which industries match based on keywords."""
-    industries = set()
-    text = " ".join(keywords) + " " + description.lower()
+    """Infer sector labels from a description.
 
+    Known sectors, including steel, lumber, aluminum, and construction, are
+    detected when their words appear. Any other description becomes free-text
+    labels. The result is a hint for scoring, not a filter.
+    """
+    text = f"{' '.join(keywords)} {description}".lower()
+    found: list[str] = []
     for industry, kw_list in INDUSTRY_KEYWORDS.items():
-        for kw in kw_list:
-            if kw in text:
-                industries.add(industry)
-                break
+        if any(keyword_in_text(kw, text) for kw in kw_list):
+            found.append(industry)
+    if not found:
+        found.extend(free_text_industries(description))
+    return found
 
-    return list(industries)
+
+def federal_classification_text(contract: dict) -> str:
+    """UNSPSC, GSIN, category, method, and criteria text for one CanadaBuys row."""
+    return " ".join(
+        get_field(contract, *names)
+        for names in (
+            ("unspsc",),
+            ("unspscDescription-eng", "unspscDescription-fra"),
+            ("gsin-nibs",),
+            ("gsinDescription-nibsDescription-eng", "gsinDescription-nibsDescription-fra"),
+            ("procurementCategory-categorieApprovisionnement",),
+            ("procurementMethod-methodeApprovisionnement-eng",),
+            ("selectionCriteria-criteresSelection-eng",),
+            ("tradeAgreements-accordsCommerciaux-eng",),
+        )
+    ).lower()
 
 
 def score_contract(contract: dict, profile: dict) -> tuple[int, list[str]]:
-    """Score a contract against a business profile. Returns (score, reasons)."""
+    """Score a contract against a business profile. Returns (score, reasons).
+
+    Any sector can score. Legacy UNSPSC prefixes still bonus steel, lumber,
+    aluminum, and construction. Other industries score when their label or
+    capability words appear in the classification text.
+    """
     score = 0
     reasons = []
 
@@ -1384,6 +1522,7 @@ def score_contract(contract: dict, profile: dict) -> tuple[int, list[str]]:
     desc = get_field(contract, "tenderDescription-descriptionAppelOffres-eng").lower()
     regions = f"{get_field(contract, 'regionsOfOpportunity-regionAppelOffres-eng')} {get_field(contract, 'regionsOfDelivery-regionsLivraison-eng')}".lower()
     unspsc = get_field(contract, "unspsc", "")
+    classification = federal_classification_text(contract)
 
     # Keyword matches in title (high value)
     title_matches = [kw for kw in keywords if kw.lower() in title]
@@ -1397,14 +1536,32 @@ def score_contract(contract: dict, profile: dict) -> tuple[int, list[str]]:
         score += 5 * len(desc_matches)
         reasons.append(f"description matches: {', '.join(desc_matches[:3])}")
 
-    # UNSPSC code matches
+    class_matches = [
+        kw for kw in keywords
+        if kw.lower() in classification and kw.lower() not in title and kw.lower() not in desc
+    ]
+    if class_matches:
+        score += 8 * len(class_matches)
+        reasons.append(f"classification matches: {', '.join(class_matches[:3])}")
+
+    content_fit = bool(title_matches or desc_matches or class_matches)
     for industry in industries:
-        prefixes = INDUSTRY_UNSPSC.get(industry, [])
+        label = str(industry).strip()
+        prefixes = INDUSTRY_UNSPSC.get(label, []) or INDUSTRY_UNSPSC.get(label.lower(), [])
+        matched_prefix = False
         for prefix in prefixes:
-            if prefix in unspsc:
+            if prefix and prefix in unspsc:
                 score += 15
                 reasons.append(f"UNSPSC code matches {industry}")
+                content_fit = True
+                matched_prefix = True
                 break
+        if matched_prefix:
+            continue
+        if len(label) >= 4 and label.lower() in classification:
+            score += 12
+            reasons.append(f"classification matches: {industry}")
+            content_fit = True
 
     # Region match
     if location:
@@ -1423,6 +1580,16 @@ def score_contract(contract: dict, profile: dict) -> tuple[int, list[str]]:
         if 0 < days_until <= 14:
             score += 5
             reasons.append(describe_days_until(days_until))
+
+    if content_fit:
+        policies = detect_domestic_policies(
+            get_field(contract, "tradeAgreements-accordsCommerciaux-eng"),
+            title,
+            desc,
+        )
+        bonus, bonus_reasons = domestic_preference_bonus(policies, location)
+        score += bonus
+        reasons.extend(bonus_reasons)
 
     return score, reasons
 
@@ -1446,7 +1613,33 @@ def render_contract_markdown(contract: dict) -> str:
         closing_text += f" — {time_left}"
     lines.append(f"- **Closing Date:** {closing_text}")
     lines.append(f"- **Entity:** {get_field(contract, 'contractingEntityName-nomEntitContractante-eng', 'Organization')}")
+    category = get_field(contract, "procurementCategory-categorieApprovisionnement")
+    if category:
+        lines.append(f"- **Category:** {category}")
+    method = get_field(contract, "procurementMethod-methodeApprovisionnement-eng")
+    if method:
+        lines.append(f"- **Procurement method:** {method}")
+    criteria = get_field(contract, "selectionCriteria-criteresSelection-eng")
+    if criteria:
+        lines.append(f"- **Selection criteria:** {criteria}")
     lines.append("")
+
+    unspsc = get_field(contract, "unspsc")
+    unspsc_description = get_field(contract, "unspscDescription-eng", "unspscDescription-fra")
+    gsin = get_field(contract, "gsin-nibs")
+    gsin_description = get_field(contract, "gsinDescription-nibsDescription-eng", "gsinDescription-nibsDescription-fra")
+    trade = get_field(contract, "tradeAgreements-accordsCommerciaux-eng")
+    if any((unspsc, unspsc_description, gsin, gsin_description, trade)):
+        lines.append("## Classification")
+        if unspsc or unspsc_description:
+            lines.append(f"- **UNSPSC:** {unspsc} {unspsc_description}".strip())
+        if gsin or gsin_description:
+            lines.append(f"- **GSIN:** {gsin} {gsin_description}".strip())
+        if trade:
+            lines.append(f"- **Trade agreements:** {trade}")
+        lines.append("")
+
+    lines.extend(render_domestic_policy_section(detect_domestic_policies(trade, title, get_field(contract, "tenderDescription-descriptionAppelOffres-eng"))))
 
     lines.append("## Regions")
     lines.append(f"- **Opportunity:** {get_field(contract, 'regionsOfOpportunity-regionAppelOffres-eng', 'Regions')}")
@@ -1522,20 +1715,35 @@ def load_contracts_for_unified() -> tuple[list[dict], list[str]]:
 
 
 def normalize_canadabuys_contract(contract: dict) -> dict[str, Any]:
-    """Normalize a CanadaBuys row to the shared opportunity shape."""
+    """Normalize a CanadaBuys row to the shared opportunity shape.
+
+    Classification columns stay on the record so search, matching, briefs,
+    and detail views can use the full open-data taxonomy.
+    """
+    title = get_field(contract, "title-titre-eng", "title-titre-fra") or "Untitled federal opportunity"
+    description = get_field(contract, "tenderDescription-descriptionAppelOffres-eng")
+    trade = get_field(contract, "tradeAgreements-accordsCommerciaux-eng")
     return {
         "source": "CanadaBuys",
         "source_key": "federal",
         "reference": get_field(contract, "referenceNumber-numeroReference"),
         "solicitation": get_field(contract, "solicitationNumber-numeroSollicitation"),
-        "title": get_field(contract, "title-titre-eng", "title-titre-fra") or "Untitled federal opportunity",
+        "title": title,
         "buyer": get_field(contract, "contractingEntityName-nomEntitContractante-eng"),
         "status": get_field(contract, "tenderStatus-appelOffresStatut-eng"),
         "category": get_field(contract, "procurementCategory-categorieApprovisionnement"),
         "posted": get_field(contract, "publicationDate-datePublication"),
         "closing": get_field(contract, "tenderClosingDate-appelOffresDateCloture"),
         "region": get_field(contract, "regionsOfDelivery-regionsLivraison-eng", "regionsOfOpportunity-regionAppelOffres-eng"),
-        "description": get_field(contract, "tenderDescription-descriptionAppelOffres-eng"),
+        "description": description,
+        "unspsc": get_field(contract, "unspsc"),
+        "unspsc_description": get_field(contract, "unspscDescription-eng", "unspscDescription-fra"),
+        "gsin": get_field(contract, "gsin-nibs"),
+        "gsin_description": get_field(contract, "gsinDescription-nibsDescription-eng", "gsinDescription-nibsDescription-fra"),
+        "trade_agreements": trade,
+        "procurement_method": get_field(contract, "procurementMethod-methodeApprovisionnement-eng"),
+        "selection_criteria": get_field(contract, "selectionCriteria-criteresSelection-eng"),
+        "domestic_policies": detect_domestic_policies(trade, title, description),
         "url": get_field(contract, "noticeURL-URLavis-eng"),
         "raw": contract,
     }
@@ -1558,19 +1766,34 @@ def normalize_alberta_opportunity(opp: dict) -> dict[str, Any]:
     else:
         region_text = str(region)
 
+    title = opp.get("title") or opp.get("shortTitle") or "Untitled Alberta opportunity"
+    description = str(opp.get("projectDescription") or "")
+    commodity_codes = _flat_text(opp.get("commodityCodes"))
+    commodity_titles = _flat_text(opp.get("commodityCodeTitles"))
     return {
         "source": "Alberta Purchasing Connection",
         "source_key": "alberta",
         "reference": ref,
         "solicitation": opp.get("solicitationNumber", ""),
-        "title": opp.get("title") or opp.get("shortTitle") or "Untitled Alberta opportunity",
+        "title": title,
         "buyer": opp.get("contractingOrganization", ""),
         "status": opp.get("statusCode", ""),
         "category": ALBERTA_CATEGORY_LABELS.get(opp.get("categoryCode"), opp.get("categoryCode", "")),
+        "category_code": str(opp.get("categoryCode") or ""),
         "posted": opp.get("postDateTime", ""),
         "closing": opp.get("closeDateTime", ""),
         "region": region_text,
-        "description": opp.get("projectDescription", ""),
+        "description": description,
+        "unspsc": commodity_codes,
+        "unspsc_description": commodity_titles,
+        "commodity_codes": commodity_codes,
+        "commodity_titles": commodity_titles,
+        "gsin": "",
+        "gsin_description": "",
+        "trade_agreements": "",
+        "procurement_method": str(opp.get("solicitationTypeCode") or ""),
+        "selection_criteria": "",
+        "domestic_policies": detect_domestic_policies("", title, description, commodity_titles),
         "url": opp.get("externalOriginLink") or url,
         "raw": opp,
     }
@@ -1595,11 +1818,17 @@ def opportunity_date(opportunity: dict, field: str) -> datetime:
 
 
 def opportunity_text(opportunity: dict) -> str:
-    """Return searchable text for a normalized opportunity."""
-    return " ".join(
-        str(opportunity.get(field, ""))
-        for field in ("title", "buyer", "category", "region", "description", "solicitation", "reference")
-    ).lower()
+    """Return searchable text for a normalized opportunity, including classification."""
+    fields = (
+        "title", "buyer", "category", "region", "description", "solicitation", "reference",
+        "unspsc", "unspsc_description", "gsin", "gsin_description", "trade_agreements",
+        "procurement_method", "selection_criteria", "commodity_codes", "commodity_titles",
+    )
+    text = " ".join(str(opportunity.get(field, "")) for field in fields)
+    policies = opportunity.get("domestic_policies") or []
+    if policies:
+        text += " " + format_domestic_policies(list(policies), short=True)
+    return text.lower()
 
 
 KEYWORD_STOPWORDS = frozenset({
@@ -1732,6 +1961,9 @@ def render_unified_opportunity_line(opportunity: dict, index: int, extra: str = 
     posting_url = opportunity.get("url") or _fallback_posting_url(opportunity)
     if posting_url:
         output += f"   Posting: {posting_url}\n"
+    policies = list(opportunity.get("domestic_policies") or [])
+    if policies:
+        output += f"   Domestic preference: {format_domestic_policies(policies, short=True)}\n"
     if extra:
         output += f"   {extra}\n"
     return output
@@ -1874,6 +2106,7 @@ TOOL_NAMES = (
     "list_deadlines",
     "find_matching_opportunities",
     "daily_bid_brief",
+    "match_industrial_support_programs",
     "search_alberta_opportunities",
     "get_alberta_opportunity_details",
     "list_alberta_deadlines",
@@ -1951,6 +2184,14 @@ def _opportunity_record(opportunity: dict) -> dict[str, Any]:
         "solicitation": str(opportunity.get("solicitation") or ""),
         "url": str(opportunity.get("url") or "") or _fallback_posting_url(opportunity),
         "closing_text": format_opportunity_closing(opportunity),
+        "unspsc": str(opportunity.get("unspsc") or ""),
+        "unspsc_description": str(opportunity.get("unspsc_description") or ""),
+        "gsin": str(opportunity.get("gsin") or ""),
+        "gsin_description": str(opportunity.get("gsin_description") or ""),
+        "trade_agreements": str(opportunity.get("trade_agreements") or ""),
+        "procurement_method": str(opportunity.get("procurement_method") or ""),
+        "selection_criteria": str(opportunity.get("selection_criteria") or ""),
+        "domestic_policies": list(opportunity.get("domestic_policies") or []),
     }
 
 
@@ -2461,6 +2702,29 @@ async def find_opportunities(args: dict) -> str:
     output += "---\n*Use `get_contract_details` with a reference number to see full details.*"
 
     return output
+
+
+async def match_industrial_support_programs(args: dict) -> str:
+    """Match a business to the read-only industrial and tariff support catalog."""
+    inline = args.get("profile")
+    if isinstance(inline, dict) and inline:
+        profile = resolve_profile(args)
+    else:
+        description = str(args.get("description") or "")
+        industry = str(args.get("industry") or "").strip()
+        capabilities = extract_keywords(description)
+        industries = infer_industries(capabilities, description)
+        if industry and industry not in industries:
+            industries.insert(0, industry)
+        profile = {
+            "company_name": str(args.get("company_name") or "Your business"),
+            "location": str(args.get("location") or ""),
+            "description": description,
+            "capabilities": capabilities,
+            "industries": industries,
+        }
+    limit = clamp_int(args.get("limit"), default=12, minimum=1, maximum=20)
+    return render_program_matches(profile, limit=limit)
 
 
 async def get_my_profile(args: dict) -> str:
