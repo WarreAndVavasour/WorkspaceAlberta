@@ -83,6 +83,7 @@ Use the Build Canada tools for:
 - inspecting tender details
 - reviewing upcoming deadlines
 - matching opportunities to a saved business profile
+- ranking the open catalogues for a free-text business description (`find_business_fit`)
 
 Do not assume the repo has CRM, ERP, spreadsheet, or accounting integrations unless they are explicitly added later.
 

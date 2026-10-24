@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from procurement_core.domestic_policy import detect_domestic_policies
 from procurement_core.requirements import tags
@@ -175,6 +177,11 @@ class ClassificationAndPolicyTest(unittest.TestCase):
 
 
 class IndustrialCatalogTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.env = mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": "", "JEV_API_KEY": ""})
+        self.env.start()
+        self.addCleanup(self.env.stop)
+
     def test_tool_is_public_and_dispatched(self) -> None:
         import sys
         sys.path.insert(0, str(ROOT / "mcp-servers" / "canadabuys"))
@@ -212,17 +219,18 @@ class IndustrialCatalogTest(unittest.TestCase):
         self.assertIn("PrairiesCan Regional Tariff Response Initiative", applies)
         self.assertNotIn("BDC metals envelope", applies)
 
-    def test_versions_are_1_2_0(self) -> None:
+    def test_versions_are_1_3_0(self) -> None:
         server = json.loads((ROOT / "server.json").read_text(encoding="utf-8"))
         plugin = json.loads((ROOT / "plugins/workspacealberta/plugin.json").read_text(encoding="utf-8"))
         claude = json.loads((ROOT / "plugins/workspacealberta/.claude-plugin/plugin.json").read_text(encoding="utf-8"))
         http = (ROOT / "mcp-servers/canadabuys/server_http.py").read_text(encoding="utf-8")
-        self.assertEqual(server["version"], "1.2.0")
-        self.assertEqual(plugin["version"], "1.2.0")
-        self.assertEqual(claude["version"], "1.2.0")
+        self.assertEqual(server["version"], "1.3.0")
+        self.assertEqual(plugin["version"], "1.3.0")
+        self.assertEqual(claude["version"], "1.3.0")
         self.assertEqual(plugin["version"], claude["version"])
-        self.assertIn('version="1.2.0"', http)
+        self.assertIn('version="1.3.0"', http)
         self.assertNotIn("1.1.1", http)
+        self.assertNotIn('version="1.2.0"', http)
         self.assertLessEqual(len(plugin["extensions"]["com.openai"]["interface"]["longDescription"]), 4000)
 
 

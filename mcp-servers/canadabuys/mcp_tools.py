@@ -275,7 +275,12 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="search_opportunities",
             title="Search procurement opportunities",
-            description="Search every open CanadaBuys and Alberta Purchasing Connection notice for any business. Results are not limited to steel, lumber, aluminum, or construction.",
+            description=(
+                "Search every open CanadaBuys and Alberta Purchasing Connection notice for any business. "
+                "Results are not limited to steel, lumber, aluminum, or construction. "
+                "Pass description or profile to rank by a TypeSafe Jev supply-fit classification "
+                "(yes, partial, or no) after a commodity-code prefilter. Keyword-only searches stay lexical."
+            ),
             output_schema=OPPORTUNITIES_OUTPUT_SCHEMA,
             input_schema={
                 "type": "object",
@@ -301,7 +306,20 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum combined results (default 20, max 50)",
                         "default": 20
-                    }
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "What the business does, in plain language. When set, fit classification runs before keyword ranking."
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Where the business works, such as Red Deer, Alberta."
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "description": "Optional company name."
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
                 }
             }
         ),
@@ -357,7 +375,13 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="find_matching_opportunities",
             title="Match procurement opportunities to my business",
-            description="Rank CanadaBuys and Alberta APC opportunities for any business profile, in any sector. Pass an inline `profile` to describe the business per call. Steel, lumber, aluminum, and construction remain valid labels.",
+            description=(
+                "Rank CanadaBuys and Alberta APC opportunities for any business profile, in any sector. "
+                "Pass an inline `profile` to describe the business per call. A description is classified with "
+                "TypeSafe Jev (yes, partial, or no, and goods supply, services, training, or subcontract) "
+                "after a commodity-code prefilter; keyword score and Buy Canadian bonuses break ties. "
+                "Steel, lumber, aluminum, and construction remain valid labels."
+            ),
             output_schema=MATCHES_OUTPUT_SCHEMA,
             input_schema={
                 "type": "object",
@@ -379,7 +403,11 @@ def get_mcp_tools() -> list[Tool]:
         Tool(
             name="daily_bid_brief",
             title="Get my daily bid brief",
-            description="Generate a free daily bid brief from the full CanadaBuys and Alberta APC catalogues for any business. Pass an inline `profile` to describe the business per call. Domestic-preference flags are included when a matched notice carries them.",
+            description=(
+                "Generate a free daily bid brief from the full CanadaBuys and Alberta APC catalogues for any business. "
+                "Pass an inline `profile` to describe the business per call. Best fits start with the same TypeSafe Jev "
+                "supply classification as find_business_fit. Domestic-preference flags are included when a matched notice carries them."
+            ),
             input_schema={
                 "type": "object",
                 "properties": {
@@ -395,6 +423,63 @@ def get_mcp_tools() -> list[Tool]:
                     },
                     "profile": PROFILE_ARG_SCHEMA
                 }
+            }
+        ),
+        Tool(
+            name="find_business_fit",
+            title="Find contracts for a business description",
+            description=(
+                "Rank open CanadaBuys and Alberta Purchasing Connection notices for a free-text business description. "
+                "A commodity-code and term prefilter cuts the catalogues to a short candidate list, then TypeSafe Jev "
+                "classifies each notice: could this business supply it (yes, partial, or no) and as which capability "
+                "(goods supply, services, training, or subcontract). Yes and partial results are ordered by that "
+                "verdict, then by the existing keyword score and Buy Canadian bonus. If Jev is not configured or "
+                "rejects the key, keyword ranking is used and the result says so. The description and a short notice "
+                "summary are sent to TypeSafe when classification runs. See /privacy. workspaceAlberta does not submit "
+                "a bid or decide eligibility."
+            ),
+            output_schema=OPPORTUNITIES_OUTPUT_SCHEMA,
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "description": "What the business does, in its own words. Example: a bakery in Red Deer that bakes at scale and teaches culinary skills."
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Where the business works, such as Red Deer, Alberta."
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "description": "Optional company name for the heading."
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "all, federal, or alberta",
+                        "default": "all"
+                    },
+                    "province": {
+                        "type": "string",
+                        "description": "Optional province or delivery region filter"
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Optional category filter"
+                    },
+                    "days": {
+                        "type": "integer",
+                        "description": "Only show notices closing within N days (default 120, max 365)",
+                        "default": 120
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum results (default 15, max 50)",
+                        "default": 15
+                    },
+                    "profile": PROFILE_ARG_SCHEMA
+                },
+                "required": ["description"]
             }
         ),
         # ===== Alberta Purchasing Connection Tools =====
@@ -715,6 +800,11 @@ def get_mcp_tools() -> list[Tool]:
             tool.description += " Hosted: sign-in required; no paid subscription needed."
         if tool.name in {"search_alberta_opportunities", "find_alberta_opportunities", "find_matching_opportunities", "search_opportunities", "daily_bid_brief"}:
             tool.description += " When configured, search terms or business capabilities may be sent to Cohere to select commodity filters. See /privacy."
+        if tool.name in {"search_opportunities", "find_matching_opportunities", "daily_bid_brief", "find_business_fit"}:
+            tool.description += (
+                " When a business description is present and TypeSafe is configured, notice text and that "
+                "description are sent to TypeSafe for supply-fit classification. See /privacy."
+            )
         persistent = tool.name in PERSISTENT_TOOLS
         tool.annotations = ToolAnnotations(
             title=tool.title,

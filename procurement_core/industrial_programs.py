@@ -1,7 +1,11 @@
 """Read-only matcher for the industrial and tariff support catalog.
 
-The catalog is a checked-in JSON file. Matching is lexical. It never submits
-an application or treats a keyword overlap as eligibility.
+The catalog is a checked-in JSON file. Matching uses the business description:
+eligibility tags and industry words first, then a short activity phrase so a
+broad program explains why it surfaced. When ``TYPESAFE_API_KEY`` is set, a
+bounded TypeSafe Jev pass labels each featured program yes, partial, or no.
+A sector program Jev calls unrelated is left out of the applies list. This
+never submits an application or treats a keyword overlap as eligibility.
 """
 
 from __future__ import annotations
@@ -11,6 +15,27 @@ import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+
+from procurement_core import business_fit
+
+# Hints taken from each program's published eligibility. They explain a match.
+# They are not an application test. ``program["eligibility_tags"]`` overrides.
+ELIGIBILITY_TAGS: dict[str, tuple[str, ...]] = {
+    "prairiescan-rtri": ("tariff", "export", "liquidity"),
+    "ised-strategic-response-fund": (
+        "steel", "aluminum", "lumber", "manufacturing", "automotive", "forestry", "defence", "energy", "tariff",
+    ),
+    "ised-canada-strong-diversification-fund": ("manufacturing", "steel", "aluminum", "capital"),
+    "joint-steel-action-fund": ("steel",),
+    "ontario-auto-modernization": ("automotive",),
+    "bdc-pivot-to-grow": ("tariff", "liquidity", "export"),
+    "bdc-metals-envelope": ("steel", "aluminum", "copper", "metal", "fabrication"),
+    "nrcan-first-and-last-mile-fund": ("mining", "critical mineral"),
+    "nrcan-critical-minerals-accelerator": ("mining", "critical mineral"),
+    "pspc-buy-canadian-framework": ("procurement", "buy canadian", "supplier"),
+    "buy-ontario-policy": ("buy ontario",),
+    "ring-of-fire-roads": ("ring of fire",),
+}
 
 CATALOG_PATH = Path(__file__).resolve().parent / "content" / "industrial_programs.json"
 
@@ -57,7 +82,19 @@ def location_bucket(location: str) -> str:
     return "other"
 
 
-def _program_score(program: dict[str, Any], text: str, industries: list[str]) -> tuple[int, list[str]]:
+def _tag_list(program: dict[str, Any]) -> list[str]:
+    raw = program.get("eligibility_tags")
+    if isinstance(raw, list) and raw:
+        return [str(item).lower().strip() for item in raw if str(item).strip()]
+    return [item.lower() for item in ELIGIBILITY_TAGS.get(str(program.get("id") or ""), ())]
+
+
+def _program_score(
+    program: dict[str, Any],
+    text: str,
+    industries: list[str],
+    activity: str,
+) -> tuple[int, list[str]]:
     score = 0
     reasons: list[str] = []
     industry_labels = {item.lower() for item in industries if item.strip()}
@@ -68,7 +105,16 @@ def _program_score(program: dict[str, Any], text: str, industries: list[str]) ->
         reasons.append("industry " + ", ".join(overlap))
     elif "any" in program_industries and program.get("audience") == "broad":
         score += 1
-        reasons.append("open across industries")
+        if activity:
+            reasons.append(f"open to any sector; business described as {activity}")
+        else:
+            reasons.append("open across industries")
+    for tag in _tag_list(program):
+        if tag and tag != "any" and business_fit.phrase_in(tag, text):
+            score += 4
+            label = f"eligibility: {tag}"
+            if label not in reasons:
+                reasons.append(label)
     for keyword in program.get("keywords") or []:
         token = str(keyword).lower().strip()
         if len(token) >= 3 and token in text:
@@ -129,7 +175,13 @@ def render_program_matches(
     industries = [str(item) for item in profile.get("industries") or [] if str(item).strip()]
     location = str(profile.get("location") or "")
     company = str(profile.get("company_name") or "Your business")
-    text = " ".join([description, " ".join(capabilities), " ".join(industries), location]).lower()
+    text = business_fit.normalize_text(
+        " ".join([description, " ".join(capabilities), " ".join(industries), location])
+    )
+    activity = business_fit.activity_label(description) if description.strip() else ""
+    broad_reason = (
+        f"open to any sector; business described as {activity}" if activity else "open across industries"
+    )
     bucket = location_bucket(location)
     directory = not description.strip() and not capabilities and not industries
 
@@ -140,7 +192,7 @@ def render_program_matches(
         "national_note": [],
     }
     for program in catalog.get("programs") or []:
-        score, reasons = _program_score(program, text, industries)
+        score, reasons = _program_score(program, text, industries, activity)
         section = _section_for(program, bucket)
         audience = program.get("audience")
         if directory:
@@ -150,7 +202,9 @@ def render_program_matches(
             grouped[section].append((score, program, reasons))
             continue
         if audience == "broad" or score > 0:
-            grouped[section].append((score, program, reasons or ["open across industries"]))
+            grouped[section].append((score, program, reasons or [broad_reason]))
+
+    classifier_warnings = _apply_program_classifier(profile, grouped)
 
     for rows in grouped.values():
         rows.sort(key=lambda item: (-item[0], str(item[1].get("name") or "")))
@@ -222,8 +276,50 @@ def render_program_matches(
             "These are delivered in Alberta, Saskatchewan, and Manitoba.",
             grouped["prairie_only"],
         )
+    if classifier_warnings:
+        lines.append("## Warnings")
+        lines.append("")
+        for warning in classifier_warnings:
+            lines.append(f"- {warning}")
+        lines.append("")
     lines.append(
         f"Catalog version {catalog.get('catalog_version', '')}. "
         "Verify every figure on the official page before you act on it."
     )
     return "\n".join(lines).strip() + "\n"
+
+
+def _apply_program_classifier(
+    profile: dict[str, Any],
+    grouped: dict[str, list[tuple[int, dict[str, Any], list[str]]]],
+) -> list[str]:
+    """Ask Jev about featured programs when a key is configured.
+
+    A sector program judged unrelated drops out of Applies. A broad program
+    stays, with the verdict in the reason, because it is not sector-limited.
+    """
+    description = str(profile.get("description") or "").strip()
+    if not description or not business_fit.typesafe_api_key():
+        return []
+    featured = [program for _score, program, _reasons in grouped["applies"][: business_fit.MAX_PROGRAMS]]
+    if not featured:
+        return []
+    classification = business_fit.classify_programs(profile, featured)
+    if classification.status != "ok":
+        return list(classification.warnings)
+    kept: list[tuple[int, dict[str, Any], list[str]]] = []
+    for score, program, reasons in grouped["applies"]:
+        verdict = (classification.verdicts.get(str(program.get("id") or "")) or {}).get("verdict")
+        if verdict == "no" and program.get("audience") != "broad":
+            continue
+        if verdict in {"yes", "partial", "no"}:
+            note = f"classifier: {verdict}"
+            reasons = [note, *reasons]
+            if verdict == "yes":
+                score += 6
+            elif verdict == "partial":
+                score += 2
+        kept.append((score, program, reasons))
+    kept.sort(key=lambda item: (-item[0], str(item[1].get("name") or "")))
+    grouped["applies"] = kept
+    return list(classification.warnings)

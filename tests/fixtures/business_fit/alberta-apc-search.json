@@ -1,0 +1,37 @@
+{
+  "totalCount": 2,
+  "values": [
+    {
+      "referenceNumber": "AB-2026-09001",
+      "solicitationNumber": "RD-2026-CATER-01",
+      "title": "Catering and food services - Red Deer",
+      "shortTitle": "Red Deer catering",
+      "contractingOrganization": "City of Red Deer",
+      "statusCode": "OPEN",
+      "categoryCode": "SRV",
+      "postDateTime": "2026-10-08T09:00:00Z",
+      "closeDateTime": "2026-12-10T16:00:00",
+      "regionOfDelivery": ["Red Deer", "Alberta"],
+      "projectDescription": "Catering and food services for civic events in Red Deer.",
+      "commodityCodes": ["90101602"],
+      "commodityCodeTitles": ["Catering", "Food services"],
+      "externalOriginLink": "https://purchasing.alberta.ca/opportunity/2026/9001"
+    },
+    {
+      "referenceNumber": "AB-2026-09099",
+      "solicitationNumber": "RD-2026-SOFT-04",
+      "title": "Software licences for municipal offices",
+      "shortTitle": "Municipal software licences",
+      "contractingOrganization": "City of Red Deer",
+      "statusCode": "OPEN",
+      "categoryCode": "GD",
+      "postDateTime": "2026-10-09T09:00:00Z",
+      "closeDateTime": "2026-12-12T16:00:00",
+      "regionOfDelivery": ["Red Deer"],
+      "projectDescription": "Annual software licences. Not a food or training contract.",
+      "commodityCodes": ["43230000"],
+      "commodityCodeTitles": ["Software"],
+      "externalOriginLink": "https://purchasing.alberta.ca/opportunity/2026/9099"
+    }
+  ]
+}
