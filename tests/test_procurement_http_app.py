@@ -247,6 +247,8 @@ class InlineProfileTest(unittest.TestCase):
             "find_opportunities",
             "find_matching_opportunities",
             "daily_bid_brief",
+            "find_business_fit",
+            "search_opportunities",
             "find_alberta_opportunities",
             "process_bid_room",
             "analyze_contract_with_cohere",

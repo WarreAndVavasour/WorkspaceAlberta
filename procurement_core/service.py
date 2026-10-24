@@ -37,10 +37,13 @@ Layout (top to bottom):
 
 Data flow: CanadaBuys publishes a full open-tender CSV which is fetched with
 :func:`fetch_all_contracts` and cached at ``DATA_DIR/latest.csv``; APC is
-queried live per request. Scoring is deterministic; APC candidate retrieval
-uses an optional bounded Cohere query planner with lexical fallback. The model layer
-also supports judgment tools (``analyze_contract_with_cohere`` and the
-sandboxed bid-room review).
+queried live per request. When a business description is present, search and
+matching start with a commodity-code prefilter and a TypeSafe Jev supply-fit
+classification (``business_fit``); keyword scoring and Buy Canadian bonuses
+break ties, and a missing or rejected Jev key falls back to keyword ranking.
+Keyword-only search still uses an optional bounded Cohere query planner for
+APC filters. The model layer also supports judgment tools
+(``analyze_contract_with_cohere`` and the sandboxed bid-room review).
 
 Configuration (environment variables):
     CANADABUYS_DATA_DIR                    Cache dir (default ``~/.canadabuys/``)
@@ -67,7 +70,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from . import fixtures, usage
+from . import business_fit, fixtures, usage
 from .apc_documents import APC_ACCESS_MESSAGE, apc_document_manifest, apc_posting_url
 from .domestic_policy import (
     detect_domestic_policies,
@@ -2062,8 +2065,8 @@ def collect_unified_deadlines(args: dict) -> tuple[list[dict], list[str]]:
     return opportunities[:limit], warnings
 
 
-def collect_unified_matches(profile: dict, days: int, limit: int) -> tuple[list[tuple[int, int, dict, list[str]]], list[str]]:
-    """Collect scored opportunity matches across federal and Alberta sources."""
+def _keyword_matches(profile: dict, days: int, limit: int) -> tuple[list[tuple[int, int, dict, list[str]]], list[str]]:
+    """Score both catalogues with the existing keyword ranker."""
     now = datetime.now(timezone.utc)
     warnings = []
     scored: list[tuple[int, int, dict, list[str]]] = []
@@ -2089,6 +2092,217 @@ def collect_unified_matches(profile: dict, days: int, limit: int) -> tuple[list[
     scored.sort(key=lambda item: (-item[0], item[1]))
     return scored[:limit], warnings
 
+
+def fit_profile_from_args(args: dict) -> dict | None:
+    """Return a profile when this call carries a business description.
+
+    Keyword-only searches stay on the lexical path. A description, or an
+    inline profile that has one, is what turns on the Jev fit pass.
+    """
+    inline = args.get("profile")
+    if isinstance(inline, dict) and str(inline.get("description") or "").strip():
+        return resolve_profile({"profile": inline})
+    description = str(args.get("description") or "").strip()
+    if not description:
+        return None
+    capabilities = extract_keywords(description)
+    return {
+        "company_name": str(args.get("company_name") or "Your business"),
+        "location": str(args.get("location") or ""),
+        "description": description,
+        "capabilities": capabilities,
+        "industries": infer_industries(capabilities, description),
+    }
+
+
+def _gather_fit_notices(
+    *,
+    source: str,
+    province: str,
+    category: str,
+    days: int,
+    open_notices_only: bool,
+) -> tuple[list[dict], list[str]]:
+    """Load open notices for the fit pass without a keyword or Cohere query.
+
+    The commodity prefilter runs on this set. Alberta paging is capped at 8
+    seconds so classification still has time inside the tool call.
+    """
+    now = datetime.now(timezone.utc)
+    warnings: list[str] = []
+    opportunities: list[dict] = []
+
+    if include_source(source, "federal"):
+        contracts, federal_warnings = load_contracts_for_unified()
+        warnings.extend(federal_warnings)
+        for contract in contracts:
+            if not federal_contract_matches(contract, "", province, category):
+                continue
+            closing = canadabuys_closing(contract)
+            if closing and has_closed(closing, now):
+                continue
+            if not open_notices_only:
+                if not closing or days_until_close(closing, now) > days:
+                    continue
+            opportunities.append(normalize_canadabuys_contract(contract))
+
+    if include_source(source, "alberta"):
+        if province and "alberta" not in province.lower():
+            warnings.append("Alberta APC was skipped because the province filter is not Alberta.")
+        else:
+            apc_category = normalize_alberta_category(category) if category else ""
+            if category and apc_category not in ALBERTA_CATEGORY_LABELS:
+                apc_category = ""
+            close_start = ""
+            close_end = ""
+            if not open_notices_only:
+                today = alberta_today(now)
+                close_start = today.strftime("%Y-%m-%d")
+                close_end = (today + timedelta(days=days)).strftime("%Y-%m-%d")
+            try:
+                rows, warning = fetch_all_alberta_opportunities(
+                    status="OPEN",
+                    category=apc_category,
+                    close_start=close_start,
+                    close_end=close_end,
+                    timeout_seconds=8,
+                )
+                if warning:
+                    warnings.append(warning)
+                for opp in rows:
+                    closing = alberta_closing(opp)
+                    if closing and has_closed(closing, now):
+                        continue
+                    if not open_notices_only and (not closing or days_until_close(closing, now) > days):
+                        continue
+                    opportunities.append(normalize_alberta_opportunity(opp))
+            except RuntimeError as exc:
+                warnings.append(f"Alberta APC unavailable: {exc}")
+    return opportunities, warnings
+
+
+def _existing_notice_score(profile: dict, opportunity: dict) -> tuple[int, int, list[str]]:
+    """Existing keyword score, days to close, and reasons for one normalized notice."""
+    raw = opportunity.get("raw") if isinstance(opportunity.get("raw"), dict) else {}
+    closing = opportunity_closing(opportunity)
+    now = datetime.now(timezone.utc)
+    days_until = days_until_close(closing, now) if closing and not has_closed(closing, now) else 9999
+    if opportunity.get("source_key") == "alberta":
+        score, reasons = score_alberta_opportunity(raw, profile)
+    else:
+        score, reasons = score_contract(raw, profile)
+    return score, days_until, reasons
+
+
+def _domestic_bonus_for_fit(profile: dict, opportunity: dict, score: int, reasons: list[str]) -> tuple[int, list[str]]:
+    """Add the Buy Canadian bonus when Jev already established a supply fit."""
+    if any("domestic preference" in reason for reason in reasons):
+        return score, reasons
+    bonus, bonus_reasons = domestic_preference_bonus(
+        list(opportunity.get("domestic_policies") or []),
+        str(profile.get("location") or ""),
+    )
+    if not bonus:
+        return score, reasons
+    return score + bonus, [*reasons, *bonus_reasons]
+
+
+def _fit_matches(
+    profile: dict,
+    days: int,
+    limit: int,
+    *,
+    source: str = "all",
+    province: str = "",
+    category: str = "",
+    keywords: str = "",
+    open_notices_only: bool = False,
+) -> tuple[list[tuple[int, int, dict, list[str]]], list[str]]:
+    """Rank by Jev supply fit, then the existing score. Fall back when Jev cannot run."""
+    fallback_days = days if not open_notices_only else 365
+    description = str(profile.get("description") or "").strip()
+    if not description:
+        return _keyword_matches(profile, fallback_days, limit)
+    if not business_fit.typesafe_api_key():
+        scored, keyword_warnings = _keyword_matches(profile, fallback_days, limit)
+        return scored, [business_fit.UNCONFIGURED_WARNING, *keyword_warnings]
+
+    warnings: list[str] = []
+    opportunities, gather_warnings = _gather_fit_notices(
+        source=source, province=province, category=category, days=days,
+        open_notices_only=open_notices_only,
+    )
+    warnings.extend(gather_warnings)
+    expansion = business_fit.expand(description, extra_terms=str(keywords or "").split())
+    if not expansion.has_signal:
+        scored, keyword_warnings = _keyword_matches(profile, fallback_days, limit)
+        return scored, [
+            "Commodity prefilter found no terms for this description; showing keyword ranking.",
+            *keyword_warnings,
+        ]
+    candidates, total = business_fit.select_candidates(opportunities, expansion)
+    if total > len(candidates):
+        warnings.append(
+            f"Commodity prefilter kept {len(candidates)} of {total} candidates for classification."
+        )
+    if not candidates:
+        scored, keyword_warnings = _keyword_matches(profile, fallback_days, limit)
+        return scored, [
+            "Commodity prefilter found no candidates for this description; showing keyword ranking.",
+            *keyword_warnings,
+        ]
+    classification = business_fit.classify_notices(profile, candidates)
+    if classification.status != "ok":
+        scored, keyword_warnings = _keyword_matches(profile, fallback_days, limit)
+        return scored, [*classification.warnings, *keyword_warnings]
+    warnings.extend(classification.warnings)
+    scores: dict[str, tuple[int, int, list[str]]] = {}
+    for candidate in candidates:
+        reference = str(candidate.get("reference") or "")
+        score, days_until, reasons = _existing_notice_score(profile, candidate)
+        verdict = str((classification.verdicts.get(reference) or {}).get("verdict") or "")
+        if verdict in {"yes", "partial"}:
+            score, reasons = _domestic_bonus_for_fit(profile, candidate, score, reasons)
+        scores[reference] = (score, days_until, reasons)
+    ranked = business_fit.rank_notices(candidates, classification.verdicts, scores)
+    if not ranked:
+        warnings.append("TypeSafe Jev found no plausible supply match in the candidate set.")
+        return [], warnings
+    return ranked[:limit], warnings
+
+
+def collect_unified_matches(profile: dict, days: int, limit: int) -> tuple[list[tuple[int, int, dict, list[str]]], list[str]]:
+    """Rank both catalogues for a profile. A description starts with Jev fit."""
+    if not str(profile.get("description") or "").strip():
+        return _keyword_matches(profile, days, limit)
+    return _fit_matches(profile, days, limit)
+
+
+def collect_search(args: dict) -> tuple[list[dict], list[str]]:
+    """Unified search. A description or inline profile uses the fit pass first."""
+    profile = fit_profile_from_args(args)
+    if profile is None:
+        return collect_unified_search(args)
+    limit = clamp_int(args.get("limit"), default=20, minimum=1, maximum=50)
+    open_notices_only = args.get("days") is None
+    days = 365 if open_notices_only else clamp_int(args.get("days"), default=120, minimum=1, maximum=365)
+    scored, warnings = _fit_matches(
+        profile,
+        days,
+        limit,
+        source=str(args.get("source") or "all"),
+        province=str(args.get("province") or ""),
+        category=str(args.get("category") or ""),
+        keywords=str(args.get("keywords") or ""),
+        open_notices_only=open_notices_only,
+    )
+    opportunities = []
+    for _score, _days_until, opportunity, reasons in scored:
+        shown = dict(opportunity)
+        shown["fit_line"] = "; ".join(str(reason) for reason in reasons[:5])
+        opportunities.append(shown)
+    return opportunities, warnings
+
 # ============== Tool Dispatch ==============
 
 TOOL_NAMES = (
@@ -2106,6 +2320,7 @@ TOOL_NAMES = (
     "list_deadlines",
     "find_matching_opportunities",
     "daily_bid_brief",
+    "find_business_fit",
     "match_industrial_support_programs",
     "search_alberta_opportunities",
     "get_alberta_opportunity_details",
@@ -2172,7 +2387,7 @@ def _opportunity_record(opportunity: dict) -> dict[str, Any]:
     is the same moment as ISO 8601 in Alberta time with its UTC offset.
     """
     closing = opportunity_closing(opportunity)
-    return {
+    record = {
         "title": str(opportunity.get("title") or ""),
         "source": str(opportunity.get("source") or ""),
         "reference": str(opportunity.get("reference") or ""),
@@ -2193,6 +2408,10 @@ def _opportunity_record(opportunity: dict) -> dict[str, Any]:
         "selection_criteria": str(opportunity.get("selection_criteria") or ""),
         "domestic_policies": list(opportunity.get("domestic_policies") or []),
     }
+    if opportunity.get("fit_verdict"):
+        record["fit_verdict"] = str(opportunity.get("fit_verdict") or "")
+        record["fit_capability"] = str(opportunity.get("fit_capability") or "")
+    return record
 
 
 def _search_structured(opportunities: list[dict], warnings: list[str]) -> dict[str, Any]:
@@ -2233,7 +2452,8 @@ def _render_search_markdown(opportunities: list[dict], warnings: list[str]) -> s
     sources = sorted({str(o.get("source") or "") for o in opportunities if o.get("source")})
     output += f"Showing {len(opportunities)} result{'s' if len(opportunities) != 1 else ''} from {' and '.join(sources) or 'CanadaBuys and Alberta Purchasing Connection'}.\n\n"
     for i, opportunity in enumerate(opportunities, 1):
-        output += render_unified_opportunity_line(opportunity, i) + "\n"
+        extra = str(opportunity.get("fit_line") or "")
+        output += render_unified_opportunity_line(opportunity, i, extra) + "\n"
 
     if warnings:
         output += "## Warnings\n"
@@ -2299,7 +2519,9 @@ def _render_matches_markdown(
     return output
 
 
-STRUCTURED_TOOLS = frozenset({"search_opportunities", "list_deadlines", "find_matching_opportunities"})
+STRUCTURED_TOOLS = frozenset({
+    "search_opportunities", "list_deadlines", "find_matching_opportunities", "find_business_fit",
+})
 
 TENDER_REQUIREMENTS_SCHEMA = "wa.tender_requirements.v1"
 REQUIREMENTS_BOARD_TEMPLATE = (
@@ -2449,8 +2671,18 @@ async def call_tool_text_and_structured(
         return await call_tool_text(name, args), None
 
     def _run() -> tuple[str, dict[str, Any] | None]:
-        if name == "search_opportunities":
-            opportunities, warnings = collect_unified_search(args)
+        if name in {"search_opportunities", "find_business_fit"}:
+            if name == "find_business_fit" and fit_profile_from_args(args) is None:
+                return (
+                    "Describe the business in plain language, and where it works. "
+                    "For example: a bakery in Red Deer, Alberta that bakes at scale and teaches culinary skills."
+                ), None
+            search_args = args
+            if name == "find_business_fit" and args.get("days") is None:
+                search_args = {**args, "days": 120}
+            if name == "find_business_fit" and args.get("limit") is None:
+                search_args = {**search_args, "limit": 15}
+            opportunities, warnings = collect_search(search_args)
             return _render_search_markdown(opportunities, warnings), _search_structured(opportunities, warnings)
         if name == "list_deadlines":
             days = clamp_int(args.get("days"), default=30, minimum=1, maximum=365)
@@ -2748,7 +2980,23 @@ async def get_my_profile(args: dict) -> str:
 
 async def search_opportunities(args: dict) -> str:
     """Search across federal and Alberta opportunity sources."""
-    opportunities, warnings = collect_unified_search(args)
+    opportunities, warnings = collect_search(args)
+    return _render_search_markdown(opportunities, warnings)
+
+
+async def find_business_fit(args: dict) -> str:
+    """Rank open notices for a free-text business description."""
+    if fit_profile_from_args(args) is None:
+        return (
+            "Describe the business in plain language, and where it works. "
+            "For example: a bakery in Red Deer, Alberta that bakes at scale and teaches culinary skills."
+        )
+    search_args = dict(args)
+    if search_args.get("days") is None:
+        search_args["days"] = 120
+    if search_args.get("limit") is None:
+        search_args["limit"] = 15
+    opportunities, warnings = collect_search(search_args)
     return _render_search_markdown(opportunities, warnings)
 
 

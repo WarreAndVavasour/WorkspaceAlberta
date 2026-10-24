@@ -154,7 +154,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
 
 mcp_server = Server(
     "canadabuys",
-    version="1.2.0",
+    version="1.3.0",
     instructions=SERVER_INSTRUCTIONS,
     on_list_tools=handle_list_tools,
     on_call_tool=handle_call_tool,
@@ -191,7 +191,7 @@ app = FastAPI(
         "Canadian signals, daily bid briefs, and a read-only industrial "
         "support catalog."
     ),
-    version="1.2.0",
+    version="1.3.0",
     lifespan=lifespan,
     # Swagger lists tags in this order: what a first-time visitor wants first.
     openapi_tags=[
