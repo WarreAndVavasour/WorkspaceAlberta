@@ -131,9 +131,11 @@ No environment variables are required for local use.
 
 Optional:
 
-- `POSTHOG_API_KEY`: enable server-side PostHog telemetry on the hosted endpoint (`tool_called`, `pro_tool_denied`, `landing_page_viewed`, `subscription_started`, `subscription_cancelled`); off when unset, and the stdio server never emits events
+- `POSTHOG_API_KEY`: enable server-side PostHog telemetry on the hosted endpoint (`tool_called`, `pro_tool_denied`, `landing_page_viewed` for browsers, `endpoint_root_hit` for anything else that opens `/`, `subscription_started`, `subscription_cancelled`); off when unset, and the stdio server never emits events. Request events carry `client_name`, `client_version`, `protocol_version`, `mcp_session_id_hash`, `user_agent`, `ua_family`, `is_internal`, `ip_source` and the caller's `$ip` (see `procurement_core/telemetry.py`)
 - `POSTHOG_HOST`: PostHog ingestion host, default `https://us.i.posthog.com`
 - `WA_ENVIRONMENT`: environment tag on telemetry events, default `prod`
+- `WA_TELEMETRY_SALT`: key for signing the `Mcp-Session-Id` and hashing it; defaults to a key derived from `WA_OAUTH_SIGNING_KEY`, so every instance agrees
+- `WA_INTERNAL_CLIENTS`: extra comma-separated client names or user-agent prefixes to mark `is_internal` (built in: `wv-harness` and the repo's acceptance/readiness scripts)
 - `CANADABUYS_DATA_DIR`: override the default cache directory
 - `ALBERTA_APC_API_BASE`: override the Alberta Purchasing Connection API base, currently `https://purchasing.alberta.ca/api`
 - `ALBERTA_APC_APP_BASE`: override the Alberta Purchasing Connection app base, currently `https://purchasing.alberta.ca`
