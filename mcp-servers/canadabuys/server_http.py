@@ -53,6 +53,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from mcp.server import Server, ServerRequestContext
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, TextContent, Tool
+from mcp_types import CLIENT_INFO_META_KEY
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
@@ -96,6 +97,31 @@ def _mcp_authorization_header(ctx: ServerRequestContext) -> str | None:
     return headers.get("authorization")
 
 
+def _mcp_caller(ctx: ServerRequestContext) -> dict[str, Any]:
+    """Telemetry caller context for the current MCP request."""
+    request = getattr(ctx, "request", None)
+    headers = getattr(request, "headers", None) or {}
+    client = getattr(request, "client", None)
+    meta = getattr(ctx, "meta", None)
+    client_info = meta.get(CLIENT_INFO_META_KEY) if isinstance(meta, dict) else None
+    return telemetry.caller_context(
+        headers,
+        transport="mcp",
+        peer=getattr(client, "host", None),
+        client_info=client_info if isinstance(client_info, dict) else None,
+        protocol_version=getattr(ctx, "protocol_version", None) if client_info else None,
+    )
+
+
+def _rest_caller(request: Request, transport: str = "rest") -> dict[str, Any]:
+    """Telemetry caller context for a REST call (or ``transport="web"`` for a page)."""
+    return telemetry.caller_context(
+        request.headers,
+        transport=transport,
+        peer=request.client.host if request.client else None,
+    )
+
+
 async def handle_list_tools(ctx: ServerRequestContext, params) -> ListToolsResult:
     """List available procurement MCP tools."""
     from procurement_core.openai_support import OpenAIListToolsResult
@@ -113,10 +139,11 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
     """
     name = params.name
     arguments = params.arguments or {}
+    caller = _mcp_caller(ctx)
     try:
         record = await asyncio.to_thread(check_tool_access, name, _mcp_authorization_header(ctx))
     except GateError as exc:
-        telemetry.capture_gate_denied(name, "mcp", exc.status_code)
+        telemetry.capture_gate_denied(name, "mcp", exc.status_code, caller=caller)
         return CallToolResult(
             content=[
                 TextContent(
@@ -143,7 +170,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
             storage.reset_tenant(token)
     telemetry.capture_tool_call(
         name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000),
-        upstream=meter.log_fields(),
+        upstream=meter.log_fields(), caller=caller,
     )
     return CallToolResult(
         content=[TextContent(type="text", text=block) for block in mcp_text_blocks(name, text, structured)],
@@ -295,6 +322,7 @@ async def run_tool(
     tool_name: str,
     arguments: dict[str, Any] | None = None,
     authorization: str | None = None,
+    caller: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run a shared-core tool and return a REST-friendly envelope.
 
@@ -313,7 +341,7 @@ async def run_tool(
         # misses; keep it off the event loop.
         record = await asyncio.to_thread(check_tool_access, tool_name, authorization)
     except GateError as exc:
-        telemetry.capture_gate_denied(tool_name, "rest", exc.status_code)
+        telemetry.capture_gate_denied(tool_name, "rest", exc.status_code, caller=caller)
         headers = {}
         if exc.status_code == 401:
             headers["WWW-Authenticate"] = oauth.www_authenticate_challenge()
@@ -329,7 +357,7 @@ async def run_tool(
             storage.reset_tenant(token)
     telemetry.capture_tool_call(
         tool_name, "rest", record, arguments, content, int((time.monotonic() - started) * 1000),
-        upstream=meter.log_fields(),
+        upstream=meter.log_fields(), caller=caller,
     )
     return {
         "tool": tool_name,
@@ -380,6 +408,34 @@ def _header_value(scope: dict[str, Any], name: str) -> str | None:
     return None
 
 
+def _with_session_id(send: Any, payload: Any, scope: dict[str, Any]) -> Any:
+    """Answer ``initialize`` with an ``Mcp-Session-Id`` that records ``clientInfo``.
+
+    The transport is stateless, so the id is the session record itself
+    (:func:`telemetry.mint_session_id`); clients echo it on every later
+    request and telemetry reads the client name back from it. A client that
+    already holds one keeps it.
+    """
+    if not isinstance(payload, dict) or payload.get("method") != "initialize":
+        return send
+    if _header_value(scope, "mcp-session-id"):
+        return send
+    params = payload.get("params") if isinstance(payload.get("params"), dict) else {}
+    client_info = params.get("clientInfo") if isinstance(params.get("clientInfo"), dict) else {}
+    session_id = telemetry.mint_session_id(
+        client_info.get("name"), client_info.get("version"), params.get("protocolVersion")
+    )
+
+    async def send_with_session(message: dict[str, Any]) -> None:
+        if message.get("type") == "http.response.start" and message.get("status") == 200:
+            headers = [(k, v) for k, v in message.get("headers") or [] if k.lower() != b"mcp-session-id"]
+            headers.append((b"mcp-session-id", session_id.encode("ascii")))
+            message = {**message, "headers": headers}
+        await send(message)
+
+    return send_with_session
+
+
 class MCPStreamableHTTPApp:
     """ASGI adapter for the MCP StreamableHTTP session manager."""
 
@@ -412,14 +468,15 @@ class MCPStreamableHTTPApp:
                 )
                 await response(scope, _replay_receive(b""), send)
                 return
+            try:
+                payload = json.loads(body) if body else None
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                payload = None
+            send = _with_session_id(send, payload, scope)
             # Partial auth: all protected tools must 401 at the
             # HTTP layer *before* the SDK wraps the refusal in a 200 tool
             # result. initialize, tools/list, and free tools stay open.
             if (gate_enabled() or storage.is_hosted()) and body:
-                try:
-                    payload = json.loads(body)
-                except json.JSONDecodeError:
-                    payload = None
                 if payload is not None and oauth.mcp_calls_pro_tool(payload, PROTECTED_TOOLS):
                     authorization = _header_value(scope, "authorization")
                     if not await asyncio.to_thread(identity.has_presentable_identity, authorization):
@@ -448,8 +505,18 @@ app.add_route("/mcp", MCPStreamableHTTPApp(), methods=["GET", "POST", "DELETE"])
 
 @app.get("/", include_in_schema=False)
 async def landing(request: Request) -> HTMLResponse:
-    """Human-friendly landing page with MCP connect instructions."""
-    telemetry.capture("landing_page_viewed", properties={"source": "direct"})
+    """Human-friendly landing page with MCP connect instructions.
+
+    Browsers count as ``landing_page_viewed``; MCP clients, crawlers and
+    scripts probing the root count as ``endpoint_root_hit``.
+    """
+    caller = _rest_caller(request, "web")
+    is_browser = caller["ua_family"] == "browser"
+    telemetry.capture(
+        "landing_page_viewed" if is_browser else "endpoint_root_hit",
+        caller=caller,
+        properties={"source": "direct", "is_browser": is_browser},
+    )
     return HTMLResponse(web_pages.landing_page(_public_mcp_url(request)))
 
 
@@ -464,8 +531,8 @@ def _public_mcp_url(request: Request) -> str:
 
 
 @app.get("/pricing", include_in_schema=False)
-async def pricing_page() -> HTMLResponse:
-    telemetry.capture("pricing_page_viewed", properties={"source": "direct"})
+async def pricing_page(request: Request) -> HTMLResponse:
+    telemetry.capture("pricing_page_viewed", caller=_rest_caller(request, "web"), properties={"source": "direct"})
     return HTMLResponse(web_pages.pricing_page())
 
 
@@ -485,7 +552,7 @@ async def try_page() -> HTMLResponse:
 
 
 @app.post("/try/search", include_in_schema=False)
-async def try_search(arguments: dict[str, Any] | None = Body(default=None)) -> JSONResponse:
+async def try_search(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> JSONResponse:
     """Browser search for the /try page: structured records, plain-language errors."""
     args = arguments if isinstance(arguments, dict) else {}
     keywords = args.get("keywords")
@@ -501,7 +568,10 @@ async def try_search(arguments: dict[str, Any] | None = Body(default=None)) -> J
         )
     except Exception:  # noqa: BLE001 - never show internals to a browser visitor
         structured = None
-    telemetry.capture("try_search", properties={"source": source, "ms": int((time.monotonic() - started) * 1000)})
+    telemetry.capture(
+        "try_search", caller=_rest_caller(request, "web"),
+        properties={"source": source, "ms": int((time.monotonic() - started) * 1000)},
+    )
     if not structured:
         return JSONResponse({"message": "Search did not work just now. Please try again in a minute."}, status_code=502)
     now = datetime.now(timezone.utc)
@@ -759,9 +829,9 @@ async def stripe_webhook(request: Request) -> JSONResponse:
     except WebhookError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     if result.get("provisioned"):
-        telemetry.capture("subscription_started", properties={"plan": "pro"})
+        telemetry.capture("subscription_started", properties={"plan": "pro", **telemetry.WEBHOOK_CALLER})
     elif result.get("revoked"):
-        telemetry.capture("subscription_cancelled", properties={"plan": "pro"})
+        telemetry.capture("subscription_cancelled", properties={"plan": "pro", **telemetry.WEBHOOK_CALLER})
     return JSONResponse(result)
 
 
@@ -782,43 +852,43 @@ async def generic_tool(
     arguments: dict[str, Any] | None = Body(default=None),
 ) -> dict[str, Any]:
     """Call any procurement tool by MCP tool name."""
-    return await run_tool(tool_name, arguments, _auth(request))
+    return await run_tool(tool_name, arguments, _auth(request), _rest_caller(request))
 
 
 @app.post("/search", tags=["procurement"])
 async def search(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Search CanadaBuys and Alberta Purchasing Connection together."""
-    return await run_tool("search_opportunities", arguments, _auth(request))
+    return await run_tool("search_opportunities", arguments, _auth(request), _rest_caller(request))
 
 
 @app.get("/details/{reference}", tags=["procurement"])
 async def details(reference: str, request: Request) -> dict[str, Any]:
     """Get details for a CanadaBuys or Alberta APC opportunity."""
-    return await run_tool("get_opportunity_details", {"reference": reference}, _auth(request))
+    return await run_tool("get_opportunity_details", {"reference": reference}, _auth(request), _rest_caller(request))
 
 
 @app.post("/deadlines", tags=["procurement"])
 async def deadlines(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """List federal and Alberta opportunities closing soon."""
-    return await run_tool("list_deadlines", arguments, _auth(request))
+    return await run_tool("list_deadlines", arguments, _auth(request), _rest_caller(request))
 
 
 @app.post("/matches", tags=["procurement"])
 async def matches(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Rank opportunities against the saved business profile."""
-    return await run_tool("find_matching_opportunities", arguments, _auth(request))
+    return await run_tool("find_matching_opportunities", arguments, _auth(request), _rest_caller(request))
 
 
 @app.post("/brief", tags=["procurement"])
 async def brief(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Generate the daily bid brief."""
-    return await run_tool("daily_bid_brief", arguments, _auth(request))
+    return await run_tool("daily_bid_brief", arguments, _auth(request), _rest_caller(request))
 
 
 @app.post("/industrial-programs", tags=["procurement"])
 async def industrial_programs(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Match a business to the read-only industrial and tariff support catalog."""
-    return await run_tool("match_industrial_support_programs", arguments, _auth(request))
+    return await run_tool("match_industrial_support_programs", arguments, _auth(request), _rest_caller(request))
 
 
 @app.post("/bid-room/process", tags=["bid-room"])
@@ -879,19 +949,19 @@ async def bid_room_classify(request: Request, arguments: dict[str, Any] | None =
 @app.post("/profile", tags=["profile"])
 async def set_profile(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Set the business profile used for opportunity matching."""
-    return await run_tool("set_business_profile", arguments, _auth(request))
+    return await run_tool("set_business_profile", arguments, _auth(request), _rest_caller(request))
 
 
 @app.get("/profile", tags=["profile"])
 async def get_profile(request: Request) -> dict[str, Any]:
     """Return the saved business profile."""
-    return await run_tool("get_my_profile", {}, _auth(request))
+    return await run_tool("get_my_profile", {}, _auth(request), _rest_caller(request))
 
 
 @app.post("/cohere/analyze", tags=["analysis"])
 async def cohere_analyze(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Analyze a CanadaBuys tender with Cohere Command A+ when configured."""
-    return await run_tool("analyze_contract_with_cohere", arguments, _auth(request))
+    return await run_tool("analyze_contract_with_cohere", arguments, _auth(request), _rest_caller(request))
 
 
 # ---------------------------------------------------------------------------
