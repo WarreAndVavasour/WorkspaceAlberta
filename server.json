@@ -1,26 +1,30 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.HarleyCoops/workspace-alberta",
-  "description": "workspaceAlberta reads every CanadaBuys and Alberta Purchasing Connection notice and ranks them for any business.",
+  "name": "com.warreandvavasour/workspacealberta",
+  "title": "workspaceAlberta",
+  "description": "Search every CanadaBuys and Alberta Purchasing Connection tender. Free briefs; Pro bid-room tools.",
   "repository": {
     "url": "https://github.com/WarreAndVavasour/WorkspaceAlberta",
     "source": "github"
   },
   "version": "1.3.0",
+  "websiteUrl": "https://warreandvavasour.com/workspacealberta?utm_source=mcp-registry&utm_medium=directory&utm_campaign=workspacealberta",
+  "icons": [
+    {
+      "src": "https://elbowsupknivesout.warreandvavasour.com/icon.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    },
+    {
+      "src": "https://elbowsupknivesout.warreandvavasour.com/icon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": ["any"]
+    }
+  ],
   "remotes": [
     {
       "type": "streamable-http",
       "url": "https://elbowsupknivesout.warreandvavasour.com/mcp"
-    }
-  ],
-  "packages": [
-    {
-      "registryType": "npm",
-      "identifier": "@warreandvavasour/workspace-alberta",
-      "version": "0.1.1",
-      "transport": {
-        "type": "stdio"
-      }
     }
   ]
 }
