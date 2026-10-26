@@ -28,9 +28,10 @@ support
 
 ## One-time tailnet setup
 
-In the Tailscale admin console, create ACL/policy entries for support users and WorkspaceAlberta device tags.
+In the Tailscale admin console, review the complete policy before adding grants for support users and WorkspaceAlberta device tags. See [the NSA network baseline](../network-security-baseline.md) for the control checklist.
 
-Example policy fragment:
+Example policy fragment (replace example identities with verified tailnet members;
+add negative tests for actual non-support members and customer-specific devices):
 
 ```jsonc
 {
@@ -44,19 +45,41 @@ Example policy fragment:
     "tag:wa-terminal": ["group:support"],
     "tag:wa-pi5": ["group:support"]
   },
-  "acls": [
+  "grants": [
     {
-      "action": "accept",
       "src": ["group:support"],
-      "dst": ["tag:wa-terminal:*", "tag:wa-pi5:*"]
+      "dst": ["tag:wa-terminal"],
+      "ip": ["tcp:22"]
     }
   ],
   "ssh": [
     {
       "action": "check",
       "src": ["group:support"],
-      "dst": ["tag:wa-terminal", "tag:wa-pi5"],
-      "users": ["support", "autogroup:nonroot"]
+      "dst": ["tag:wa-terminal"],
+      "users": ["support"],
+      "checkPeriod": "1h"
+    }
+  ],
+  "tests": [
+    {
+      "src": "owner@example.com",
+      "proto": "tcp",
+      "accept": ["tag:wa-terminal:22"],
+      "deny": ["tag:wa-terminal:80", "tag:wa-terminal:443", "tag:wa-terminal:8000", "tag:wa-terminal:8080", "tag:wa-terminal:11434"]
+    },
+    {
+      "src": "tag:wa-terminal",
+      "proto": "tcp",
+      "deny": ["tag:wa-terminal:22", "tag:wa-terminal:8080", "tag:wa-terminal:11434"]
+    }
+  ],
+  "sshTests": [
+    {
+      "src": "owner@example.com",
+      "dst": ["tag:wa-terminal"],
+      "check": ["support"],
+      "deny": ["root", "pi"]
     }
   ]
 }
@@ -64,6 +87,10 @@ Example policy fragment:
 
 Notes:
 
+- Grants are additive: remove overlapping all-port or allow-all rules; this narrow grant cannot override them.
+- `tag:wa-pi5` is inventory metadata only; it grants no access.
+- No terminal-to-terminal access is granted here. Customer A must not reach customer B.
+- This controls tailnet traffic only. LAN/public listeners need separate host firewall rules.
 - Tailscale SSH users must already exist on the Pi.
 - Prefer `check` mode for support access so staff must re-authenticate.
 - Keep `tagOwners` tight. A user or auth key that can apply a tag can grant that device the tag identity.
@@ -113,16 +140,15 @@ Create support user:
 
 ```bash
 sudo adduser --disabled-password --gecos "WorkspaceAlberta Support" "$SUPPORT_USER"
-sudo usermod -aG sudo "$SUPPORT_USER"
 ```
 
-Optional passwordless sudo, only if operationally required:
-
-```bash
-printf '%s ALL=(ALL) NOPASSWD:ALL\n' "$SUPPORT_USER" | sudo tee "/etc/sudoers.d/90-$SUPPORT_USER"
-sudo chmod 0440 "/etc/sudoers.d/90-$SUPPORT_USER"
-sudo visudo -c
-```
+Keep this account unprivileged by default. Do not grant blanket `NOPASSWD:ALL`
+or add it to the `sudo` group as part of standard provisioning. If maintenance
+requires elevation, provision a reviewed, command-specific sudoers rule for a
+root-owned wrapper with fixed arguments. Package managers, shells, editors,
+interpreters and unrestricted `systemctl` commands can confer root-equivalent
+access and are not safe allowlist entries. Validate sudoers with `sudo visudo -c`.
+Use a separate, audited administrator path for OS upgrades and reboots.
 
 Install Tailscale using the official Linux installer:
 
@@ -181,8 +207,29 @@ Inside the remote shell:
 ```bash
 whoami
 hostname
-sudo true
+sudo -n -l
 ```
+
+A fresh support account should have no sudo permissions; a nonzero `sudo -n -l`
+exit status can be expected. Record any explicitly approved elevation separately.
+
+Before shipping, record `ss -lntup`, the host firewall rules, and `timedatectl status`.
+Verify SSH is unreachable on the customer LAN and public address, including IPv6;
+Tailscale policy does not close an OpenSSH listener on Ethernet/Wi-Fi. Apply firewall
+changes with local recovery access and confirm the permitted Tailscale SSH path still
+works. Disable unused listeners and router port forwards. Do not enable subnet routing,
+exit-node advertising, or Funnel without a separate review.
+
+Validate these assertions in the complete tailnet policy, using actual members/devices:
+
+- Support can reach each terminal on TCP 22 and log in only as `support`, with check mode.
+- Support cannot reach terminal ports 80, 443, 8000, 8080 or 11434 without a separately approved grant.
+- Ordinary users and other terminals cannot reach a terminal on TCP 22.
+- Root and other local usernames are denied by SSH policy.
+
+Use Tailscale policy `tests` and `sshTests` to retain these assertions. A JSON parse
+alone does not validate Tailscale semantics. Record a successful admin-console policy
+validation before rollout, then verify actual connectivity from permitted and denied sources.
 
 Confirm in the Tailscale admin console:
 
@@ -251,6 +298,9 @@ ssh support@100.x.y.z
 
 ## Standard remote triage
 
+Unprivileged support can inspect permitted logs and state. Commands below using
+`sudo` require the separately provisioned administrator path or a reviewed wrapper.
+
 ```bash
 hostnamectl
 date
@@ -291,6 +341,9 @@ systemctl list-unit-files --type=service --no-pager | grep -Ei 'workspace|albert
 ```
 
 ## Safe update and reboot workflow
+
+These OS maintenance commands require the separately approved administrator path;
+the default unprivileged support account cannot run them.
 
 Use tmux and coordinate with the customer before rebooting.
 
@@ -339,11 +392,11 @@ tailscale status
 tailscale netcheck
 ```
 
-If registration is lost and someone has local/customer-assisted shell access, use a fresh short-lived auth key:
+If registration is lost and someone has local/customer-assisted administrator access, create the root-only auth-key file using the provisioning steps above, use a fresh short-lived key, and delete the file afterward:
 
 ```bash
 sudo tailscale up \
-  --auth-key=<fresh-key> \
+  --auth-key=file:/root/tailscale-authkey \
   --hostname=wa-pi5-acme-edmonton-01 \
   --advertise-tags=tag:wa-terminal,tag:wa-pi5 \
   --ssh
@@ -353,7 +406,7 @@ Use `--reset` only when intentionally reapplying the full desired state:
 
 ```bash
 sudo tailscale up --reset \
-  --auth-key=<fresh-key> \
+  --auth-key=file:/root/tailscale-authkey \
   --hostname=wa-pi5-acme-edmonton-01 \
   --advertise-tags=tag:wa-terminal,tag:wa-pi5 \
   --ssh
