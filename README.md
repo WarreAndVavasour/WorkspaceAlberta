@@ -1,4 +1,42 @@
-# WorkspaceAlberta
+# workspaceAlberta
+
+workspaceAlberta lets your AI assistant search every open CanadaBuys and Alberta Purchasing Connection tender, rank them against your business, and tell you what closes next.
+
+**Add to Claude:** [workspaceAlberta in Claude's connector directory](https://claude.ai/directory/connectors/workspacealberta)
+
+**Claude Code:**
+
+```bash
+claude mcp add --transport http workspaceAlberta https://elbowsupknivesout.warreandvavasour.com/mcp
+```
+
+**Cursor** (`~/.cursor/mcp.json`) **/ VS Code** (`.vscode/mcp.json`, use `"servers"` in place of `"mcpServers"`):
+
+```json
+{
+  "mcpServers": {
+    "workspacealberta": {
+      "type": "http",
+      "url": "https://elbowsupknivesout.warreandvavasour.com/mcp"
+    }
+  }
+}
+```
+
+**Try it:**
+
+```text
+I run a small general contractor in Red Deer, Alberta.
+What construction tenders close in the next 7 days?
+Give me the reference, buyer, closing time and official link for each.
+```
+
+You get open notices from both sources, soonest first: reference (for example `AB-2026-06788`), buyer, closing time in Alberta time, the official posting link and any Buy Canadian or other domestic-preference flag. It finds and ranks work. It does not submit bids or contact buyers.
+
+- **Free, no account:** search, details, deadlines, matching and the daily bid brief across both sources.
+- **Pro:** watchlist, bid/no-bid scorecards, bid-room document review and tender requirement lists. Sign in when a Pro tool asks; [plans and pricing](https://warreandvavasour.com/workspacealberta?utm_source=github&utm_medium=readme&utm_campaign=workspacealberta).
+
+Keywords: Canadian procurement, CanadaBuys, Alberta Purchasing Connection, government tenders, bids, trades, construction, MCP server.
 
 <p align="center">
   <img src="docs/assets/women-workers-collage.png" alt="Eight photographs of Canadian women building war industries: welding, machining, drafting, and finishing munitions, 1940-1945." width="100%">
@@ -34,7 +72,7 @@ The world as we know it has changed.
 
 WorkspaceAlberta is the way to stay ahead of these changes.
 
-## Getting Started
+## More Ways to Connect
 
 The hosted MCP server is live and free for browsing — no install, no account, no API key. Point any MCP-capable assistant at it:
 
@@ -54,7 +92,7 @@ https://elbowsupknivesout.warreandvavasour.com/mcp
 }
 ```
 
-**Claude Desktop** (no native HTTP transport) — bridge with `mcp-remote`:
+**Claude Desktop** — add the URL under Settings > Connectors, or bridge with `mcp-remote`:
 
 ```json
 {
@@ -75,9 +113,11 @@ Then ask it something a real owner would ask:
 
 ### Adding your Pro key
 
-Search, details, deadlines, and the daily brief are open to everyone. Six tools —
-bid rooms, Cohere tender review, the watchlist, and bid/no-bid scorecards — need an
-active subscription. Your key arrives by email after checkout and starts with `wa_live_`.
+Search, details, deadlines, and the daily brief are open to everyone. Seven tools —
+bid rooms, tender requirement lists, Cohere tender review, the three watchlist tools,
+and bid/no-bid scorecards — need an active subscription. Clients that support OAuth
+ask you to sign in the first time you use one. Subscribers can also use a key: it
+arrives by email after checkout and starts with `wa_live_`.
 
 Send it as an `Authorization` header. For HTTP-native clients:
 
@@ -94,15 +134,16 @@ Send it as an `Authorization` header. For HTTP-native clients:
 }
 ```
 
-For Claude Desktop, set it on the bridge instead:
+For the `mcp-remote` bridge, pass it as a header (no spaces around the colon in `args`):
 
 ```json
 {
   "mcpServers": {
     "workspacealberta": {
       "command": "npx",
-      "args": ["-y", "@warreandvavasour/workspace-alberta"],
-      "env": { "WORKSPACEALBERTA_API_KEY": "wa_live_YOUR_KEY" }
+      "args": ["-y", "mcp-remote", "https://elbowsupknivesout.warreandvavasour.com/mcp",
+               "--header", "Authorization:${WA_AUTH}"],
+      "env": { "WA_AUTH": "Bearer wa_live_YOUR_KEY" }
     }
   }
 }
