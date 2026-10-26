@@ -128,7 +128,8 @@ class HarnessContractTests(unittest.TestCase):
             text, data = asyncio.run(service.call_tool_text_and_structured("find_matching_opportunities", {"profile": PROFILE}))
             apc_text = asyncio.run(service.find_alberta_opportunities({"profile": PROFILE}))
         self.assertEqual(data["matches"][0]["reference"], "AB-2026-05716")
-        self.assertEqual(data["warnings"], ["Partial enumeration: fixture"])
+        self.assertIn("Partial enumeration: fixture", data["warnings"])
+        self.assertTrue(any("keyword ranking" in warning for warning in data["warnings"]))
         self.assertIn("Partial enumeration", text)
         self.assertIn("Partial enumeration", apc_text)
 

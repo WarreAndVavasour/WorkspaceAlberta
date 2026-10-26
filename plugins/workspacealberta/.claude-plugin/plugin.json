@@ -1,7 +1,7 @@
 {
   "name": "workspacealberta",
   "displayName": "WorkspaceAlberta",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "workspaceAlberta reads every CanadaBuys and Alberta Purchasing Connection notice for any business, surfaces Buy Canadian signals, and turns a tender package into a requirements board.",
   "author": {
     "name": "Warre & Vavasour",

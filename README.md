@@ -218,6 +218,7 @@ The core tools are:
 - `get_opportunity_details` for a single posting by reference number
 - `list_deadlines` for what is closing soon
 - `find_matching_opportunities` for profile-based ranking
+- `find_business_fit` for a free-text business description, classified with TypeSafe Jev after a commodity-code prefilter
 - `daily_bid_brief` for the daily owner/operator summary
 - `analyze_contract_with_cohere` for optional Cohere Command A+ tender review
 - `process_bid_room` for live E2B attachment processing: Cohere Parse turns tender PDFs and images into markdown, then Command A+ reviews the evidence
@@ -236,7 +237,7 @@ E2B sandboxes are the isolated compute layer for heavier bid-room work: opening 
 
 ### Tool calling: how the MCP tools map to Cohere
 
-Every one of the 27 tools above is exposed to the model through one uniform
+Every procurement tool is exposed to the model through one uniform
 function-calling path. There is no per-tool glue: whatever the MCP server
 declares, the model sees.
 
@@ -245,7 +246,7 @@ declares, the model sees.
 `refresh_data`. Unified search across both sources: `search_opportunities`,
 `get_opportunity_details`, `list_deadlines`. Profile and matching:
 `set_business_profile`, `get_my_profile`, `find_opportunities`,
-`find_matching_opportunities`, `daily_bid_brief`,
+`find_matching_opportunities`, `daily_bid_brief`, `find_business_fit`,
 `match_industrial_support_programs`. Alberta Purchasing
 Connection: `search_alberta_opportunities`, `get_alberta_opportunity_details`,
 `list_alberta_deadlines`, `summarize_alberta_opportunities`,

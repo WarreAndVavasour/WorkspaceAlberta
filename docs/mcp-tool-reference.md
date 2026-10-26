@@ -25,7 +25,10 @@ Search CanadaBuys and Alberta Purchasing Connection together.
 | `category` | string | — | Free text for federal; mapped to APC codes (services→SRV, goods→GD, construction→CNST) for Alberta |
 | `limit` | int | 20 | 1–50, combined across sources |
 
-Results sort newest-posted first. Degraded sources produce warnings, not failures.
+Results sort newest-posted first when the call is keywords only. Pass `description` or `profile` to run the supply-fit pass first: a UNSPSC, GSIN, and APC commodity-code prefilter (at most 12 notices), then one TypeSafe Jev classification per notice. Yes and partial results are ordered by that verdict, then by keyword score and any Buy Canadian bonus. A missing or rejected `TYPESAFE_API_KEY` falls back to keyword ranking and the result says so. Degraded sources produce warnings, not failures.
+
+### `find_business_fit`
+**required:** `description`. Optional `location`, `company_name`, `source`, `province`, `category`, `days` (120; 1–365), `limit` (15; 1–50), and an inline `profile`. Same fit pass as a described `search_opportunities`, aimed at a sentence such as "bakery in Red Deer, Alberta providing baking at scale and baking/culinary training." The description and a short notice summary are sent to TypeSafe when a key is configured. At most 12 classifications, 4 at a time, 8 seconds for the whole pass, and answers are cached per notice and description. About 500 input tokens per notice; Jev bills input only at $0.042 per million tokens.
 
 ### `get_opportunity_details`
 **required:** `reference`. Routes automatically: references matching `AB-YYYY-NNNNN` go to the live APC public detail API; everything else searches the cached CanadaBuys snapshot by reference or solicitation number (substring match). Returns a full markdown dossier: overview, regions/commodity codes, description, submission details, source links.
@@ -34,7 +37,7 @@ Results sort newest-posted first. Degraded sources produce warnings, not failure
 Opportunities closing soon across both sources. Args: `days` (30; 1–365), `source`, `province`, `category`, `limit` (20; 1–50). Sorted soonest-closing first with days-remaining annotations.
 
 ### `find_matching_opportunities`
-Ranks both sources against any business profile. Args: `days` (60; 1–365), `limit` (15; 1–30), plus an inline `profile` when nothing is saved. Scoring is deterministic and sector-neutral: title keyword hits (10 pts each), description hits (5), classification or commodity hits (8), legacy UNSPSC prefix hits for steel, lumber, aluminum, and construction (15), an industry label in the classification text (12), delivery-region match (10), closing within 14 days (+5), and a domestic-preference bonus (10) for a Canadian or Alberta business when the notice already matches on content. Each result explains *why* it matched. Domestic preference alone does not create a match.
+Ranks both sources against any business profile. Args: `days` (60; 1–365), `limit` (15; 1–30), plus an inline `profile` when nothing is saved. Scoring is deterministic and sector-neutral: title keyword hits (10 pts each), description hits (5), classification or commodity hits (8), legacy UNSPSC prefix hits for steel, lumber, aluminum, and construction (15), an industry label in the classification text (12), delivery-region match (10), closing within 14 days (+5), and a domestic-preference bonus (10) for a Canadian or Alberta business when the notice already matches on content. Each result explains *why* it matched. When the profile has a description, the first reason is the Jev fit verdict. Domestic preference alone does not create a keyword match; after a yes or partial verdict it still adds the Buy Canadian bonus for a Canadian business.
 
 ### `daily_bid_brief`
 The flagship free tool: market snapshot (open federal + Alberta counts), best-fit matches with reasons, closing-soon list, and one suggested action. Args: `days` (14; 1–60), `limit` per section (5; 1–10). Uses a saved profile or an inline `profile`. Matched notices that carry a Buy Canadian or other domestic-preference flag say so on the line.

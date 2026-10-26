@@ -28,6 +28,7 @@ business profile needs a free sign-in. Watchlists, bid/no-bid scorecards, bid-ro
 tender classification and contract analysis need sign-in and an active Pro subscription;
 sign-in happens through your app's normal OAuth flow, and the plugin never asks for credentials.
 
+Supply-fit search can send a business description and a short notice summary to TypeSafe AI.
 Some Pro tools send tender documents or clause text to processors that the server's privacy
 notice lists (TypeSafe AI, Cohere, E2B). APC documents are uploaded by you through a private,
 expiring upload link. See the [privacy notice](https://elbowsupknivesout.warreandvavasour.com/privacy)

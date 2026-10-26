@@ -16,10 +16,18 @@ bonding, capacity or business facts. Saving a profile and changing a watchlist a
 persistent actions: do them only when requested. Respect the caller's tenant and
 never put credentials into tool arguments, documents, logs or handoffs.
 
-Search and briefs work without a model. When a Cohere key is configured, APC search
-and matching send the search intent or business capabilities to Cohere once to select
-commodity filters. Ranking stays deterministic; preserve fallback and partial-retrieval
-warnings. Supplier location is not automatically a delivery restriction. check_cohere_status checks
+Search and briefs work without a model. When a business description or profile is
+present, search_opportunities, find_matching_opportunities, daily_bid_brief and
+find_business_fit first cut the open catalogues with UNSPSC, GSIN and APC commodity
+codes, then ask TypeSafe Jev whether the business can supply each notice (yes,
+partial or no, and goods supply, services, training or subcontract). Notice text
+and the description are sent to TypeSafe for that classification. Rank by the Jev
+verdict, then keyword score and Buy Canadian bonuses. If Jev is not configured or
+rejects the key, those tools fall back to keyword ranking and say so. Jev labels
+are classifier outputs to verify. When a Cohere key is configured, keyword APC
+search still sends the search intent or business capabilities to Cohere once to
+select commodity filters. Ranking stays deterministic; preserve fallback and
+partial-retrieval warnings. Supplier location is not automatically a delivery restriction. check_cohere_status checks
 configuration, not provider health. Cohere analysis and process_bid_room are optional
 paid hosted capabilities; bid-room processing sends attachments to E2B and extracted
 evidence, PDF page images and business context to Cohere. process_bid_room returns

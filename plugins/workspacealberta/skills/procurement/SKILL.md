@@ -31,6 +31,15 @@ agriculture, defence, manufacturing, and any other description are matched
 the same way. Use the UNSPSC, GSIN, trade-agreement, procurement-method, and
 selection-criteria fields when they are present.
 
+When the user describes a business in plain language, call `find_business_fit`
+with that description and location, or pass `description` or an inline `profile`
+to `search_opportunities`, `find_matching_opportunities`, or `daily_bid_brief`.
+That path classifies supply fit with TypeSafe Jev after a commodity-code
+prefilter. Keep the yes / partial / no verdict and the capability (goods supply,
+services, training, or subcontract) visible, then the keyword score and any Buy
+Canadian flag. If the result warns that Jev is not configured or rejected the
+key, say that keyword ranking was used and do not present it as a classified fit.
+
 When a notice carries Buy Canadian or domestic-preference flags, show them
 with the source wording: Canadian materials, strategic Canadian suppliers and
 content, Canadian suppliers only, reciprocal procurement, or CFTA-only
