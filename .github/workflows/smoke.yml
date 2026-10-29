@@ -1,6 +1,22 @@
 name: smoke
 on: [push, pull_request]
 jobs:
+  npm-bridge:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/workspace-alberta-mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.2'
+          cache: npm
+          cache-dependency-path: packages/workspace-alberta-mcp/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run smoke
+      - run: npm run pack:check
   smoke:
     runs-on: ubuntu-latest
     steps:
@@ -45,7 +61,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: ${{ hashFiles('package.json') != '' }}
         with:
-          node-version: 'lts/*'
+          node-version: '24.22.2'
       - name: npm install + build
         if: ${{ hashFiles('package.json') != '' }}
         run: |
