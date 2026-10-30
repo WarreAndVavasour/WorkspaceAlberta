@@ -4,8 +4,6 @@ workspaceAlberta lets your AI assistant search every open CanadaBuys and Alberta
 
 **Add to Claude:** [workspaceAlberta in Claude's connector directory](https://claude.ai/directory/connectors/workspacealberta)
 
-**Marketplace:** [Workspace Alberta MCP on mcprush](https://mcprush.com/christian-harley-cooper/workspace-alberta-mcp). WorkspaceAlberta is a Warre & Vavasour product; the marketplace listing appears under Christian Harley Cooper's publisher profile. Public browsing is free; hosted Pro tools require an active subscription (see [plans and pricing](https://warreandvavasour.com/workspacealberta)). The listing's npm installation starts a local bridge to the hosted endpoint, rather than running the procurement server locally. Use the installation instructions below for direct HTTP or `mcp-remote` access.
-
 **Claude Code:**
 
 ```bash
