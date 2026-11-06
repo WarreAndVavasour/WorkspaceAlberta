@@ -1,0 +1,1192 @@
+[
+ {
+  "category": "Personal income tax",
+  "title": "2027 Canada Groceries and Essentials Benefit Supplement",
+  "values": [
+   4055,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": 4055,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "2027-canada-groceries-essentials-benefit-supplement",
+  "pdf_page": 394,
+  "printed_page": 376,
+  "proposal": "Budget 2026 proposes to deliver a one-time CGEB supplement, to be delivered in early 2027, equal to half of the maximum annual CGEB amounts for the 2026-27 benefit year.",
+  "heading_page": 394
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Mineral Exploration Tax Credit and Critical Mineral Exploration Tax Credit",
+  "values": [
+   1,
+   307,
+   216,
+   216,
+   216
+  ],
+  "total": 956,
+  "lenses": [
+   "energy",
+   "investment"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "mineral-exploration-tax-credit-critical-mineral-exploration-tax-credit",
+  "pdf_page": 395,
+  "printed_page": 377,
+  "proposal": "Budget 2026 proposes to extend eligibility for the METC and CMETC for five years, to flow-through share agreements entered into on or before March 31, 2032.",
+  "heading_page": 394
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Canada Caregiver Credit",
+  "values": [
+   null,
+   185,
+   200,
+   220,
+   240
+  ],
+  "total": 845,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "canada-caregiver-credit",
+  "pdf_page": 396,
+  "printed_page": 378,
+  "proposal": "Budget 2026 proposes to make the CCC refundable to ensure that eligible caregivers can receive the full amount even if they have little or no tax liability.",
+  "heading_page": 395
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Canada Growth Incentive – Capital Gains Exemption",
+  "values": [
+   null,
+   null,
+   null,
+   80,
+   485
+  ],
+  "total": 565,
+  "lenses": [
+   "investment",
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "canada-growth-incentive-capital-gains-exemption",
+  "pdf_page": 396,
+  "printed_page": 378,
+  "proposal": "Budget 2026 proposes to introduce a new Canada Growth Incentive (CGI) capital gains exemption which would allow a Canadian-resident individual to claim a tax exemption on capital gains realized on the disposition of qualifying shares of a qualifying corporation, up to a $15-million limit.",
+  "heading_page": 396
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Canada Growth Incentive – Rollover for Investments in Small Businesses",
+  "values": [
+   null,
+   35,
+   35,
+   40,
+   40
+  ],
+  "total": 150,
+  "lenses": [
+   "investment",
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "canada-growth-incentive-rollover-investments-small-businesses",
+  "pdf_page": 398,
+  "printed_page": 380,
+  "proposal": "Budget 2026 proposes to increase the period to acquire replacement shares and to introduce a special provision for individuals who have entered into agreements for future equity.",
+  "heading_page": 398
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Instalment Payments for Individuals and Corporations",
+  "values": [
+   null,
+   25,
+   115,
+   125,
+   130
+  ],
+  "total": 395,
+  "lenses": [
+   "businesses",
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "instalment-payments-individuals-corporations",
+  "pdf_page": 400,
+  "printed_page": 382,
+  "proposal": "Budget 2026 proposes to increase the threshold from $3,000 to $7,500 for corporations and individuals resident outside Quebec, and from $1,800 to $4,500 for individuals resident in Quebec.",
+  "heading_page": 399
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Income Tax Return Filing and Balance-Due Dates for Individuals",
+  "values": [
+   15,
+   50,
+   55,
+   55,
+   55
+  ],
+  "total": 230,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "income-tax-return-filing-balance-due-dates-individuals",
+  "pdf_page": 400,
+  "printed_page": 382,
+  "proposal": "Budget 2026 proposes to change the T1 filing and balance-due dates to May 15 for all individuals, including self-employed individuals and their spouses or common-law partners.",
+  "heading_page": 400
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Northern Residents Deductions",
+  "values": [
+   null,
+   21,
+   26,
+   26,
+   26
+  ],
+  "total": 99,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "northern-residents-deductions",
+  "pdf_page": 401,
+  "printed_page": 383,
+  "proposal": "Budget 2026 proposes to eliminate both of these restrictions.",
+  "heading_page": 401
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Expansion of the Intergenerational Farm and Fishing Property Rollover",
+  "values": [
+   null,
+   15,
+   15,
+   15,
+   20
+  ],
+  "total": 65,
+  "lenses": [
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "expansion-intergenerational-farm-fishing-property-rollover",
+  "pdf_page": 402,
+  "printed_page": 384,
+  "proposal": "Budget 2026 proposes to expand the rollover so that it is available for transfers to a niece, nephew, grandniece, or grandnephew of the taxpayer or the taxpayer's spouse or common-law partner.",
+  "heading_page": 401
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Registered Disability Savings Plan",
+  "values": [
+   1,
+   5,
+   8,
+   10,
+   15
+  ],
+  "total": 39,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "registered-disability-savings-plan",
+  "pdf_page": 402,
+  "printed_page": 384,
+  "proposal": "Budget 2026 proposes to make the qualifying family member measure permanent.",
+  "heading_page": 402
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Moving Expense Deduction",
+  "values": [
+   null,
+   1,
+   1,
+   1,
+   1
+  ],
+  "total": 4,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "moving-expense-deduction",
+  "pdf_page": 403,
+  "printed_page": 385,
+  "proposal": "Budget 2026 proposes to allow individuals making an eligible relocation to deduct a flat $1,000 in respect of the relocation instead of tracking and claiming their deductible moving expenses.",
+  "heading_page": 402
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Clergy Residence Deduction",
+  "values": [
+   null,
+   6,
+   7,
+   7,
+   7
+  ],
+  "total": 27,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "clergy-residence-deduction",
+  "pdf_page": 403,
+  "printed_page": 385,
+  "proposal": "Budget 2026 proposes to allow eligible individuals to deduct a flat amount in a year of $1,000 for each month in which they are eligible for the deduction, up to a maximum of $12,000 for a year, instead of claiming according to the existing detailed method described above.",
+  "heading_page": 403
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Labour Mobility Deduction for Tradespeople",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "trades"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "labour-mobility-deduction-tradespeople",
+  "pdf_page": 404,
+  "printed_page": 386,
+  "proposal": "Budget 2026 proposes to allow eligible tradespeople and apprentices working in the construction industry who undertake an eligible temporary relocation to deduct a flat $1,500 per year instead of claiming actual eligible expenses incurred.",
+  "heading_page": 403
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Home Accessibility Tax Credit",
+  "values": [
+   null,
+   1,
+   1,
+   1,
+   1
+  ],
+  "total": 4,
+  "lenses": [
+   "households",
+   "housing",
+   "trades"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "home-accessibility-tax-credit",
+  "pdf_page": 404,
+  "printed_page": 386,
+  "proposal": "Budget 2026 proposes to allow eligible individuals who incur qualifying expenses to calculate the Home Accessibility Tax Credit using a one-time optional flat-expense amount of $1,000 for a year instead of claiming their actual expenses incurred.",
+  "heading_page": 404
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Adoption Expense Tax Credit",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "adoption-expense-tax-credit",
+  "pdf_page": 404,
+  "printed_page": 386,
+  "proposal": "Budget 2026 proposes to allow eligible adoptive parents to calculate the Adoption Expense Tax Credit using an optional flat expense amount of $1,200 per adopted child in the year an adoption is completed, instead of their actual eligible adoption expenses.",
+  "heading_page": 404
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Foreign Income Verification Statement – Form T1135",
+  "values": [
+   null,
+   null,
+   5,
+   6,
+   6
+  ],
+  "total": 17,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "foreign-income-verification-statement-form-t1135",
+  "pdf_page": 405,
+  "printed_page": 387,
+  "proposal": "Budget 2026 proposes to increase the threshold above which Form T1135 must be filed from $100,000 to $200,000.",
+  "heading_page": 405
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Apprentice Vehicle Mechanics’ Tools Deduction",
+  "values": [
+   null,
+   3,
+   3,
+   3,
+   3
+  ],
+  "total": 12,
+  "lenses": [
+   "trades"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "apprentice-vehicle-mechanics-tools-deduction",
+  "pdf_page": 405,
+  "printed_page": 387,
+  "proposal": "Budget 2026 proposes to allow apprentice vehicle mechanics to deduct all eligible expenses under the apprentice vehicle mechanics' tools deduction.",
+  "heading_page": 405
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Medical Expense Tax Credit and Disability Supports Deduction",
+  "values": [
+   null,
+   1,
+   2,
+   2,
+   2
+  ],
+  "total": 7,
+  "lenses": [
+   "households",
+   "health"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "medical-expense-tax-credit-disability-supports-deduction",
+  "pdf_page": 406,
+  "printed_page": 388,
+  "proposal": "Budget 2026 proposes to simplify the METC while maintaining the integrity of the credit by reducing the documentation requirements for certain eligible expenses, as described below.",
+  "heading_page": 406
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Deductibility of Expenses Against Commission Income",
+  "values": [
+   null,
+   1,
+   1,
+   1,
+   1
+  ],
+  "total": 4,
+  "lenses": [
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "deductibility-expenses-against-commission-income",
+  "pdf_page": 409,
+  "printed_page": 391,
+  "proposal": "Budget 2026 proposes to eliminate the rules that prevent commission employees from deducting travel and motor vehicle expenses under the general employee provisions when they also claim expenses under the commission-employee rules.",
+  "heading_page": 409
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Lump-sum Thresholds for Periodic Payment of Benefits",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "lump-sum-thresholds-periodic-payment-benefits",
+  "pdf_page": 410,
+  "printed_page": 392,
+  "proposal": "Budget 2026 proposes to increase the lump-sum payment threshold to $50 per month for the CCB, to $70 per quarter for the CGEB and, for the 2027 taxation year only, to $70 per payment for the Advance CWB.",
+  "heading_page": 409
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Scholarship, Fellowship, and Bursary Income",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "training"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "scholarship-fellowship-bursary-income",
+  "pdf_page": 410,
+  "printed_page": 392,
+  "proposal": "Budget 2026 proposes to allow a program to qualify even where a student received financial assistance from an arm's-length person.",
+  "heading_page": 410
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Deductibility of Expenses by Employed Artists",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "deductibility-expenses-by-employed-artists",
+  "pdf_page": 410,
+  "printed_page": 392,
+  "proposal": "Budget 2026 proposes to replace the existing cap on the deduction with a limit equal to the amount of the artist's employment income for the year from the specified artistic activities.",
+  "heading_page": 410
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Volunteer Firefighters and Search and Rescue Volunteers Tax Credit",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "volunteer-firefighters-search-rescue-volunteers-tax-credit",
+  "pdf_page": 411,
+  "printed_page": 393,
+  "proposal": "Budget 2026 proposes to combine the Volunteer Firefighters Tax Credit and the Search and Rescue Volunteers Tax Credit into a single 14-per-cent non-refundable Volunteer Firefighters and Search and Rescue Volunteers Tax Credit calculated on an amount of $6,000.",
+  "heading_page": 411
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Registered Retirement Savings Plan",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "registered-retirement-savings-plan",
+  "pdf_page": 411,
+  "printed_page": 393,
+  "proposal": "Budget 2026 announces the government's intention to merge the core features of the RRSP and RRIF under the Income Tax Act into a single “RRSP for life” and to make other changes to improve and modernize the RRSP tax rules.",
+  "heading_page": 411
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Excess Corporate Holdings Regime for Private Foundations",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "excess-corporate-holdings-regime-private-foundations",
+  "pdf_page": 412,
+  "printed_page": 394,
+  "proposal": "Budget 2026 proposes to eliminate the excess corporate holdings regime.",
+  "heading_page": 412
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Objections to Assessments",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "objections-assessments",
+  "pdf_page": 412,
+  "printed_page": 394,
+  "proposal": "Budget 2026 proposes, for most taxpayers, to amend the deadline to file a notice of objection to an income tax assessment to one year after the day the notice of assessment is sent.",
+  "heading_page": 412
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Disclosure of Tax Debt to Credit Bureaus",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "disclosure-tax-debt-credit-bureaus",
+  "pdf_page": 413,
+  "printed_page": 395,
+  "proposal": "Budget 2026 proposes to amend the Income Tax Act to allow the CRA to disclose information about a taxpayer's tax debts to credit bureaus.",
+  "heading_page": 413
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Trust Distributions to Non-Residents",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "trust-distributions-non-residents",
+  "pdf_page": 414,
+  "printed_page": 396,
+  "proposal": "Budget 2026 proposes to broaden the current rollout denial rule to include indirect distributions of trust property to non-resident beneficiaries.",
+  "heading_page": 413
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Information Sharing – Pension Administrators",
+  "values": [
+   null,
+   null,
+   -10,
+   -10,
+   -10
+  ],
+  "total": -30,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "information-sharing-pension-administrators",
+  "pdf_page": 414,
+  "printed_page": 396,
+  "proposal": "Budget 2026 proposes to amend the Income Tax Act to permit the CRA to confirm to the administrator of a registered pension plan that a plan member is deceased.",
+  "heading_page": 414
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Registered Pension Plans",
+  "values": [
+   null,
+   null,
+   -50,
+   -50,
+   -48
+  ],
+  "total": -148,
+  "lenses": [],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "registered-pension-plans",
+  "pdf_page": 414,
+  "printed_page": 396,
+  "proposal": "Budget 2026 proposes to provide express tax consequences under the Income Tax Act and Income Tax Regulations where the CRA revokes the registration of an RPP.",
+  "heading_page": 414
+ },
+ {
+  "category": "Personal income tax",
+  "title": "Build Canada Workers Benefit",
+  "values": [
+   null,
+   515,
+   515,
+   515,
+   515
+  ],
+  "total": 2060,
+  "lenses": [
+   "households"
+  ],
+  "table": {
+   "pdf_page": 392,
+   "printed_page": 374
+  },
+  "slug": "build-canada-workers-benefit",
+  "pdf_page": 416,
+  "printed_page": 398,
+  "proposal": "Budget 2026 proposes to phase out the Advance Canada Workers Benefit, reinvest a portion of the resulting savings to enhance the Canada Workers Benefit and rename the enhanced benefit the Build Canada Workers Benefit.",
+  "heading_page": 416,
+  "adjustment": {
+   "category": "Personal income tax",
+   "title": "Less: savings from the phasing out of advance payments",
+   "values": [
+    null,
+    -470,
+    -860,
+    -860,
+    -860
+   ],
+   "total": -3050,
+   "lenses": [
+    "households"
+   ],
+   "table": {
+    "pdf_page": 392,
+    "printed_page": 374
+   }
+  }
+ },
+ {
+  "category": "Business income tax",
+  "title": "Clean Electricity and Clean Technology Investment Tax Credits",
+  "values": [
+   null,
+   70,
+   780,
+   710,
+   860
+  ],
+  "total": 2420,
+  "lenses": [
+   "energy",
+   "investment",
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "clean-electricity-clean-technology-investment-tax-credits",
+  "pdf_page": 419,
+  "printed_page": 401,
+  "proposal": "Budget 2026 proposes to extend the Clean Electricity and Clean Technology investment tax credits to eligible property that becomes available for use before 2041.",
+  "heading_page": 419
+ },
+ {
+  "category": "Business income tax",
+  "title": "Scientific Research and Experimental Development Tax Incentive Program",
+  "values": [
+   25,
+   200,
+   245,
+   225,
+   235
+  ],
+  "total": 930,
+  "lenses": [
+   "businesses",
+   "investment"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "scientific-research-experimental-development-tax-incentive-program",
+  "pdf_page": 420,
+  "printed_page": 402,
+  "proposal": "Budget 2026 proposes to expand the activities and expenditures eligible under the SR&ED program.",
+  "heading_page": 420
+ },
+ {
+  "category": "Business income tax",
+  "title": "Interest Deductibility Limits",
+  "values": [
+   235,
+   80,
+   80,
+   80,
+   80
+  ],
+  "total": 555,
+  "lenses": [
+   "housing",
+   "investment"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "interest-deductibility-limits",
+  "pdf_page": 422,
+  "printed_page": 404,
+  "proposal": "Budget 2026 proposes to expand the two EIFEL exceptions to cover a borrower's interest and financing expenses where the borrowed funds are used for eligible activities carried on by another corporation, trust or partnership within the same group of affiliated entities.",
+  "heading_page": 421
+ },
+ {
+  "category": "Business income tax",
+  "title": "Canadian Journalism Labour Tax Credit",
+  "values": [
+   16,
+   150,
+   170,
+   85,
+   80
+  ],
+  "total": 501,
+  "lenses": [
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "canadian-journalism-labour-tax-credit",
+  "pdf_page": 422,
+  "printed_page": 404,
+  "proposal": "Budget 2026 proposes to extend eligibility for the CJLTC to the production of audio and audiovisual news.",
+  "heading_page": 422
+ },
+ {
+  "category": "Business income tax",
+  "title": "Taxable Preferred Shares",
+  "values": [
+   1,
+   25,
+   25,
+   20,
+   20
+  ],
+  "total": 91,
+  "lenses": [
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "taxable-preferred-shares",
+  "pdf_page": 423,
+  "printed_page": 405,
+  "proposal": "Budget 2026 proposes to introduce the following measures: • Exempt Canadian-controlled private corporations from the taxable preferred share regime by excluding dividends they pay from Part VI.1 tax.",
+  "heading_page": 423
+ },
+ {
+  "category": "Business income tax",
+  "title": "Helium Exploration, Development and Resource Expenses",
+  "values": [
+   null,
+   4,
+   15,
+   15,
+   20
+  ],
+  "total": 54,
+  "lenses": [
+   "energy",
+   "investment"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "helium-exploration-development-resource-expenses",
+  "pdf_page": 424,
+  "printed_page": 406,
+  "proposal": "Budget 2026 proposes to allow helium exploration and development expenses to qualify as CEE and CDE, consistent with the treatment of similar expenses in the petroleum and natural gas sector.",
+  "heading_page": 424
+ },
+ {
+  "category": "Business income tax",
+  "title": "Corporate Tax Elections",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "corporate-tax-elections",
+  "pdf_page": 425,
+  "printed_page": 407,
+  "proposal": "Budget 2026 proposes to eliminate the existing requirements for corporations to file a certified copy of a resolution or authorization when making certain elections or agreements.",
+  "heading_page": 424
+ },
+ {
+  "category": "Business income tax",
+  "title": "Corporate Loss Transfers",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "corporate-loss-transfers",
+  "pdf_page": 425,
+  "printed_page": 407,
+  "proposal": null,
+  "heading_page": 425
+ },
+ {
+  "category": "Business income tax",
+  "title": "Administrative Penalties",
+  "values": [
+   null,
+   null,
+   -11,
+   -48,
+   -58
+  ],
+  "total": -117,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "administrative-penalties",
+  "pdf_page": 427,
+  "printed_page": 409,
+  "proposal": "Budget 2026 proposes several amendments to administrative penalties under federal tax statutes.",
+  "heading_page": 427,
+  "adjustment": {
+   "category": "Business income tax",
+   "title": "Less: amounts provisioned in Budget 2025 for future reviews",
+   "values": [
+    null,
+    null,
+    11,
+    48,
+    58
+   ],
+   "total": 117,
+   "lenses": [],
+   "table": {
+    "pdf_page": 393,
+    "printed_page": 375
+   }
+  }
+ },
+ {
+  "category": "International tax",
+  "title": "Common Reporting Standard",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "common-reporting-standard",
+  "pdf_page": 430,
+  "printed_page": 412,
+  "proposal": "Budget 2026 announces the government's intention to consult on potential measures to strengthen Canada's implementation of the CRS.",
+  "heading_page": 429
+ },
+ {
+  "category": "International tax",
+  "title": "Taxable Canadian Property",
+  "values": [
+   3,
+   15,
+   15,
+   15,
+   15
+  ],
+  "total": 63,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "taxable-canadian-property",
+  "pdf_page": 431,
+  "printed_page": 413,
+  "proposal": "Budget 2026 proposes to reduce the withholding and remittance rates from 25 and 50 per cent to 15 and 30 per cent, respectively (as shown in Table 4).",
+  "heading_page": 430
+ },
+ {
+  "category": "Sales and excise tax",
+  "title": "GST/HST Health Measures",
+  "values": [
+   20,
+   41,
+   46,
+   46,
+   46
+  ],
+  "total": 199,
+  "lenses": [
+   "health"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "gst-hst-health-measures",
+  "pdf_page": 432,
+  "printed_page": 414,
+  "proposal": "Budget 2026 proposes changes to ensure that the GST/HST treatment of certain health care services and devices remains aligned with developments in the health care sector.",
+  "heading_page": 432
+ },
+ {
+  "category": "Sales and excise tax",
+  "title": "Pre-approval regime for GST/HST Input Tax Credit Allocation Methods of Financial Institutions",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "pre-approval-regime-gst-hst-input-tax-credit-allocation-methods-financ",
+  "pdf_page": 433,
+  "printed_page": 415,
+  "proposal": "Budget 2026 proposes to amend the Excise Tax Act to allow these financial institutions to apply for pre-approval of their GST/HST input allocation methods for three consecutive fiscal years, rather than only in respect of one fiscal year.",
+  "heading_page": 433
+ },
+ {
+  "category": "Sales and excise tax",
+  "title": "Product Descriptions and Regulatory Cross-References in Sales and Excise Tax Rules",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "product-descriptions-regulatory-cross-references-sales-excise-tax-rule",
+  "pdf_page": 434,
+  "printed_page": 416,
+  "proposal": "Budget 2026 proposes to update outdated HS codes and regulatory cross- references in the sales and excise tax rules.",
+  "heading_page": 433
+ },
+ {
+  "category": "Sales and excise tax",
+  "title": "Cannabis Taxation",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "cannabis-taxation",
+  "pdf_page": 436,
+  "printed_page": 418,
+  "proposal": "Budget 2026 proposes changes to the cannabis excise duty stamping regime and measures to strengthen the penalty framework.",
+  "heading_page": 436
+ },
+ {
+  "category": "Sales and excise tax",
+  "title": "Spirits Licence Security Requirements",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "spirits-licence-security-requirements",
+  "pdf_page": 438,
+  "printed_page": 420,
+  "proposal": "Budget 2026 proposes to: • Require excise warehouse licensees authorized to possess non-duty-paid packaged spirits to provide security as a condition of licensing.",
+  "heading_page": 438
+ },
+ {
+  "category": "Sales and excise tax",
+  "title": "Federal Fuel Excise Tax Licensing Framework",
+  "values": [
+   null,
+   20,
+   null,
+   null,
+   null
+  ],
+  "total": 20,
+  "lenses": [
+   "businesses"
+  ],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "federal-fuel-excise-tax-licensing-framework",
+  "pdf_page": 438,
+  "printed_page": 420,
+  "proposal": "Budget 2026 proposes amendments to the Excise Tax Act to expand the eligibility for a wholesaler licence to businesses that resell fuel in the normal course of their business and to broaden the relieving rules for fuel purchased or imported by licensed manufacturers.",
+  "heading_page": 438
+ },
+ {
+  "category": "Other tax",
+  "title": "Ministerial Delegations",
+  "values": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "total": null,
+  "lenses": [],
+  "table": {
+   "pdf_page": 393,
+   "printed_page": 375
+  },
+  "slug": "ministerial-delegations",
+  "pdf_page": 440,
+  "printed_page": 422,
+  "proposal": "Budget 2026 proposes to amend the Income Tax Act to allow the following matters to be designated by ministerial authority rather than prescribed by the Income Tax Regulations.",
+  "heading_page": 440
+ }
+]
