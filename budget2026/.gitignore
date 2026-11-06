@@ -1,0 +1,19 @@
+# Build output and the earlier Codex draft (full page text + PDF): never committed.
+out/
+out-preview/
+dist/
+__pycache__/
+.wrangler/
+node_modules/
+
+# Full budget text and page renders stay local: this repo is public and the PDF is
+# "All rights reserved". Regenerate with scripts/index_pdf.py from the PDF.
+data/source.json
+data/source.txt
+data/*.png
+*.pdf
+
+# Superseded Codex draft files (they republished the full text).
+scripts/legacy_codex_build.py
+/app.js
+/style.css

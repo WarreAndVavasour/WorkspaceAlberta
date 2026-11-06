@@ -1,0 +1,4923 @@
+{
+ "1": {
+  "start_page": 161,
+  "rows": [
+   {
+    "kind": "section",
+    "code": "1.1",
+    "label": "Making Canada the best place to invest",
+    "values": [
+     2044.0,
+     9170.0,
+     9266.0,
+     7455.0,
+     10089.0
+    ],
+    "total": 38024.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161
+   },
+   {
+    "label": "Kickstarting Canada’s Investment Supercycle with the Productivity Mega Deduction",
+    "capital": true,
+    "values": [
+     2015.0,
+     8870.0,
+     8895.0,
+     7020.0,
+     9255.0
+    ],
+    "total": 36055.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.1"
+   },
+   {
+    "label": "Backing Canada’s next generation of entrepreneurs",
+    "capital": false,
+    "values": [
+     null,
+     35.0,
+     35.0,
+     120.0,
+     525.0
+    ],
+    "total": 715.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.1"
+   },
+   {
+    "label": "Helping Canadian innovators scale at home",
+    "capital": false,
+    "values": [
+     null,
+     7.0,
+     50.0,
+     50.0,
+     43.0
+    ],
+    "total": 150.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.1",
+    "adjustments": [
+     {
+      "label": "Funds previously provisioned in the fiscal framework",
+      "capital": false,
+      "values": [
+       -5.0,
+       -11.0,
+       -15.0,
+       -14.0,
+       -11.0
+      ],
+      "total": -56.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 161,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Boosting innovation and commercialisation",
+    "capital": true,
+    "values": [
+     25.0,
+     200.0,
+     247.0,
+     227.0,
+     237.0
+    ],
+    "total": 936.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.1"
+   },
+   {
+    "label": "Unleashing billions for Canadian businesses with the Canada Investment Summit",
+    "capital": false,
+    "values": [
+     null,
+     50.0,
+     40.0,
+     50.0,
+     40.0
+    ],
+    "total": 181.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.1"
+   },
+   {
+    "label": "Mobilising private investment to modernise Canada’s airports",
+    "capital": false,
+    "values": [
+     9.0,
+     18.0,
+     13.0,
+     1.0,
+     0.0
+    ],
+    "total": 42.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.1"
+   },
+   {
+    "kind": "section",
+    "code": "1.2",
+    "label": "Building a cleaner, more competitive economy",
+    "values": [
+     null,
+     788.0,
+     2562.0,
+     3105.0,
+     3263.0
+    ],
+    "total": 9718.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161
+   },
+   {
+    "label": "Powering Canada Strong",
+    "capital": true,
+    "values": [
+     null,
+     622.0,
+     2297.0,
+     2835.0,
+     2993.0
+    ],
+    "total": 8747.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.2"
+   },
+   {
+    "label": "Growing Canada’s nuclear advantage and powering our electricity future",
+    "capital": true,
+    "values": [
+     null,
+     100.0,
+     108.0,
+     113.0,
+     112.0
+    ],
+    "total": 433.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.2",
+    "adjustments": [
+     {
+      "label": "Projected revenues",
+      "capital": false,
+      "values": [
+       null,
+       -3.0,
+       -3.0,
+       -4.0,
+       -4.0
+      ],
+      "total": -14.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 161,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Expanding Canada’s electric vehicle charging infrastructure",
+    "capital": true,
+    "values": [
+     null,
+     69.0,
+     159.0,
+     162.0,
+     162.0
+    ],
+    "total": 553.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.2"
+   },
+   {
+    "kind": "section",
+    "code": "1.3",
+    "label": "Unlocking the full potential of Canada’s natural resources",
+    "values": [
+     -11.0,
+     936.0,
+     827.0,
+     887.0,
+     925.0
+    ],
+    "total": 3564.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161
+   },
+   {
+    "label": "Bringing critical minerals from mine to market",
+    "capital": true,
+    "values": [
+     1.0,
+     414.0,
+     335.0,
+     451.0,
+     460.0
+    ],
+    "total": 1661.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.3",
+    "adjustments": [
+     {
+      "label": "Funds previously provisioned in the fiscal framework",
+      "capital": false,
+      "values": [
+       -12.0,
+       -32.0,
+       -62.0,
+       -62.0,
+       -32.0
+      ],
+      "total": -200.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 161,
+      "kind": "adjustment"
+     },
+     {
+      "label": "Projected revenues",
+      "capital": false,
+      "values": [
+       null,
+       null,
+       null,
+       -57.0,
+       -57.0
+      ],
+      "total": -113.0,
+      "flags": [
+       "none",
+       "none",
+       "none",
+       null,
+       null
+      ],
+      "page": 161,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Strengthening Canada’s forest sector",
+    "capital": true,
+    "values": [
+     null,
+     554.0,
+     554.0,
+     554.0,
+     554.0
+    ],
+    "total": 2216.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.3"
+   },
+   {
+    "kind": "section",
+    "code": "1.4",
+    "label": "Building a net-zero economy",
+    "values": [
+     null,
+     25.0,
+     30.0,
+     55.0,
+     75.0
+    ],
+    "total": 185.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161
+   },
+   {
+    "label": "Advancing Canada’s climate competitiveness",
+    "capital": false,
+    "values": [
+     null,
+     25.0,
+     30.0,
+     55.0,
+     75.0
+    ],
+    "total": 185.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.4"
+   },
+   {
+    "kind": "section",
+    "code": "1.5",
+    "label": "Strengthening competition",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 1.0,
+    "flags": [
+     "under_half_million",
+     "under_half_million",
+     null,
+     null,
+     null
+    ],
+    "page": 161
+   },
+   {
+    "label": "Advancing the digital transformation of the financial system",
+    "capital": false,
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 1.0,
+    "flags": [
+     "under_half_million",
+     "under_half_million",
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.5"
+   },
+   {
+    "kind": "section",
+    "code": "1.x",
+    "label": "Additional investments – Canada’s Investment Supercycle",
+    "values": [
+     null,
+     118.0,
+     161.0,
+     189.0,
+     59.0
+    ],
+    "total": 527.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161
+   },
+   {
+    "label": "Arctic offshore oil and gas governance",
+    "capital": false,
+    "values": [
+     null,
+     1.0,
+     3.0,
+     3.0,
+     3.0
+    ],
+    "total": 11.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.x",
+    "description": "Funding proposed for CIRNAC to support the governance and oversight of offshore oil and gas activities in the Arctic Ocean."
+   },
+   {
+    "label": "Canada’s standards-setting and accreditation system",
+    "capital": false,
+    "values": [
+     null,
+     2.0,
+     2.0,
+     2.0,
+     null
+    ],
+    "total": 6.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.x",
+    "description": "Funding proposed for the SCC to strengthen access to standards expertise and support Canadian firms’ participation in domestic and international markets."
+   },
+   {
+    "label": "Geo-mapping for energy and minerals (GeoNorth)",
+    "capital": true,
+    "values": [
+     null,
+     6.0,
+     10.0,
+     10.0,
+     9.0
+    ],
+    "total": 34.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.x",
+    "description": "Funding proposed for NRCan to renew the GeoNorth program, which generates and disseminates public geoscience data used to support land-use and infrastructure development decisions, exploration for geological and mineral resources, and environmental assessments in Canada’s North."
+   },
+   {
+    "label": "NRC IRAP Clean Technology renewal",
+    "capital": false,
+    "values": [
+     null,
+     65.0,
+     107.0,
+     126.0,
+     null
+    ],
+    "total": 298.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 161,
+    "kind": "measure",
+    "section": "1.x",
+    "description": "Funding proposed for the NRC to renew the Industrial Research Assistance Program’s Clean Technology initiative, which supports Canadian small- and medium-sized enterprises to develop, demonstrate, and commercialise clean technologies."
+   },
+   {
+    "label": "Polar Knowledge Canada",
+    "capital": true,
+    "values": [
+     null,
+     60.0,
+     58.0,
+     66.0,
+     65.0
+    ],
+    "total": 250.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 162,
+    "kind": "measure",
+    "section": "1.x",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -37.0,
+       -36.0,
+       -36.0,
+       -36.0
+      ],
+      "total": -145.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 162,
+      "kind": "adjustment"
+     }
+    ],
+    "description": "Funding proposed for POLAR to support investments related to the Canadian High Arctic Research Station as well as enhancements to its Science and Technology program and related operations."
+   },
+   {
+    "label": "Supporting economic development in the North",
+    "capital": true,
+    "values": [
+     null,
+     18.0,
+     18.0,
+     18.0,
+     18.0
+    ],
+    "total": 71.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 162,
+    "kind": "measure",
+    "section": "1.x",
+    "description": "Funding proposed for CanNor to renew support for economic development projects in the North through Inclusive Diversification and Economic Advancement in the North (IDEANorth) and the Northern Indigenous Economic Opportunities Program."
+   },
+   {
+    "label": "Supporting the Canadian Infrastructure Council",
+    "capital": false,
+    "values": [
+     null,
+     2.0,
+     null,
+     null,
+     null
+    ],
+    "total": 2.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 162,
+    "kind": "measure",
+    "section": "1.x",
+    "description": "Funding proposed for HICC to renew the Canadian Infrastructure Council, which publishes independent reports to help governments identify where infrastructure investment is most needed over the long term."
+   },
+   {
+    "label": "Chapter 1 - Net fiscal impact",
+    "capital": false,
+    "values": [
+     2033.0,
+     11037.0,
+     12845.0,
+     11691.0,
+     14412.0
+    ],
+    "total": 52018.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 162,
+    "kind": "net"
+   },
+   {
+    "kind": "capital",
+    "label": "Of which, capital investment",
+    "values": [
+     2029.0,
+     10388.0,
+     12070.0,
+     10794.0,
+     13227.0
+    ],
+    "total": 48507.0,
+    "page": 162
+   }
+  ],
+  "notes": [
+   "¹ Kickstarting Canada’s Investment Supercycle with the Productivity Mega Deduction was announced on",
+   "September 15, 2026.",
+   "Note:",
+   "i. An ellipsis (….) indicates no adjustments to existing funding levels (that is, no additional funding, or reduction",
+   "in funding, is being proposed), or no funding implications (for example, a one-time event or a new program that",
+   "begins in future years).",
+   "ii. A dash (-) indicates that consideration of a further extension will occur at a later time.",
+   "iii. A starred 0 (0*) indicates an amount of less than $0.5 million, which rounds to zero in this table.",
+   "iv. Measures that include funding classified as a capital investment are marked with an asterisk (*).",
+   "v. Numbers may not add due to rounding.",
+   "vi. A glossary of abbreviations used in this table can be found at the end of Annex 1."
+  ]
+ },
+ "2": {
+  "start_page": 196,
+  "rows": [
+   {
+    "kind": "section",
+    "code": "2.1",
+    "label": "Building a stronger, more sovereign economy",
+    "values": [
+     56.0,
+     363.0,
+     734.0,
+     1074.0,
+     1061.0
+    ],
+    "total": 3287.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196
+   },
+   {
+    "label": "Moving major projects forward faster — Major Projects Management Entity",
+    "capital": false,
+    "values": [
+     18.0,
+     44.0,
+     47.0,
+     48.0,
+     30.0
+    ],
+    "total": 187.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196,
+    "kind": "measure",
+    "section": "2.1"
+   },
+   {
+    "label": "Supporting major projects across the country – Mackenzie Valley Highway",
+    "capital": true,
+    "values": [
+     38.0,
+     319.0,
+     687.0,
+     1026.0,
+     1030.0
+    ],
+    "total": 3100.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196,
+    "kind": "measure",
+    "section": "2.1"
+   },
+   {
+    "kind": "section",
+    "code": "2.2",
+    "label": "Diversifying trade and deepening ties with reliable partners",
+    "values": [
+     7.0,
+     38.0,
+     2.0,
+     2.0,
+     2.0
+    ],
+    "total": 51.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196
+   },
+   {
+    "label": "Modernising trade systems – Digital trade",
+    "capital": true,
+    "values": [
+     8.0,
+     41.0,
+     2.0,
+     2.0,
+     2.0
+    ],
+    "total": 55.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196,
+    "kind": "measure",
+    "section": "2.2",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       -1.0,
+       -3.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "total": -4.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 196,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "kind": "section",
+    "code": "2.3",
+    "label": "Helping Canadians and their businesses navigate change",
+    "values": [
+     2178.0,
+     4422.0,
+     1820.0,
+     1886.0,
+     1194.0
+    ],
+    "total": 11501.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196
+   },
+   {
+    "label": "Supporting Canadian workers and businesses",
+    "capital": true,
+    "values": [
+     2178.0,
+     4413.0,
+     1812.0,
+     1877.0,
+     1194.0
+    ],
+    "total": 11474.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196,
+    "kind": "measure",
+    "section": "2.3",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -50.0,
+       -50.0,
+       -50.0,
+       0.0
+      ],
+      "total": -150.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 196,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Supporting a more competitive wine sector",
+    "capital": false,
+    "values": [
+     null,
+     59.0,
+     59.0,
+     59.0,
+     null
+    ],
+    "total": 177.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 196,
+    "kind": "measure",
+    "section": "2.3"
+   },
+   {
+    "kind": "section",
+    "code": "2.x",
+    "label": "Additional investments – A more competitive and connected Canadian economy",
+    "values": [
+     43.0,
+     83.0,
+     6.0,
+     6.0,
+     6.0
+    ],
+    "total": 143.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196
+   },
+   {
+    "label": "Major Projects Office resources",
+    "capital": true,
+    "values": [
+     43.0,
+     78.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 121.0,
+    "flags": [
+     null,
+     null,
+     "under_half_million",
+     "under_half_million",
+     "under_half_million"
+    ],
+    "page": 196,
+    "kind": "measure",
+    "section": "2.x",
+    "description": "Funding proposed for PCO for the Major Projects Office to support work on projects listed and considered for listing under the Building Canada Act, including consultation with Indigenous Peoples and regulatory work."
+   },
+   {
+    "label": "Strengthening supply chain data and analysis",
+    "capital": false,
+    "values": [
+     null,
+     5.0,
+     5.0,
+     6.0,
+     6.0
+    ],
+    "total": 22.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196,
+    "kind": "measure",
+    "section": "2.x",
+    "description": "Funding proposed for TC to renew supply chain data and analysis used to identify bottlenecks, monitor disruptions, and inform decisions on trade diversification and economic security."
+   },
+   {
+    "label": "Chapter 2 - Net fiscal impact",
+    "capital": false,
+    "values": [
+     2284.0,
+     4906.0,
+     2562.0,
+     2968.0,
+     2263.0
+    ],
+    "total": 14983.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 196,
+    "kind": "net"
+   },
+   {
+    "kind": "capital",
+    "label": "Of which, capital investment",
+    "values": [
+     328.0,
+     1520.0,
+     1799.0,
+     2845.0,
+     2182.0
+    ],
+    "total": 8674.0,
+    "page": 196
+   }
+  ],
+  "notes": [
+   "1 Supporting Canadian workers and businesses captures measures that were previously announced on May 4, 2026; June 3,",
+   "2026; August 25, 2026; and October 21, 2026. This includes broad-based support for workers and businesses and",
+   "targeted support announced for steel, aluminum, automotive, copper, forestry, mining, and critical minerals sectors.",
+   "2  This measure includes Employment Insurance (EI) expenditures which will be sourced from the fiscal framework, charged to",
+   "the EI Operating Account, and ultimately recovered through future EI premiums. EI premiums will be set according to the",
+   "seven-year break-even mechanism in order to recover these costs.",
+   "Note:",
+   "i. An ellipsis (….) indicates no adjustments to existing funding levels (that is, no additional funding, or reduction in funding, is",
+   "being proposed), or no funding implications (for example, a one-time event or a new program that begins in future years).",
+   "ii. A dash (-) indicates that consideration of a further extension will occur at a later time.",
+   "iii. A starred 0 (0*) indicates an amount of less than $0.5 million, which rounds to zero in this table.",
+   "iv. Measures that include funding classified as a capital investment are marked with an asterisk (*).",
+   "v. Numbers may not add due to rounding.",
+   "vi. A glossary of abbreviations used in this table can be found at the end of Annex 1."
+  ]
+ },
+ "3": {
+  "start_page": 233,
+  "rows": [
+   {
+    "kind": "section",
+    "code": "3.1",
+    "label": "Delivering a boost today",
+    "values": [
+     8687.0,
+     3634.0,
+     355.0,
+     377.0,
+     1061.0
+    ],
+    "total": 14113.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233
+   },
+   {
+    "label": "Providing more help with groceries and everyday essentials",
+    "capital": false,
+    "values": [
+     4055.0,
+     148.0,
+     151.0,
+     154.0,
+     158.0
+    ],
+    "total": 4665.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "label": "Strengthening support for workers earning low wages",
+    "capital": false,
+    "values": [
+     null,
+     515.0,
+     515.0,
+     515.0,
+     515.0
+    ],
+    "total": 2060.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "label": "Phasing out of advance payments",
+    "capital": false,
+    "values": [
+     null,
+     -470.0,
+     -871.0,
+     -871.0,
+     -871.0
+    ],
+    "total": -3082.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "label": "Making the Canada Caregiver Credit refundable",
+    "capital": false,
+    "values": [
+     null,
+     185.0,
+     200.0,
+     220.0,
+     240.0
+    ],
+    "total": 845.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "label": "Lowering costs for Canadians at the pump",
+    "capital": false,
+    "values": [
+     2870.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 2870.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "label": "$2 billion investment, retrofitting 1 million homes to save Canadians $1 billion per year",
+    "capital": true,
+    "values": [
+     87.0,
+     210.0,
+     359.0,
+     359.0,
+     324.0
+    ],
+    "total": 1339.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "label": "Securing the future of a Canada-wide early learning and child care system",
+    "capital": false,
+    "values": [
+     2370.0,
+     3046.0,
+     null,
+     null,
+     null
+    ],
+    "total": 5416.0,
+    "flags": [
+     null,
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "label": "Realignment of existing funding",
+    "capital": false,
+    "values": [
+     -695.0,
+     0.0,
+     0.0,
+     0.0,
+     695.0
+    ],
+    "total": 0.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.1"
+   },
+   {
+    "kind": "section",
+    "code": "3.2",
+    "label": "Providing a bridge to tomorrow",
+    "values": [
+     132.0,
+     3208.0,
+     4953.0,
+     4054.0,
+     4114.0
+    ],
+    "total": 16461.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233
+   },
+   {
+    "label": "Pillar 1: Putting Canada on a path to end homelessness in 10 years",
+    "capital": true,
+    "values": [
+     null,
+     2364.0,
+     3620.0,
+     2620.0,
+     2619.0
+    ],
+    "total": 11224.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.2"
+   },
+   {
+    "label": "Pillar 2: Expand non-market housing",
+    "capital": true,
+    "values": [
+     null,
+     null,
+     473.0,
+     495.0,
+     530.0
+    ],
+    "total": 1498.0,
+    "flags": [
+     "none",
+     "none",
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.2"
+   },
+   {
+    "label": "Turning federal lands and buildings into homes",
+    "capital": true,
+    "values": [
+     null,
+     387.0,
+     387.0,
+     387.0,
+     387.0
+    ],
+    "total": 1550.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.2"
+   },
+   {
+    "label": "Pillar 3: Building a housing market that works for all",
+    "capital": true,
+    "values": [
+     null,
+     49.0,
+     52.0,
+     151.0,
+     216.0
+    ],
+    "total": 468.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.2"
+   },
+   {
+    "label": "Helping Canadians get an affordable mortgage",
+    "capital": true,
+    "values": [
+     null,
+     6.0,
+     4.0,
+     4.0,
+     0.0
+    ],
+    "total": 13.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.2"
+   },
+   {
+    "label": "Securing a resilient food supply chain – National Food Security Strategy",
+    "capital": true,
+    "values": [
+     132.0,
+     360.0,
+     375.0,
+     357.0,
+     361.0
+    ],
+    "total": 1585.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.2",
+    "adjustments": [
+     {
+      "label": "Costs to be recovered",
+      "capital": false,
+      "values": [
+       null,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "total": 0.0,
+      "flags": [
+       "none",
+       "under_half_million",
+       "under_half_million",
+       "under_half_million",
+       "under_half_million"
+      ],
+      "page": 233,
+      "kind": "adjustment"
+     },
+     {
+      "label": "Projected revenues",
+      "capital": false,
+      "values": [
+       null,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "total": 0.0,
+      "flags": [
+       "none",
+       "under_half_million",
+       "under_half_million",
+       "under_half_million",
+       "under_half_million"
+      ],
+      "page": 233,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Securing a resilient food supply chain – Renewing the Local Food Infrastructure Fund",
+    "capital": true,
+    "values": [
+     null,
+     41.0,
+     41.0,
+     41.0,
+     0.0
+    ],
+    "total": 124.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "under_half_million"
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.2"
+   },
+   {
+    "kind": "section",
+    "code": "3.3",
+    "label": "Supporting a healthy and secure future",
+    "values": [
+     null,
+     1245.0,
+     65.0,
+     null,
+     null
+    ],
+    "total": 1310.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 233
+   },
+   {
+    "label": "Improving access to mental health and home and community care",
+    "capital": false,
+    "values": [
+     null,
+     1200.0,
+     null,
+     null,
+     null
+    ],
+    "total": 1200.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.3"
+   },
+   {
+    "label": "Renewing the Emergency Treatment Fund",
+    "capital": false,
+    "values": [
+     null,
+     40.0,
+     60.0,
+     null,
+     null
+    ],
+    "total": 100.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.3"
+   },
+   {
+    "label": "Improving access to medications",
+    "capital": false,
+    "values": [
+     null,
+     5.0,
+     5.0,
+     0.0,
+     0.0
+    ],
+    "total": 10.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.3"
+   },
+   {
+    "kind": "section",
+    "code": "3.4",
+    "label": "Growing our skilled workforce to build Canada Strong",
+    "values": [
+     13.0,
+     347.0,
+     132.0,
+     101.0,
+     129.0
+    ],
+    "total": 722.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233
+   },
+   {
+    "label": "Launching Team Canada Strong",
+    "capital": false,
+    "values": [
+     null,
+     0.0,
+     1.0,
+     2.0,
+     2.0
+    ],
+    "total": 5.0,
+    "flags": [
+     "none",
+     "under_half_million",
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.4"
+   },
+   {
+    "label": "Helping workers build skills for the jobs of tomorrow",
+    "capital": false,
+    "values": [
+     null,
+     114.0,
+     113.0,
+     112.0,
+     113.0
+    ],
+    "total": 452.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.4",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -48.0,
+       -48.0,
+       -48.0,
+       -48.0
+      ],
+      "total": -192.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 233,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Helping workers affected by tariffs gain new skills",
+    "capital": false,
+    "values": [
+     null,
+     170.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 170.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.4"
+   },
+   {
+    "label": "Building a more responsive and resilient immigration system",
+    "capital": false,
+    "values": [
+     13.0,
+     228.0,
+     98.0,
+     72.0,
+     100.0
+    ],
+    "total": 511.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233,
+    "kind": "measure",
+    "section": "3.4",
+    "adjustments": [
+     {
+      "label": "Projected revenues",
+      "capital": false,
+      "values": [
+       null,
+       -117.0,
+       -32.0,
+       -38.0,
+       -38.0
+      ],
+      "total": -224.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 233,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "kind": "section",
+    "code": "3.x",
+    "label": "Additional investments – A more affordable life",
+    "values": [
+     -195.0,
+     -398.0,
+     -405.0,
+     -410.0,
+     -482.0
+    ],
+    "total": -1890.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 233
+   },
+   {
+    "label": "Administration of the First Home Savings Account",
+    "capital": true,
+    "values": [
+     null,
+     20.0,
+     20.0,
+     21.0,
+     0.0
+    ],
+    "total": 62.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "under_half_million"
+    ],
+    "page": 234,
+    "kind": "measure",
+    "section": "3.x",
+    "description": "Funding proposed for CRA for continued administration of the First Home Savings Account."
+   },
+   {
+    "label": "Asylum processing",
+    "capital": false,
+    "values": [
+     5.0,
+     9.0,
+     37.0,
+     40.0,
+     8.0
+    ],
+    "total": 98.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 234,
+    "kind": "measure",
+    "section": "3.x",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       -35.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "total": -35.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 234,
+      "kind": "adjustment"
+     }
+    ],
+    "description": "Funding proposed for the IRB, IRCC and CBSA to reduce asylum inventories and support the effective functioning of Canada’s asylum system."
+   },
+   {
+    "label": "Enhancing biometrics collection for immigration screening",
+    "capital": false,
+    "values": [
+     null,
+     15.0,
+     15.0,
+     30.0,
+     30.0
+    ],
+    "total": 90.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 234,
+    "kind": "measure",
+    "section": "3.x",
+    "adjustments": [
+     {
+      "label": "Projected revenues",
+      "capital": false,
+      "values": [
+       null,
+       -6.0,
+       -6.0,
+       -5.0,
+       -5.0
+      ],
+      "total": -22.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 234,
+      "kind": "adjustment"
+     }
+    ],
+    "description": "Funding proposed for IRCC to expand screening checks using fingerprints and facial images to more travellers. This would include a new requirement for visa-exempt travellers applying for an electronic Travel Authorization (eTA), an online travel authorisation required before flying to Canada, to submit a facial image remotely to verify their identity and reduce fraud."
+   },
+   {
+    "label": "Extending support for the Vaccine Impact Assistance Program",
+    "capital": false,
+    "values": [
+     null,
+     27.0,
+     null,
+     null,
+     null
+    ],
+    "total": 27.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 234,
+    "kind": "measure",
+    "section": "3.x",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -9.0,
+       null,
+       null,
+       null
+      ],
+      "total": -9.0,
+      "flags": [
+       "none",
+       null,
+       "extension_later",
+       "extension_later",
+       "extension_later"
+      ],
+      "page": 234,
+      "kind": "adjustment"
+     }
+    ],
+    "description": "Funding proposed for PHAC to renew the Vaccine Impact Assistance Program, which provides financial support to people in Canada who have been assessed as having sustained a serious and permanent injury as a result of receiving a HC-authorised vaccine."
+   },
+   {
+    "label": "Migrant Worker Support Program",
+    "capital": false,
+    "values": [
+     null,
+     20.0,
+     20.0,
+     20.0,
+     20.0
+    ],
+    "total": 82.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 234,
+    "kind": "measure",
+    "section": "3.x",
+    "description": "Funding proposed for ESDC to renew funding for non-profit organisations that help temporary foreign workers understand their rights and get help if they experience abuse, exploitation, or workplace problems."
+   },
+   {
+    "label": "Supporting the Autism Framework and Strategy",
+    "capital": false,
+    "values": [
+     null,
+     6.0,
+     6.0,
+     null,
+     null
+    ],
+    "total": 11.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 234,
+    "kind": "measure",
+    "section": "3.x",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -3.0,
+       -3.0,
+       null,
+       null
+      ],
+      "total": -5.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       "extension_later",
+       "extension_later"
+      ],
+      "page": 234,
+      "kind": "adjustment"
+     }
+    ],
+    "description": "Funding proposed for PHAC to renew funding for AIDE Canada, which provides free autism information and resources for autistic people and their families, and to fund community-led autism projects."
+   },
+   {
+    "label": "Projected Employment Insurance premium revenues for measures included in Budget 2026",
+    "capital": false,
+    "values": [
+     -165.0,
+     -477.0,
+     -496.0,
+     -516.0,
+     -535.0
+    ],
+    "total": -2188.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 234,
+    "kind": "measure",
+    "section": "3.x",
+    "description": "Includes projected Employment Insurance premium revenues for measures in section 2.3 (Supporting Canadian workers and businesses), in section 3.4 (Launching Team Canada Strong, Helping workers build skills for the jobs of tomorrow, and Helping workers affected by tariffs gain new skills), and in section 6 – Additional investments (Improving technical support for the My Service Canada Account)."
+   },
+   {
+    "label": "Chapter 3 - Net fiscal impact",
+    "capital": false,
+    "values": [
+     8637.0,
+     8037.0,
+     5099.0,
+     4121.0,
+     4822.0
+    ],
+    "total": 30715.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 234,
+    "kind": "net"
+   },
+   {
+    "kind": "capital",
+    "label": "Of which, capital investment",
+    "values": [
+     135.0,
+     3115.0,
+     3762.0,
+     2878.0,
+     3009.0
+    ],
+    "total": 12899.0,
+    "page": 234
+   }
+  ],
+  "notes": [
+   "¹ The extension of the federal fuel excise tax relief on gasoline, diesel, and aviation fuels was announced on September 2,",
+   "2026.",
+   "² $2 billion investment, retrofitting 1 million homes to save Canadians $1 billion per year was announced on October 8,",
+   "2026.",
+   "³ Securing the future of a Canada-wide early learning and child care system was announced on June 19, 2026",
+   "⁴ The National Food Security Strategy was announced on June 11, 2026.",
+   "⁵ Improving access to mental health and home and community care was announced on October 14, 2026.",
+   "⁶  This measure includes Employment Insurance (EI) expenditures which will be sourced from the fiscal framework, charged",
+   "to the EI Operating Account, and ultimately recovered through future EI premiums. EI premiums will be set according to the",
+   "seven-year break-even mechanism in order to recover these costs.",
+   "⁷ Helping workers build skills for the jobs of tomorrow was announced on October 26, 2026.",
+   "Note:",
+   "i. An ellipsis (….) indicates no adjustments to existing funding levels (that is, no additional funding, or reduction in funding, is",
+   "being proposed), or no funding implications (for example, a one-time event or a new program that begins in future years).",
+   "ii. A dash (-) indicates that consideration of a further extension will occur at a later time.",
+   "iii. A starred 0 (0*) indicates an amount of less than $0.5 million, which rounds to zero in this table.",
+   "iv. Measures that include funding classified as a capital investment are marked with an asterisk (*).",
+   "v. Numbers may not add due to rounding.",
+   "vi. A glossary of abbreviations used in this table can be found at the end of Annex 1."
+  ]
+ },
+ "4": {
+  "start_page": 265,
+  "rows": [
+   {
+    "kind": "section",
+    "code": "4.1",
+    "label": "Bringing Canadians together by celebrating our stories and places",
+    "values": [
+     797.0,
+     1243.0,
+     1195.0,
+     867.0,
+     925.0
+    ],
+    "total": 5026.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265
+   },
+   {
+    "label": "Celebrating Canada’s 160th anniversary",
+    "capital": false,
+    "values": [
+     null,
+     325.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 325.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -100.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "total": -100.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 265,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Revitalising recreational facilities and ice rinks",
+    "capital": true,
+    "values": [
+     null,
+     80.0,
+     200.0,
+     200.0,
+     200.0
+    ],
+    "total": 680.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Renewing the Canada Strong Pass, making national museums permanently free for children and youth, and supporting national museums and heritage institutions",
+    "capital": true,
+    "values": [
+     6.0,
+     160.0,
+     108.0,
+     113.0,
+     125.0
+    ],
+    "total": 511.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Supporting Canadian stories, journalism, and media",
+    "capital": false,
+    "values": [
+     750.0,
+     181.0,
+     45.0,
+     55.0,
+     55.0
+    ],
+    "total": 1086.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Extending the Canadian Journalism Labour Tax Credit",
+    "capital": false,
+    "values": [
+     16.0,
+     150.0,
+     170.0,
+     85.0,
+     80.0
+    ],
+    "total": 501.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Promoting Francophone culture",
+    "capital": true,
+    "values": [
+     null,
+     99.0,
+     280.0,
+     5.0,
+     2.0
+    ],
+    "total": 387.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Preserving the legacy of those who have served Canada",
+    "capital": false,
+    "values": [
+     4.0,
+     5.0,
+     8.0,
+     5.0,
+     5.0
+    ],
+    "total": 27.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Supporting Canada’s national parks and historic sites",
+    "capital": true,
+    "values": [
+     null,
+     49.0,
+     64.0,
+     71.0,
+     95.0
+    ],
+    "total": 278.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Investing in our oceans",
+    "capital": true,
+    "values": [
+     20.0,
+     301.0,
+     281.0,
+     304.0,
+     324.0
+    ],
+    "total": 1231.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -42.0,
+       -3.0,
+       null,
+       null
+      ],
+      "total": -45.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       "extension_later",
+       "extension_later"
+      ],
+      "page": 265,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Conserving our oceans",
+    "capital": true,
+    "values": [
+     null,
+     35.0,
+     32.0,
+     29.0,
+     39.0
+    ],
+    "total": 135.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "label": "Supporting the Terry Fox Humanitarian Awards",
+    "capital": false,
+    "values": [
+     null,
+     null,
+     10.0,
+     0.0,
+     0.0
+    ],
+    "total": 10.0,
+    "flags": [
+     "none",
+     "none",
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.1"
+   },
+   {
+    "kind": "section",
+    "code": "4.2",
+    "label": "Connecting communities",
+    "values": [
+     5.0,
+     407.0,
+     390.0,
+     414.0,
+     124.0
+    ],
+    "total": 1341.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265
+   },
+   {
+    "label": "Supporting ferry and passenger rail services",
+    "capital": true,
+    "values": [
+     9.0,
+     411.0,
+     390.0,
+     414.0,
+     124.0
+    ],
+    "total": 1348.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.2",
+    "adjustments": [
+     {
+      "label": "Funds previously provisioned in the fiscal framework",
+      "capital": false,
+      "values": [
+       -4.0,
+       -4.0,
+       null,
+       null,
+       null
+      ],
+      "total": -7.0,
+      "flags": [
+       null,
+       null,
+       "extension_later",
+       "extension_later",
+       "extension_later"
+      ],
+      "page": 265,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "kind": "section",
+    "code": "4.3",
+    "label": "Advancing reconciliation with Indigenous Peoples",
+    "values": [
+     180.0,
+     4881.0,
+     6621.0,
+     7827.0,
+     7140.0
+    ],
+    "total": 26649.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265
+   },
+   {
+    "label": "Investing in housing and infrastructure in First Nations communities – Investments in First Nations clean water infrastructure and legislation",
+    "capital": true,
+    "values": [
+     180.0,
+     367.0,
+     543.0,
+     1623.0,
+     1898.0
+    ],
+    "total": 4611.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.3"
+   },
+   {
+    "label": "Investing in housing and infrastructure First Nations communities – Investments to stabilise, accelerate construction, and transform financing",
+    "capital": true,
+    "values": [
+     null,
+     1716.0,
+     2112.0,
+     2031.0,
+     2055.0
+    ],
+    "total": 7913.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.3"
+   },
+   {
+    "label": "Supporting student success in First Nations communities",
+    "capital": false,
+    "values": [
+     null,
+     1077.0,
+     1196.0,
+     1318.0,
+     1365.0
+    ],
+    "total": 4956.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.3",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -40.0,
+       -40.0,
+       -40.0,
+       -40.0
+      ],
+      "total": -160.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 265,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Supporting Indigenous children and families",
+    "capital": true,
+    "values": [
+     null,
+     1511.0,
+     1511.0,
+     1510.0,
+     1519.0
+    ],
+    "total": 6051.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.3",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -798.0,
+       null,
+       null,
+       null
+      ],
+      "total": -798.0,
+      "flags": [
+       "none",
+       null,
+       "extension_later",
+       "extension_later",
+       "extension_later"
+      ],
+      "page": 265,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Strengthening health and safety in Indigenous communities",
+    "capital": true,
+    "values": [
+     null,
+     1031.0,
+     1279.0,
+     1364.0,
+     324.0
+    ],
+    "total": 3998.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.3"
+   },
+   {
+    "label": "Strengthening the fiscal and institutional capacity of Indigenous governments",
+    "capital": false,
+    "values": [
+     null,
+     18.0,
+     20.0,
+     20.0,
+     21.0
+    ],
+    "total": 79.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 265,
+    "kind": "measure",
+    "section": "4.3"
+   },
+   {
+    "kind": "section",
+    "code": "4.4",
+    "label": "Building a more inclusive Canada",
+    "values": [
+     null,
+     89.0,
+     93.0,
+     58.0,
+     56.0
+    ],
+    "total": 297.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266
+   },
+   {
+    "label": "Advancing gender equality",
+    "capital": false,
+    "values": [
+     null,
+     37.0,
+     42.0,
+     7.0,
+     7.0
+    ],
+    "total": 93.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.4"
+   },
+   {
+    "label": "Implementing Canada’s Black Justice Strategy",
+    "capital": false,
+    "values": [
+     null,
+     34.0,
+     34.0,
+     34.0,
+     34.0
+    ],
+    "total": 136.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.4"
+   },
+   {
+    "label": "Renewing the 2SLGBTQI+ Project Stream",
+    "capital": false,
+    "values": [
+     null,
+     15.0,
+     15.0,
+     15.0,
+     15.0
+    ],
+    "total": 60.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.4"
+   },
+   {
+    "label": "Supporting Kids Help Phone",
+    "capital": false,
+    "values": [
+     null,
+     3.0,
+     3.0,
+     3.0,
+     null
+    ],
+    "total": 8.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.4"
+   },
+   {
+    "kind": "section",
+    "code": "4.x",
+    "label": "Additional investments – A strong and united Canada",
+    "values": [
+     null,
+     929.0,
+     161.0,
+     128.0,
+     82.0
+    ],
+    "total": 1300.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266
+   },
+   {
+    "label": "Extending support for the operations of the Canadian Air Transport Security Authority",
+    "capital": false,
+    "values": [
+     null,
+     776.0,
+     null,
+     null,
+     null
+    ],
+    "total": 776.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for CATSA to continue operations for airport security screening."
+   },
+   {
+    "label": "Supporting Canada Council for the Arts",
+    "capital": false,
+    "values": [
+     null,
+     8.0,
+     8.0,
+     4.0,
+     null
+    ],
+    "total": 20.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for Canada Council for the Arts to support professional artists and arts organisations in the creation, production, and presentation of theatre, dance, music, and other live performances."
+   },
+   {
+    "label": "Safety, integrity, and transparency in the Canadian sport system",
+    "capital": false,
+    "values": [
+     null,
+     4.0,
+     4.0,
+     4.0,
+     4.0
+    ],
+    "total": 16.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for PCH to renew support for the Canadian Safe Sport Program to help prevent and address maltreatment in sport and support safe sport environments for all participants."
+   },
+   {
+    "label": "Renewing funding to combat aquatic invasive species",
+    "capital": true,
+    "values": [
+     null,
+     9.0,
+     10.0,
+     10.0,
+     10.0
+    ],
+    "total": 38.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for DFO to renew measures to prevent, detect, and respond to aquatic invasive species, while supporting partnerships with provinces, territories, Indigenous Peoples, and other stakeholders to protect Canada’s freshwater and marine ecosystems."
+   },
+   {
+    "label": "Circular economy for plastics renewal",
+    "capital": false,
+    "values": [
+     null,
+     22.0,
+     21.0,
+     16.0,
+     17.0
+    ],
+    "total": 76.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for ECCC, NRC, and DFO to renew measures to reduce plastic waste and increase circularity by developing and implementing regulations, gathering relevant and consistent data, and conducting scientific research activities to inform policy-making, and to support the Ghost Gear Program."
+   },
+   {
+    "label": "Brain Canada Foundation",
+    "capital": false,
+    "values": [
+     null,
+     null,
+     24.0,
+     0.0,
+     0.0
+    ],
+    "total": 24.0,
+    "flags": [
+     "none",
+     "none",
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for HC to renew support for the Brain Canada Foundation, a national foundation dedicated to advancing neurological research."
+   },
+   {
+    "label": "Faster services for veterans",
+    "capital": false,
+    "values": [
+     null,
+     28.0,
+     28.0,
+     28.0,
+     28.0
+    ],
+    "total": 110.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for VAC and the RCMP to maintain case management services that help veterans and former RCMP members with complex health and rehabilitation needs navigate services and access timely support."
+   },
+   {
+    "label": "Supporting veterans’ well-being",
+    "capital": false,
+    "values": [
+     null,
+     3.0,
+     3.0,
+     3.0,
+     null
+    ],
+    "total": 9.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for VAC to expand the Veteran and Family Well-Being Fund to support research and community-based projects in areas such as women veterans’ health and well-being, employment after service, and recognition of modern military service."
+   },
+   {
+    "label": "Dechinta Centre for Research and Learning",
+    "capital": false,
+    "values": [
+     null,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ],
+    "total": 10.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for CIRNAC to support the operations of the Dechinta Centre for Research and Learning, which offers post-secondary land-based learning and research programs to Indigenous students in the Northwest Territories."
+   },
+   {
+    "label": "Indigenous Justice Strategy",
+    "capital": false,
+    "values": [
+     null,
+     10.0,
+     null,
+     null,
+     null
+    ],
+    "total": 10.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for JUS to advance Indigenous-led justice initiatives, enforcement of Indigenous laws, and the revitalisation of Indigenous legal traditions."
+   },
+   {
+    "label": "Indigenous Land Surveys and Registration Services",
+    "capital": false,
+    "values": [
+     null,
+     2.0,
+     2.0,
+     2.0,
+     2.0
+    ],
+    "total": 8.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for NRCan and ISC to support Canada’s land registry responsibilities under the Indian Act, including conducting land surveys and maintaining an online land registry."
+   },
+   {
+    "label": "Indigenous-related litigation research",
+    "capital": false,
+    "values": [
+     null,
+     5.0,
+     5.0,
+     5.0,
+     5.0
+    ],
+    "total": 20.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for CIRNAC to continue to support the effective and timely resolution of Indigenous litigation."
+   },
+   {
+    "label": "Renewal of RCMP Legacy Residential School Funding",
+    "capital": false,
+    "values": [
+     null,
+     1.0,
+     null,
+     null,
+     null
+    ],
+    "total": 1.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 266,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for the RCMP’s National Centre for Missing Persons and Unidentified Remains to support Indigenous communities through specialised investigations, training, and outreach related to missing persons, unidentified remains, and the legacy of residential schools."
+   },
+   {
+    "label": "Renewal of support for expanding First Nations’ reserve lands",
+    "capital": false,
+    "values": [
+     null,
+     11.0,
+     11.0,
+     11.0,
+     11.0
+    ],
+    "total": 42.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 267,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for ISC to expand the reserve land base of First Nations by supporting the processing of requests, enhancing First Nation technical capacity, and advancing Indigenous-led land governance."
+   },
+   {
+    "label": "Residential Schools Legacy: National Centre for Truth and Reconciliation",
+    "capital": false,
+    "values": [
+     null,
+     5.0,
+     null,
+     null,
+     null
+    ],
+    "total": 5.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 267,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for CIRNAC to support the National Centre for Truth and Reconciliation in its mission to support Residential School Survivors, preserve historical records, and advance reconciliation initiatives."
+   },
+   {
+    "label": "Sports programming for Indigenous youth",
+    "capital": false,
+    "values": [
+     null,
+     4.0,
+     4.0,
+     4.0,
+     4.0
+    ],
+    "total": 16.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 267,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for PCH for the Sport for Social Development in Indigenous Communities program to support Indigenous-led sport and recreation and support Indigenous community well-being through sport."
+   },
+   {
+    "label": "Supporting participation in negotiations to advance Section 35 rights",
+    "capital": false,
+    "values": [
+     null,
+     40.0,
+     40.0,
+     40.0,
+     null
+    ],
+    "total": 119.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 267,
+    "kind": "measure",
+    "section": "4.x",
+    "description": "Funding proposed for CIRNAC to support Indigenous and federal participation in the negotiation of modern treaties, self-government agreements, and other constructive arrangements that advance predictability in the exercise of section 35 rights."
+   },
+   {
+    "label": "Chapter 4 - Net fiscal impact",
+    "capital": false,
+    "values": [
+     982.0,
+     7549.0,
+     8460.0,
+     9294.0,
+     8327.0
+    ],
+    "total": 34613.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 267,
+    "kind": "net"
+   },
+   {
+    "kind": "capital",
+    "label": "Of which, capital investment",
+    "values": [
+     153.0,
+     1740.0,
+     2232.0,
+     3215.0,
+     3549.0
+    ],
+    "total": 10888.0,
+    "page": 267
+   }
+  ],
+  "notes": [
+   "¹ Support for Canada’s audiovisual sector component of the “Supporting Canadian stories, journalism and media” was",
+   "announced on June 3, 2026.",
+   "² Investing in our oceans was announced September 29, 2026.",
+   "³ Investments in First Nations clean water infrastructure and legislation were announced on June 16, 2026.",
+   "⁴ In addition, there is a realignment of existing funds of $607 million for Jordan’s Principle from 2025-26 to 2026-27 and",
+   "2027-28.",
+   "⁵ The First Nations and Inuit Policing Program component of “Strengthening health and safety in Indigenous communities” was",
+   "announced on October 26, 2026.",
+   "Note:",
+   "i. An ellipsis (….) indicates no adjustments to existing funding levels (that is, no additional funding, or reduction in funding, is",
+   "being proposed), or no funding implications (for example, a one-time event or a new program that begins in future years).",
+   "ii. A dash (-) indicates that consideration of a further extension will occur at a later time.",
+   "iii. A starred 0 (0*) indicates an amount of less than $0.5 million, which rounds to zero in this table.",
+   "iv. Measures that include funding classified as a capital investment are marked with an asterisk (*).",
+   "v. Numbers may not add due to rounding.",
+   "vi. A glossary of abbreviations used in this table can be found at the end of Annex 1."
+  ]
+ },
+ "5": {
+  "start_page": 299,
+  "rows": [
+   {
+    "kind": "section",
+    "code": "5.1",
+    "label": "Defending Canada",
+    "values": [
+     -166.0,
+     501.0,
+     39.0,
+     240.0,
+     141.0
+    ],
+    "total": 755.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299
+   },
+   {
+    "label": "Advancing the Defence Drone Initiative",
+    "capital": true,
+    "values": [
+     null,
+     215.0,
+     369.0,
+     374.0,
+     451.0
+    ],
+    "total": 1410.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.1",
+    "adjustments": [
+     {
+      "label": "Funds previously provisioned in the fiscal framework",
+      "capital": false,
+      "values": [
+       null,
+       -215.0,
+       -369.0,
+       -208.0,
+       -236.0
+      ],
+      "total": -1028.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 299,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Expanding Operation REASSURANCE",
+    "capital": true,
+    "values": [
+     1400.0,
+     1330.0,
+     1373.0,
+     1415.0,
+     1475.0
+    ],
+    "total": 6994.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.1",
+    "adjustments": [
+     {
+      "label": "Funds previously provisioned in the fiscal framework and sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       -1400.0,
+       -1330.0,
+       -1373.0,
+       -1415.0,
+       -1475.0
+      ],
+      "total": -6994.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 299,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Supporting Canadian Armed Forces members and their families after the Wainwright tragedy",
+    "capital": false,
+    "values": [
+     16.0,
+     13.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 28.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.1"
+   },
+   {
+    "label": "Strengthening Canada’s defence industrial base",
+    "capital": true,
+    "values": [
+     124.0,
+     595.0,
+     821.0,
+     624.0,
+     438.0
+    ],
+    "total": 2602.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.1",
+    "adjustments": [
+     {
+      "label": "Funds previously provisioned in the fiscal framework and sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       -305.0,
+       -140.0,
+       -845.0,
+       -665.0,
+       -685.0
+      ],
+      "total": -2641.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 299,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Protecting Canada through sovereign intelligence",
+    "capital": true,
+    "values": [
+     null,
+     33.0,
+     63.0,
+     114.0,
+     174.0
+    ],
+    "total": 384.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.1"
+   },
+   {
+    "kind": "section",
+    "code": "5.2",
+    "label": "Keeping Canadians safe at home",
+    "values": [
+     264.0,
+     565.0,
+     791.0,
+     808.0,
+     521.0
+    ],
+    "total": 2949.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299
+   },
+   {
+    "label": "Making online spaces safe for everyone",
+    "capital": false,
+    "values": [
+     8.0,
+     33.0,
+     50.0,
+     57.0,
+     59.0
+    ],
+    "total": 206.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.2",
+    "adjustments": [
+     {
+      "label": "Costs to be recovered",
+      "capital": false,
+      "values": [
+       null,
+       null,
+       null,
+       null,
+       -29.0
+      ],
+      "total": -29.0,
+      "flags": [
+       "none",
+       "none",
+       "none",
+       "none",
+       null
+      ],
+      "page": 299,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Delivering the benefits of AI for all Canadians – AI for All",
+    "capital": false,
+    "values": [
+     257.0,
+     346.0,
+     551.0,
+     562.0,
+     323.0
+    ],
+    "total": 2038.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.2"
+   },
+   {
+    "label": "Delivering the benefits of AI for all Canadians - Global Partnership on Artificial Intelligence",
+    "capital": false,
+    "values": [
+     null,
+     2.0,
+     2.0,
+     2.0,
+     2.0
+    ],
+    "total": 6.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.2"
+   },
+   {
+    "label": "Supporting the Canadian Centre for Child Protection",
+    "capital": false,
+    "values": [
+     null,
+     3.0,
+     3.0,
+     3.0,
+     null
+    ],
+    "total": 8.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.2"
+   },
+   {
+    "label": "Engaging communities and preventing violence",
+    "capital": false,
+    "values": [
+     null,
+     16.0,
+     16.0,
+     16.0,
+     16.0
+    ],
+    "total": 64.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.2"
+   },
+   {
+    "label": "Supporting victims of crime and reducing repeat offending",
+    "capital": false,
+    "values": [
+     null,
+     14.0,
+     18.0,
+     18.0,
+     0.0
+    ],
+    "total": 49.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.2"
+   },
+   {
+    "label": "Addressing gender-based violence",
+    "capital": false,
+    "values": [
+     null,
+     152.0,
+     152.0,
+     152.0,
+     152.0
+    ],
+    "total": 607.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.2"
+   },
+   {
+    "kind": "section",
+    "code": "5.3",
+    "label": "Protecting Canadians from digital and financial threats",
+    "values": [
+     1.0,
+     25.0,
+     33.0,
+     32.0,
+     37.0
+    ],
+    "total": 128.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299
+   },
+   {
+    "label": "Delivering Canada’s National Anti-Fraud Strategy",
+    "capital": false,
+    "values": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "total": 6.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.3"
+   },
+   {
+    "label": "Cracking down on tax evasion and financial crime",
+    "capital": true,
+    "values": [
+     null,
+     24.0,
+     42.0,
+     53.0,
+     64.0
+    ],
+    "total": 182.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.3",
+    "adjustments": [
+     {
+      "label": "Projected revenues",
+      "capital": false,
+      "values": [
+       null,
+       null,
+       -11.0,
+       -22.0,
+       -28.0
+      ],
+      "total": -60.0,
+      "flags": [
+       "none",
+       "none",
+       null,
+       null,
+       null
+      ],
+      "page": 299,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "kind": "section",
+    "code": "5.4",
+    "label": "Strengthening disaster preparedness",
+    "values": [
+     866.0,
+     463.0,
+     419.0,
+     408.0,
+     408.0
+    ],
+    "total": 2564.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299
+   },
+   {
+    "label": "Preparing for and responding to wildfires",
+    "capital": false,
+    "values": [
+     null,
+     2.0,
+     2.0,
+     2.0,
+     2.0
+    ],
+    "total": 8.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.4"
+   },
+   {
+    "label": "Strengthening emergency preparedness in First Nations communities",
+    "capital": true,
+    "values": [
+     866.0,
+     461.0,
+     461.0,
+     461.0,
+     461.0
+    ],
+    "total": 2710.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.4"
+   },
+   {
+    "label": "Protecting against catastrophic earthquake risks",
+    "capital": false,
+    "values": [
+     null,
+     null,
+     -44.0,
+     -55.0,
+     -55.0
+    ],
+    "total": -154.0,
+    "flags": [
+     "none",
+     "none",
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.4"
+   },
+   {
+    "kind": "section",
+    "code": "5.x",
+    "label": "Additional investments – A safe and sovereign Canada",
+    "values": [
+     null,
+     63.0,
+     61.0,
+     55.0,
+     18.0
+    ],
+    "total": 197.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299
+   },
+   {
+    "label": "Supporting the Canadian Cyber Defence Collective’s Strategic Forum",
+    "capital": false,
+    "values": [
+     null,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ],
+    "total": 12.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 299,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for PS to support the Canadian Cyber Defence Collective’s Strategic Forum. The Strategic Forum serves as Canada’s national platform for cyber leadership and coordinated action by convening experts to co-develop practical, cross-sector solutions that enhance Canada’s collective cyber resilience."
+   },
+   {
+    "label": "Supporting enforcement activities related to Canada’s Afghanistan resettlement initiatives",
+    "capital": false,
+    "values": [
+     null,
+     4.0,
+     5.0,
+     5.0,
+     null
+    ],
+    "total": 14.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for CBSA to continue enforcement activities associated with Afghan nationals who arrived under the Afghanistan Special Immigration Measures and related resettlement initiatives."
+   },
+   {
+    "label": "Delivering Canada’s sanctions regime",
+    "capital": true,
+    "values": [
+     null,
+     6.0,
+     6.0,
+     6.0,
+     6.0
+    ],
+    "total": 25.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for GAC, FIN and the RCMP to continue delivering Canada’s sanctions regime."
+   },
+   {
+    "label": "Supporting the integrity of the immigration system",
+    "capital": false,
+    "values": [
+     null,
+     24.0,
+     24.0,
+     24.0,
+     null
+    ],
+    "total": 73.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     "extension_later"
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for CBSA to continue to support the timely identification and removal of individuals who are inadmissible to Canada."
+   },
+   {
+    "label": "Supporting the Strategic Cooperation Centre on Information Sharing",
+    "capital": false,
+    "values": [
+     null,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "total": 4.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for PS to support the Strategic Cooperation Centre on Information Sharing, which is the Government of Canada’s centre of expertise on the Security of Information and Disclosure Act."
+   },
+   {
+    "label": "Preventing the smuggling of migrants",
+    "capital": false,
+    "values": [
+     null,
+     6.0,
+     6.0,
+     null,
+     null
+    ],
+    "total": 13.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for the RCMP to maintain activities to detect, deter, and disrupt migrant smuggling operations targeting Canada."
+   },
+   {
+    "label": "Administering the Criminal Code Authorisation Regime for humanitarian assistance",
+    "capital": false,
+    "values": [
+     null,
+     6.0,
+     6.0,
+     6.0,
+     6.0
+    ],
+    "total": 23.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for PS and the RCMP to administer the Criminal Code Authorisation Regime, a process to facilitate the delivery of necessary international assistance activities in terrorist-controlled areas, while mitigating the risk that funding will benefit a terrorist group."
+   },
+   {
+    "label": "Combatting auto theft",
+    "capital": true,
+    "values": [
+     null,
+     8.0,
+     9.0,
+     9.0,
+     1.0
+    ],
+    "total": 26.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for CBSA to sustain its ability to identify, examine, and detain suspected stolen vehicles before they leave Canada."
+   },
+   {
+    "label": "Canada in a Changing Climate",
+    "capital": false,
+    "values": [
+     null,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "total": 4.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for NRCan to continue to support the Canada in a Changing Climate National Assessment Process to synthesise knowledge on climate change impacts and adaptation in Canada."
+   },
+   {
+    "label": "Strengthening flood resilience",
+    "capital": false,
+    "values": [
+     null,
+     3.0,
+     null,
+     null,
+     null
+    ],
+    "total": 3.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 300,
+    "kind": "measure",
+    "section": "5.x",
+    "description": "Funding proposed for PS to continue implementation of Canada’s Flood Risk Finder."
+   },
+   {
+    "label": "Chapter 5 - Net fiscal impact",
+    "capital": false,
+    "values": [
+     966.0,
+     1617.0,
+     1342.0,
+     1543.0,
+     1126.0
+    ],
+    "total": 6593.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 300,
+    "kind": "net"
+   },
+   {
+    "kind": "capital",
+    "label": "Of which, capital investment",
+    "values": [
+     196.0,
+     674.0,
+     505.0,
+     422.0,
+     206.0
+    ],
+    "total": 2004.0,
+    "page": 300
+   }
+  ],
+  "notes": [
+   "¹ Advancing the Defence Drone Initiative was announced on July 23, 2026.",
+   "² Expanding Operation REASSURANCE was announced on July 8, 2026.",
+   "³ The Ukraine Support Loan component of the “Strengthening Canada’s defence industrial base” was announced on October",
+   "30, 2026.",
+   "⁴ Delivering the benefits of AI for all Canadians – AI for All was announced on June 4, 2026.",
+   "⁵ Addressing gender-based violence was announced on July 16, 2026.",
+   "⁶ Preparing for and responding to wildfires was announced on October 30, 2026.",
+   "⁷ Strengthening emergency preparedness in First Nations communities was announced on October 26, 2026.",
+   "Note:",
+   "i. An ellipsis (….) indicates no adjustments to existing funding levels (that is, no additional funding, or reduction in funding, is",
+   "being proposed), or no funding implications (for example, a one-time event or a new program that begins in future years).",
+   "ii. A dash (-) indicates that consideration of a further extension will occur at a later time.",
+   "iii. A starred 0 (0*) indicates an amount of less than $0.5 million, which rounds to zero in this table.",
+   "iv. Measures that include funding classified as a capital investment are marked with an asterisk (*).",
+   "v. Numbers may not add due to rounding.",
+   "vi. A glossary of abbreviations used in this table can be found at the end of Annex 1."
+  ]
+ },
+ "6": {
+  "start_page": 329,
+  "rows": [
+   {
+    "kind": "section",
+    "code": "6.1",
+    "label": "Simplifying the tax system",
+    "values": [
+     20.0,
+     174.0,
+     287.0,
+     425.0,
+     485.0
+    ],
+    "total": 1391.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329
+   },
+   {
+    "label": "Making it easier for Canadians to manage their taxes",
+    "capital": false,
+    "values": [
+     16.0,
+     114.0,
+     219.0,
+     231.0,
+     241.0
+    ],
+    "total": 821.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.1"
+   },
+   {
+    "label": "Connecting more Canadians to federal benefits",
+    "capital": false,
+    "values": [
+     null,
+     5.0,
+     8.0,
+     138.0,
+     183.0
+    ],
+    "total": 334.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.1"
+   },
+   {
+    "label": "Making it easier to do business",
+    "capital": false,
+    "values": [
+     4.0,
+     55.0,
+     60.0,
+     56.0,
+     61.0
+    ],
+    "total": 236.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.1"
+   },
+   {
+    "kind": "section",
+    "code": "6.2",
+    "label": "Making government work better for Canadians",
+    "values": [
+     12.0,
+     146.0,
+     173.0,
+     242.0,
+     226.0
+    ],
+    "total": 798.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329
+   },
+   {
+    "label": "Advancing artificial intelligence in government through Digital Transformation Canada",
+    "capital": true,
+    "values": [
+     12.0,
+     87.0,
+     131.0,
+     192.0,
+     184.0
+    ],
+    "total": 606.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.2"
+   },
+   {
+    "label": "Modernising government benefits and services",
+    "capital": true,
+    "values": [
+     15.0,
+     79.0,
+     39.0,
+     42.0,
+     60.0
+    ],
+    "total": 237.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.2",
+    "adjustments": [
+     {
+      "label": "Funds sourced from existing departmental resources",
+      "capital": false,
+      "values": [
+       null,
+       -21.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      "total": -21.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 329,
+      "kind": "adjustment"
+     },
+     {
+      "label": "Funds from Canada Pension Plan (CPP) account",
+      "capital": false,
+      "values": [
+       -15.0,
+       -58.0,
+       -39.0,
+       -42.0,
+       -60.0
+      ],
+      "total": -215.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 329,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Reinforcing Canada’s border infrastructure",
+    "capital": false,
+    "values": [
+     null,
+     59.0,
+     41.0,
+     50.0,
+     42.0
+    ],
+    "total": 192.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.2"
+   },
+   {
+    "kind": "section",
+    "code": "6.3",
+    "label": "Lowering the costs of government",
+    "values": [
+     11.0,
+     -375.0,
+     -470.0,
+     -571.0,
+     -649.0
+    ],
+    "total": -2053.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329
+   },
+   {
+    "label": "Strengthening the effectiveness of fines and penalties",
+    "capital": false,
+    "values": [
+     0.0,
+     -17.0,
+     -28.0,
+     -65.0,
+     -77.0
+    ],
+    "total": -186.0,
+    "flags": [
+     "under_half_million",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.3"
+   },
+   {
+    "label": "Strengthening tax compliance",
+    "capital": true,
+    "values": [
+     null,
+     25.0,
+     28.0,
+     31.0,
+     33.0
+    ],
+    "total": 116.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.3",
+    "adjustments": [
+     {
+      "label": "Projected revenues",
+      "capital": false,
+      "values": [
+       null,
+       -249.0,
+       -290.0,
+       -310.0,
+       -330.0
+      ],
+      "total": -1179.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 329,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Renewing the public service – aligning operating budgets with ERI personnel savings",
+    "capital": false,
+    "values": [
+     null,
+     -100.0,
+     -100.0,
+     -100.0,
+     -100.0
+    ],
+    "total": -400.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.3"
+   },
+   {
+    "label": "Renewing the public service – savings on CPP employer contribution costs",
+    "capital": false,
+    "values": [
+     -17.0,
+     -69.0,
+     -71.0,
+     -73.0,
+     -75.0
+    ],
+    "total": -305.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.3"
+   },
+   {
+    "label": "Modernising Canada Post",
+    "capital": false,
+    "values": [
+     32.0,
+     60.0,
+     74.0,
+     86.0,
+     94.0
+    ],
+    "total": 346.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.3",
+    "adjustments": [
+     {
+      "label": "Projected savings",
+      "capital": false,
+      "values": [
+       -4.0,
+       -28.0,
+       -83.0,
+       -139.0,
+       -194.0
+      ],
+      "total": -448.0,
+      "flags": [
+       null,
+       null,
+       null,
+       null,
+       null
+      ],
+      "page": 329,
+      "kind": "adjustment"
+     }
+    ]
+   },
+   {
+    "label": "Streamlining the delivery of federal financing",
+    "capital": false,
+    "values": [
+     1.0,
+     2.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 3.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.3"
+   },
+   {
+    "label": "amounts provisioned in Budget 2025 for future reviews",
+    "capital": false,
+    "values": [
+     null,
+     375.0,
+     470.0,
+     571.0,
+     649.0
+    ],
+    "total": 2064.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "chapter_adjustment"
+   },
+   {
+    "kind": "section",
+    "code": "6.x",
+    "label": "Additional investments – A more efficient government",
+    "values": [
+     255.0,
+     320.0,
+     114.0,
+     101.0,
+     101.0
+    ],
+    "total": 890.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329
+   },
+   {
+    "label": "Information sharing – pension administrators",
+    "capital": false,
+    "values": [
+     null,
+     null,
+     -10.0,
+     -10.0,
+     -10.0
+    ],
+    "total": -30.0,
+    "flags": [
+     "none",
+     "none",
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "This measure proposes to allow the CRA to share information with an administrator of a registered pension plan about the death of a member who is entitled to an unclaimed pension benefit."
+   },
+   {
+    "label": "Registered pension plans",
+    "capital": false,
+    "values": [
+     null,
+     null,
+     -50.0,
+     -50.0,
+     -48.0
+    ],
+    "total": -148.0,
+    "flags": [
+     "none",
+     "none",
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "This measure introduces specific and clear tax consequences where the CRA revokes the registration of a registered pension plan that does not comply with registration conditions. In addition, it strengthens the integrity rules that apply to individual pension plans."
+   },
+   {
+    "label": "Federal fuel excise tax licensing framework",
+    "capital": false,
+    "values": [
+     null,
+     20.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "total": 20.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "The measure proposes updates to the fuel excise tax licensing framework and to provide relief for certain past instances where unintended tax burdens occurred."
+   },
+   {
+    "label": "GST/HST health measures",
+    "capital": false,
+    "values": [
+     20.0,
+     41.0,
+     46.0,
+     46.0,
+     46.0
+    ],
+    "total": 199.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "This measure proposes to exempt the supply of qualifying massage therapy services and zero-rate devices specially designed to treat cancer using alternating electric field therapy for GST/HST purposes."
+   },
+   {
+    "label": "Interest deductibility limits",
+    "capital": false,
+    "values": [
+     235.0,
+     80.0,
+     80.0,
+     80.0,
+     80.0
+    ],
+    "total": 555.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "This measure proposes to expand the exceptions to the excessive interest and financing expenses limitation rules for purpose-built rental housing and regulated energy utility businesses to cover indirect funding within an affiliated group and by broadening the scope of a regulated energy utility business to incorporate prices set by Crown corporations and through government-operated markets."
+   },
+   {
+    "label": "The Public Service Occupational Health Program",
+    "capital": false,
+    "values": [
+     null,
+     8.0,
+     11.0,
+     9.0,
+     9.0
+    ],
+    "total": 38.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 329,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "Funding proposed for HC to renew occupational health services, medical advice, and guidance that protect federal workers, including correctional officers, border services officers, and other employees who require mandatory occupational health evaluations."
+   },
+   {
+    "label": "Supporting employees affected by workplace injuries",
+    "capital": false,
+    "values": [
+     null,
+     137.0,
+     null,
+     null,
+     null
+    ],
+    "total": 137.0,
+    "flags": [
+     "none",
+     null,
+     "extension_later",
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 330,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "Funding proposed for CSC to meet its statutory obligations as an employer with respect to workplace injury, including physical and psychological injuries."
+   },
+   {
+    "label": "Supporting the accountability and modernisation of the Royal Canadian Mounted Police (RCMP)",
+    "capital": false,
+    "values": [
+     null,
+     5.0,
+     5.0,
+     5.0,
+     5.0
+    ],
+    "total": 18.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 330,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "Funding proposed for the RCMP to support the implementation of findings from external reviews and the Management Advisory Board, which is a legislated advisory body that provides the RCMP Commissioner with independent expert advice in areas such as governance, risk management, and resource stewardship."
+   },
+   {
+    "label": "Strengthening the Courts Administration Service (CAS)",
+    "capital": true,
+    "values": [
+     null,
+     12.0,
+     14.0,
+     17.0,
+     15.0
+    ],
+    "total": 58.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 330,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "Funding proposed for CAS to support compliance with the Official Languages Act and reduce the existing translation backlog, help the Federal Court manage elevated caseloads, as well as complete work to modernise the infrastructure that supports Canada’s national courts."
+   },
+   {
+    "label": "Improving technical support for the My Service Canada Account",
+    "capital": false,
+    "values": [
+     null,
+     15.0,
+     15.0,
+     null,
+     null
+    ],
+    "total": 30.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     "extension_later",
+     "extension_later"
+    ],
+    "page": 330,
+    "kind": "measure",
+    "section": "6.x",
+    "adjustments": [
+     {
+      "label": "Funds from CPP account",
+      "capital": false,
+      "values": [
+       null,
+       -1.0,
+       -1.0,
+       null,
+       null
+      ],
+      "total": -2.0,
+      "flags": [
+       "none",
+       null,
+       null,
+       "extension_later",
+       "extension_later"
+      ],
+      "page": 330,
+      "kind": "adjustment"
+     }
+    ],
+    "description": "Funding proposed for ESDC to renew support for Canadians who need help accessing their My Service Canada Account and the benefits and services it supports, including Employment Insurance, the Canada Pension Plan and Old Age Security."
+   },
+   {
+    "label": "Archiving the records of former Prime Minister Trudeau",
+    "capital": false,
+    "values": [
+     null,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ],
+    "total": 12.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 330,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "Funding proposed for LAC to acquire, preserve, and provide Canadians with access to the records of Canada’s 23rd Prime Minister, the Right Honourable Justin Trudeau."
+   },
+   {
+    "label": "Supporting lieutenant governors",
+    "capital": false,
+    "values": [
+     null,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "total": 3.0,
+    "flags": [
+     "none",
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 330,
+    "kind": "measure",
+    "section": "6.x",
+    "description": "Funding proposed for PCH to support lieutenant governors in carrying out their roles and responsibilities."
+   },
+   {
+    "label": "Chapter 6 - Net fiscal impact",
+    "capital": false,
+    "values": [
+     298.0,
+     639.0,
+     573.0,
+     767.0,
+     813.0
+    ],
+    "total": 3091.0,
+    "flags": [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "page": 330,
+    "kind": "net"
+   },
+   {
+    "kind": "capital",
+    "label": "Of which, capital investment",
+    "values": [
+     2.0,
+     23.0,
+     87.0,
+     126.0,
+     175.0
+    ],
+    "total": 413.0,
+    "page": 330
+   }
+  ],
+  "notes": [
+   "1 Includes $3.4 million over four years, starting in 2027-28, and $1 million ongoing to Fisheries and Oceans Canada to",
+   "implement an administrative monetary penalties regime under the Fisheries Act.",
+   "2 Numbers reflect incremental savings resulting from modernisation activities at Canada Post Corporation. Canada Post",
+   "Corporation’s overall net operating losses are accounted for in the fiscal framework and included in the Public Accounts.",
+   "3 After measures in this budget and savings from the review of external management and other consulting services",
+   "announced in SEU 2026, the balance of savings to be identified at a future date is $0.5 billion in 2027-28, and an average",
+   "of $1.8 billion annually from 2028-29 to 2030-31.",
+   "4 This measure includes Employment Insurance (EI) expenditures which will be sourced from the fiscal framework, charged to",
+   "the EI Operating Account, and ultimately recovered through future EI premiums. EI premiums will be set according to the",
+   "seven-year break-even mechanism in order to recover these costs.",
+   "Note:",
+   "i. An ellipsis (….) indicates no adjustments to existing funding levels (that is, no additional funding, or reduction in funding, is",
+   "being proposed), or no funding implications (for example, a one-time event or a new program that begins in future years).",
+   "ii. A dash (-) indicates that consideration of a further extension will occur at a later time.",
+   "iii. A starred 0 (0*) indicates an amount of less than $0.5 million, which rounds to zero in this table.",
+   "iv. Measures that include funding classified as a capital investment are marked with an asterisk (*).",
+   "v. Numbers may not add due to rounding.",
+   "vi. A glossary of abbreviations used in this table can be found at the end of Annex 1."
+  ]
+ }
+}
