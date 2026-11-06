@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
+      - 'budget2026/**'
   workflow_dispatch:
     inputs:
       action:
