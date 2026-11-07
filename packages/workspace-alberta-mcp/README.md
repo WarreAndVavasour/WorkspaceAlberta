@@ -4,6 +4,8 @@ Agents: call `get_server_guide` after connecting for the current workflow, hando
 
 Stdio bridge for the hosted WorkspaceAlberta procurement MCP endpoint.
 
+Requires patched Node 22.23.4+, 24.22.1+, or 26.12.1+ within those major versions. The bridge rejects older or unsupported runtimes before loading credentials or connecting. Updating this package does not upgrade Node on the client machine.
+
 This package is for MCP clients that expect a local `command` transport. It starts `mcp-remote` and connects it to the hosted WorkspaceAlberta StreamableHTTP endpoint.
 
 ## MCP client config (published package)
