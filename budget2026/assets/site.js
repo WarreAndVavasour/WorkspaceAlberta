@@ -4,7 +4,10 @@
       The project key is read from <meta name="wv:posthog-key">, which the site build
       fills from the POSTHOG_PROJECT_KEY environment variable. If that tag is empty,
       init is skipped. No cookies (sessionStorage), no person profiles, no autocapture,
-      honours Do Not Track, and only runs on the production hostname. */
+      honours Do Not Track, and only runs on the production hostname.
+   3. Click tracking: link_clicked / button_clicked for every link and button (label, page
+      section, destination without its query string; form fields are never read), plus the
+      named funnel events below. Add data-track-skip to leave an element out. */
 (() => {
   // ---------- tooltips ----------
   const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; tip.setAttribute("role", "status"); document.body.appendChild(tip);
@@ -52,16 +55,35 @@
     [/warreandvavasour\.com\/?$/, "wv_home"], [/budget\.canada\.ca/, "official_budget"],
     [/\/data\/|\.json$/, "data_download"], [/(agents|skill)\.md$|llms\.txt$|agent-card\.json$/, "agent_file"],
   ];
+  const placementOf = (el) => {
+    const section = el.closest("section[id], section[aria-labelledby], aside, header, footer");
+    return section ? (section.id || section.getAttribute("aria-labelledby") || section.tagName.toLowerCase()) : "body";
+  };
+  const labelOf = (el) => (el.getAttribute("aria-label") || el.textContent || el.getAttribute("title") ||
+    (el.tagName === "INPUT" ? el.value : "") || "").replace(/\s+/g, " ").trim().slice(0, 80);
+  const destinationOf = (raw) => {
+    if (raw.startsWith("#")) return { link_type: "anchor", destination: raw.slice(0, 80) };
+    try {
+      const u = new URL(raw, location.href);
+      if (u.protocol === "mailto:" || u.protocol === "tel:") return { link_type: u.protocol.slice(0, -1), destination: u.protocol + u.pathname };
+      if (!/^https?:$/.test(u.protocol)) return { link_type: "other", destination: u.protocol };
+      if (u.origin === location.origin) return { link_type: u.pathname === location.pathname && u.hash ? "anchor" : "internal", destination: u.pathname + u.hash };
+      return { link_type: /(^|\.)warreandvavasour\.com$/.test(u.hostname) ? "internal" : "external", destination: u.host + u.pathname, destination_host: u.host };
+    } catch (_) { return { link_type: "other", destination: "" }; }
+  };
+  const CLICKABLE = "a[href], button, [role='button'], summary, input[type='submit'], input[type='button']";
   document.addEventListener("click", (e) => {
-    const a = e.target.closest && e.target.closest("a[href]");
-    if (!a) return;
-    const href = a.href;
+    const el = e.target.closest && e.target.closest(CLICKABLE);
+    if (!el || el.closest("[data-track-skip]")) return;
+    const placement = placementOf(el);
+    const base = { label: labelOf(el), section: placement, element: el.tagName.toLowerCase() };
+    if (el.tagName !== "A") { window.wvTrack("button_clicked", base); return; }
+    window.wvTrack("link_clicked", { ...base, ...destinationOf(el.getAttribute("href") || "") });
+    const href = el.href;
     const hit = DEST.find(([re]) => re.test(href));
     if (!hit) return;
-    const section = a.closest("section[id], section[aria-labelledby], aside, header, footer");
     window.wvTrack(hit[1] === "data_download" || hit[1] === "agent_file" ? "budget_data_opened" : "budget_outbound_click", {
-      destination: hit[1], href, link_text: (a.textContent || "").trim().slice(0, 80),
-      placement: section ? (section.id || section.getAttribute("aria-labelledby") || section.tagName.toLowerCase()) : "body",
+      destination: hit[1], href, link_text: (el.textContent || "").trim().slice(0, 80), placement,
     });
   }, true);
 })();
