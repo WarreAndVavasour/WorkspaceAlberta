@@ -10,7 +10,7 @@
 - **Chapters**, **fiscal outlook** (deficit, debt, revenues, expenses, capital vs operating, loans), **tax changes** (all 49 annex measures), **methodology**.
 - **Agent-readable**: every page has a JSON twin (`<link rel="alternate" type="application/json">`), plus `/data/budget.json`, `/data/explorer.json`, `/llms.txt`, `/sitemap.xml`, JSON-LD.
 - **Agent broadcast** (`scripts/agent_files.py`): `/agents.md` (endpoints, record format, rules, Claude Agent SDK examples in Python and TypeScript), `/skill.md` (drop-in Claude Agent Skill, save as `.claude/skills/budget2026/SKILL.md`) and `/.well-known/agent-card.json` (same shape as warreandvavasour.com's card). All point agents to the workspaceAlberta MCP for live tenders.
-- **Analytics** (`assets/site.js`): PostHog, same project as warreandvavasour.com, every event tagged `product=budget2026` with `page_type` and `slug`. No cookies (sessionStorage), no person profiles, no autocapture, no session recording; honours Do Not Track / GPC; runs only on `*.warreandvavasour.com`. Events: `$pageview`, `$pageleave`, `link_clicked` and `button_clicked` (every link and button: `label`, `section`, `element`, and for links `link_type`, `destination` without its query string, `destination_host`; form fields are never read; `data-track-skip` opts an element out), `budget_outbound_click` (destination: workspacealberta, claude_connector, training, ai_terminal, million_dollar_problem, pacific_link, wv_home, official_budget), `budget_data_opened`, `budget_search` (query, results), `budget_lens_selected`, `budget_measure_opened`, `budget_chapter_opened`, `budget_view_changed`, `budget_filter_changed`, `budget_map_fullscreen`.
+- **Analytics** (`assets/site.js`): PostHog, same project as warreandvavasour.com, every event tagged `product=budget2026` with `page_type` and `slug`. No cookies (sessionStorage), no person profiles, no autocapture, no session recording; honours Do Not Track / GPC; runs only on `*.warreandvavasour.com`. The project key is not stored in this repo. `scripts/build_site.py` reads `POSTHOG_PROJECT_KEY` from the environment and writes it to `<meta name="wv:posthog-key">` in the generated pages (`out/`, which is gitignored). `site.js` reads that tag and skips PostHog when it is empty, so a build without the variable still publishes a working site. Events: `$pageview`, `$pageleave`, `link_clicked` and `button_clicked` (every link and button: `label`, `section`, `element`, and for links `link_type`, `destination` without its query string, `destination_host`; form fields are never read; `data-track-skip` opts an element out), `budget_outbound_click` (destination: workspacealberta, claude_connector, training, ai_terminal, million_dollar_problem, pacific_link, wv_home, official_budget), `budget_data_opened`, `budget_search` (query, results), `budget_lens_selected`, `budget_measure_opened`, `budget_chapter_opened`, `budget_view_changed`, `budget_filter_changed`, `budget_map_fullscreen`.
 
 ## Money types (never added together)
 
@@ -29,7 +29,7 @@ python scripts/build_all.py              # -> out/
 python scripts/build_all.py --preview    # -> out-preview/ (relative links)
 ```
 
-Standard library only; no model or API key. `data/source.json` (the full page text) is not committed because this repo is public; create it from the budget PDF with `python scripts/index_pdf.py budget-2026.pdf` (needs PyMuPDF) before building. `scripts/verify.py` runs on every build and fails it if any transcribed fiscal value, section subtotal, tax value or key-fact number does not match its cited page.
+Standard library only; no model calls. The generator does not read a dotenv file. Export `POSTHOG_PROJECT_KEY` in the build environment when this deploy should send analytics; leave it unset and analytics stay off. `data/source.json` (the full page text) is not committed because this repo is public; create it from the budget PDF with `python scripts/index_pdf.py budget-2026.pdf` (needs PyMuPDF) before building. `scripts/verify.py` runs on every build and fails it if any transcribed fiscal value, section subtotal, tax value or key-fact number does not match its cited page.
 
 | File | Role |
 |---|---|
@@ -52,11 +52,14 @@ Built from the 532-page PDF (SHA-256 `26e60cd8…6e19`). The PDF says “All rig
 ## Deploy (Cloudflare Workers static assets)
 
 ```
+# Export POSTHOG_PROJECT_KEY before building if analytics should run.
+# Wrangler publishes the already-built out/ directory; a dashboard secret
+# does not reach the pages unless this build saw the variable.
 python scripts/build_all.py
 npx wrangler@4 deploy
 ```
 
-`wrangler.jsonc` deploys `out/` as the assets-only Worker `warre-vavasour-budget2026` with the custom domain `budget2026.warreandvavasour.com` (Cloudflare creates the DNS record and certificate). `out/_headers` sets security headers and CORS on `/data/*`, `/agents.md`, `/skill.md` and `/.well-known/*`. Uses the wrangler OAuth login on Christian's PC.
+`wrangler.jsonc` deploys `out/` as the assets-only Worker `warre-vavasour-budget2026` with the custom domain `budget2026.warreandvavasour.com` (Cloudflare creates the DNS record and certificate). `out/_headers` sets security headers and CORS on `/data/*`, `/agents.md`, `/skill.md` and `/.well-known/*`. Do not put `POSTHOG_PROJECT_KEY` in `wrangler.jsonc`. Uses the wrangler OAuth login on Christian's PC.
 
 ## Next
 
