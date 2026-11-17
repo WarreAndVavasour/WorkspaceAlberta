@@ -219,18 +219,19 @@ class IndustrialCatalogTest(unittest.TestCase):
         self.assertIn("PrairiesCan Regional Tariff Response Initiative", applies)
         self.assertNotIn("BDC metals envelope", applies)
 
-    def test_versions_are_1_3_0(self) -> None:
+    def test_versions_are_1_4_0(self) -> None:
         server = json.loads((ROOT / "server.json").read_text(encoding="utf-8"))
         plugin = json.loads((ROOT / "plugins/workspacealberta/plugin.json").read_text(encoding="utf-8"))
         claude = json.loads((ROOT / "plugins/workspacealberta/.claude-plugin/plugin.json").read_text(encoding="utf-8"))
         http = (ROOT / "mcp-servers/canadabuys/server_http.py").read_text(encoding="utf-8")
-        self.assertEqual(server["version"], "1.3.0")
-        self.assertEqual(plugin["version"], "1.3.0")
-        self.assertEqual(claude["version"], "1.3.0")
+        self.assertEqual(server["version"], "1.4.0")
+        self.assertEqual(plugin["version"], "1.4.0")
+        self.assertEqual(claude["version"], "1.4.0")
         self.assertEqual(plugin["version"], claude["version"])
-        self.assertIn('version="1.3.0"', http)
+        self.assertIn('version="1.4.0"', http)
         self.assertNotIn("1.1.1", http)
         self.assertNotIn('version="1.2.0"', http)
+        self.assertNotIn('version="1.3.0"', http)
         self.assertLessEqual(len(plugin["extensions"]["com.openai"]["interface"]["longDescription"]), 4000)
 
 

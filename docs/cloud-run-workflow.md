@@ -8,7 +8,7 @@ The workflow is manual: merging or pushing alone does not change production.
 1. Select **stage**. Leave the revision inputs blank. The workflow runs the local
    test suites, builds only the tracked application files, pushes the image to
    Artifact Registry, and deploys its immutable digest at zero production traffic.
-   It checks OAuth discovery, all 26 tool titles, authentication challenges,
+   It checks OAuth discovery, every listed tool title, authentication challenges,
    Google sign-in rendering, exact image hashes, search, details and matching.
    For revisions containing the blog, it also verifies the index, each published
    post, RSS publication status and the exact CSS hash from the reviewed commit.

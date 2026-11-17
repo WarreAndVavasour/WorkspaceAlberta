@@ -192,7 +192,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
 
 mcp_server = Server(
     "canadabuys",
-    version="1.3.0",
+    version="1.4.0",
     instructions=SERVER_INSTRUCTIONS,
     on_list_tools=handle_list_tools,
     on_call_tool=handle_call_tool,
@@ -227,9 +227,9 @@ app = FastAPI(
         "workspaceAlberta procurement API for every CanadaBuys and Alberta "
         "Purchasing Connection notice, matched to any business, with Buy "
         "Canadian signals, daily bid briefs, and a read-only industrial "
-        "support catalog."
+        "support catalog, plus a read-only Oil Sands Growth Program brief."
     ),
-    version="1.3.0",
+    version="1.4.0",
     lifespan=lifespan,
     # Swagger lists tags in this order: what a first-time visitor wants first.
     openapi_tags=[
@@ -904,6 +904,30 @@ async def industrial_programs(request: Request, arguments: dict[str, Any] | None
     return await run_tool("match_industrial_support_programs", arguments, _auth(request), _rest_caller(request))
 
 
+@app.post("/oil-sands-growth", tags=["procurement"])
+async def oil_sands_growth(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Read the sourced Oil Sands Growth Program brief."""
+    return await run_tool("get_oil_sands_growth_program", arguments, _auth(request), _rest_caller(request))
+
+
+@app.post("/oil-sands-growth/fit", tags=["procurement"])
+async def oil_sands_growth_fit(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Read how a business could benefit from the Oil Sands Growth Program."""
+    return await run_tool("check_oil_sands_growth_fit", arguments, _auth(request), _rest_caller(request))
+
+
+@app.post("/oil-sands-growth/supply", tags=["procurement"])
+async def oil_sands_growth_supply(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Match oil sands operators from the program release to public notices on file."""
+    return await run_tool("find_oil_sands_supply_opportunities", arguments, _auth(request), _rest_caller(request))
+
+
+@app.post("/oil-sands-growth/updates", tags=["procurement"])
+async def oil_sands_growth_updates(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """List stored Oil Sands Growth Program announcements."""
+    return await run_tool("list_oil_sands_growth_updates", arguments, _auth(request), _rest_caller(request))
+
+
 @app.post("/bid-room/process", tags=["bid-room"])
 async def bid_room_process(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Process a bid room in E2B and analyze it with Cohere inside the sandbox.
@@ -1018,6 +1042,13 @@ _DOCS_EXAMPLES = {
         "match_industrial_support_programs",
         {"description": "Steel fabrication and welding", "location": "Edmonton, Alberta"},
     ),
+    "/oil-sands-growth": ("get_oil_sands_growth_program", {"topic": "overview"}),
+    "/oil-sands-growth/fit": (
+        "check_oil_sands_growth_fit",
+        {"description": "Pressure-vessel fabrication and welding", "location": "Nisku, Alberta"},
+    ),
+    "/oil-sands-growth/supply": ("find_oil_sands_supply_opportunities", {"keywords": "fabrication", "limit": 8}),
+    "/oil-sands-growth/updates": ("list_oil_sands_growth_updates", {"refresh": False}),
     "/profile": ("set_business_profile", {"company_name": "Example Concrete Ltd", **_EXAMPLE_PROFILE}),
 }
 

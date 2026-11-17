@@ -1,6 +1,6 @@
 ---
 name: procurement
-description: Find and assess Canadian public procurement for any business through workspaceAlberta, using the full CanadaBuys and Alberta Purchasing Connection catalogues. Use for tender searches, capability matching, Buy Canadian signals, closing deadlines, bid briefs, industrial support, saved business profiles, watchlists, and evidence-grounded bid reviews.
+description: Find and assess Canadian public procurement for any business through workspaceAlberta, using the full CanadaBuys and Alberta Purchasing Connection catalogues. Use for tender searches, capability matching, Buy Canadian signals, closing deadlines, bid briefs, industrial support, the Oil Sands Growth Program, saved business profiles, watchlists, and evidence-grounded bid reviews.
 ---
 
 # workspaceAlberta procurement
@@ -51,6 +51,15 @@ and tariff support, including the October 2026 federal-provincial package and
 national programs an Alberta firm can ask about. Ontario-only streams are
 labeled so an Alberta firm can see they do not apply. Do not present the
 catalog as an application, an award, or an eligibility decision.
+
+`get_oil_sands_growth_program`, `check_oil_sands_growth_fit`,
+`find_oil_sands_supply_opportunities`, and `list_oil_sands_growth_updates` are
+a public read-only brief of Alberta's Oil Sands Growth Program, announced
+13 November 2026. Keep official release facts, news-conference reports, and
+unpublished points separate. A fabricator or service company does not receive
+the royalty. A company quote is not an approved project. Do not present the
+brief as an application or an eligibility decision. If a live refresh fails,
+keep the stored sources and retrieval date visible.
 
 Use business facts already supplied. Ask only for missing constraints needed for
 the requested task. For anonymous matching, pass an inline `profile`; do not save
