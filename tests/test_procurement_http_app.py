@@ -242,7 +242,7 @@ class InlineProfileTest(unittest.TestCase):
     def test_profile_arg_declared_on_matching_tools(self) -> None:
         from mcp_tools import get_mcp_tools
 
-        by_name = {tool.name: tool for tool in get_mcp_tools()}
+        by_name = {tool.name: tool for tool in get_mcp_tools(include_hidden=True)}
         for name in (
             "find_opportunities",
             "find_matching_opportunities",

@@ -41,7 +41,7 @@ class ExtensionToolsTest(unittest.TestCase):
         from mcp_tools import get_mcp_tools
         from procurement_core.service import TOOL_NAMES
 
-        declared = {tool.name for tool in get_mcp_tools()}
+        declared = {tool.name for tool in get_mcp_tools(include_hidden=True)}
         self.assertEqual(declared, set(TOOL_NAMES))
 
     def test_empty_watchlist(self):

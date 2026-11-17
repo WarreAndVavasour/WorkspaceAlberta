@@ -27,6 +27,21 @@ def make_signature(payload: bytes, secret: str, timestamp: int | None = None) ->
     return f"t={ts},v1={digest}"
 
 
+class AccessHelpTest(unittest.TestCase):
+    def test_help_names_checkout_steps_and_no_third_party_keys(self):
+        from procurement_core.auth import access_help, access_help_text
+
+        pro = access_help(401, "classify_tender")
+        self.assertEqual(pro["requires"], "pro")
+        self.assertIn("buy.stripe.com", pro["steps"][-1])
+        free = access_help(401, "set_business_profile")
+        self.assertEqual(free["requires"], "sign_in")
+        self.assertIn("never starts a paid subscription", free["steps"][-1])
+        lapsed = access_help_text(402, "list_watchlist")
+        self.assertTrue(lapsed.startswith("1. Subscribe"))
+        self.assertIn("Do not paste API keys", lapsed)
+
+
 class KeyMaterialTest(unittest.TestCase):
     def test_generate_and_hash(self):
         key = auth.generate_api_key()
