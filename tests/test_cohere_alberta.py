@@ -78,7 +78,7 @@ class AlbertaCoherePathTest(unittest.TestCase):
         long_markdown = "y" * (service.MAX_CONTRACT_PROMPT_CHARS + 500)
         captured = {}
 
-        def fake_chat(messages, max_tokens=1200):
+        def fake_chat(messages, max_tokens=1200, **kwargs):
             captured["user"] = messages[1]["content"]
             return ("ok", "Cohere API", "command-a")
 
@@ -88,8 +88,8 @@ class AlbertaCoherePathTest(unittest.TestCase):
              mock.patch.object(service, "call_cohere_chat", side_effect=fake_chat):
             run_analyze({"reference": "AB-2026-04073"})
 
-        self.assertIn("[Contract text truncated for model call.]", captured["user"])
-        self.assertLessEqual(len(captured["user"]), service.MAX_CONTRACT_PROMPT_CHARS + 1000)
+        self.assertIn("[Notice text cut at the notice cap.]", captured["user"])
+        self.assertNotIn("y" * (service.MAX_CONTRACT_PROMPT_CHARS + 1), captured["user"])
 
     def test_bad_alberta_reference_returns_not_available(self):
         with mock.patch.object(
@@ -117,9 +117,13 @@ class AlbertaCoherePathTest(unittest.TestCase):
         self.assertIn("no API key configured", output)
 
 
+NO_ATTACHMENTS = ValueError("No tender attachments are published for WS3712345678.")
+
+
 class FederalCoherePathTest(unittest.TestCase):
     def test_federal_reference_still_works(self):
         with mock.patch.object(service, "load_contracts", return_value=[FAKE_FEDERAL_CONTRACT]), \
+             mock.patch.object(service, "_classify_canadabuys_files", side_effect=NO_ATTACHMENTS), \
              mock.patch.object(service, "load_profile", return_value={}), \
              mock.patch.object(
                  service,

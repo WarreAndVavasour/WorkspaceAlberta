@@ -144,7 +144,9 @@ Optional:
 - `HF_TOKEN` or `HUGGINGFACEHUB_API_TOKEN`: fallback route for Cohere Command A+ analysis through Hugging Face Inference Providers
 - `CANADABUYS_COHERE_MODEL`: override the default Cohere model, currently `command-a-plus-05-2026`
 - `CANADABUYS_COHERE_HF_MODEL`: override the default HF model route, currently `CohereLabs/command-a-plus-05-2026-w4a4:cohere`
-- `CANADABUYS_COHERE_CHAT_COMPLETIONS_URL`: override the Cohere chat completions endpoint
+- `CANADABUYS_COHERE_CHAT_COMPLETIONS_URL`: override the Cohere OpenAI-compatible endpoint (query planner)
+- `CANADABUYS_COHERE_V2_CHAT_URL`: override the Cohere v2 chat endpoint used by `analyze_contract_with_cohere`
+- `CANADABUYS_COHERE_ANALYSIS_TIMEOUT`: seconds to wait for a tender analysis (default 900; the Cloud Run request timeout must be at least this)
 - `CANADABUYS_HF_CHAT_COMPLETIONS_URL`: override the Hugging Face chat completions endpoint
 
 When both Cohere keys are set, the server uses `COHERE_API_KEY` first and retries once with `COHERE_PROD_API_KEY` only for rate-limit, quota, or credit-style failures.

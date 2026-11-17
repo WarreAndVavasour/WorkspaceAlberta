@@ -696,7 +696,16 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
         Tool(
             name="analyze_contract_with_cohere",
             title="Analyze a contract with Cohere",
-            description="Use Cohere Command A+ to review a CanadaBuys tender and explain fit, risks, and next steps.",
+            description=(
+                "Read a whole tender package with Cohere Command A+ and explain it to a business owner: "
+                "what it is, who can bid, how offers are evaluated, everything that must be submitted (with "
+                "document and page), fit, risks and next actions. Reads the notice and every published "
+                "CanadaBuys attachment, amendments first. Alberta APC: the first call returns a private upload "
+                "link (APC releases documents only to the user's own supplier account); call again with "
+                "upload_token. The tender text is sent to Cohere. The model reasons before answering, so a "
+                "call can take several minutes; a reply cut off by max_tokens returns an error, never a "
+                "partial analysis. Hosted: sign-in and an active workspaceAlberta Pro subscription required."
+            ),
             input_schema={
                 "type": "object",
                 "properties": {
@@ -714,8 +723,12 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
                     },
                     "max_tokens": {
                         "type": "integer",
-                        "description": "Maximum model response tokens (default 1200, max 2000)",
-                        "default": 1200
+                        "description": "Tokens for reasoning plus the answer (default 50000, min 4000, max 64000)",
+                        "default": 50000
+                    },
+                    "upload_token": {
+                        "type": "string",
+                        "description": "For APC only: the upload_token from an earlier classify_tender, process_bid_room or analyze_contract_with_cohere result, after the user uploaded the documents."
                     },
                     "profile": PROFILE_ARG_SCHEMA
                 },
