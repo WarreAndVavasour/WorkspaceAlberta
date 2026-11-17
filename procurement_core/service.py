@@ -3935,12 +3935,13 @@ def _analysis_corpus(reference: str, upload_token: str, max_tokens: int, deadlin
     else:
         if upload_token:
             raise ValueError("upload_token applies only to an Alberta APC reference.")
-        contracts = load_contracts()
+        contracts, cache_warnings = load_contracts_for_unified()
         if not contracts:
-            raise ValueError("No contract data available. Run `refresh_data` first.")
+            raise ValueError("No contract data available. " + " ".join(cache_warnings))
         contract = find_contract_by_reference(reference, contracts)
         if not contract:
             raise ValueError(f"Contract not found: {reference}")
+        warnings += [w for w in cache_warnings if "refreshed" not in w]
         source_name = "CanadaBuys"
         source_ref = get_field(contract, "referenceNumber-numeroReference") or reference
         notice = render_contract_markdown(contract)
