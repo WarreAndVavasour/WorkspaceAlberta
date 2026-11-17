@@ -31,8 +31,9 @@ AMENDMENT_PATTERN = re.compile(
 )
 REFERENCE_PATTERN = re.compile(
     r"\b(Annex(?:e)?|Appendix|Appendice|Schedule|Attachment|Exhibit|Form|Formulaire|Pi[èe]ce\s+jointe)"
-    r"\s+([A-Z0-9][A-Za-z0-9\-\.]{0,6}(?:\s*[-–:]\s*[A-Z][\w’'\-]+(?:\s+[A-Z][\w’'\-]+){0,5})?)"
+    r"\s+((?:[A-Z0-9][\w’'\-\.]*)(?:\s+(?:[A-Z][\w’'\-]*|of|de|du|des|la|le)){0,6})"
 )
+REFERENCE_STOPWORDS = {"The", "This", "That", "These", "Le", "La", "Les", "Ce", "Cette", "A", "An"}
 EN_WORDS = (" the ", " and ", " of ", " to ", " must ", " shall ", " will ", " with ")
 FR_WORDS = (" le ", " la ", " les ", " des ", " et ", " du ", " doit ", " pour ", " une ")
 NOTICE_CHAR_CAP = 12_000
@@ -74,7 +75,12 @@ def referenced_documents(docs: list[TenderDocument], limit: int = 40) -> list[st
     for doc in docs:
         for page in doc.pages:
             for match in REFERENCE_PATTERN.finditer(page):
-                label = re.sub(r"\s+", " ", f"{match.group(1)} {match.group(2)}").strip(" .:-–")
+                words = match.group(2).split()
+                while words and words[-1] in {"of", "de", "du", "des", "la", "le"}:
+                    words.pop()
+                if not words or words[0] in REFERENCE_STOPWORDS:
+                    continue
+                label = re.sub(r"\s+", " ", f"{match.group(1)} {' '.join(words)}").strip(" .:-–")
                 seen.setdefault(label, None)
                 if len(seen) >= limit:
                     return list(seen)
@@ -108,13 +114,18 @@ def pages_from_units(units: list[dict], documents: list[dict]) -> list[TenderDoc
     return docs
 
 
-def reading_order(docs: list[TenderDocument]) -> list[TenderDocument]:
-    """Amendments first, then the main language largest first, then the other language."""
+def reading_order(docs: list[TenderDocument], preferred_language: str = "en") -> list[TenderDocument]:
+    """Amendments first, then the reader's language largest first, then the other language.
+
+    ``preferred_language`` wins whenever the package has documents in it; a French-only
+    package is read in French. Federal packages are bilingual, so the French version
+    is usually a translation and goes last (it is read only if the budget allows).
+    """
     totals: dict[str, int] = {}
     for doc in docs:
         totals[doc.language] = totals.get(doc.language, 0) + doc.chars
     known = {k: v for k, v in totals.items() if k != "unknown"}
-    primary = max(known, key=known.get) if known else "unknown"
+    primary = preferred_language if preferred_language in known else (max(known, key=known.get) if known else "unknown")
 
     def key(doc: TenderDocument) -> tuple:
         other_language = doc.language not in (primary, "unknown")
@@ -129,6 +140,7 @@ def assemble(
     *,
     char_budget: int,
     skipped: list[tuple[str, str]] | None = None,
+    preferred_language: str = "en",
 ) -> dict[str, Any]:
     """Build the model text and the full inventory within ``char_budget`` characters."""
     notice = notice_markdown.strip()
@@ -136,7 +148,7 @@ def assemble(
         notice = notice[:NOTICE_CHAR_CAP] + "\n[Notice text cut at the notice cap.]"
     parts = [f"=== NOTICE (the published tender notice) ===\n{notice}"]
     used = len(parts[0])
-    ordered = reading_order(docs)
+    ordered = reading_order(docs, preferred_language)
     for number, doc in enumerate(ordered, 1):
         header = f"\n\n=== DOCUMENT {number}: {doc.name} ({len(doc.pages)} pages, language: {doc.language}, role: {doc.role}) ==="
         if used + len(header) + 200 > char_budget:

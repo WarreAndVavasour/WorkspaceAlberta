@@ -3888,8 +3888,11 @@ ANALYSIS_SYSTEM_PROMPT = (
     "say when one changes something. Cite the document and page for each requirement, for "
     "example (RFP p.54) or (Addendum 1 p.3), using the page markers in the text. If something "
     "is not in the documents you were given, or a document was not read (see the inventory), "
-    "say so plainly instead of filling the gap from general knowledge. Write plainly for an "
-    "owner, not a procurement officer."
+    "say so plainly instead of filling the gap from general knowledge. When the evaluation has "
+    "a minimum score or a pass/fail test, explain what it takes to clear it. About the business, "
+    "use only the business context you are given: never assume its experience, clients, staff, "
+    "certifications or past government work; say what it would need to show. Write plainly for "
+    "an owner, not a procurement officer."
 )
 
 ANALYSIS_SECTIONS = (

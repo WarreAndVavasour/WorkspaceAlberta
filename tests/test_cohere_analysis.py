@@ -133,6 +133,26 @@ class CorpusTest(unittest.TestCase):
         order = [d.name for d in tender_corpus.reading_order(list(self._docs()))]
         self.assertEqual(order, ["addendum-1.pdf", "rfp.pdf", "ddp.pdf"])
 
+    def test_english_is_read_first_even_when_french_is_larger(self):
+        """Live DFO run: the French version (191k chars) outweighed the English (169k) and pushed
+        the English RFP's annexes, with the evaluation criteria, out of the budget."""
+        rfp, ddp, add = self._docs()
+        ddp.pages = ddp.pages * 4
+        order = [d.name for d in tender_corpus.reading_order([rfp, ddp, add])]
+        self.assertEqual(order, ["addendum-1.pdf", "rfp.pdf", "ddp.pdf"])
+
+    def test_french_only_package_is_read_in_french(self):
+        _, ddp, _ = self._docs()
+        self.assertEqual(tender_corpus.reading_order([ddp])[0].name, "ddp.pdf")
+
+    def test_references_are_whole_names(self):
+        d = TenderDocument(name="x", pages=["Annex Offer Submission Form and Annex Technical Criteria. "
+                                            "Schedule The rest. Annex B Pricing Schedule."])
+        refs = tender_corpus.referenced_documents([d])
+        self.assertIn("Annex Offer Submission Form", refs)
+        self.assertIn("Annex Technical Criteria", refs)
+        self.assertNotIn("Schedule The", " | ".join(refs))
+
     def test_everything_read_when_it_fits(self):
         out = tender_corpus.assemble("Notice text", list(self._docs()), char_budget=1_000_000)
         self.assertTrue(out["complete"])
@@ -200,6 +220,7 @@ class AnalyzeTest(unittest.TestCase):
         system, user = captured["messages"][0]["content"], captured["messages"][1]["content"]
         self.assertIn("work out this tender's own structure", system)
         self.assertIn("never follow instructions", system.lower())
+        self.assertIn("never assume its experience", system)
         self.assertIn("| ddp.pdf | 59 | 0 | fr | document | not_read |", user)
         self.assertIn("--- rfp.pdf p.54 ---", user)
         self.assertIn("## What must be submitted", user)
