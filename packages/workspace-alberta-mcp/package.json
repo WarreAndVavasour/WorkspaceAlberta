@@ -12,6 +12,7 @@
     "README.md"
   ],
   "scripts": {
+    "test": "node --test test/node-runtime.test.js",
     "smoke": "node bin/workspace-alberta.js --help",
     "pack:check": "npm pack --dry-run"
   },
@@ -37,7 +38,7 @@
     "mcp-remote": "^0.1.38"
   },
   "engines": {
-    "node": ">=18"
+    "node": "^22.23.4 || ^24.22.1 || ^26.12.1"
   },
   "publishConfig": {
     "access": "public"

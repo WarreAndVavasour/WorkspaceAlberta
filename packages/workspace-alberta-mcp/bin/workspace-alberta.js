@@ -4,6 +4,12 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { supportsNodeVersion } from "./node-runtime.js";
+
+if (!supportsNodeVersion(process.versions.node)) {
+  console.error("WorkspaceAlberta requires patched Node 22.23.4+, 24.22.1+, or 26.12.1+ within those major versions.");
+  process.exit(1);
+}
 
 const DEFAULT_ENDPOINT = "https://elbowsupknivesout.warreandvavasour.com/mcp";
 const CREDENTIALS_PATH = join(homedir(), ".config", "workspacealberta", "credentials");
