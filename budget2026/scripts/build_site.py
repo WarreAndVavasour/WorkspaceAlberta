@@ -3,7 +3,11 @@
 python3 build_site.py WORK_DIR OUT_DIR [--preview]
 --preview rewrites every root-relative link to a relative path ending in index.html,
 so the site can be opened from any folder (used for the private Artifact preview).
-No API keys, no model calls. Budget text is escaped and treated as data.
+No model calls. Budget text is escaped and treated as data.
+
+POSTHOG_PROJECT_KEY, when set in the environment, is copied into
+<meta name="wv:posthog-key">. It is never printed. An empty value leaves
+the tag blank and the page skips PostHog.
 """
 import html
 import json
@@ -20,8 +24,6 @@ from fiscal_data import TABLES, ECONOMY, YEARS5, series  # noqa: E402
 from taxonomy import LENSES, MONEY_TYPES, OTHER_URLS, CHAPTER_URLS  # noqa: E402
 import agent_files  # noqa: E402
 
-WORK, OUT = Path(sys.argv[1]), Path(sys.argv[2])
-PREVIEW = "--preview" in sys.argv
 BASE = "https://budget2026.warreandvavasour.com"
 WV = "https://warreandvavasour.com"
 CLAUDE_DIR = "https://claude.ai/directory/connectors/workspacealberta"
@@ -29,17 +31,34 @@ MCP_URL = "https://elbowsupknivesout.warreandvavasour.com/mcp"
 TODAY = "2026-11-05"
 esc = html.escape
 
-M = json.loads((WORK / "measures.json").read_text(encoding="utf-8"))
-TAX = json.loads((WORK / "tax.json").read_text(encoding="utf-8"))
-SRC = json.loads((WORK / "source.json").read_text(encoding="utf-8"))
-MEASURES = M["measures"]
-BY_SLUG = {m["slug"]: m for m in MEASURES}
-CHAPTERS = M["chapters"]
-PRINTED = {int(k): v for k, v in M["printed_pages"].items()}
 LENS = {l["id"]: l for l in LENSES}
 TYPE_ORDER = ["spending", "tax", "savings_or_revenue", "no_line_item"]
 TYPE_CSS = {"spending": "spending", "tax": "tax", "savings_or_revenue": "savings", "no_line_item": "none"}
 TABLE1 = series("table-1", "Budgetary balance")
+
+
+def posthog_project_key():
+    """Browser analytics key from the environment. Blank means skip PostHog."""
+    raw = os.environ.get("POSTHOG_PROJECT_KEY", "").strip()
+    if not raw or any(ch.isspace() for ch in raw):
+        return ""
+    return raw
+
+
+def load_inputs():
+    """Read WORK_DIR and OUT_DIR from argv and load the local budget JSON."""
+    global WORK, OUT, PREVIEW, M, TAX, SRC, MEASURES, BY_SLUG, CHAPTERS, PRINTED
+    if len(sys.argv) < 3:
+        raise SystemExit("usage: python build_site.py WORK_DIR OUT_DIR [--preview]")
+    WORK, OUT = Path(sys.argv[1]), Path(sys.argv[2])
+    PREVIEW = "--preview" in sys.argv
+    M = json.loads((WORK / "measures.json").read_text(encoding="utf-8"))
+    TAX = json.loads((WORK / "tax.json").read_text(encoding="utf-8"))
+    SRC = json.loads((WORK / "source.json").read_text(encoding="utf-8"))
+    MEASURES = M["measures"]
+    BY_SLUG = {m["slug"]: m for m in MEASURES}
+    CHAPTERS = M["chapters"]
+    PRINTED = {int(k): v for k, v in M["printed_pages"].items()}
 
 
 # ---------------------------------------------------------------- formatting
@@ -211,7 +230,7 @@ def layout(title, description, path, body, *, jsonld=None, crumbs=None, json_alt
 <meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{canonical}">
 <meta property="og:image" content="{BASE}/assets/og.png"><meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0a0807">
-<meta name="wv:page-type" content="{page_type}"><meta name="wv:slug" content="{esc(slug)}">
+<meta name="wv:page-type" content="{page_type}"><meta name="wv:slug" content="{esc(slug)}"><meta name="wv:posthog-key" content="{esc(posthog_project_key())}">
 <link rel="icon" href="{FAVICON}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{FONTS}">
@@ -864,6 +883,7 @@ def preview_rewrite():
 
 
 def main():
+    load_inputs()
     if OUT.exists():
         try:
             shutil.rmtree(OUT)

@@ -2,6 +2,11 @@
 out/
 out-preview/
 dist/
+
+# Local env only. The site build reads POSTHOG_PROJECT_KEY from the process
+# environment; do not commit a key here.
+.env
+.env.*
 __pycache__/
 .wrangler/
 node_modules/

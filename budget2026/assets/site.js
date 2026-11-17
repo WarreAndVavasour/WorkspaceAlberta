@@ -1,8 +1,10 @@
 /* Budget 2026 Explorer — shared page script.
    1. Chart tooltips ([data-tip]) with keyboard focus equivalents.
    2. PostHog analytics (same project as warreandvavasour.com, tagged product=budget2026).
-      No cookies (sessionStorage), no person profiles, no autocapture, honours Do Not Track,
-      and only runs on the production hostname.
+      The project key is read from <meta name="wv:posthog-key">, which the site build
+      fills from the POSTHOG_PROJECT_KEY environment variable. If that tag is empty,
+      init is skipped. No cookies (sessionStorage), no person profiles, no autocapture,
+      honours Do Not Track, and only runs on the production hostname.
    3. Click tracking: link_clicked / button_clicked for every link and button (label, page
       section, destination without its query string; form fields are never read), plus the
       named funnel events below. Add data-track-skip to leave an element out. */
@@ -16,7 +18,7 @@
   document.addEventListener("scroll", () => { tip.hidden = true; }, { passive: true });
 
   // ---------- analytics ----------
-  const KEY = "phc_RDTMHJmWuROb9X3lYLTGydkyfvtRLQJbwcpQB0gQsPd";
+  const KEY = ((document.querySelector("meta[name='wv:posthog-key']") || {}).content || "").trim();
   const HOST = "https://us.i.posthog.com";
   const live = /(^|\.)warreandvavasour\.com$/.test(location.hostname);
   const dnt = navigator.doNotTrack === "1" || window.doNotTrack === "1" || navigator.globalPrivacyControl === true;
@@ -29,7 +31,7 @@
     if (ready && window.posthog) { try { window.posthog.capture(name, p); } catch (_) { /* never affect the page */ } }
     else if (queue.length < 50) queue.push([name, p]);
   };
-  if (live && !dnt) {
+  if (live && !dnt && KEY) {
     try {
       /* PostHog loader stub (posthog-js array.js) */
       !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.crossOrigin = "anonymous", p.async = !0, p.src = s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "init capture register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset get_distinct_id get_property".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
