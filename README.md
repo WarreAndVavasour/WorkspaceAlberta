@@ -267,6 +267,7 @@ The core tools are:
 - `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
 - `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
 - `match_industrial_support_programs` for a read-only industrial and tariff support catalog, with Ontario-only streams labeled for Alberta firms
+- `get_oil_sands_growth_program`, `check_oil_sands_growth_fit`, `find_oil_sands_supply_opportunities`, and `list_oil_sands_growth_updates` for a read-only brief of Alberta's 13 November 2026 Oil Sands Growth Program, including source URLs and the retrieval date. They do not decide eligibility.
 
 The full tool and REST reference lives in [`docs/mcp-tool-reference.md`](docs/mcp-tool-reference.md); the architecture walkthrough is [`docs/architecture.md`](docs/architecture.md).
 
@@ -288,7 +289,10 @@ declares, the model sees.
 `get_opportunity_details`, `list_deadlines`. Profile and matching:
 `set_business_profile`, `get_my_profile`, `find_opportunities`,
 `find_matching_opportunities`, `daily_bid_brief`, `find_business_fit`,
-`match_industrial_support_programs`. Alberta Purchasing
+`match_industrial_support_programs`. Oil Sands Growth Program:
+`get_oil_sands_growth_program`, `check_oil_sands_growth_fit`,
+`find_oil_sands_supply_opportunities`, `list_oil_sands_growth_updates`.
+Alberta Purchasing
 Connection: `search_alberta_opportunities`, `get_alberta_opportunity_details`,
 `list_alberta_deadlines`, `summarize_alberta_opportunities`,
 `find_alberta_opportunities`. Model review and bid-room:

@@ -182,7 +182,7 @@ gcloud run services delete workspacealberta --project n8n-automation-project-459
 ## Health & Smoke Checks
 
 ```bash
-curl https://<host>/health          # {"status":"ok", "tools": 25, ...}
+curl https://<host>/health          # {"status":"ok", "tools": 33, ...}
 curl https://<host>/tools | head    # schema list
 curl -X POST https://<host>/tools/summarize_contracts
 ```

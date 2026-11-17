@@ -135,7 +135,7 @@ MATCHES_OUTPUT_SCHEMA = {
 
 # Older and overlapping tools stay callable by name (clients, saved prompts and
 # directory reviews still use them) but are not listed in tools/list, so an agent
-# picks between about fifteen tools instead of 29. Each one has a listed replacement:
+# picks between about twenty tools instead of 33. Each one has a listed replacement:
 HIDDEN_TOOLS = {
     "search_contracts": "search_opportunities",
     "get_contract_details": "get_opportunity_details",
@@ -775,6 +775,106 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
                 },
             },
         ),
+        Tool(
+            name="get_oil_sands_growth_program",
+            title="Read the Oil Sands Growth Program",
+            description=(
+                "Read-only brief on Alberta's Oil Sands Growth Program, announced 13 November 2026: "
+                "what it is, the 10-year royalty framework, who the written release says can apply, "
+                "timelines, related pipelines, and what is still unpublished. Facts are labeled official, "
+                "reported, or unconfirmed, with source URLs and the retrieval date. "
+                "workspaceAlberta does not apply or decide eligibility."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "topic": {
+                        "type": "string",
+                        "description": (
+                            "Optional section: overview, eligibility, royalty, timeline, pipelines, "
+                            "suppliers, or sources. Empty returns the full brief."
+                        ),
+                    },
+                },
+                "additionalProperties": False,
+            },
+        ),
+        Tool(
+            name="check_oil_sands_growth_fit",
+            title="Check Oil Sands Growth Program fit",
+            description=(
+                "Read how a business could benefit from the Oil Sands Growth Program: directly, only if "
+                "it is an oil sands producer seeking the royalty framework, or indirectly as a fabricator, "
+                "trade, or service company selling to operators who expand. A Fort McMurray fabricator or "
+                "Edmonton-region supplier is a supply-chain reading, not a royalty recipient. "
+                "This does not decide eligibility. Location is context, not a published preference."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "description": "What the business does, in its own words.",
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Where the business works, such as Fort McMurray or Edmonton, Alberta.",
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "description": "Optional company name for the heading.",
+                    },
+                    "profile": PROFILE_ARG_SCHEMA,
+                },
+                "additionalProperties": False,
+            },
+        ),
+        Tool(
+            name="find_oil_sands_supply_opportunities",
+            title="Find oil sands supply opportunities",
+            description=(
+                "List oil sands operators quoted in the 13 November 2026 release, then match those names "
+                "and oil sands terms to open CanadaBuys and Alberta Purchasing Connection notices already "
+                "available to this server. Quotes are not approved projects. Most operator capital is "
+                "private and will not appear. A missing notice is reported as a gap, not as no work."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "keywords": {
+                        "type": "string",
+                        "description": "Optional extra filter, such as fabrication or camp. Applied after the oil sands match.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum public notices to show (default 8, max 20).",
+                        "default": 8,
+                    },
+                },
+                "additionalProperties": False,
+            },
+        ),
+        Tool(
+            name="list_oil_sands_growth_updates",
+            title="List Oil Sands Growth Program updates",
+            description=(
+                "Return the latest stored official and related announcements for the Oil Sands Growth "
+                "Program, newest first, with source URLs and retrieval dates. The 17 November 2026 "
+                "Premier's post is a restatement, not a new rule. Pass refresh true to check that the "
+                "official release URL is still online. A failed check returns the stored catalog."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "refresh": {
+                        "type": "boolean",
+                        "description": "When true, confirm the official Alberta release URL still names the program. Default false.",
+                        "default": False,
+                    },
+                },
+                "additionalProperties": False,
+            },
+        ),
         # ===== Extension Tools (watchlist + scorecard) =====
         Tool(
             name="watch_opportunity",
@@ -856,6 +956,7 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
                 "get_server_guide", "get_my_profile", "check_cohere_status",
                 "list_watchlist", "unwatch_opportunity", "set_business_profile",
                 "match_industrial_support_programs",
+                "get_oil_sands_growth_program", "check_oil_sands_growth_fit",
             },
         )
     if not include_hidden:

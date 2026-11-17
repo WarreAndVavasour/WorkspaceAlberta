@@ -47,8 +47,9 @@ Long description:
 > and tender requirement lists. It does not submit bids or contact buyers. Verify
 > requirements against the official posting before bidding.
 
-Tool counts (from `tools/list`, November 16, 2026):
-16 listed tools. 7 are public with no account; 13 older tools still answer by name
+Tool counts (from `tools/list`, November 17, 2026):
+20 listed tools. 11 are public with no account, including four Oil Sands Growth
+Program readings; 13 older tools still answer by name
 but are not listed (see `HIDDEN_TOOLS` in `mcp-servers/canadabuys/mcp_tools.py`). 2 need a free sign-in
 (`set_business_profile`, `get_my_profile`). 7 need sign-in and Pro
 (`watch_opportunity`, `list_watchlist`, `unwatch_opportunity`,

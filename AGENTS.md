@@ -84,6 +84,7 @@ Use the Build Canada tools for:
 - reviewing upcoming deadlines
 - matching opportunities to a saved business profile
 - ranking the open catalogues for a free-text business description (`find_business_fit`)
+- reading Alberta's Oil Sands Growth Program from the stored 17 November 2026 catalog (`get_oil_sands_growth_program`, `check_oil_sands_growth_fit`, `find_oil_sands_supply_opportunities`, `list_oil_sands_growth_updates`). These tools do not decide eligibility.
 
 Do not assume the repo has CRM, ERP, spreadsheet, or accounting integrations unless they are explicitly added later.
 

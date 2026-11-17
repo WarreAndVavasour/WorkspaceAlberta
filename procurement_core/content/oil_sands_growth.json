@@ -1,0 +1,328 @@
+{
+  "catalog_version": "2026-11-17",
+  "retrieved_on": "2026-11-17",
+  "program": {
+    "name": "Oil Sands Growth Program",
+    "short_name": "OGP",
+    "announced": "2026-11-13",
+    "status": "announced_rules_unpublished",
+    "administrator": "Government of Alberta",
+    "mechanism": "A 10-year royalty framework for approved new oil sands production. The written release does not describe a grant, a royalty credit, or a published program budget.",
+    "summary": "On 13 November 2026 the Government of Alberta announced the Oil Sands Growth Program. Approved projects would pay a two per cent royalty for the first five years, then one percentage point more each year until six per cent in years nine and 10. The release says this is meant to attract investment in new oil sands projects and expansions, grow production, and fill new pipelines. A separate application portal, eligibility regulation, and dollar envelope were not published on the pages retrieved 17 November 2026.",
+    "official_release_url": "https://www.alberta.ca/announcements.cfm?xID=981275DC1AC17-BD32-E06C-F81BC3AE18865A02",
+    "official_release_title": "A new era of oil sands growth"
+  },
+  "disclaimer": "Reading aid only. workspaceAlberta does not apply to the Oil Sands Growth Program, contact Alberta Energy and Minerals, decide eligibility, or treat a company quote as an approved project. Amounts, tests, and dates can change. Open the official release before relying on a figure. Facts marked reported or unconfirmed are not in the written 13 November 2026 release.",
+  "royalty_schedule": {
+    "status": "official",
+    "basis": "The release states the rates. It does not say whether they apply to gross revenue or net revenue, and it does not tie them to a price benchmark. Those points are unconfirmed.",
+    "note": "The release does not publish a year-by-year table. Years 6, 7, and 8 below are the one-percentage-point steps that sentence describes between five years at two per cent and six per cent in years nine and 10.",
+    "years": [
+      {"label": "Years 1 to 5", "rate_percent": 2},
+      {"label": "Year 6", "rate_percent": 3},
+      {"label": "Year 7", "rate_percent": 4},
+      {"label": "Year 8", "rate_percent": 5},
+      {"label": "Years 9 and 10", "rate_percent": 6}
+    ]
+  },
+  "official_points": [
+    "The program would be open to all oil sands producers that meet the eligibility requirements. The release does not publish those requirements.",
+    "Targeted launch is spring 2027. Qualifying projects announced after 15 November 2026 will be grandfathered. The release does not define qualifying or what counts as announced.",
+    "Projects would remain subject to applicable regulatory approvals, environmental requirements and, where required, project-specific Indigenous consultation, with suspension or termination for non-compliance.",
+    "Alberta will review the program by 31 December 2029 to assess its effectiveness and inform its future direction.",
+    "The release states a goal of doubling oil production to eight million barrels per day, and about $205 billion in cumulative additional revenues by 2040 and over $1.3 trillion by 2060. It does not give the year of the eight-million-barrel target.",
+    "The release says the program will drive tens of billions of dollars of investment, create tens of thousands of jobs, and fund rural municipalities with property taxes. The release spells that last figure \"billons\"; read it as the government's projection, not a budget line.",
+    "The program supports Alberta's commitments under the Canada-Alberta-Oil Sands Alliance memorandum of understanding, including coordinated fiscal and regulatory frameworks for sustained oil sands investment and production growth."
+  ],
+  "reported_not_in_release": [
+    {
+      "text": "CBC reported from the 13 November 2026 Calgary news conference that the program will not replace the existing royalty program, will not guarantee a project's approval, and will not skip environmental or Indigenous consultation requirements. CBC also reported that companies return to the regular royalty regime after 10 years, or sooner if they cannot meet production, environmental, or regulatory requirements.",
+      "source_id": "cbc"
+    },
+    {
+      "text": "CBC reported that Minister of Energy and Minerals Brian Jean said the Oil Sands Growth Program rate is not tied to West Texas Intermediate, and that if the standard provincial royalty rate is lower than the incentive rate the company pays the lower rate.",
+      "source_id": "cbc"
+    },
+    {
+      "text": "CBC reported Premier Danielle Smith saying Alberta was generating around 5 million barrels and that the aim is 8 million barrels of oil per day by 2035. The written release states the eight-million-barrel goal and the 2040 and 2060 revenue figures, and does not state the 5 million or 2035 figures.",
+      "source_id": "cbc"
+    },
+    {
+      "text": "Dentons, citing the announcement and statements at the news conference, reported that participation is by application, that the program is for new projects and expansions that add new production, and that existing production does not qualify. Dentons also reported that officials said a project must add at least 5,000 barrels per day and cannot sit inside the boundary of a previously approved project, though it may use existing infrastructure. Dentons said detailed rules were not yet published, and that reports indicate the rate is on gross revenue rather than net revenue.",
+      "source_id": "dentons"
+    },
+    {
+      "text": "Dentons noted a possible second meaning of 31 December 2029: officials were also described as calling it a deadline to commit and start construction. The written release calls that date a review of effectiveness. Until Alberta publishes the rule, treat 31 December 2029 as the review date in the release.",
+      "source_id": "dentons"
+    }
+  ],
+  "unconfirmed": [
+    "No application form, intake date, or program office URL was on the official release or the Alberta royalty pages retrieved 17 November 2026.",
+    "No grant amount, royalty-credit budget, or supplier set-aside was published.",
+    "Supplier, fabricator, contractor, and trade-contractor eligibility was not published. The written release addresses oil sands producers and approved projects.",
+    "The royalty base (gross or net revenue) and any price floor were not in the written release.",
+    "The AER ST98 crude bitumen page (https://www.aer.ca/data-and-performance-reports/statistical-reports/alberta-energy-outlook-st98/crude-bitumen) did not return page text on 17 November 2026, so this catalog stores no AER production figure. The AER outlook is a separate document from this royalty announcement."
+  ],
+  "current_royalty_context": {
+    "text": "Alberta's current oil sands royalty page describes Royalty Projects under the existing regime: 1 to 9 per cent of gross revenue before payout, depending on West Texas Intermediate, then the greater of that gross rate or 25 to 40 per cent of net revenue after payout. That page, retrieved 17 November 2026, does not describe the Oil Sands Growth Program. It is context for the regime the new framework would sit beside, not a program rule.",
+    "source_id": "royalty-overview"
+  },
+  "operators": [
+    {
+      "name": "Cenovus Energy",
+      "statement": "Jon McKenzie, president and CEO, said in the release that Cenovus looks forward to implementing the program and accelerating new production. No project was named.",
+      "named_project": ""
+    },
+    {
+      "name": "Suncor",
+      "statement": "Rich Kruger, CEO, welcomed the announcement as a step toward capital investment for growth. No project was named.",
+      "named_project": ""
+    },
+    {
+      "name": "Canadian Natural Resources Limited",
+      "statement": "Scott Stauth, president, said Canadian Natural looks forward to finalizing definitive agreements for the memorandum's objectives of additional market egress, production growth, and the Pathways Project. That is a company statement, not an Oil Sands Growth Program approval.",
+      "named_project": "Pathways Project, named by the company in the release"
+    },
+    {
+      "name": "ConocoPhillips Canada",
+      "statement": "Nick McKenna, president, said the program is a step toward investment certainty for future growth capital at Surmont. The release does not approve a Surmont expansion.",
+      "named_project": "Surmont, named as growth capital the company wants to compete for"
+    },
+    {
+      "name": "Imperial",
+      "statement": "John R. Whelan, chairman, president and CEO, welcomed the program as support for long-term oil sands growth. No project was named.",
+      "named_project": ""
+    },
+    {
+      "name": "Strathcona Resources",
+      "statement": "Adam Waterous, executive chairman, said in the release that Strathcona intends to grow from 125,000 barrels per day to 300,000 barrels a day by 2036. That is the company's statement, not a program approval or a government forecast.",
+      "named_project": "Company growth intention to 300,000 barrels a day by 2036"
+    }
+  ],
+  "alliance_context": "The 2 July 2026 memorandum among Canada, Alberta, Canadian Natural Resources Limited, Cenovus Energy Inc., ConocoPhillips Canada Resources Corp., Imperial Oil Resources Limited, and Suncor Energy Inc. says Alberta will, subject to legislative and regulatory approvals, implement financial supports to encourage the oil production growth required to underpin the West Coast Oil Pipeline, the expansion of Trans Mountain, and other egress growth. The 13 November release says the Oil Sands Growth Program supports Alberta's commitments under that memorandum. The memorandum is not the program regulation. The release says the program is open to all oil sands producers that meet the eligibility requirements, which is wider than those five companies. Strathcona Resources is quoted in the release and is not one of the five memorandum parties.",
+  "pipelines": [
+    {
+      "name": "New pipeline capacity",
+      "status": "named_only_as_capacity",
+      "detail": "The Oil Sands Growth Program release says Alberta needs investment to increase production and fill new pipelines. It does not name a pipeline.",
+      "urls": ["release"]
+    },
+    {
+      "name": "Pacific Link (West Coast Oil Pipeline)",
+      "status": "related_official_project",
+      "detail": "Separate from the royalty release. On 1 October 2026 the Government of Canada listed the West Coast Oil Pipeline, now known as Pacific Link, as a project of national interest. Alberta's Pacific Link page says construction has not started, and that early work could start as early as 1 September 2027 once Indigenous consultation is complete and approvals and permits are in place. The 2 July 2026 memorandum describes an Alberta-proposed 1 million barrel per day pipeline to the West Coast. The royalty release does not state that capacity or condition the royalty on this pipeline.",
+      "urls": ["pacific-link", "mou", "pm-pacific"]
+    },
+    {
+      "name": "Trans Mountain expansion",
+      "status": "related_in_mou",
+      "detail": "The 2 July 2026 memorandum includes the expansion of Trans Mountain among the egress the financial supports are meant to underpin. The Oil Sands Growth Program release does not name Trans Mountain.",
+      "urls": ["mou"]
+    }
+  ],
+  "supplier_reading": {
+    "direct": "The written program is a royalty framework for approved new oil sands production. A producer would ask Alberta, once rules exist, whether a new project or expansion can use those rates. workspaceAlberta cannot file that request.",
+    "supply_chain": "A fabricator, trade, camp, logistics, or service company does not receive the royalty. Any benefit is indirect: if producers spend capital on new projects or expansions, they buy modules, steel, piping, vessels, electrical and instrumentation work, construction, camps, trucking, maintenance, and related services. The release does not require local content, an Alberta supplier, or a Fort McMurray or Edmonton location.",
+    "public_procurement": "CanadaBuys and Alberta Purchasing Connection are public tender catalogues. Most oil sands operator capital is bought privately and will not appear there. A miss in those catalogues is not evidence that operators have no work.",
+    "location_note": "Fort McMurray, Wood Buffalo, and the Edmonton region are where oil sands production and a lot of shop fabrication already sit. The program does not name those places or prefer a supplier there."
+  },
+  "fit_signals": {
+    "producer": [
+      "oil sands producer",
+      "oilsands producer",
+      "bitumen producer",
+      "oil sands operator",
+      "oilsands operator",
+      "we produce bitumen",
+      "our bitumen production",
+      "sagd operator",
+      "in situ producer",
+      "operate a royalty project"
+    ],
+    "supplier": [
+      "fabricat",
+      "welding",
+      "welder",
+      "module",
+      "structural steel",
+      "piping",
+      "pipe spool",
+      "pressure vessel",
+      "scaffold",
+      "electrical",
+      "instrumentation",
+      "earthwork",
+      "civil construction",
+      "work camp",
+      "camp service",
+      "logistics",
+      "trucking",
+      "ndt",
+      "coating",
+      "insulation",
+      "turnaround",
+      "boiler",
+      "heat exchanger",
+      "machining",
+      "valve",
+      "maintenance"
+    ]
+  },
+  "location_markers": [
+    "fort mcmurray",
+    "wood buffalo",
+    "fort mckay",
+    "edmonton",
+    "nisku",
+    "leduc",
+    "sherwood park",
+    "fort saskatchewan",
+    "bonnyville",
+    "cold lake",
+    "lac la biche"
+  ],
+  "notice_terms": [
+    "suncor",
+    "cenovus",
+    "canadian natural",
+    "cnrl",
+    "conocophillips",
+    "conoco",
+    "imperial oil",
+    "strathcona",
+    "oil sands",
+    "oilsands",
+    "bitumen"
+  ],
+  "updates": [
+    {
+      "date": "2026-11-17",
+      "kind": "statement",
+      "title": "Premier Danielle Smith restated the program on X",
+      "summary": "At 15:54 UTC on 17 November 2026 the Premier posted: \"Alberta is entering a new era of prosperity. Our new Oil Sands Growth Program will bring billions in new investment, grow production and fill the new pipelines on the way. That means more good jobs for Albertans and stronger revenues for the schools, hospitals and roads our families count on. The best is yet to come.\" The post does not add eligibility rules, rates, or an application link. The short link on the post resolves to the post itself.",
+      "source_id": "smith-x"
+    },
+    {
+      "date": "2026-11-13",
+      "kind": "official_release",
+      "title": "A new era of oil sands growth",
+      "summary": "Government of Alberta news release announcing the Oil Sands Growth Program, the 10-year royalty framework, a targeted spring 2027 launch, grandfathering of qualifying projects announced after 15 November 2026, and a review by 31 December 2029.",
+      "source_id": "release"
+    },
+    {
+      "date": "2026-10-01",
+      "kind": "related",
+      "title": "Pacific Link listed as a project of national interest",
+      "summary": "Related egress project, not the royalty program. The Government of Canada listed the West Coast Oil Pipeline, now called Pacific Link, as a project of national interest. Alberta's project page says construction has not started.",
+      "source_id": "pm-pacific"
+    },
+    {
+      "date": "2026-07-02",
+      "kind": "related",
+      "title": "Canada-Alberta-Oil Sands Alliance memorandum",
+      "summary": "Related agreement the 13 November release says the program supports. Alberta committed, subject to legislative and regulatory approvals, to implement financial supports for production growth to underpin the West Coast Oil Pipeline, the Trans Mountain expansion, and other egress. This memorandum is not the Oil Sands Growth Program regulation.",
+      "source_id": "mou"
+    }
+  ],
+  "sources": [
+    {
+      "id": "release",
+      "title": "A new era of oil sands growth",
+      "publisher": "Government of Alberta",
+      "url": "https://www.alberta.ca/announcements.cfm?xID=981275DC1AC17-BD32-E06C-F81BC3AE18865A02",
+      "published": "2026-11-13",
+      "retrieved_on": "2026-11-17",
+      "role": "Primary written announcement"
+    },
+    {
+      "id": "announcements-index",
+      "title": "News | Alberta.ca",
+      "publisher": "Government of Alberta",
+      "url": "https://www.alberta.ca/news",
+      "published": "2026-11-13",
+      "retrieved_on": "2026-11-17",
+      "role": "Index entry that links the release"
+    },
+    {
+      "id": "smith-x",
+      "title": "Premier Danielle Smith post",
+      "publisher": "Danielle Smith (@ABDanielleSmith) on X",
+      "url": "https://x.com/ABDanielleSmith/status/2122720163489612027",
+      "published": "2026-11-17",
+      "retrieved_on": "2026-11-17",
+      "role": "Restatement. No new program rules in the post text."
+    },
+    {
+      "id": "royalty-overview",
+      "title": "Oil sands royalties – Overview",
+      "publisher": "Government of Alberta",
+      "url": "https://www.alberta.ca/royalty-oil-sands",
+      "published": "",
+      "retrieved_on": "2026-11-17",
+      "role": "Current Royalty Project regime. Does not describe this program."
+    },
+    {
+      "id": "pacific-link",
+      "title": "Pacific Link",
+      "publisher": "Government of Alberta",
+      "url": "https://www.alberta.ca/pacific-link",
+      "published": "2026-10-01",
+      "retrieved_on": "2026-11-17",
+      "role": "Related pipeline page. Construction has not started."
+    },
+    {
+      "id": "pm-pacific",
+      "title": "Prime Minister lists the West Coast Oil Pipeline, now known as Pacific Link",
+      "publisher": "Prime Minister of Canada",
+      "url": "https://www.pm.gc.ca/en/news/news-releases/2026/10/01/prime-minister-carney-lists-west-coast-oil-pipeline-now-known-pacific",
+      "published": "2026-10-01",
+      "retrieved_on": "2026-11-17",
+      "role": "Federal listing of the related pipeline"
+    },
+    {
+      "id": "mou",
+      "title": "Memorandum of Understanding among Canada, Alberta, and the Oil Sands Alliance parties",
+      "publisher": "Government of Canada, Major Projects Office",
+      "url": "https://www.canada.ca/en/privy-council/major-projects-office/projects/other/referred/pathways-plus/memorandum-understanding.html",
+      "published": "2026-07-02",
+      "retrieved_on": "2026-11-17",
+      "role": "Agreement the release says the program supports. Not the program regulation."
+    },
+    {
+      "id": "mou-publication",
+      "title": "Memorandum of Understanding between the Government of Canada, the Government of Alberta, and the Oil Sands Alliance parties",
+      "publisher": "Open Government, Alberta",
+      "url": "https://open.alberta.ca/publications/mou-canada-alberta-oil-sands-alliance-parties",
+      "published": "2026-07-02",
+      "retrieved_on": "2026-11-17",
+      "role": "Alberta publication record for the same memorandum"
+    },
+    {
+      "id": "cbc",
+      "title": "Alberta announces royalty program as part of plan to double oilsands production",
+      "publisher": "CBC News",
+      "url": "https://www.cbc.ca/news/canada/edmonton/northern-alberta-oilsands-royalties-9.7421165",
+      "published": "2026-11-13",
+      "retrieved_on": "2026-11-17",
+      "role": "News-conference reporting. Not a Government of Alberta page."
+    },
+    {
+      "id": "dentons",
+      "title": "Alberta's new Oil Sands Growth Program: A 10-year royalty framework",
+      "publisher": "Dentons",
+      "url": "https://www.dentons.com/en/insights/articles/2026/november/16/albertas-new-oil-sands-growth-program",
+      "published": "2026-11-16",
+      "retrieved_on": "2026-11-17",
+      "role": "Legal commentary. Cites the release and news-conference remarks. Not an official rule."
+    },
+    {
+      "id": "aer-st98",
+      "title": "ST98 crude bitumen outlook",
+      "publisher": "Alberta Energy Regulator",
+      "url": "https://www.aer.ca/data-and-performance-reports/statistical-reports/alberta-energy-outlook-st98/crude-bitumen",
+      "published": "",
+      "retrieved_on": "2026-11-17",
+      "role": "Page listed for context. Direct retrieval timed out, so no AER figures are stored."
+    }
+  ]
+}

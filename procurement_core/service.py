@@ -80,6 +80,13 @@ from .domestic_policy import (
     render_domestic_policy_section,
 )
 from .industrial_programs import render_program_matches
+from .oil_sands_growth import (
+    relevance_reasons,
+    render_fit as render_oil_sands_fit,
+    render_overview as render_oil_sands_overview,
+    render_supply as render_oil_sands_supply,
+    render_updates as render_oil_sands_updates,
+)
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -2411,6 +2418,10 @@ TOOL_NAMES = (
     "daily_bid_brief",
     "find_business_fit",
     "match_industrial_support_programs",
+    "get_oil_sands_growth_program",
+    "check_oil_sands_growth_fit",
+    "find_oil_sands_supply_opportunities",
+    "list_oil_sands_growth_updates",
     "search_alberta_opportunities",
     "get_alberta_opportunity_details",
     "list_alberta_deadlines",
@@ -3046,6 +3057,82 @@ async def match_industrial_support_programs(args: dict) -> str:
         }
     limit = clamp_int(args.get("limit"), default=12, minimum=1, maximum=20)
     return render_program_matches(profile, limit=limit)
+
+
+def _oil_sands_notice_text(opportunity: dict) -> str:
+    return " ".join(
+        str(opportunity.get(key) or "")
+        for key in ("title", "buyer", "description", "category", "region")
+    )
+
+
+def _collect_oil_sands_notices(keywords: str, limit: int) -> tuple[list[tuple[dict, list[str]]], list[str]]:
+    """Scan CanadaBuys and Alberta APC for notices that name oil sands operators."""
+    matches: list[tuple[dict, list[str]]] = []
+    warnings: list[str] = []
+    seen: set[tuple[str, str, str]] = set()
+    needle = keywords.strip().lower()
+
+    def consider(opportunity: dict) -> None:
+        text = _oil_sands_notice_text(opportunity)
+        reasons = relevance_reasons(text)
+        if not reasons:
+            return
+        if needle and re.search(r"\b" + re.escape(needle) + r"\b", text.lower()) is None:
+            return
+        key = (
+            str(opportunity.get("source") or ""),
+            str(opportunity.get("reference") or ""),
+            str(opportunity.get("title") or ""),
+        )
+        if key in seen:
+            return
+        seen.add(key)
+        matches.append((opportunity, reasons))
+
+    rows, federal_warnings = load_contracts_for_unified()
+    warnings.extend(federal_warnings)
+    for row in rows:
+        consider(normalize_canadabuys_contract(row))
+    try:
+        payload = search_alberta_api(query="oil sands", status="OPEN", limit=max(limit, 10), timeout=5)
+        for row in payload.get("values") or []:
+            if isinstance(row, dict):
+                consider(normalize_alberta_opportunity(row))
+    except Exception as exc:
+        warnings.append(f"Alberta Purchasing Connection oil sands search unavailable: {exc}")
+    return matches, warnings
+
+
+async def get_oil_sands_growth_program(args: dict) -> str:
+    """Return the sourced Oil Sands Growth Program brief."""
+    return render_oil_sands_overview(str(args.get("topic") or ""))
+
+
+async def check_oil_sands_growth_fit(args: dict) -> str:
+    """Read how a business could benefit from the program, directly or as a supplier."""
+    inline = args.get("profile") if isinstance(args.get("profile"), dict) else {}
+    return render_oil_sands_fit(
+        description=str(args.get("description") or inline.get("description") or ""),
+        location=str(args.get("location") or inline.get("location") or ""),
+        company_name=str(args.get("company_name") or inline.get("company_name") or ""),
+    )
+
+
+async def find_oil_sands_supply_opportunities(args: dict) -> str:
+    """List release quotes and any public notices that name oil sands operators."""
+    limit = clamp_int(args.get("limit"), default=8, minimum=1, maximum=20)
+    keywords = str(args.get("keywords") or "")
+    matches, warnings = _collect_oil_sands_notices(keywords, limit)
+    return render_oil_sands_supply(matches, warnings, limit=limit, keywords=keywords)
+
+
+async def list_oil_sands_growth_updates(args: dict) -> str:
+    """Return stored program announcements. Optional refresh only confirms the release URL."""
+    refresh = args.get("refresh")
+    if isinstance(refresh, str):
+        refresh = refresh.strip().lower() in {"1", "true", "yes"}
+    return render_oil_sands_updates(refresh=bool(refresh))
 
 
 async def get_my_profile(args: dict) -> str:

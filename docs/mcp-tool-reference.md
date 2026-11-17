@@ -45,6 +45,18 @@ The flagship free tool: market snapshot (open federal + Alberta counts), best-fi
 ### `match_industrial_support_programs`
 Public and read-only. Matches a description, an `industry`, a `location`, or an inline `profile` to `procurement_core/content/industrial_programs.json`. Covers the 21 October 2026 $8.72 billion federal-provincial package and national programs an Alberta firm can ask about (PrairiesCan Regional Tariff Response Initiative, ISED Strategic Response Fund, Canada Strong Diversification Fund, BDC Pivot to Grow, the BDC metals envelope, NRCan First and Last Mile Fund, the Critical Minerals Accelerator, and the PSPC Buy Canadian Policy Framework). Ontario-only streams are returned in their own section. An empty location is read as Alberta. This does not apply for funding or decide eligibility. REST route: `POST /industrial-programs`.
 
+### `get_oil_sands_growth_program`
+Public and read-only. Returns the Oil Sands Growth Program brief from `procurement_core/content/oil_sands_growth.json`, retrieved 17 November 2026 from the Government of Alberta release "A new era of oil sands growth" (13 November 2026). Optional `topic`: `overview`, `eligibility`, `royalty`, `timeline`, `pipelines`, `suppliers`, or `sources`. Official sentences, news-conference reports, and unpublished points stay in separate sections. This does not apply or decide eligibility. REST route: `POST /oil-sands-growth`.
+
+### `check_oil_sands_growth_fit`
+Public and read-only. Args: `description`, `location`, `company_name`, or an inline `profile`. A producer description is told how the royalty framework could apply once Alberta publishes rules. A fabricator, trade, or service description is told the benefit is indirect, through operator spending. A Fort McMurray or Edmonton-region location is context, not a published preference. An unrelated description is told the release has no general business credit. REST route: `POST /oil-sands-growth/fit`.
+
+### `find_oil_sands_supply_opportunities`
+Public and read-only. Lists companies quoted in the 13 November 2026 release, then scans the CanadaBuys cache and Alberta Purchasing Connection for notices that name those operators or say oil sands or bitumen. Optional `keywords` narrows that set. Optional `limit` (8; 1–20). Quotes are not approved projects. If the public catalogues have no hit, the tool says so and still returns the operator list, because most operator capital is private. An Alberta search failure is a warning, not a failed tool call. REST route: `POST /oil-sands-growth/supply`.
+
+### `list_oil_sands_growth_updates`
+Public and read-only. Stored announcements, newest first, with source URL and retrieval date. The 17 November 2026 Premier's post is included as a restatement with no new rules. Optional `refresh` (default false) checks that the official release URL still contains the program name. A timeout or a page that no longer names the program returns the stored catalog with that warning. The refresh does not parse new rules out of the page. REST route: `POST /oil-sands-growth/updates`.
+
 ---
 
 ## Business Profile Tools
@@ -140,6 +152,10 @@ Reports which model route is configured (Cohere direct vs HF router), model IDs,
 | `/matches` | POST | `find_matching_opportunities` |
 | `/brief` | POST | `daily_bid_brief` |
 | `/industrial-programs` | POST | `match_industrial_support_programs` |
+| `/oil-sands-growth` | POST | `get_oil_sands_growth_program` |
+| `/oil-sands-growth/fit` | POST | `check_oil_sands_growth_fit` |
+| `/oil-sands-growth/supply` | POST | `find_oil_sands_supply_opportunities` |
+| `/oil-sands-growth/updates` | POST | `list_oil_sands_growth_updates` |
 | `/bid-room/process` | POST | `process_bid_room` (JSON artifact) |
 | `/bid-room/classify` | POST | `classify_tender` (JSON artifact) |
 | `/profile` | POST / GET | `set_business_profile` / `get_my_profile` |
