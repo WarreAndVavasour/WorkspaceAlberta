@@ -464,6 +464,12 @@ class HttpOAuthTest(unittest.TestCase):
             self.assertEqual(mcp.status_code, 401)
             self.assertIn("resource_metadata=", mcp.headers["www-authenticate"])
             self.assertEqual(mcp.json()["error"], "invalid_token")
+            body = mcp.json()
+            self.assertEqual(body["tool"], "list_watchlist")
+            self.assertEqual(body["requires"], "pro")
+            self.assertIn("buy.stripe.com", body["subscribe_url"])
+            self.assertIn("never needs", body["third_party_keys"])
+            self.assertTrue(any("Sign in" in step for step in body["steps"]))
             free = self.client.post(
                 "/mcp",
                 headers={"Accept": "application/json"},

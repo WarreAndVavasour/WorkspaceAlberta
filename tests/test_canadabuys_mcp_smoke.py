@@ -10,33 +10,22 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVER_PATH = ROOT / "mcp-servers" / "canadabuys" / "server.py"
+# tools/list shows the focused set; older names stay callable (see HIDDEN_TOOLS).
 EXPECTED_TOOLS = {
     "get_server_guide",
     "set_business_profile",
-    "find_opportunities",
     "get_my_profile",
-    "search_contracts",
-    "get_contract_details",
-    "list_upcoming_deadlines",
-    "summarize_contracts",
-    "refresh_data",
     "search_opportunities",
     "get_opportunity_details",
     "list_deadlines",
     "find_matching_opportunities",
     "daily_bid_brief",
-    "find_business_fit",
     "match_industrial_support_programs",
     "process_bid_room",
     "classify_tender",
-    "check_cohere_status",
     "analyze_contract_with_cohere",
-    "search_alberta_opportunities",
-    "get_alberta_opportunity_details",
-    "list_alberta_deadlines",
-    "summarize_alberta_opportunities",
-    "find_alberta_opportunities",
 }
+UNLISTED_BUT_CALLABLE = {"search_contracts", "find_business_fit", "check_cohere_status"}
 
 
 class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
@@ -63,6 +52,9 @@ class CanadaBuysMcpSmokeTest(unittest.IsolatedAsyncioTestCase):
                     tools_result = await session.list_tools()
                     tool_names = {tool.name for tool in tools_result.tools}
                     self.assertTrue(EXPECTED_TOOLS.issubset(tool_names))
+                    self.assertFalse(UNLISTED_BUT_CALLABLE & set(tool_names))
+                    hidden_result = await session.call_tool("check_cohere_status", {})
+                    self.assertFalse(hidden_result.is_error)
 
                     tool_result = await session.call_tool("get_my_profile", {})
                     self.assertFalse(tool_result.is_error)

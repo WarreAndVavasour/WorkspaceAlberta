@@ -4,9 +4,11 @@ SERVER_INSTRUCTIONS = """workspaceAlberta helps any Canadian business find publi
 
 Notices keep UNSPSC, GSIN, trade-agreement, procurement-method, and selection-criteria fields when the source published them. Domestic-preference flags (Buy Canadian materials, Buy Canadian strategic suppliers and content, Canadian suppliers only, reciprocal procurement, and CFTA-only coverage) are evidence from the notice, not a bid decision. match_industrial_support_programs is a public read-only catalog of industrial and tariff support, including Ontario-only streams that do not apply to an Alberta firm. It does not apply for funding or decide eligibility.
 
-Use tools/list for current schemas; prefer unified tools over legacy federal-only tools.
+Use tools/list for current schemas. Older federal-only, Alberta-only and summary tools still
+answer by name but are no longer listed; use the listed tools.
 Hosted authentication is partial: connect without credentials and upgrade through OAuth
-when a protected tool returns HTTP 401. set_business_profile and get_my_profile require
+when a protected tool returns HTTP 401. The 401 body and tool errors list the steps
+and the checkout link. This server never needs third-party API keys from the user. set_business_profile and get_my_profile require
 sign-in only (free). watch_opportunity, list_watchlist, unwatch_opportunity,
 bid_no_bid_scorecard, process_bid_room, classify_tender and analyze_contract_with_cohere
 require sign-in and an active Pro subscription. Other tools are public; anonymous matching uses an
@@ -17,8 +19,8 @@ persistent actions: do them only when requested. Respect the caller's tenant and
 never put credentials into tool arguments, documents, logs or handoffs.
 
 Search and briefs work without a model. When a business description or profile is
-present, search_opportunities, find_matching_opportunities, daily_bid_brief and
-find_business_fit first cut the open catalogues with UNSPSC, GSIN and APC commodity
+present, search_opportunities, find_matching_opportunities and daily_bid_brief
+first cut the open catalogues with UNSPSC, GSIN and APC commodity
 codes, then ask TypeSafe Jev whether the business can supply each notice (yes,
 partial or no, and goods supply, services, training or subcontract). Notice text
 and the description are sent to TypeSafe for that classification. Rank by the Jev
@@ -27,8 +29,7 @@ rejects the key, those tools fall back to keyword ranking and say so. Jev labels
 are classifier outputs to verify. When a Cohere key is configured, keyword APC
 search still sends the search intent or business capabilities to Cohere once to
 select commodity filters. Ranking stays deterministic; preserve fallback and
-partial-retrieval warnings. Supplier location is not automatically a delivery restriction. check_cohere_status checks
-configuration, not provider health. Cohere analysis and process_bid_room are optional
+partial-retrieval warnings. Supplier location is not automatically a delivery restriction. Cohere analysis and process_bid_room are optional
 paid hosted capabilities; bid-room processing sends attachments to E2B and extracted
 evidence, PDF page images and business context to Cohere. process_bid_room returns
 within 145 seconds, including setup; an incomplete/timeout response is not an analysis.

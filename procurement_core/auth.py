@@ -64,6 +64,58 @@ PRO_TOOLS = frozenset(
 SIGN_IN_TOOLS = frozenset({"set_business_profile", "get_my_profile"})
 PROTECTED_TOOLS = PRO_TOOLS | SIGN_IN_TOOLS
 
+SUBSCRIBE_URL = "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a"
+PRICING_URL = "https://elbowsupknivesout.warreandvavasour.com/pricing"
+SUPPORT_URL = "https://elbowsupknivesout.warreandvavasour.com/support"
+NO_THIRD_PARTY_KEYS = (
+    "workspaceAlberta never needs your Cohere, OpenAI, Anthropic or other API keys. "
+    "Do not paste API keys into a chat or a tool argument."
+)
+
+
+def access_help(status_code: int, tool_name: str = "") -> dict[str, Any]:
+    """What a client or person must do after a denied call, as plain steps.
+
+    Sent in the HTTP 401 body and in MCP tool errors, so an agent can tell the
+    person how to get access instead of guessing (or asking for unrelated keys).
+    """
+    is_pro = tool_name in PRO_TOOLS
+    if status_code == 402:
+        steps = [
+            f"Subscribe to workspaceAlberta Pro (C$85/month): {SUBSCRIBE_URL}",
+            "Use the same email for checkout and for sign-in.",
+            "Then call the tool again. Your client keeps the same sign-in.",
+        ]
+    else:
+        steps = [
+            "Sign in when your client asks (OAuth). In Claude, choose Connect on the workspaceAlberta connector.",
+            "If your client cannot sign in and you have a legacy subscriber key, send `Authorization: Bearer wa_live_...`.",
+        ]
+        if is_pro:
+            steps.append(f"This is a Pro tool. If you have no subscription yet: {SUBSCRIBE_URL}")
+        else:
+            steps.append("Signing in is free and never starts a paid subscription.")
+    return {
+        "tool": tool_name or None,
+        "requires": "pro" if is_pro else "sign_in",
+        "steps": steps,
+        "subscribe_url": SUBSCRIBE_URL,
+        "pricing_url": PRICING_URL,
+        "support_url": SUPPORT_URL,
+        "third_party_keys": NO_THIRD_PARTY_KEYS,
+    }
+
+
+def access_help_text(status_code: int, tool_name: str = "") -> str:
+    """The same help as numbered Markdown steps for a tool error."""
+    help_ = access_help(status_code, tool_name)
+    lines = [f"{index}. {step}" for index, step in enumerate(help_["steps"], 1)]
+    lines.append("")
+    lines.append(help_["third_party_keys"])
+    lines.append(f"Pricing: {help_['pricing_url']} · Help: {help_['support_url']}")
+    return "\n".join(lines)
+
+
 _cache: dict[str, tuple[float, dict[str, Any] | None]] = {}
 
 

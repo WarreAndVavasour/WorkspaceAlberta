@@ -47,8 +47,9 @@ Long description:
 > and tender requirement lists. It does not submit bids or contact buyers. Verify
 > requirements against the official posting before bidding.
 
-Tool counts (from the live `tools/list` and `get_server_guide`, October 26, 2026):
-29 tools. 20 are public with no account. 2 need a free sign-in
+Tool counts (from `tools/list`, November 16, 2026):
+16 listed tools. 7 are public with no account; 13 older tools still answer by name
+but are not listed (see `HIDDEN_TOOLS` in `mcp-servers/canadabuys/mcp_tools.py`). 2 need a free sign-in
 (`set_business_profile`, `get_my_profile`). 7 need sign-in and Pro
 (`watch_opportunity`, `list_watchlist`, `unwatch_opportunity`,
 `bid_no_bid_scorecard`, `process_bid_room`, `classify_tender`,

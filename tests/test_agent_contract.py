@@ -29,10 +29,28 @@ class AgentContractTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(guide["a2a_task_execution"])
         self.assertFalse(guide["training"]["automatic_training"])
         self.assertIn("does not submit bids", SERVER_INSTRUCTIONS[:512])
-        self.assertEqual({t.name for t in get_mcp_tools()}, set(TOOL_NAMES))
+        self.assertEqual({t.name for t in get_mcp_tools(include_hidden=True)}, set(TOOL_NAMES))
         self.assertIn("classify_tender", guide["authentication"]["pro_tools"])
         self.assertIn("classify_tender sends tender clause", SERVER_INSTRUCTIONS)
         self.assertIn("build the requirements board", SERVER_INSTRUCTIONS)
+
+    async def test_listed_tools_are_focused_and_hidden_tools_still_answer(self):
+        from mcp_tools import HIDDEN_TOOLS
+
+        listed = {t.name for t in get_mcp_tools()}
+        self.assertLessEqual(len(listed), 17)
+        self.assertFalse(listed & set(HIDDEN_TOOLS))
+        for hidden, replacement in HIDDEN_TOOLS.items():
+            self.assertIn(hidden, TOOL_NAMES)
+            self.assertIn(replacement, listed)
+        for name in ("get_server_guide", "search_opportunities", "get_opportunity_details",
+                     "list_deadlines", "daily_bid_brief", "classify_tender", "process_bid_room"):
+            self.assertIn(name, listed)
+        self.assertIn("days", get_mcp_tools()[[t.name for t in get_mcp_tools()].index("search_opportunities")].input_schema["properties"])
+        for name in HIDDEN_TOOLS:
+            self.assertNotIn(name, SERVER_INSTRUCTIONS.replace("get_server_guide", ""))
+        text = await call_tool_text("check_cohere_status", {})
+        self.assertFalse(text.startswith("Error: Unknown tool"))
 
     async def test_persistent_actions_are_distinguishable_from_search(self):
         tools = {t.name: t for t in get_mcp_tools()}

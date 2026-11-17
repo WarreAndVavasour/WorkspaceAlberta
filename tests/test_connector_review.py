@@ -19,7 +19,7 @@ from procurement_core import e2b_bid_room as bid
 
 class ConnectorDeclarationTest(unittest.TestCase):
     def test_partial_auth_and_legacy_selection_are_unambiguous(self):
-        tools = {tool.name: tool for tool in get_mcp_tools()}
+        tools = {tool.name: tool for tool in get_mcp_tools(include_hidden=True)}
         declaration = workflow_contract()["authentication"]
         self.assertEqual(declaration["auth_type"], "none")
         self.assertTrue(declaration["partial_auth"])

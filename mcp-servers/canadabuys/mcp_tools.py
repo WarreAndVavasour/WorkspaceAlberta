@@ -133,8 +133,33 @@ MATCHES_OUTPUT_SCHEMA = {
 }
 
 
-def get_mcp_tools() -> list[Tool]:
-    """Return the full declared tool list in stable order."""
+# Older and overlapping tools stay callable by name (clients, saved prompts and
+# directory reviews still use them) but are not listed in tools/list, so an agent
+# picks between about fifteen tools instead of 29. Each one has a listed replacement:
+HIDDEN_TOOLS = {
+    "search_contracts": "search_opportunities",
+    "get_contract_details": "get_opportunity_details",
+    "list_upcoming_deadlines": "list_deadlines",
+    "summarize_contracts": "daily_bid_brief",
+    "find_opportunities": "find_matching_opportunities",
+    "find_business_fit": "search_opportunities",
+    "search_alberta_opportunities": "search_opportunities",
+    "get_alberta_opportunity_details": "get_opportunity_details",
+    "list_alberta_deadlines": "list_deadlines",
+    "summarize_alberta_opportunities": "daily_bid_brief",
+    "find_alberta_opportunities": "find_matching_opportunities",
+    "check_cohere_status": "get_server_guide",
+    "refresh_data": "search_opportunities",
+}
+
+
+def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
+    """Return the tool list in stable order.
+
+    tools/list, the REST /tools list and the agent card use the listed tools only.
+    Pass ``include_hidden=True`` where a hidden tool can still be called, such as
+    argument validation for REST calls.
+    """
     tools = [
         Tool(
             name="get_server_guide",
@@ -306,6 +331,10 @@ def get_mcp_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum combined results (default 20, max 50)",
                         "default": 20
+                    },
+                    "days": {
+                        "type": "integer",
+                        "description": "Only notices closing within this many days (1 to 365). Omit for every open notice."
                     },
                     "description": {
                         "type": "string",
@@ -816,5 +845,7 @@ def get_mcp_tools() -> list[Tool]:
                 "match_industrial_support_programs",
             },
         )
+    if not include_hidden:
+        tools = [tool for tool in tools if tool.name not in HIDDEN_TOOLS]
     from procurement_core.openai_support import annotate_tools
     return annotate_tools(tools)

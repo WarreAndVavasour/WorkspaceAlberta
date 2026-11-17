@@ -63,6 +63,8 @@ from procurement_core import identity, oauth, storage, telemetry, usage  # noqa:
 from procurement_core import http_hardening  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
     GateError,
+    access_help,
+    access_help_text,
     PRO_TOOLS,
     PROTECTED_TOOLS,
     SIGN_IN_TOOLS,
@@ -95,6 +97,16 @@ def _mcp_authorization_header(ctx: ServerRequestContext) -> str | None:
     if headers is None:
         return None
     return headers.get("authorization")
+
+
+def _protected_tool_name(payload: Any) -> str:
+    """Name of the first protected tool a JSON-RPC body (single or batch) calls."""
+    for message in payload if isinstance(payload, list) else [payload]:
+        if isinstance(message, dict) and message.get("method") == "tools/call":
+            name = (message.get("params") or {}).get("name")
+            if isinstance(name, str) and name in PROTECTED_TOOLS:
+                return name
+    return ""
 
 
 def _mcp_caller(ctx: ServerRequestContext) -> dict[str, Any]:
@@ -150,8 +162,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
                     type="text",
                     text=(
                         f"# workspaceAlberta access required\n\n{exc}\n\n"
-                        "Sign in when your client prompts. Saved profiles are free; "
-                        "only Pro tools require a separate subscription."
+                        f"{access_help_text(exc.status_code, name)}"
                     ),
                 )
             ],
@@ -258,7 +269,7 @@ MAX_REST_STRING = 2000
 
 
 def _tool_schema(tool_name: str) -> dict[str, Any]:
-    for tool in get_mcp_tools():
+    for tool in get_mcp_tools(include_hidden=True):
         if tool.name == tool_name:
             return getattr(tool, "input_schema", None) or getattr(tool, "inputSchema", None) or {}
     return {}
@@ -480,10 +491,12 @@ class MCPStreamableHTTPApp:
                 if payload is not None and oauth.mcp_calls_pro_tool(payload, PROTECTED_TOOLS):
                     authorization = _header_value(scope, "authorization")
                     if not await asyncio.to_thread(identity.has_presentable_identity, authorization):
+                        tool_name = _protected_tool_name(payload)
                         response = JSONResponse(
                             {
                                 "error": "invalid_token",
                                 "error_description": "Authentication required for this tool",
+                                **access_help(401, tool_name),
                             },
                             status_code=401,
                             headers={"WWW-Authenticate": oauth.www_authenticate_challenge()},
