@@ -225,7 +225,7 @@ class AnalyzeTest(unittest.TestCase):
         self.assertIn("--- rfp.pdf p.54 ---", user)
         self.assertIn("## What must be submitted", user)
         self.assertEqual(captured["kwargs"]["max_tokens"], 50_000)
-        self.assertEqual(captured["kwargs"]["thinking_budget"], 42_000)
+        self.assertEqual(captured["kwargs"]["thinking_budget"], 31_000)
         self.assertIn("**Read:** the notice and 2 document(s); 31,000 tokens of reasoning", out)
         self.assertIn("ddp.pdf (not_read)", out)
         self.assertIn("A DFO study.", out)

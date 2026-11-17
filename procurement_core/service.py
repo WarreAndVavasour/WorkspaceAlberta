@@ -155,7 +155,8 @@ COHERE_CONTEXT_TOKENS = 128_000  # command-a-plus-05-2026 (Cohere model page)
 COHERE_MAX_OUTPUT_TOKENS = 64_000  # command-a-plus-05-2026 (Cohere model page)
 ANALYSIS_MAX_TOKENS_DEFAULT = 50_000  # thinking + answer
 ANALYSIS_MIN_TOKENS = 4_000
-ANALYSIS_ANSWER_RESERVE = 8_000  # tokens kept for the written answer after thinking
+ANALYSIS_ANSWER_RESERVE = 16_000  # tokens kept for the written answer after thinking
+ANALYSIS_THINKING_CAP = 31_000  # Cohere's recommended budget for maximum reasoning
 ANALYSIS_PROMPT_OVERHEAD_TOKENS = 3_000
 ANALYSIS_CHARS_PER_TOKEN = 3.2  # conservative for mixed English/French tender text
 ANALYSIS_GATHER_SECONDS = 100.0  # download + split before the model call
@@ -3979,7 +3980,7 @@ async def analyze_contract_with_cohere(args: dict) -> str:
     upload_token = str(args.get("upload_token") or "").strip()
     max_tokens = clamp_int(args.get("max_tokens"), default=ANALYSIS_MAX_TOKENS_DEFAULT,
                            minimum=ANALYSIS_MIN_TOKENS, maximum=COHERE_MAX_OUTPUT_TOKENS)
-    thinking_budget = max_tokens - min(ANALYSIS_ANSWER_RESERVE, max_tokens // 4)
+    thinking_budget = min(ANALYSIS_THINKING_CAP, max_tokens - min(ANALYSIS_ANSWER_RESERVE, max_tokens // 3))
 
     try:
         corpus = await asyncio.to_thread(
