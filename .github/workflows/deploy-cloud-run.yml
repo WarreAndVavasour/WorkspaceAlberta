@@ -84,7 +84,11 @@ jobs:
           context_dir=$(mktemp -d)
           git archive "$GITHUB_SHA" Dockerfile requirements.txt procurement_core mcp-servers/canadabuys | tar -x -C "$context_dir"
           image_tag="$IMAGE:git-$GITHUB_SHA-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          docker build --tag "$image_tag" "$context_dir"
+          # Since the ubuntu-26.04 runner image, docker build adds a provenance
+          # attestation and pushes a manifest list. Cloud Run records the platform
+          # manifest digest, so the release check saw a different digest. One plain
+          # image manifest keeps the pushed digest and the deployed digest equal.
+          docker build --provenance=false --sbom=false --tag "$image_tag" "$context_dir"
           echo "IMAGE_TAG=$image_tag" >> "$GITHUB_ENV"
       - name: Authenticate with short-lived Google credentials
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
