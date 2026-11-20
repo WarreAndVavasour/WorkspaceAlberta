@@ -55,6 +55,10 @@ also writes one JSON line to stdout (``"event": "mcp_tool_call"`` /
 "WorkspaceAlberta - MCP Usage" dashboard. Same privacy stance: the user is
 the truncated hash distinct_id, never an email, arguments or results.
 
+``submit_feedback`` is the exception. Its own ``mcp_feedback`` line includes
+the sanitized report, because that line is the review record. Secrets are
+redacted first. Environment credentials are never copied into it.
+
 Two additions on ``mcp_tool_call`` lines:
 
 - ``upstream``: what the call used from paid APIs, as counts only (from

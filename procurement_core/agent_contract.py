@@ -53,6 +53,8 @@ and completed actions from suggestions. Missing sources and partial results must
 visible. Never treat an Error:, denied access or incomplete extraction as a successful
 business outcome. Stop on auth failures; do not retry unchanged calls indefinitely.
 
+When a listed tool is missing, wrong, confusing, or blocks the task, call submit_feedback once with the category, what you were trying to do, the tool name, what went wrong, and a proposed fix. Do not use it to ask a procurement question, to decide a bid, or to send secrets, tokens, or customer documents. A person at workspaceAlberta reviews the report. submit_feedback does not open a pull request or change the server.
+
 MCP is the tool connection, not an A2A task execution endpoint. Agent discovery is
 descriptive metadata; there is no message/send, tasks/get or autonomous bid submission.
 Workspace traces are for evaluation only when explicitly enabled. Customer material
@@ -62,6 +64,7 @@ is not automatically training data. A tool success is not revenue or a training 
 # Caching public data does not change the user's business records.
 PERSISTENT_TOOLS = frozenset({
     "set_business_profile", "watch_opportunity", "unwatch_opportunity", "refresh_data",
+    "submit_feedback",
 })
 
 def workflow_contract() -> dict:

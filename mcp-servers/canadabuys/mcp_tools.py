@@ -24,6 +24,8 @@ Tool groups, in declaration order:
   ``check_cohere_status``, ``analyze_contract_with_cohere``): E2B bid-room
   processing, TypeSafe Jev requirement classification and optional Cohere
   Command A+ review.
+- **Feedback** (``submit_feedback``): a report a person reviews. It does not
+  open a pull request or change the server.
 
 When adding a tool: add the ``Tool`` entry here, implement the async handler
 in ``procurement_core/service.py``, add the name to ``TOOL_NAMES``, and cover
@@ -833,7 +835,77 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
                 },
                 "required": ["reference"]
             }
-        )
+        ),
+        Tool(
+            name="submit_feedback",
+            title="Report a gap or bug",
+            description=(
+                "File a report when workspaceAlberta blocked the task: a bug, a missing capability, "
+                "a confusing tool description, or a wrong result. Say what you were trying to do, "
+                "which tool you used, what went wrong, and a proposed fix. A person reviews the report. "
+                "This tool does not open a pull request, change the server, submit a bid, or contact a buyer. "
+                "Do not use it for procurement search, tender questions, bid advice, or to send secrets, "
+                "tokens, API keys, or customer documents. Do not call it again for the same problem after "
+                "it returns a feedback id."
+            ),
+            input_schema={
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["category", "summary", "what_i_was_trying_to_do", "what_went_wrong"],
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "bug",
+                            "missing_capability",
+                            "confusing_tool",
+                            "incorrect_result",
+                            "auth_or_access",
+                            "other",
+                        ],
+                        "description": "What kind of gap this is.",
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high"],
+                        "description": "How blocked the task is. Defaults to medium.",
+                    },
+                    "summary": {
+                        "type": "string",
+                        "minLength": 12,
+                        "maxLength": 160,
+                        "description": "One sentence a person can scan. No secrets.",
+                    },
+                    "what_i_was_trying_to_do": {
+                        "type": "string",
+                        "minLength": 12,
+                        "maxLength": 1500,
+                        "description": "The task you were trying to finish for the user.",
+                    },
+                    "tool_name": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "description": "The workspaceAlberta tool you called. Empty if none fit.",
+                    },
+                    "what_went_wrong": {
+                        "type": "string",
+                        "minLength": 12,
+                        "maxLength": 2000,
+                        "description": "What the tool returned or refused, and how that blocked the task. No secrets or tokens.",
+                    },
+                    "proposed_fix": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "description": "What should change in the tool, the description, or the server. A person decides whether to do it.",
+                    },
+                    "client_name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "description": "Optional name of the agent or client, such as cursor.",
+                    },
+                },
+            },
+        ),
     ]
     for tool in tools:
         if tool.name in PRO_TOOLS:

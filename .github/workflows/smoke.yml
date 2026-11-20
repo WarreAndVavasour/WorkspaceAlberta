@@ -53,7 +53,8 @@ jobs:
             tests.test_production_hardening \
             tests.test_telemetry \
             tests.test_budget2026_analytics \
-            tests.test_gate_and_billing
+            tests.test_gate_and_billing \
+            tests.test_feedback
       - name: deployment safety checks
         run: python -m unittest tests.test_cloud_run_release
       - name: pip install (pyproject)

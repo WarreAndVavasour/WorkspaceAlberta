@@ -266,6 +266,7 @@ The core tools are:
 - `classify_tender` for a bidder-requirement checklist: tender PDFs are split into clauses, each clause and page is classified with TypeSafe Jev, and the results merge into one requirement per tag with connector, lead time, pages and evidence (see [`pipelines/requirement_classifier/`](pipelines/requirement_classifier/README.md))
 - `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
 - `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
+- `submit_feedback` when an agent hits a bug, a missing capability, or a confusing tool. A person reviews it. It does not open a pull request.
 - `match_industrial_support_programs` for a read-only industrial and tariff support catalog, with Ontario-only streams labeled for Alberta firms
 
 The full tool and REST reference lives in [`docs/mcp-tool-reference.md`](docs/mcp-tool-reference.md); the architecture walkthrough is [`docs/architecture.md`](docs/architecture.md).

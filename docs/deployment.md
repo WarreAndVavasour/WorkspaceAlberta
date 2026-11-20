@@ -22,6 +22,9 @@ How to run the WorkspaceAlberta procurement server locally, in Docker, and in pr
 | `HF_TOKEN` (or `HUGGINGFACEHUB_API_TOKEN`) | HF fallback route | Token needs "Make calls to Inference Providers" permission |
 | `E2B_API_KEY` | `process_bid_room` | Sandbox provisioning |
 | `TYPESAFE_API_KEY` | `classify_tender`, and supply-fit search when a business description is present (`find_business_fit`, `search_opportunities`, `find_matching_opportunities`, `daily_bid_brief`) | TypeSafe Jev classification. `classify_tender` returns "not configured" before any download when it is unset. Fit search falls back to keyword ranking and says so. `JEV_API_KEY` is accepted as an alias. No new secret: it is the same key. |
+| `WA_FEEDBACK_GITHUB_TOKEN` | Optional `submit_feedback` GitHub issue | Off unless this and `WA_FEEDBACK_GITHUB_REPO` are both set. Not a production secret today. The server never invents one. |
+| `WA_FEEDBACK_GITHUB_REPO` | Optional `owner/name` for that issue | Issues are labeled `mcp-feedback` when the label already exists. |
+| `WA_FEEDBACK_SLACK_WEBHOOK` | Optional Slack notice | Only an `https://hooks.slack.com/services/...` URL. Off unless set. The notice is the id, category, tool, and summary. |
 | `CANADABUYS_COHERE_MODEL` | — | Default `command-a-plus-05-2026` |
 | `CANADABUYS_LOAD_ENV_FILE` | — | Set `0` to disable repo-local `.env` loading (recommended in production) |
 | `ALBERTA_APC_API_BASE` / `ALBERTA_APC_APP_BASE` | — | APC endpoint overrides |
