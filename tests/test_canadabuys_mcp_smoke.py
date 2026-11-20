@@ -24,6 +24,7 @@ EXPECTED_TOOLS = {
     "process_bid_room",
     "classify_tender",
     "analyze_contract_with_cohere",
+    "submit_feedback",
 }
 UNLISTED_BUT_CALLABLE = {"search_contracts", "find_business_fit", "check_cohere_status"}
 

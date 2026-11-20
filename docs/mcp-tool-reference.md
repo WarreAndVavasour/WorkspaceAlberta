@@ -127,6 +127,17 @@ Reports which model route is configured (Cohere direct vs HF router), model IDs,
 
 ---
 
+## Feedback
+
+### `submit_feedback`
+**required:** `category`, `summary`, `what_i_was_trying_to_do`, `what_went_wrong`. Optional: `tool_name`, `proposed_fix`, `severity` (`low`, `medium`, `high`), `client_name`.
+
+File this when workspaceAlberta blocked the task: a bug, a missing capability, a confusing tool description, or a wrong result. Say what you were trying to do, which tool you used, what went wrong, and a proposed fix. A person reviews the report. The tool returns a feedback id. It does not open a pull request, change the server, submit a bid, or contact a buyer.
+
+Do not use it for procurement search, tender questions, bid advice, or to send secrets, tokens, or customer documents. At most 5 links. Text fields are length-capped. Repeated identical reports return the same id. The hosted service keeps the sanitized report in Cloud Logging (`event` = `mcp_feedback`). A local install also appends `feedback.jsonl`. GitHub issues and Slack notices stay off unless `WA_FEEDBACK_GITHUB_TOKEN` plus `WA_FEEDBACK_GITHUB_REPO`, or `WA_FEEDBACK_SLACK_WEBHOOK`, are already configured.
+
+---
+
 ## REST Convenience Routes
 
 | Route | Method | Tool |

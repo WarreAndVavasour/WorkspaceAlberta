@@ -61,6 +61,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from procurement_core import identity, oauth, storage, telemetry, usage  # noqa: E402
 from procurement_core import http_hardening  # noqa: E402
+from procurement_core.feedback import rate_key_for, rate_limit_scope  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
     GateError,
     access_help,
@@ -174,8 +175,9 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
     token = storage.set_tenant(tenant_id_for(record)) if record else None
     started = time.monotonic()
     try:
-        with usage.metering() as meter:
-            text, structured = await call_tool_text_and_structured(name, arguments)
+        with rate_limit_scope(rate_key_for(caller, storage.current_tenant())):
+            with usage.metering() as meter:
+                text, structured = await call_tool_text_and_structured(name, arguments)
     finally:
         if token is not None:
             storage.reset_tenant(token)
@@ -361,8 +363,9 @@ async def run_tool(
     token = storage.set_tenant(tenant_id_for(record)) if record else None
     started = time.monotonic()
     try:
-        with usage.metering() as meter:
-            content = await call_tool_text(tool_name, arguments or {})
+        with rate_limit_scope(rate_key_for(caller, storage.current_tenant())):
+            with usage.metering() as meter:
+                content = await call_tool_text(tool_name, arguments or {})
     finally:
         if token is not None:
             storage.reset_tenant(token)

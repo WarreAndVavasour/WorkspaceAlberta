@@ -2425,6 +2425,7 @@ TOOL_NAMES = (
     "list_watchlist",
     "unwatch_opportunity",
     "bid_no_bid_scorecard",
+    "submit_feedback",
 )
 
 
@@ -4070,3 +4071,4 @@ from procurement_core.extensions import (  # noqa: E402
     unwatch_opportunity,
     watch_opportunity,
 )
+from procurement_core.feedback import submit_feedback  # noqa: E402
