@@ -20,7 +20,7 @@
       "interface": {
         "displayName": "WorkspaceAlberta",
         "shortDescription": "Find Canadian public work",
-        "longDescription": "Wouldn't it be great if your business could find the public work that fits? workspaceAlberta reads every CanadaBuys and Alberta Purchasing Connection notice for any business, in any sector. Search tenders, compare capability matches, inspect UNSPSC and GSIN classifications, and review closing deadlines, Buy Canadian signals, and daily bid briefs. A read-only industrial and tariff catalog labels Ontario-only streams so an Alberta firm can see what does not apply. Public discovery is free. Saving business profiles requires free sign-in; watchlists, scorecards, and advanced bid-room and Cohere reviews require an existing Pro subscription. Results include source evidence and uncertainty; verify official postings and amendments before bidding. workspaceAlberta does not submit bids, contact buyers, guarantee awards, or decide funding eligibility. Optional processing uses the subprocessors described in the privacy policy.",
+        "longDescription": "Wouldn't it be great if your business could find the public work that fits? workspaceAlberta reads every CanadaBuys and Alberta Purchasing Connection notice for any business, in any sector. Search tenders, compare capability matches, inspect UNSPSC and GSIN classifications, and review closing deadlines, Buy Canadian signals, and daily bid briefs. A read-only industrial and tariff catalog labels Ontario-only streams so an Alberta firm can see what does not apply. Public discovery is free. Free sign-in unlocks saved business profiles, bid/no-bid scorecards, a 5-tender watchlist, and 2 free tender document reviews (Requirements Board / Bid Room); ongoing document reviews use pay-per-tender Bid Packs or a Pro subscription. Results include source evidence and uncertainty; verify official postings and amendments before bidding. workspaceAlberta does not submit bids, contact buyers, guarantee awards, or decide funding eligibility. Optional processing uses the subprocessors described in the privacy policy.",
         "developerName": "Warre & Vavasour",
         "category": "Business & Operations",
         "capabilities": [
@@ -71,10 +71,10 @@
               "expected_behavior": "Use OAuth and host confirmations for the requested write. Read only the review account's own profile. Sign-in does not purchase a subscription."
             },
             {
-              "description": "Requested Pro watchlist lifecycle",
+              "description": "Requested watchlist lifecycle",
               "prompt": "Add this retrieved tender to my watchlist, show it, then remove it.",
               "tools_triggered": "watch_opportunity, list_watchlist, unwatch_opportunity",
-              "expected_behavior": "Require an existing Pro entitlement and respect requested-action confirmations. Keep the operation in the review account. Do not submit a bid, contact a buyer or claim scheduled alerts."
+              "expected_behavior": "Require free OAuth sign-in and respect requested-action confirmations. Keep the operation in the review account (up to 5 tenders free; unlimited on Pro). Do not submit a bid, contact a buyer or claim scheduled alerts."
             }
           ],
           "negative": [

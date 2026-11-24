@@ -61,13 +61,14 @@ of winning or a procurement eligibility decision.
 
 ## Authentication and actions
 
-Public discovery works without sign-in. Saved profiles require free OAuth
-sign-in. `watch_opportunity`, `list_watchlist`, `unwatch_opportunity`,
-`bid_no_bid_scorecard`, `process_bid_room`, `classify_tender`, and
-`analyze_contract_with_cohere` require sign-in and an existing active Pro
-subscription. Signing in does not
-purchase a subscription. Let the host's OAuth flow collect credentials; never
-ask for secrets in conversation, tool arguments, files, or a skill archive.
+Public discovery works without sign-in. Saved profiles, watchlists (up to 5
+tenders free; unlimited on Pro), and `bid_no_bid_scorecard` require free OAuth
+sign-in. `process_bid_room`, `classify_tender`, and
+`analyze_contract_with_cohere` require sign-in and include 2 free tender review
+credits per account, after which they require a Bid Pack credit or an active Pro
+subscription. Signing in does not purchase a subscription. Let the host's OAuth
+flow collect credentials; never ask for secrets in conversation, tool arguments,
+files, or a skill archive.
 
 Saving or overwriting a profile and adding/removing watchlist items are persistent
 actions. Do them only when requested and respect host confirmations. Do not turn

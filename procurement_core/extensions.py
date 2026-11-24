@@ -109,6 +109,23 @@ async def watch_opportunity(args: dict) -> str:
     if any(item.get("reference", "").lower() == reference.lower() for item in items):
         return f"`{reference}` is already on your watchlist. Use `list_watchlist` to review it."
 
+    from procurement_core import auth, storage
+
+    tenant_record = storage.current_tenant_record()
+    if (
+        tenant_record
+        and not tenant_record.get("pro_active")
+        and len(items) >= auth.FREE_WATCHLIST_LIMIT
+    ):
+        email = str(tenant_record.get("email") or "")
+        user_id = str(tenant_record.get("user_id") or "")
+        upgrade_url = auth.checkout_url("pro", email=email, user_id=user_id) if (email or user_id) else auth.SUBSCRIBE_URL
+        return (
+            f"Your free watchlist is full ({len(items)}/{auth.FREE_WATCHLIST_LIMIT} tenders). "
+            f"Remove one with `unwatch_opportunity` to make room, or upgrade to workspaceAlberta Pro "
+            f"(C$85/month) for an unlimited watchlist and unlimited tender document reviews: {upgrade_url}"
+        )
+
     opportunity, warnings = _find_opportunity(reference)
     entry: dict[str, Any] = {
         "reference": reference,
@@ -319,7 +336,11 @@ async def bid_no_bid_scorecard(args: dict) -> str:
         output += f"- **{signal}** ({status}): {detail}\n"
     if opportunity.get("url"):
         output += f"\n[View the posting]({opportunity['url']})\n"
-    output += "\n---\nDeterministic checklist only — it does not read attachments. `process_bid_room` does."
+    output += (
+        "\n---\nDeterministic checklist only — it does not read attachments. "
+        "Run `classify_tender` for a full Requirements Board or `process_bid_room` for a sandboxed document review "
+        "(signed-in accounts include 2 free tender review credits)."
+    )
     if warnings:
         output += "\n\nWarnings:\n" + "\n".join(f"- {w}" for w in warnings[:3])
     return output

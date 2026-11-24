@@ -35,7 +35,7 @@ def callback_url() -> str:
 def configuration() -> tuple[str, str]:
     client_id = os.environ.get("WA_GOOGLE_CLIENT_ID", "").strip()
     secret = os.environ.get("WA_GOOGLE_CLIENT_SECRET", "").strip()
-    if oauth.login_provider() != "google" or not client_id or not secret:
+    if not oauth.google_login_enabled() or not client_id or not secret:
         raise oauth.OAuthError(503, "temporarily_unavailable", "Google sign-in is not configured.")
     return client_id, secret
 

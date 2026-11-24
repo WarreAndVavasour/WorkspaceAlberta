@@ -111,7 +111,7 @@ class GateTest(unittest.TestCase):
             with mock.patch.object(auth, "_supabase_lookup", return_value=None) as lookup:
                 for _ in range(3):
                     with self.assertRaises(auth.GateError) as ctx:
-                        auth.check_tool_access("watch_opportunity", f"Bearer {key}")
+                        auth.check_tool_access("classify_tender", f"Bearer {key}")
                     self.assertEqual(ctx.exception.status_code, 401)
                 self.assertEqual(lookup.call_count, 1)  # TTL cache
 
@@ -311,6 +311,166 @@ class HttpGateIntegrationTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {"STRIPE_WEBHOOK_SECRET": "whsec_x"}, clear=True):
             response = self.client.post("/stripe/webhook", content=b"{}")
         self.assertEqual(response.status_code, 400)
+
+    def test_checkout_redirects_to_prefilled_payment_link_without_stripe_key(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            res = self.client.get(
+                "/checkout?plan=pro&email=Owner@Shop.ca&user_id=user-123",
+                follow_redirects=False,
+            )
+        self.assertEqual(res.status_code, 303)
+        location = res.headers["location"]
+        self.assertIn("buy.stripe.com", location)
+        self.assertIn("prefilled_email=owner%40shop.ca", location)
+        self.assertIn("client_reference_id=user-123", location)
+
+    def test_checkout_creates_dynamic_bid_pack_session_with_stripe_key(self):
+        captured = {}
+
+        def fake_stripe_post(path, fields):
+            captured["path"] = path
+            captured["fields"] = fields
+            return {"id": "cs_test_1", "url": "https://checkout.stripe.com/c/pay/cs_test_1"}
+
+        with mock.patch.dict(os.environ, {"STRIPE_SECRET_KEY": "sk_test_123"}, clear=True):
+            with mock.patch.object(billing, "_stripe_post", side_effect=fake_stripe_post):
+                res = self.client.get(
+                    "/checkout?plan=pack_3&email=estimator@shop.ca&user_id=uid-9",
+                    follow_redirects=False,
+                )
+        self.assertEqual(res.status_code, 303)
+        self.assertEqual(res.headers["location"], "https://checkout.stripe.com/c/pay/cs_test_1")
+        self.assertEqual(captured["path"], "checkout/sessions")
+        self.assertEqual(captured["fields"]["mode"], "payment")
+        self.assertEqual(captured["fields"]["client_reference_id"], "uid-9")
+        self.assertEqual(captured["fields"]["customer_email"], "estimator@shop.ca")
+        self.assertEqual(captured["fields"]["metadata[wa_credits]"], "3")
+        self.assertEqual(captured["fields"]["line_items[0][price_data][unit_amount]"], "4900")
+
+    def test_billing_success_and_portal_pages(self):
+        ok_pro = self.client.get("/billing/success?plan=pro")
+        self.assertEqual(ok_pro.status_code, 200)
+        self.assertIn("Pro is active", ok_pro.text)
+        ok_pack = self.client.get("/billing/success?plan=pack_3")
+        self.assertEqual(ok_pack.status_code, 200)
+        self.assertIn("3 non-expiring tender credits", ok_pack.text)
+        portal_page = self.client.get("/billing/portal")
+        self.assertEqual(portal_page.status_code, 200)
+        self.assertIn("Stripe Billing Portal", portal_page.text)
+
+    def test_billing_portal_post_redirects_with_stripe_session(self):
+        from procurement_core import identity
+
+        with mock.patch.dict(os.environ, {"STRIPE_SECRET_KEY": "sk_test_123"}, clear=True):
+            with mock.patch.object(
+                identity, "lookup_subscriber_by_email", return_value={"stripe_customer_id": "cus_99"}
+            ):
+                with mock.patch.object(
+                    billing, "_stripe_post", return_value={"url": "https://billing.stripe.com/session/live_1"}
+                ):
+                    res = self.client.post(
+                        "/billing/portal",
+                        data={"email": "owner@shop.ca"},
+                        follow_redirects=False,
+                    )
+        self.assertEqual(res.status_code, 303)
+        self.assertEqual(res.headers["location"], "https://billing.stripe.com/session/live_1")
+
+
+class Phase1CreditsAndWatchlistTest(unittest.TestCase):
+    def setUp(self):
+        storage.clear_memory_credits()
+
+    def tearDown(self):
+        storage.clear_memory_credits()
+
+    def test_bid_pack_webhook_credits_user_idempotently(self):
+        secret = "whsec_pack_test"
+        payload = json.dumps(
+            {
+                "type": "checkout.session.completed",
+                "data": {
+                    "object": {
+                        "id": "cs_pack_1",
+                        "mode": "payment",
+                        "customer": "cus_pack_1",
+                        "client_reference_id": "user-abc",
+                        "customer_details": {"email": "ap@shop.ca"},
+                        "metadata": {"wa_plan": "pack_3", "wa_credits": "3", "wa_user_id": "user-abc"},
+                    }
+                },
+            }
+        ).encode()
+        header = make_signature(payload, secret)
+        env = {"STRIPE_WEBHOOK_SECRET": secret, "WA_OAUTH_STORE": "memory"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            first = billing.process_webhook_event(payload, header)
+            second = billing.process_webhook_event(payload, header)
+        self.assertTrue(first["provisioned"])
+        self.assertEqual(first["kind"], "bid_pack")
+        self.assertEqual(first["credits_added"], 3)
+        self.assertEqual(first["paid_credits"], 3)
+        self.assertFalse(second["provisioned"])
+        self.assertEqual(storage.get_user_credits("user-abc")["paid_credits"], 3)
+
+    def test_credit_consumption_skips_errors_and_apc_upload_links(self):
+        from procurement_core import identity
+
+        record = {
+            "auth_type": "oauth",
+            "user_id": "user-trial-1",
+            "email": "shop@example.ca",
+            "pro_active": False,
+            "credits_remaining": 2,
+        }
+        # Error output must never burn a credit.
+        self.assertEqual(
+            identity.consume_pro_credit_if_needed("classify_tender", record, text="Error: failed"),
+            "",
+        )
+        # APC upload link step must never burn a credit.
+        self.assertEqual(
+            identity.consume_pro_credit_if_needed(
+                "classify_tender", record, text="Upload link", structured={"upload_required": True}
+            ),
+            "",
+        )
+        self.assertEqual(storage.get_user_credits("user-trial-1")["free_credits_used"], 0)
+        # Real completed run burns 1 free credit and appends remaining balance.
+        footer1 = identity.consume_pro_credit_if_needed("classify_tender", record, text="# Requirements")
+        self.assertIn("1 tender credit remaining", footer1)
+        footer2 = identity.consume_pro_credit_if_needed("classify_tender", record, text="# Requirements")
+        self.assertIn("0 credits remaining", footer2)
+        self.assertEqual(storage.get_user_credits("user-trial-1")["free_credits_used"], 2)
+
+    def test_free_watchlist_limit_enforced_for_non_pro_and_unlimited_for_pro(self):
+        import asyncio
+        from procurement_core import extensions
+
+        existing = [{"reference": f"AB-2026-0000{i}"} for i in range(auth.FREE_WATCHLIST_LIMIT)]
+        free_rec = {"user_id": "u1", "email": "free@shop.ca", "pro_active": False}
+        pro_rec = {"user_id": "u2", "email": "pro@shop.ca", "pro_active": True}
+
+        tok = storage.set_tenant_record(free_rec)
+        try:
+            with mock.patch.object(extensions, "load_watchlist", return_value=list(existing)):
+                with mock.patch.object(extensions, "save_watchlist") as save_mock:
+                    msg = asyncio.run(extensions.watch_opportunity({"reference": "AB-2026-99999"}))
+            self.assertIn("free watchlist is full", msg.lower())
+            save_mock.assert_not_called()
+        finally:
+            storage.reset_tenant_record(tok)
+
+        tok = storage.set_tenant_record(pro_rec)
+        try:
+            with mock.patch.object(extensions, "load_watchlist", return_value=list(existing)):
+                with mock.patch.object(extensions, "_find_opportunity", return_value=(None, [])):
+                    with mock.patch.object(extensions, "save_watchlist") as save_mock:
+                        msg = asyncio.run(extensions.watch_opportunity({"reference": "AB-2026-99999"}))
+            self.assertIn("Watching `AB-2026-99999`", msg)
+            save_mock.assert_called_once()
+        finally:
+            storage.reset_tenant_record(tok)
 
 
 if __name__ == "__main__":

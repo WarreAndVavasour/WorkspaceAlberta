@@ -252,12 +252,26 @@ class ProGatingTest(unittest.TestCase):
 
     def test_oauth_without_subscription_is_402(self):
         env = {"SUPABASE_URL": "https://x.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "k"}
-        tokens, _user = PkceFlowTest()._issue_tokens()
+        storage.clear_memory_credits()
+        tokens, user = PkceFlowTest()._issue_tokens()
         identity.set_subscriber_lookup(lambda email: None)
         with mock.patch.dict(os.environ, env, clear=False):
+            # Watchlist and scorecards are free sign-in tools (no subscription required).
+            wl_record = identity.check_tool_access("list_watchlist", f"Bearer {tokens['access_token']}")
+            self.assertFalse(wl_record["pro_active"])
+            # New signed-in account gets 2 free tender review credits on Pro tools.
+            self.assertEqual(wl_record["free_credits_remaining"], auth.FREE_PRO_CREDITS)
+            for _ in range(auth.FREE_PRO_CREDITS):
+                credit_rec = identity.check_tool_access("classify_tender", f"Bearer {tokens['access_token']}")
+                self.assertEqual(credit_rec["access_via"], "credit")
+                storage.consume_user_credit(user["id"], auth.FREE_PRO_CREDITS)
+            # Once the 2 free credits are spent, Pro tools return 402 with checkout guidance.
             with self.assertRaises(auth.GateError) as ctx:
-                identity.check_tool_access("list_watchlist", f"Bearer {tokens['access_token']}")
+                identity.check_tool_access("classify_tender", f"Bearer {tokens['access_token']}")
         self.assertEqual(ctx.exception.status_code, 402)
+        self.assertEqual(ctx.exception.email, "owner@shop.ca")
+        self.assertEqual(ctx.exception.user_id, user["id"])
+        storage.clear_memory_credits()
 
     def test_oauth_with_active_subscription_passes(self):
         env = {"SUPABASE_URL": "https://x.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "k"}
@@ -415,21 +429,38 @@ class HttpOAuthTest(unittest.TestCase):
         self.assertEqual(me.json()["email"], "owner@shop.ca")
         self.assertEqual(me.json()["auth_type"], "oauth")
 
-        # A signed-in customer without Pro needs billing guidance, not another
-        # OAuth prompt; both the transport and the MCP result must reflect that.
+        # Signed-in free users can use the watchlist directly; once their 2 free
+        # tender review credits are spent, Pro tools return billing guidance (not
+        # another OAuth 401 prompt).
         env = {"SUPABASE_URL": "https://x.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "k"}
+        storage.clear_memory_credits()
         identity.set_subscriber_lookup(lambda email: None)
         with mock.patch.dict(os.environ, env, clear=False):
+            free_wl = self.client.post(
+                "/mcp",
+                headers={"Accept": "application/json", "Authorization": f"Bearer {body['access_token']}"},
+                json={"jsonrpc": "2.0", "id": 10, "method": "tools/call",
+                      "params": {"name": "list_watchlist", "arguments": {}}},
+            )
+            self.assertEqual(free_wl.status_code, 200)
+            self.assertFalse(free_wl.json()["result"].get("isError", False))
+
+            claims = oauth.validate_access_token(body["access_token"])
+            for _ in range(auth.FREE_PRO_CREDITS):
+                storage.consume_user_credit(claims["sub"], auth.FREE_PRO_CREDITS)
+
             denied = self.client.post(
                 "/mcp",
                 headers={"Accept": "application/json", "Authorization": f"Bearer {body['access_token']}"},
                 json={"jsonrpc": "2.0", "id": 11, "method": "tools/call",
-                      "params": {"name": "list_watchlist", "arguments": {}}},
+                      "params": {"name": "classify_tender", "arguments": {"reference": "AB-2026-00001"}}},
             )
             self.assertEqual(denied.status_code, 200)
             self.assertNotIn("www-authenticate", denied.headers)
             self.assertTrue(denied.json()["result"]["isError"])
             self.assertIn("not active", denied.json()["result"]["content"][0]["text"])
+            self.assertIn("/checkout?plan=pack_1", denied.json()["result"]["content"][0]["text"])
+        storage.clear_memory_credits()
 
         refresh_form = {"grant_type": "refresh_token", "refresh_token": body["refresh_token"],
                         "client_id": created["client_id"], "resource": CANONICAL}
@@ -451,6 +482,18 @@ class HttpOAuthTest(unittest.TestCase):
             rest = self.client.post("/tools/list_watchlist", json={})
             self.assertEqual(rest.status_code, 401)
             self.assertIn("resource_metadata=", rest.headers["www-authenticate"])
+            mcp_signin = self.client.post(
+                "/mcp",
+                headers={"Accept": "application/json"},
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 8,
+                    "method": "tools/call",
+                    "params": {"name": "list_watchlist", "arguments": {}},
+                },
+            )
+            self.assertEqual(mcp_signin.status_code, 401)
+            self.assertEqual(mcp_signin.json()["requires"], "sign_in")
             mcp = self.client.post(
                 "/mcp",
                 headers={"Accept": "application/json"},
@@ -458,14 +501,14 @@ class HttpOAuthTest(unittest.TestCase):
                     "jsonrpc": "2.0",
                     "id": 9,
                     "method": "tools/call",
-                    "params": {"name": "list_watchlist", "arguments": {}},
+                    "params": {"name": "classify_tender", "arguments": {"reference": "AB-2026-00001"}},
                 },
             )
             self.assertEqual(mcp.status_code, 401)
             self.assertIn("resource_metadata=", mcp.headers["www-authenticate"])
             self.assertEqual(mcp.json()["error"], "invalid_token")
             body = mcp.json()
-            self.assertEqual(body["tool"], "list_watchlist")
+            self.assertEqual(body["tool"], "classify_tender")
             self.assertEqual(body["requires"], "pro")
             self.assertIn("buy.stripe.com", body["subscribe_url"])
             self.assertIn("never needs", body["third_party_keys"])

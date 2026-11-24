@@ -47,44 +47,105 @@ CACHE_TTL_SECONDS = 300
 # flood of random wa_live_* keys would grow this dict without limit.
 MAX_CACHE_ENTRIES = 4096
 
-#: Tools that require an active subscription on the hosted server.
+#: Tools that require an active Pro subscription OR an available tender credit
+#: (every signed-in account starts with 2 free trial credits; pay-per-tender Bid
+#: Packs and Pro Unlimited unlock ongoing use).
 PRO_TOOLS = frozenset(
     {
         "process_bid_room",
         "classify_tender",
         "analyze_contract_with_cohere",
+    }
+)
+
+#: Free sign-in tools: zero upstream AI cost, persistent per-user value that
+#: builds the daily habit before a business ever hits a paywall.
+SIGN_IN_TOOLS = frozenset(
+    {
+        "set_business_profile",
+        "get_my_profile",
         "watch_opportunity",
         "list_watchlist",
         "unwatch_opportunity",
         "bid_no_bid_scorecard",
     }
 )
-
-# Hosted profiles belong to a signed-in tenant; saving one is free.
-SIGN_IN_TOOLS = frozenset({"set_business_profile", "get_my_profile"})
 PROTECTED_TOOLS = PRO_TOOLS | SIGN_IN_TOOLS
+
+#: Free signed-in accounts can watch up to 5 tenders; Pro is unlimited.
+FREE_WATCHLIST_LIMIT = 5
+#: New signed-in accounts include 2 free document-review / Requirements Board runs.
+FREE_PRO_CREDITS = 2
 
 SUBSCRIBE_URL = "https://buy.stripe.com/14AfZieZmcb2eYB5v1g7e0a"
 PRICING_URL = "https://elbowsupknivesout.warreandvavasour.com/pricing"
 SUPPORT_URL = "https://elbowsupknivesout.warreandvavasour.com/support"
+CHECKOUT_BASE_URL = "https://elbowsupknivesout.warreandvavasour.com/checkout"
+BILLING_PORTAL_URL = "https://elbowsupknivesout.warreandvavasour.com/billing/portal"
 NO_THIRD_PARTY_KEYS = (
     "workspaceAlberta never needs your Cohere, OpenAI, Anthropic or other API keys. "
     "Do not paste API keys into a chat or a tool argument."
 )
 
 
-def access_help(status_code: int, tool_name: str = "") -> dict[str, Any]:
+def _public_origin_base() -> str:
+    return (
+        os.environ.get("WA_PUBLIC_ORIGIN", "").strip().rstrip("/")
+        or "https://elbowsupknivesout.warreandvavasour.com"
+    )
+
+
+def checkout_url(
+    plan: str = "pro",
+    *,
+    email: str = "",
+    user_id: str = "",
+) -> str:
+    """Build a direct checkout link bound to the caller's identity when known."""
+    params: dict[str, str] = {"plan": plan}
+    if email:
+        params["email"] = email.strip().lower()
+    if user_id:
+        params["user_id"] = user_id.strip()
+    return f"{_public_origin_base()}/checkout?{urlencode(params)}"
+
+
+def prefilled_subscribe_url(*, email: str = "", user_id: str = "", base_url: str = "") -> str:
+    """Append Stripe Payment Link prefill parameters when identity is known."""
+    target = (base_url or SUBSCRIBE_URL).strip()
+    params: dict[str, str] = {}
+    if email:
+        params["prefilled_email"] = email.strip().lower()
+    if user_id:
+        params["client_reference_id"] = user_id.strip()
+    if not params:
+        return target
+    sep = "&" if "?" in target else "?"
+    return f"{target}{sep}{urlencode(params)}"
+
+
+def access_help(
+    status_code: int,
+    tool_name: str = "",
+    *,
+    email: str = "",
+    user_id: str = "",
+) -> dict[str, Any]:
     """What a client or person must do after a denied call, as plain steps.
 
     Sent in the HTTP 401 body and in MCP tool errors, so an agent can tell the
     person how to get access instead of guessing (or asking for unrelated keys).
     """
     is_pro = tool_name in PRO_TOOLS
+    pro_checkout = checkout_url("pro", email=email, user_id=user_id) if (email or user_id) else SUBSCRIBE_URL
+    pack_1_checkout = checkout_url("pack_1", email=email, user_id=user_id)
+    pack_3_checkout = checkout_url("pack_3", email=email, user_id=user_id)
+    portal_url = f"{_public_origin_base()}/billing/portal"
     if status_code == 402:
         steps = [
-            f"Subscribe to workspaceAlberta Pro (C$85/month): {SUBSCRIBE_URL}",
-            "Use the same email for checkout and for sign-in.",
-            "Then call the tool again. Your client keeps the same sign-in.",
+            f"Subscribe to workspaceAlberta Pro (C$85/month, unlimited): {pro_checkout}",
+            f"Or buy a pay-per-tender Bid Pack (no subscription): C$19 for 1 tender ({pack_1_checkout}) or C$49 for 3 tenders ({pack_3_checkout}).",
+            "Use the same email for checkout and sign-in, then call the tool again — your client keeps the same sign-in.",
         ]
     else:
         steps = [
@@ -92,27 +153,44 @@ def access_help(status_code: int, tool_name: str = "") -> dict[str, Any]:
             "If your client cannot sign in and you have a legacy subscriber key, send `Authorization: Bearer wa_live_...`.",
         ]
         if is_pro:
-            steps.append(f"This is a Pro tool. If you have no subscription yet: {SUBSCRIBE_URL}")
+            steps.append(
+                f"Signing in is free and includes {FREE_PRO_CREDITS} free tender review credits. "
+                f"After your free runs, upgrade to Pro (C$85/mo) or a C$19 Bid Pack: {SUBSCRIBE_URL}"
+            )
         else:
-            steps.append("Signing in is free and never starts a paid subscription.")
+            steps.append(
+                "Signing in is free and never starts a paid subscription. "
+                f"Includes saved profiles, bid/no-bid scorecards, a {FREE_WATCHLIST_LIMIT}-tender watchlist, and {FREE_PRO_CREDITS} free tender reviews."
+            )
     return {
         "tool": tool_name or None,
         "requires": "pro" if is_pro else "sign_in",
         "steps": steps,
         "subscribe_url": SUBSCRIBE_URL,
+        "checkout_url": pro_checkout,
+        "bid_pack_urls": {"pack_1": pack_1_checkout, "pack_3": pack_3_checkout},
+        "billing_portal_url": portal_url,
         "pricing_url": PRICING_URL,
         "support_url": SUPPORT_URL,
         "third_party_keys": NO_THIRD_PARTY_KEYS,
     }
 
 
-def access_help_text(status_code: int, tool_name: str = "") -> str:
+def access_help_text(
+    status_code: int,
+    tool_name: str = "",
+    *,
+    email: str = "",
+    user_id: str = "",
+) -> str:
     """The same help as numbered Markdown steps for a tool error."""
-    help_ = access_help(status_code, tool_name)
+    help_ = access_help(status_code, tool_name, email=email, user_id=user_id)
     lines = [f"{index}. {step}" for index, step in enumerate(help_["steps"], 1)]
     lines.append("")
     lines.append(help_["third_party_keys"])
-    lines.append(f"Pricing: {help_['pricing_url']} · Help: {help_['support_url']}")
+    lines.append(
+        f"Pricing: {help_['pricing_url']} · Manage billing: {help_['billing_portal_url']} · Help: {help_['support_url']}"
+    )
     return "\n".join(lines)
 
 
@@ -127,8 +205,17 @@ class GateError(Exception):
     configured).
     """
 
-    def __init__(self, status_code: int, message: str) -> None:
+    def __init__(
+        self,
+        status_code: int,
+        message: str,
+        *,
+        email: str = "",
+        user_id: str = "",
+    ) -> None:
         self.status_code = status_code
+        self.email = email
+        self.user_id = user_id
         super().__init__(message)
 
 

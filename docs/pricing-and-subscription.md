@@ -2,16 +2,25 @@
 
 ## The model
 
-Two tiers. The habit is free; the bid work is paid.
+Three tiers designed so the habit and first real bid reviews are free, occasional bidders can pay per tender, and active bidding shops subscribe to Pro.
 
-| | Daily Brief (Free) | WorkspaceAlberta Pro ($85 CAD/mo) |
-|---|---|---|
-| Daily bid brief | ✔ | ✔ |
-| Unified search, details, deadlines | ✔ | ✔ |
-| Bid rooms (E2B sandboxed package analysis) | — | ✔ |
-| Cohere Command A+ tender review | — | ✔ |
-| Watchlist + bid/no-bid scorecards | — | ✔ |
-| Profile-matched ranking | ✔ (basic) | ✔ |
+| | Free (No Account) | Free Account (OAuth Sign-In, C$0) | Bid Packs (C$19 / C$49) | Pro Unlimited (C$85 CAD/mo) |
+|---|---|---|---|---|
+| Daily bid brief, unified search, details, deadlines | ✔ | ✔ | ✔ | ✔ |
+| Saved business profile | — | ✔ | ✔ | ✔ |
+| Watchlist | — | ✔ (up to 5 tenders) | ✔ (up to 5 tenders) | ✔ (unlimited) |
+| Bid/no-bid scorecards (`bid_no_bid_scorecard`) | — | ✔ | ✔ | ✔ |
+| Tender Requirements Boards (`classify_tender`) | — | 2 free credits | 1 or 3 non-expiring credits | ✔ (unlimited) |
+| E2B Bid Rooms (`process_bid_room`) & Cohere Command A+ review | — | Included in 2 free credits | 1 credit per run | ✔ (unlimited) |
+| Self-serve Stripe billing portal (`/billing/portal`) | — | — | ✔ | ✔ |
+
+### Hosted endpoints & environment variables
+
+- `GET /checkout?plan=pro|pack_1|pack_3&email=...&user_id=...` — creates a dynamic Stripe Checkout Session (binding `client_reference_id` and `customer_email`) when `STRIPE_SECRET_KEY` is configured, or redirects to a prefilled Stripe Payment Link.
+- `GET /billing/success` — post-checkout confirmation page.
+- `GET / POST /billing/portal` — self-serve Stripe Billing Portal for card updates, receipts, and 1-click cancellation.
+- `WA_LOGIN_PROVIDER=both` — enables Google OIDC and 6-digit Work Email verification codes side by side on `/authorize` (for Microsoft 365 / Outlook SMBs); `google` and `email` single-provider modes remain supported.
+- Apply `pipelines/migrations/005_credits_and_billing.sql` in Supabase to add first-class credit & `user_id`-linked subscriber columns (the server degrades safely before the migration is applied).
 
 ## Why $85
 

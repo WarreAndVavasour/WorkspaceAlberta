@@ -36,6 +36,13 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 _current_tenant: ContextVar[str | None] = ContextVar("wa_current_tenant", default=None)
+_current_tenant_record: ContextVar[dict[str, Any] | None] = ContextVar(
+    "wa_current_tenant_record", default=None
+)
+
+# In-memory fallback credit ledger used when WA_OAUTH_STORE=memory or when
+# Supabase is unavailable / migration 005 columns have not yet been applied.
+_memory_credits: dict[str, dict[str, Any]] = {}
 
 TENANT_FIELDS = {"profile", "watchlist"}
 USER_TENANT_PREFIX = "user:"
@@ -77,6 +84,20 @@ def reset_tenant(token) -> None:
 
 def current_tenant() -> str | None:
     return _current_tenant.get()
+
+
+def set_tenant_record(record: dict[str, Any] | None):
+    """Bind the validated identity record for the current request."""
+    return _current_tenant_record.set(record)
+
+
+def reset_tenant_record(token) -> None:
+    """Restore the previous identity record binding."""
+    _current_tenant_record.reset(token)
+
+
+def current_tenant_record() -> dict[str, Any] | None:
+    return _current_tenant_record.get()
 
 
 def _supabase_available() -> bool:
@@ -170,3 +191,171 @@ def set_json_field(field: str, value: Any) -> bool:
 def tenant_active() -> bool:
     """True when the current request is bound to a Supabase-backed tenant."""
     return bool(current_tenant() and _supabase_available())
+
+
+# ============== Per-user Pro trial & Bid Pack credit ledger ==============
+
+
+def _use_memory_credits() -> bool:
+    if os.environ.get("WA_OAUTH_STORE", "").strip().lower() == "memory":
+        return True
+    return not _supabase_available()
+
+
+def _default_credit_state() -> dict[str, Any]:
+    return {
+        "free_credits_used": 0,
+        "paid_credits": 0,
+        "stripe_customer_id": "",
+        "credited_sessions": [],
+    }
+
+
+def clear_memory_credits() -> None:
+    """Reset the in-memory credit ledger (used by tests)."""
+    _memory_credits.clear()
+
+
+def _normalize_credit_state(raw: dict[str, Any] | None) -> dict[str, Any]:
+    data = raw or {}
+    sessions = data.get("credited_sessions")
+    return {
+        "free_credits_used": max(0, int(data.get("free_credits_used") or 0)),
+        "paid_credits": max(0, int(data.get("paid_credits") or 0)),
+        "stripe_customer_id": str(data.get("stripe_customer_id") or "").strip(),
+        "credited_sessions": list(sessions) if isinstance(sessions, list) else [],
+    }
+
+
+def _read_supabase_credits(user_id: str) -> dict[str, Any] | None:
+    params = urlencode(
+        {
+            "user_id": f"eq.{user_id}",
+            "select": "free_credits_used,paid_credits,stripe_customer_id,credited_sessions",
+            "limit": "1",
+        }
+    )
+    try:
+        rows = _request("GET", f"wa_user_data?{params}")
+    except (HTTPError, URLError, json.JSONDecodeError, RuntimeError):
+        return None
+    if not rows:
+        return _default_credit_state()
+    return _normalize_credit_state(rows[0])
+
+
+def _write_supabase_credits(user_id: str, state: dict[str, Any]) -> bool:
+    payload = {
+        "free_credits_used": max(0, int(state.get("free_credits_used") or 0)),
+        "paid_credits": max(0, int(state.get("paid_credits") or 0)),
+        "stripe_customer_id": str(state.get("stripe_customer_id") or "").strip(),
+        "credited_sessions": list(state.get("credited_sessions") or [])[-50:],
+    }
+    try:
+        existing_params = urlencode({"user_id": f"eq.{user_id}", "select": "user_id", "limit": "1"})
+        existing = _request("GET", f"wa_user_data?{existing_params}") or []
+        if existing:
+            params = urlencode({"user_id": f"eq.{user_id}"})
+            _request("PATCH", f"wa_user_data?{params}", payload)
+        else:
+            _request("POST", "wa_user_data", [{"user_id": user_id, **payload}])
+        return True
+    except (HTTPError, URLError, RuntimeError):
+        return False
+
+
+def get_user_credits(user_id: str) -> dict[str, Any]:
+    """Read free-trial and Bid Pack credit state for an OAuth user."""
+    uid = str(user_id or "").strip()
+    if not uid:
+        return _default_credit_state()
+    if not _use_memory_credits():
+        row = _read_supabase_credits(uid)
+        if row is not None:
+            _memory_credits[uid] = dict(row)
+            return row
+    return _normalize_credit_state(_memory_credits.get(uid))
+
+
+def consume_user_credit(user_id: str, free_allowance: int) -> dict[str, Any]:
+    """Consume 1 credit (free trial credits first, then paid Bid Pack credits).
+
+    Returns ``{"consumed": "free"|"paid"|"none", "free_credits_remaining": int,
+    "paid_credits": int, "total_credits": int}``.
+    """
+    uid = str(user_id or "").strip()
+    if not uid:
+        return {"consumed": "none", "free_credits_remaining": 0, "paid_credits": 0, "total_credits": 0}
+    state = get_user_credits(uid)
+    consumed = "none"
+    if state["free_credits_used"] < free_allowance:
+        state["free_credits_used"] += 1
+        consumed = "free"
+    elif state["paid_credits"] > 0:
+        state["paid_credits"] -= 1
+        consumed = "paid"
+
+    if consumed != "none":
+        _memory_credits[uid] = dict(state)
+        if not _use_memory_credits():
+            _write_supabase_credits(uid, state)
+
+    free_remaining = max(0, free_allowance - state["free_credits_used"])
+    paid = max(0, state["paid_credits"])
+    return {
+        "consumed": consumed,
+        "free_credits_remaining": free_remaining,
+        "paid_credits": paid,
+        "total_credits": free_remaining + paid,
+    }
+
+
+def grant_user_paid_credits(
+    user_id: str,
+    credits: int,
+    *,
+    session_id: str = "",
+    stripe_customer_id: str = "",
+) -> dict[str, Any]:
+    """Idempotently add Bid Pack credits to a user account after checkout."""
+    uid = str(user_id or "").strip()
+    if not uid or credits <= 0:
+        return {"credited": False, "paid_credits": 0}
+    state = get_user_credits(uid)
+    if session_id and session_id in state["credited_sessions"]:
+        return {"credited": False, "reason": "already_credited", "paid_credits": state["paid_credits"]}
+    state["paid_credits"] += int(credits)
+    if session_id:
+        state["credited_sessions"].append(session_id)
+    if stripe_customer_id:
+        state["stripe_customer_id"] = stripe_customer_id
+    _memory_credits[uid] = dict(state)
+    persisted = True
+    if not _use_memory_credits():
+        persisted = _write_supabase_credits(uid, state)
+    return {"credited": True, "paid_credits": state["paid_credits"], "persisted": persisted}
+
+
+def lookup_user_id_by_email(email: str) -> str:
+    """Resolve an email address to its ``wa_users.id`` when available."""
+    normalized = str(email or "").strip().lower()
+    if not normalized:
+        return ""
+    if os.environ.get("WA_OAUTH_STORE", "").strip().lower() == "memory":
+        from procurement_core import oauth
+
+        store = oauth.get_store()
+        if hasattr(store, "users"):
+            for user in store.users.values():
+                if str(user.get("email") or "").strip().lower() == normalized:
+                    return str(user.get("id") or "")
+        return ""
+    if not _supabase_available():
+        return ""
+    escaped = normalized.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    params = f"email=ilike.{urlencode({'v': escaped})[2:]}&select=id&limit=1"
+    try:
+        rows = _request("GET", f"wa_users?{params}") or []
+    except (HTTPError, URLError, json.JSONDecodeError, RuntimeError):
+        return ""
+    return str(rows[0].get("id") or "") if rows else ""

@@ -78,7 +78,13 @@ class PartialAuthenticationTest(unittest.TestCase):
             result = client.get("/profile", headers={"Authorization": "Bearer test-token"})
             self.assertEqual(result.status_code, 200)
             self.assertEqual(result.json()["content"], "user:free-test")
-            denied = client.post("/tools/list_watchlist", json={}, headers={"Authorization": "Bearer test-token"})
+            free_wl = client.post("/tools/list_watchlist", json={}, headers={"Authorization": "Bearer test-token"})
+            self.assertEqual(free_wl.status_code, 200)
+            denied = client.post(
+                "/tools/process_bid_room",
+                json={"reference": "AB-2026-00001"},
+                headers={"Authorization": "Bearer test-token"},
+            )
             self.assertEqual(denied.status_code, 402)
         self.assertIsNone(storage._current_tenant.get())
 

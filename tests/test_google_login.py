@@ -163,6 +163,44 @@ class GoogleFlowTest(unittest.TestCase):
             with patch.dict(os.environ, {**config, missing: ""}, clear=True), self.assertRaises(RuntimeError):
                 oauth.validate_hosted_configuration()
 
+    def test_both_provider_mode_renders_google_and_work_email_and_validates_both(self):
+        both_env = {**CONFIG, "WA_LOGIN_PROVIDER": "both", "WA_OAUTH_DEV_SHOW_CODE": "1"}
+        with patch.dict(os.environ, both_env):
+            page = self.http.get("/authorize", params=self.params)
+            self.assertEqual(page.status_code, 200)
+            self.assertIn('action="/authorize/google"', page.text)
+            self.assertIn('action="/authorize"', page.text)
+            self.assertIn('type="email"', page.text)
+            self.assertIn("connection-card", page.text)
+            # Email OTP works alongside Google OIDC in "both" mode.
+            oauth.login_code_limiter().reset()
+            emailed = self.http.post("/authorize", data={**self.params, "email": "estimator@m365shop.ca"})
+            self.assertEqual(emailed.status_code, 200)
+            code_match = re.search(r'data-otp="(\d{6})"', emailed.text)
+            self.assertIsNotNone(code_match)
+            login_id = re.search(r'name="login_id" value="([^"]+)"', emailed.text)[1]
+            verified = self.http.post("/authorize/verify", data={"login_id": login_id, "code": code_match[1]})
+            self.assertEqual(verified.status_code, 200)
+            self.assertIn("estimator@m365shop.ca", verified.text)
+            # Google flow also still works in "both" mode.
+            query = self.begin()
+            self.assertEqual(self.callback(query).status_code, 200)
+
+        hosted_both = {
+            **CONFIG,
+            "WA_LOGIN_PROVIDER": "both",
+            "K_SERVICE": "test",
+            "SUPABASE_URL": "https://test.supabase.co",
+            "SUPABASE_SERVICE_ROLE_KEY": "test",
+            "WA_SMTP_HOST": "smtp.example.com",
+            "WA_SMTP_FROM": "login@example.com",
+        }
+        with patch.dict(os.environ, hosted_both, clear=True):
+            oauth.validate_hosted_configuration()
+        for missing in ["WA_GOOGLE_CLIENT_ID", "WA_SMTP_HOST"]:
+            with patch.dict(os.environ, {**hosted_both, missing: ""}, clear=True), self.assertRaises(RuntimeError):
+                oauth.validate_hosted_configuration()
+
 
 class GoogleTokenVerificationTest(unittest.TestCase):
     @classmethod

@@ -909,7 +909,7 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
     ]
     for tool in tools:
         if tool.name in PRO_TOOLS:
-            tool.description += " Hosted: sign-in and an active workspaceAlberta Pro subscription required."
+            tool.description += " Hosted: sign-in required; includes 2 free tender review credits, then a workspaceAlberta Bid Pack or Pro subscription."
         elif tool.name in SIGN_IN_TOOLS:
             tool.description += " Hosted: sign-in required; no paid subscription needed."
         if tool.name in {"search_alberta_opportunities", "find_alberta_opportunities", "find_matching_opportunities", "search_opportunities", "daily_bid_brief"}:

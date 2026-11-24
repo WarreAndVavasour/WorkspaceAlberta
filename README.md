@@ -33,8 +33,9 @@ Give me the reference, buyer, closing time and official link for each.
 
 You get open notices from both sources, soonest first: reference (for example `AB-2026-06788`), buyer, closing time in Alberta time, the official posting link and any Buy Canadian or other domestic-preference flag. It finds and ranks work. It does not submit bids or contact buyers.
 
-- **Free, no account:** search, details, deadlines, matching and the daily bid brief across both sources.
-- **Pro:** watchlist, bid/no-bid scorecards, bid-room document review and tender requirement lists. Sign in when a Pro tool asks; [plans and pricing](https://warreandvavasour.com/workspacealberta?utm_source=github&utm_medium=readme&utm_campaign=workspacealberta).
+- **Free, no account:** search, details, deadlines, matching, industrial support catalog, and the daily bid brief across both sources.
+- **Free sign-in (C$0):** saved business profile, 5-tender watchlist, bid/no-bid scorecards, and **2 free tender document reviews** (`classify_tender` Requirements Board / Bid Room).
+- **Bid Packs (C$19 / C$49) or Pro (C$85/mo):** pay per tender with non-expiring credits, or go unlimited with Pro (unlimited watchlist, Requirements Boards, E2B bid rooms, and Cohere Command A+ reviews). Sign in when a protected tool asks; [plans and pricing](https://elbowsupknivesout.warreandvavasour.com/pricing).
 
 Keywords: Canadian procurement, CanadaBuys, Alberta Purchasing Connection, government tenders, bids, trades, construction, MCP server.
 

@@ -133,17 +133,40 @@ def _consent_target(params: dict[str, str]) -> str:
     return f"{name} ({host})" if name and params.get("cimd") != "1" else host
 
 
-def _google_form(params: dict[str, str]) -> str:
+def _google_form(params: dict[str, str], *, include_email: bool = False, error: str = "") -> str:
     host = escape(_consent_target(params))
+    error_html = f'<p class="error">{escape(error)}</p>' if error else ""
+    email_block = ""
+    intro = (
+        f"Connect your procurement tools. Sign in with your Gmail or Google Workspace account, "
+        f"then review access for <strong>{host}</strong>."
+    )
+    if include_email:
+        intro = (
+            f"Connect your procurement tools with Google or any work email (Microsoft 365, Outlook, "
+            f"or company domain), then review access for <strong>{host}</strong>."
+        )
+        email_block = f"""
+<div class="auth-divider" style="margin:1.25rem 0 0.85rem;border-top:1px solid #d6d3ca;padding-top:0.9rem;">
+  <p style="margin:0 0 0.5rem;font-size:0.9rem;color:#555;"><strong>Or sign in with any work email</strong> (Microsoft 365, Outlook, company domain)</p>
+  {error_html}
+  <form method="post" action="/authorize">
+    {_hidden_params(params)}
+    <label style="display:block;font-size:0.85rem;margin-bottom:0.35rem;">Work email
+      <input type="email" name="email" required autocomplete="username" placeholder="you@yourcompany.ca" style="display:block;width:100%;padding:0.55rem 0.65rem;margin-top:0.25rem;border:1px solid #bbb;border-radius:8px;box-sizing:border-box;">
+    </label>
+    <button type="submit" style="width:100%;padding:0.6rem 0.75rem;border:0;border-radius:8px;background:#16382d;color:#fff7e8;font-weight:600;cursor:pointer;margin-top:0.35rem;">Email me a 6-digit sign-in code</button>
+  </form>
+</div>"""
     return auth_page("Sign in to workspaceAlberta", f"""
 <div class="signin-body">
 <h1>Your next<br>possibility awaits.</h1>
-<p class="intro">Connect your procurement tools. Sign in with your Gmail or Google Workspace account, then review access for <strong>{host}</strong>.</p>
+<p class="intro">{intro}</p>
 <form method="post" action="/authorize/google">
   {_hidden_params(params)}
   <button type="submit" class="google-signin" aria-label="Sign in with Google"><img src="/assets/google-signin.png" alt="Sign in with Google"></button>
-</form>
-<p class="subscription-note">Use the same email as your Pro subscription. Signing in does not start a subscription or charge you.</p>
+</form>{email_block}
+<p class="subscription-note">Signing in is free, never starts a paid subscription, and includes 2 free tender Requirements Boards, a 5-tender watchlist, and bid/no-bid scorecards.</p>
 </div>
 """, step="01", step_label="Connect your workspace")
 
@@ -235,7 +258,12 @@ def register_oauth_routes(app: FastAPI) -> None:
             if target:
                 return RedirectResponse(target, status_code=302)
             return HTMLResponse(_page("Sign-in link problem", _authorize_error_body(exc.description)), 400)
-        return HTMLResponse(_google_form(checked) if oauth.login_provider() == "google" else _email_form(checked))
+        provider = oauth.login_provider()
+        if provider == "both":
+            return HTMLResponse(_google_form(checked, include_email=True))
+        if provider == "google":
+            return HTMLResponse(_google_form(checked))
+        return HTMLResponse(_email_form(checked))
 
     @app.post("/authorize/google", include_in_schema=False, response_model=None)
     async def authorize_google(request: Request) -> HTMLResponse | RedirectResponse:
@@ -263,7 +291,7 @@ def register_oauth_routes(app: FastAPI) -> None:
 
     @app.post("/authorize", include_in_schema=False, response_model=None)
     async def authorize_start(request: Request) -> HTMLResponse | RedirectResponse:
-        if oauth.login_provider() != "email":
+        if not oauth.email_login_enabled():
             return HTMLResponse(_page("Sign in with Google", "<p>Reconnect from your MCP client to sign in with Google.</p>"), 404)
         form = await _form_map(request)
         params = _params_from_form(form)
@@ -275,6 +303,8 @@ def register_oauth_routes(app: FastAPI) -> None:
                 checked = await asyncio.to_thread(oauth.validate_authorize_params, params)
             except oauth.OAuthError:
                 return HTMLResponse(_page("Sign-in link problem", _authorize_error_body(exc.description)), 400)
+            if oauth.login_provider() == "both":
+                return HTMLResponse(_google_form(checked, include_email=True, error=exc.description), 400)
             return HTMLResponse(_email_form(checked, error=exc.description), 400)
         notice = ""
         if not started.get("delivered") and not started.get("dev_code"):
@@ -294,7 +324,7 @@ def register_oauth_routes(app: FastAPI) -> None:
 
     @app.post("/authorize/verify", include_in_schema=False)
     async def authorize_verify(request: Request) -> HTMLResponse:
-        if oauth.login_provider() != "email":
+        if not oauth.email_login_enabled():
             return HTMLResponse(_page("Sign in with Google", "<p>Email-code sign-in is disabled.</p>"), 404)
         form = await _form_map(request)
         try:

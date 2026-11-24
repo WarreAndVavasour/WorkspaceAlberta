@@ -117,9 +117,17 @@ def normalize_email(email: str) -> str:
 
 def login_provider() -> str:
     provider = os.environ.get("WA_LOGIN_PROVIDER", "email").strip().lower()
-    if provider not in {"email", "google"}:
-        raise RuntimeError("WA_LOGIN_PROVIDER must be email or google.")
+    if provider not in {"email", "google", "both"}:
+        raise RuntimeError("WA_LOGIN_PROVIDER must be email, google, or both.")
     return provider
+
+
+def google_login_enabled() -> bool:
+    return login_provider() in {"google", "both"}
+
+
+def email_login_enabled() -> bool:
+    return login_provider() in {"email", "both"}
 
 
 def validate_hosted_configuration() -> None:
@@ -127,9 +135,12 @@ def validate_hosted_configuration() -> None:
     if not os.environ.get("K_SERVICE"):
         return
     provider = login_provider()
-    required = ("WA_GOOGLE_CLIENT_ID", "WA_GOOGLE_CLIENT_SECRET") if provider == "google" else ("WA_SMTP_HOST", "WA_SMTP_FROM")
-    missing = [name for name in ("WA_OAUTH_SIGNING_KEY", *required)
-               if not os.environ.get(name, "").strip()]
+    required: list[str] = ["WA_OAUTH_SIGNING_KEY"]
+    if provider in {"google", "both"}:
+        required.extend(["WA_GOOGLE_CLIENT_ID", "WA_GOOGLE_CLIENT_SECRET"])
+    if provider in {"email", "both"}:
+        required.extend(["WA_SMTP_HOST", "WA_SMTP_FROM"])
+    missing = [name for name in required if not os.environ.get(name, "").strip()]
     if missing:
         raise RuntimeError("Hosted OAuth requires: " + ", ".join(missing))
     if len(os.environ["WA_OAUTH_SIGNING_KEY"].strip()) < 32:
@@ -138,7 +149,7 @@ def validate_hosted_configuration() -> None:
         raise RuntimeError("Hosted OAuth must not expose sign-in codes.")
     if os.environ.get("WA_OAUTH_STORE", "").strip().lower() == "memory" or not all(supabase_config()):
         raise RuntimeError("Hosted OAuth requires Supabase persistence.")
-    if provider == "email" and os.environ.get("WA_SMTP_STARTTLS", "1").lower() not in {"1", "true", "yes"}:
+    if provider in {"email", "both"} and os.environ.get("WA_SMTP_STARTTLS", "1").lower() not in {"1", "true", "yes"}:
         raise RuntimeError("Hosted OAuth requires verified SMTP STARTTLS.")
 
 

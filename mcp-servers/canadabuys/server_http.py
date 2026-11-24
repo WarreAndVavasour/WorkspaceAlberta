@@ -63,9 +63,11 @@ from procurement_core import identity, oauth, storage, telemetry, usage  # noqa:
 from procurement_core import http_hardening  # noqa: E402
 from procurement_core.feedback import rate_key_for, rate_limit_scope  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
+    FREE_WATCHLIST_LIMIT,
     GateError,
     access_help,
     access_help_text,
+    checkout_url,
     PRO_TOOLS,
     PROTECTED_TOOLS,
     SIGN_IN_TOOLS,
@@ -73,8 +75,17 @@ from procurement_core.auth import (  # noqa: E402
     gate_enabled,
     validate_key,
 )
-from procurement_core.billing import WebhookError, process_webhook_event  # noqa: E402
-from procurement_core.identity import check_tool_access, tenant_id_for  # noqa: E402
+from procurement_core.billing import (  # noqa: E402
+    WebhookError,
+    create_billing_portal_session,
+    create_checkout_session,
+    process_webhook_event,
+)
+from procurement_core.identity import (  # noqa: E402
+    check_tool_access,
+    consume_pro_credit_if_needed,
+    tenant_id_for,
+)
 from procurement_core.oauth_http import register_oauth_routes  # noqa: E402
 from procurement_core.bid_room_upload_http import register_bid_room_upload_routes  # noqa: E402
 from procurement_core.public_pages import register_public_pages  # noqa: E402
@@ -163,7 +174,7 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
                     type="text",
                     text=(
                         f"# workspaceAlberta access required\n\n{exc}\n\n"
-                        f"{access_help_text(exc.status_code, name)}"
+                        f"{access_help_text(exc.status_code, name, email=exc.email, user_id=exc.user_id)}"
                     ),
                 )
             ],
@@ -173,14 +184,22 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
         )
 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
+    record_token = storage.set_tenant_record(record) if record else None
     started = time.monotonic()
     try:
         with rate_limit_scope(rate_key_for(caller, storage.current_tenant())):
             with usage.metering() as meter:
                 text, structured = await call_tool_text_and_structured(name, arguments)
     finally:
+        if record_token is not None:
+            storage.reset_tenant_record(record_token)
         if token is not None:
             storage.reset_tenant(token)
+    credit_note = await asyncio.to_thread(
+        consume_pro_credit_if_needed, name, record, text=text, structured=structured
+    )
+    if credit_note:
+        text = text + credit_note
     telemetry.capture_tool_call(
         name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000),
         upstream=meter.log_fields(), caller=caller,
@@ -361,14 +380,22 @@ async def run_tool(
         raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
+    record_token = storage.set_tenant_record(record) if record else None
     started = time.monotonic()
     try:
         with rate_limit_scope(rate_key_for(caller, storage.current_tenant())):
             with usage.metering() as meter:
-                content = await call_tool_text(tool_name, arguments or {})
+                content, structured = await call_tool_text_and_structured(tool_name, arguments or {})
     finally:
+        if record_token is not None:
+            storage.reset_tenant_record(record_token)
         if token is not None:
             storage.reset_tenant(token)
+    credit_note = await asyncio.to_thread(
+        consume_pro_credit_if_needed, tool_name, record, text=content, structured=structured
+    )
+    if credit_note:
+        content = content + credit_note
     telemetry.capture_tool_call(
         tool_name, "rest", record, arguments, content, int((time.monotonic() - started) * 1000),
         upstream=meter.log_fields(), caller=caller,
@@ -658,14 +685,120 @@ async def me(request: Request) -> dict[str, Any] | HTMLResponse:
             detail="Sign in or send `Authorization: Bearer wa_live_...`.",
             headers={"WWW-Authenticate": oauth.www_authenticate_challenge()},
         )
+    email = str(record.get("email") or "")
+    user_id = str(record.get("user_id") or "")
     return {
         "status": record.get("status"),
         "plan": record.get("plan"),
-        "email": record.get("email", ""),
+        "email": email,
         "auth_type": record.get("auth_type"),
         "pro_active": record.get("pro_active"),
+        "free_credits_remaining": record.get("free_credits_remaining", 0),
+        "paid_credits": record.get("paid_credits", 0),
+        "credits_remaining": record.get("credits_remaining", 0),
+        "free_watchlist_limit": FREE_WATCHLIST_LIMIT,
+        "sign_in_tools": sorted(SIGN_IN_TOOLS),
         "pro_tools": sorted(PRO_TOOLS),
+        "billing": {
+            "checkout_pro": checkout_url("pro", email=email, user_id=user_id),
+            "checkout_pack_1": checkout_url("pack_1", email=email, user_id=user_id),
+            "checkout_pack_3": checkout_url("pack_3", email=email, user_id=user_id),
+            "portal": f"{oauth.public_origin()}/billing/portal",
+        },
     }
+
+
+@app.get("/checkout", include_in_schema=False, response_model=None)
+async def checkout(
+    request: Request,
+    plan: str = "pro",
+    email: str = "",
+    user_id: str = "",
+) -> RedirectResponse | HTMLResponse | JSONResponse:
+    """Redirect to a Stripe Checkout Session (or prefilled Payment Link) for Pro or Bid Packs."""
+    caller = _rest_caller(request, "web")
+    try:
+        result = await asyncio.to_thread(
+            create_checkout_session,
+            plan,
+            email=email,
+            user_id=user_id,
+            origin=oauth.public_origin(),
+        )
+    except WebhookError as exc:
+        if _wants_html(request):
+            return HTMLResponse(
+                web_pages.message_page("Checkout unavailable", "Checkout unavailable", str(exc)),
+                status_code=exc.status_code,
+            )
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    telemetry.capture(
+        "checkout_started",
+        caller=caller,
+        properties={"plan": result.get("plan", plan), "source": result.get("source", "")},
+    )
+    return RedirectResponse(result["url"], status_code=303)
+
+
+@app.get("/billing/success", include_in_schema=False)
+async def billing_success(plan: str = "pro") -> HTMLResponse:
+    """Friendly confirmation page after Stripe Checkout completes."""
+    return HTMLResponse(web_pages.billing_success_page(plan))
+
+
+@app.get("/billing/portal", include_in_schema=False, response_model=None)
+async def billing_portal_get(request: Request) -> RedirectResponse | HTMLResponse | JSONResponse:
+    """Self-serve Stripe billing portal for managing or cancelling a Pro subscription."""
+    auth_header = request.headers.get("authorization")
+    if extract_bearer_key(auth_header):
+        try:
+            record = await asyncio.to_thread(identity.resolve_bearer, auth_header)
+        except GateError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        customer_id = str((record or {}).get("stripe_customer_id") or "")
+        try:
+            portal = await asyncio.to_thread(
+                create_billing_portal_session,
+                customer_id,
+                return_url=f"{oauth.public_origin()}/pricing",
+            )
+        except WebhookError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+        if _wants_html(request):
+            return RedirectResponse(portal["url"], status_code=303)
+        return JSONResponse(portal)
+    return HTMLResponse(web_pages.billing_portal_page())
+
+
+@app.post("/billing/portal", include_in_schema=False, response_model=None)
+async def billing_portal_post(request: Request) -> RedirectResponse | HTMLResponse:
+    """Open the Stripe Billing Portal by matching the subscriber's billing email."""
+    form = await request.form()
+    email = str(form.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        return HTMLResponse(
+            web_pages.billing_portal_page(error="Enter the email address you used at checkout."),
+            status_code=400,
+        )
+    subscriber = await asyncio.to_thread(identity.lookup_subscriber_by_email, email)
+    customer_id = str((subscriber or {}).get("stripe_customer_id") or "")
+    try:
+        portal = await asyncio.to_thread(
+            create_billing_portal_session,
+            customer_id,
+            return_url=f"{oauth.public_origin()}/pricing",
+        )
+    except WebhookError:
+        return HTMLResponse(
+            web_pages.billing_portal_page(
+                error=(
+                    "We could not open an automatic billing portal for that email right now. "
+                    "Check that it matches your Stripe receipt, or email christian@warreandvavasour.com and we will update or cancel your plan right away."
+                )
+            ),
+            status_code=200,
+        )
+    return RedirectResponse(portal["url"], status_code=303)
 
 
 # ---------------------------------------------------------------------------
@@ -845,7 +978,17 @@ async def stripe_webhook(request: Request) -> JSONResponse:
     except WebhookError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     if result.get("provisioned"):
-        telemetry.capture("subscription_started", properties={"plan": "pro", **telemetry.WEBHOOK_CALLER})
+        if result.get("kind") == "bid_pack":
+            telemetry.capture(
+                "bid_pack_purchased",
+                properties={
+                    "plan": result.get("plan", "pack_1"),
+                    "credits": result.get("credits_added", 0),
+                    **telemetry.WEBHOOK_CALLER,
+                },
+            )
+        else:
+            telemetry.capture("subscription_started", properties={"plan": "pro", **telemetry.WEBHOOK_CALLER})
     elif result.get("revoked"):
         telemetry.capture("subscription_cancelled", properties={"plan": "pro", **telemetry.WEBHOOK_CALLER})
     return JSONResponse(result)
@@ -922,15 +1065,26 @@ async def bid_room_process(request: Request, arguments: dict[str, Any] | None = 
         raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
+    record_token = storage.set_tenant_record(record) if record else None
     try:
-        return await process_bid_room_artifact_bounded(arguments or {})
+        result = await process_bid_room_artifact_bounded(arguments or {})
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     finally:
+        if record_token is not None:
+            storage.reset_tenant_record(record_token)
         if token is not None:
             storage.reset_tenant(token)
+    await asyncio.to_thread(
+        consume_pro_credit_if_needed,
+        "process_bid_room",
+        record,
+        text=str(result.get("markdown") or "ok"),
+        structured=result if isinstance(result, dict) else None,
+    )
+    return result
 
 
 @app.post("/bid-room/classify", tags=["bid-room"])
@@ -949,8 +1103,9 @@ async def bid_room_classify(request: Request, arguments: dict[str, Any] | None =
         raise HTTPException(status_code=exc.status_code, detail=str(exc), headers=headers) from exc
 
     token = storage.set_tenant(tenant_id_for(record)) if record else None
+    record_token = storage.set_tenant_record(record) if record else None
     try:
-        return await classify_tender_artifact_bounded(arguments or {})
+        result = await classify_tender_artifact_bounded(arguments or {})
     except ClassifierNotConfigured as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
@@ -958,8 +1113,18 @@ async def bid_room_classify(request: Request, arguments: dict[str, Any] | None =
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     finally:
+        if record_token is not None:
+            storage.reset_tenant_record(record_token)
         if token is not None:
             storage.reset_tenant(token)
+    await asyncio.to_thread(
+        consume_pro_credit_if_needed,
+        "classify_tender",
+        record,
+        text=str(result.get("markdown") or "ok"),
+        structured=result if isinstance(result, dict) else None,
+    )
+    return result
 
 
 @app.post("/profile", tags=["profile"])

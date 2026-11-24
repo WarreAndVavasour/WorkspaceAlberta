@@ -166,11 +166,11 @@ Ask in plain words, for example: <em>“Find Alberta construction tenders closin
 <pre>{{"mcpServers": {{"workspaceAlberta": {{"type": "http", "url": "{escape(mcp_url)}"}}}}}}</pre>
 </details>
 
-<h2>Free and Pro</h2>
-<p><strong>Free, no account:</strong> search, tender details, closing deadlines, daily briefs, and matching against a business description.</p>
-<p><strong>Pro, {PRO_PRICE}:</strong> saved watchlists, bid/no-bid scorecards and AI review of tender documents.
-Your AI app asks you to sign in with Google the first time you use a Pro feature. Signing in is free and does not charge you.</p>
-<p><a class="btn secondary" href="/pricing">Compare Free and Pro</a></p>
+<h2>Free, Bid Packs, and Pro</h2>
+<p><strong>Free, no account:</strong> search, tender details, closing deadlines, daily briefs, industrial support programs, and matching against a business description.</p>
+<p><strong>Free sign-in (C$0):</strong> saved business profile, <strong>5-tender watchlist</strong>, <strong>bid/no-bid scorecards</strong>, and <strong>2 free tender Requirements Boards</strong> (<code>classify_tender</code> / bid-room trial). Signing in never starts a paid subscription.</p>
+<p><strong>Bid Packs (C$19 / C$49) or Pro ({PRO_PRICE}):</strong> pay per tender with non-expiring credits, or go unlimited with Pro (unlimited Requirements Boards, E2B bid rooms, Cohere Command A+ reviews, unlimited watchlist, and self-serve billing).</p>
+<p><a class="btn secondary" href="/pricing">Compare Free, Bid Packs, and Pro</a></p>
 
 <h2>Words you may see</h2>
 <dl class="glossary">
@@ -225,50 +225,67 @@ Check a token at <code>GET /me</code> with that header.</p>
 def pricing_page() -> str:
     body = f"""
 <h1>Pricing</h1>
-<p class="lead">Searching is free. Pro adds saved work and document review.</p>
+<p class="lead">Search is free. Sign in free for watchlists, scorecards, and 2 free tender Requirements Boards. Pay per tender or go unlimited with Pro.</p>
 <div class="plans">
-<div class="card"><h3>Free</h3><p class="price">C$0</p>
-<p class="muted">No account needed.</p>
-<ul><li>Search federal and Alberta tenders</li><li>Tender details and closing deadlines</li>
-<li>Daily bid brief</li><li>Matching against a business description you type in</li>
-<li>Save a business profile (free sign-in)</li></ul>
+<div class="card"><h3>Free Account</h3><p class="price">C$0</p>
+<p class="muted">Search works with no account. Free sign-in unlocks saved tools.</p>
+<ul><li>Unified CanadaBuys + Alberta APC search, details, deadlines &amp; daily brief</li>
+<li>Saved business profile</li>
+<li><strong>Watchlist</strong> (up to 5 tenders)</li>
+<li><strong>Bid/no-bid scorecards</strong> on demand</li>
+<li><strong>2 free tender reviews</strong> (<code>classify_tender</code> Requirements Board or Bid Room)</li></ul>
 <a class="btn secondary" href="/try">Try a search</a></div>
-<div class="card"><h3>Pro</h3><p class="price">{PRO_PRICE}</p>
-<p class="muted">Billed monthly in Canadian dollars. Cancel any time.</p>
-<ul><li>Everything in Free</li><li>Watchlist: save tenders and follow them</li>
-<li>Bid/no-bid scorecard</li><li>AI review of tender documents (bid room)</li>
-<li>Requirements list from tender documents</li><li>AI analysis of a CanadaBuys tender</li></ul>
-<a class="btn primary" href="{STRIPE_SUBSCRIBE_URL}" rel="noopener">Start Pro — {PRO_PRICE}</a></div>
+
+<div class="card"><h3>Bid Packs</h3><p class="price">C$19 <small style="font-size:0.95rem;font-weight:400;">/ 1 tender</small></p>
+<p class="muted">Or C$49 for 3 tenders. One-time purchase — credits never expire.</p>
+<ul><li>Ideal for shops bidding 4–8 public tenders a year</li>
+<li>Interactive <strong>Requirements Board</strong> (<code>classify_tender</code>) with lead-time schedule &amp; evidence quotes</li>
+<li><strong>E2B Bid Room</strong> attachment analysis (Cohere Parse + Command A+)</li>
+<li>Full Cohere Command A+ tender explainer</li>
+<li>No recurring subscription</li></ul>
+<div class="actions" style="margin:0.6rem 0 0;">
+<a class="btn secondary" href="/checkout?plan=pack_1" rel="noopener">Buy 1 credit — C$19</a>
+<a class="btn secondary" href="/checkout?plan=pack_3" rel="noopener">Buy 3 credits — C$49</a>
+</div></div>
+
+<div class="card"><h3>Pro Unlimited</h3><p class="price">{PRO_PRICE}</p>
+<p class="muted">Billed monthly in CAD. Cancel any time in one click.</p>
+<ul><li>Everything in Free</li>
+<li><strong>Unlimited watchlist</strong> tracking</li>
+<li><strong>Unlimited Requirements Boards</strong> from tender PDFs</li>
+<li><strong>Unlimited E2B Bid Rooms</strong> &amp; Cohere Command A+ reviews</li>
+<li>Self-serve billing portal &amp; priority Canadian support</li></ul>
+<a class="btn primary" href="/checkout?plan=pro" rel="noopener">Start Pro — {PRO_PRICE}</a>
+<p class="muted" style="font-size:0.85rem;margin:0.5rem 0 0;">Direct Stripe link: <a href="{STRIPE_SUBSCRIBE_URL}" rel="noopener">buy.stripe.com</a></p></div>
 </div>
 
-<h2>How Pro works</h2>
+<h2>How it works</h2>
 <ol class="steps">
-<li>Subscribe with the button above. Checkout is on Stripe, our payment provider. We never see your card number.</li>
-<li>Use the <strong>same email</strong> for checkout and for Google sign-in. A Gmail or Google Workspace account works. Another email address will not work yet; write to us first.</li>
-<li>In your AI app, use a Pro feature. The app asks you to sign in with Google. After sign-in, Pro features work.</li>
+<li>Connect workspaceAlberta in Claude, ChatGPT, Cursor, or Claude Code and sign in when asked. Every new account starts with <strong>2 free tender reviews</strong>, a 5-tender watchlist, and bid/no-bid scorecards at C$0.</li>
+<li>When you are ready for more tenders, pick a one-time <strong>Bid Pack</strong> (C$19 or C$49) or <strong>Pro Unlimited</strong> ({PRO_PRICE}). Checkout runs on Stripe — we never see your card number.</li>
+<li>Links opened from your AI app automatically attach your account ID and email, so Pro or Bid Pack credits unlock immediately when you return to chat.</li>
 </ol>
 
-<h2 id="terms">Subscription terms</h2>
+<h2 id="terms">Subscription &amp; billing terms</h2>
 <ul>
 <li><strong>Seller:</strong> Warre &amp; Vavasour Ltd, Alberta, Canada.</li>
-<li><strong>Price:</strong> {PRO_PRICE}, in Canadian dollars. Checkout shows the final amount before you pay.</li>
-<li><strong>Renewal:</strong> the subscription renews every month until you cancel.</li>
-<li><strong>Cancel:</strong> email <a href="mailto:{SUPPORT_EMAIL}?subject=Cancel%20workspaceAlberta%20Pro">{SUPPORT_EMAIL}</a> from your subscription email. Pro stops at the end of the paid month.</li>
-<li><strong>Data:</strong> see the <a href="/privacy">privacy notice</a> for what Pro features send to service providers.</li>
+<li><strong>Pricing:</strong> Pro is {PRO_PRICE} in Canadian dollars; Bid Packs are C$19 (1 credit) or C$49 (3 credits), one-time. Checkout shows the final amount before you pay.</li>
+<li><strong>Renewal:</strong> Pro renews every month until you cancel. Bid Pack credits do not renew and do not expire.</li>
+<li><strong>Manage or cancel:</strong> open the <a href="/billing/portal">self-serve billing portal</a> any time, or email <a href="mailto:{SUPPORT_EMAIL}?subject=Cancel%20workspaceAlberta%20Pro">{SUPPORT_EMAIL}</a>. Pro stays active through the end of the paid month.</li>
+<li><strong>Data:</strong> see the <a href="/privacy">privacy notice</a> for what document-review features send to service providers.</li>
 <li><strong>Results:</strong> workspaceAlberta helps you find and review tenders. It does not submit bids and does not guarantee awards. Always check the official posting.</li>
 </ul>
 <p>Questions before you buy? Email <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a>.</p>
 
 <section lang="fr" id="fr" aria-labelledby="fr-pricing">
 <h2 id="fr-pricing">Tarifs en français</h2>
-<p><strong>Gratuit :</strong> recherche, détails, dates de clôture et résumé quotidien, sans compte.
-<strong>Pro : 85 $ CA par mois</strong>, facturé chaque mois en dollars canadiens, renouvelé jusqu'à l'annulation.
-Pro ajoute la liste de suivi, la grille « soumissionner ou non » et l'analyse des documents d'appel d'offres.
-Pour annuler, écrivez à <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a>. Utilisez le même courriel pour le paiement et pour la connexion Google.</p>
+<p><strong>Gratuit :</strong> recherche, détails, dates de clôture et résumé quotidien sans compte. La connexion gratuite inclut le profil d'entreprise, la liste de suivi (jusqu'à 5 appels d'offres), la grille « soumissionner ou non » et <strong>2 analyses gratuites</strong>.
+<strong>Crédits à l'unité :</strong> 19 $ CA (1 appel d'offres) ou 49 $ CA (3 appels d'offres), sans abonnement.
+<strong>Pro illimité : 85 $ CA par mois</strong>, facturé en dollars canadiens, résiliable en tout temps via le <a href="/billing/portal">portail de facturation</a> ou par courriel à <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a>.</p>
 </section>
 """
-    return page("workspaceAlberta pricing — Free and Pro", body, current="/pricing",
-                description="workspaceAlberta Free and Pro plans. Pro is C$85/month, billed monthly in CAD.")
+    return page("workspaceAlberta pricing — Free, Bid Packs, and Pro", body, current="/pricing",
+                description="workspaceAlberta Free (with 2 free tender reviews), pay-per-tender Bid Packs (C$19/C$49), and Pro Unlimited (C$85/month CAD).")
 
 
 TRY_SCRIPT = """
@@ -359,9 +376,49 @@ def me_page() -> str:
     body = """
 <h1>Account status</h1>
 <p class="lead">You do not need to sign in on this website.</p>
-<p>Sign-in happens inside your AI app. The first time you use a Pro feature there, the app opens a Google sign-in window.
-After that, the app shows whether your Pro subscription is active.</p>
-<div class="actions"><a class="btn primary" href="/#connect">Add it to my AI app</a><a class="btn secondary" href="/pricing">See Pro pricing</a></div>
-<p class="muted">Developers: send <code>GET /me</code> with an <code>Authorization: Bearer</code> header to check a token.</p>
+<p>Sign-in happens inside your AI app. The first time you save a profile, watchlist, scorecard, or tender review, the app opens a sign-in window.
+Every signed-in account starts with 2 free tender Requirements Boards, a 5-tender watchlist, and bid/no-bid scorecards.</p>
+<div class="actions"><a class="btn primary" href="/#connect">Add it to my AI app</a><a class="btn secondary" href="/pricing">See plans &amp; Bid Packs</a><a class="btn secondary" href="/billing/portal">Manage billing</a></div>
+<p class="muted">Developers: send <code>GET /me</code> with an <code>Authorization: Bearer</code> header to check your plan and remaining tender credits.</p>
 """
     return page("workspaceAlberta account status", body)
+
+
+def billing_success_page(plan: str = "pro") -> str:
+    plan_key = str(plan or "pro").strip().lower()
+    if plan_key == "pack_3":
+        headline = "Your 3-tender Bid Pack is ready"
+        detail = "We added 3 non-expiring tender credits to your workspaceAlberta account. Return to Claude (or your MCP client) and re-run classify_tender or process_bid_room — no key pasting needed."
+    elif plan_key == "pack_1":
+        headline = "Your tender credit is ready"
+        detail = "We added 1 non-expiring tender credit to your workspaceAlberta account. Return to Claude (or your MCP client) and re-run classify_tender or process_bid_room — no key pasting needed."
+    else:
+        headline = "WorkspaceAlberta Pro is active"
+        detail = "Your unlimited Pro plan is active. Return to Claude (or your MCP client) and re-run your tool — your existing sign-in now has unlimited Requirements Boards, Bid Rooms, Cohere reviews, and watchlists."
+    body = f"""
+<h1>{escape(headline)}</h1>
+<p class="lead">{escape(detail)}</p>
+<div class="actions">
+  <a class="btn primary" href="/#connect">Back to connection guide</a>
+  <a class="btn secondary" href="/billing/portal">Manage billing</a>
+</div>
+<p class="muted">Need help or paid with a different accounting email? Email <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a> with your receipt and we will link your account right away.</p>
+"""
+    return page(f"{headline} — workspaceAlberta", body)
+
+
+def billing_portal_page(*, error: str = "") -> str:
+    err_html = f'<p class="error">{escape(error)}</p>' if error else ""
+    body = f"""
+<h1>Manage billing &amp; cancellation</h1>
+<p class="lead">Update your card, download receipts, or cancel WorkspaceAlberta Pro in one click through Stripe's self-serve portal.</p>
+{err_html}
+<form method="post" action="/billing/portal" class="search">
+  <label>Billing email used at Stripe checkout
+    <input name="email" type="email" required autocomplete="email" placeholder="you@yourcompany.ca">
+  </label>
+  <button class="btn primary" type="submit">Open Stripe Billing Portal</button>
+</form>
+<p class="muted">Prefer email? Write to <a href="mailto:{SUPPORT_EMAIL}?subject=Manage%20workspaceAlberta%20billing">{SUPPORT_EMAIL}</a> from your billing address and we will handle it promptly.</p>
+"""
+    return page("Manage billing — workspaceAlberta", body)

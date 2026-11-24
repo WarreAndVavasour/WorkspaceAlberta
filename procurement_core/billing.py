@@ -36,15 +36,55 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from procurement_core import storage
 from procurement_core.auth import (
+    SUBSCRIBE_URL,
     clear_cache,
     generate_api_key,
     hash_api_key,
+    prefilled_subscribe_url,
     stripe_secret_key,
     supabase_config,
 )
 
 SIGNATURE_TOLERANCE_SECONDS = 300
+DEFAULT_PRO_PRICE_ID = "price_1TqDAVIOLkCszIIOQIb7YgT3"
+
+PLANS: dict[str, dict[str, Any]] = {
+    "pro": {
+        "mode": "subscription",
+        "name": "WorkspaceAlberta Pro (Unlimited Monthly)",
+        "description": "Unlimited tender Requirements Boards, E2B Bid Rooms, Cohere Command A+ reviews, and unlimited watchlist.",
+        "unit_amount_cad_cents": 8500,
+        "credits": 0,
+        "price_env": "WA_STRIPE_PRICE_PRO",
+        "default_price_id": DEFAULT_PRO_PRICE_ID,
+        "link_env": "WA_STRIPE_LINK_PRO",
+        "default_link": SUBSCRIBE_URL,
+    },
+    "pack_1": {
+        "mode": "payment",
+        "name": "WorkspaceAlberta Bid Pack — 1 Tender Credit",
+        "description": "1 tender credit for classify_tender (Requirements Board), process_bid_room, or analyze_contract_with_cohere. Never expires.",
+        "unit_amount_cad_cents": 1900,
+        "credits": 1,
+        "price_env": "WA_STRIPE_PRICE_PACK_1",
+        "default_price_id": "",
+        "link_env": "WA_STRIPE_LINK_PACK_1",
+        "default_link": "",
+    },
+    "pack_3": {
+        "mode": "payment",
+        "name": "WorkspaceAlberta Bid Pack — 3 Tender Credits",
+        "description": "3 tender credits for classify_tender (Requirements Board), process_bid_room, or analyze_contract_with_cohere. Never expires.",
+        "unit_amount_cad_cents": 4900,
+        "credits": 3,
+        "price_env": "WA_STRIPE_PRICE_PACK_3",
+        "default_price_id": "",
+        "link_env": "WA_STRIPE_LINK_PACK_3",
+        "default_link": "",
+    },
+}
 
 
 class WebhookError(Exception):
@@ -125,14 +165,13 @@ def _supabase_request(method: str, path_query: str, payload: Any = None, prefer:
     return json.loads(body) if body else None
 
 
-def _stripe_set_customer_metadata(customer_id: str, metadata: dict[str, str]) -> bool:
-    """Best-effort metadata write; returns False when no key configured."""
+def _stripe_post(path: str, fields: dict[str, str]) -> dict[str, Any]:
+    """POST form-encoded fields to Stripe API and return parsed JSON."""
     secret = stripe_secret_key()
     if not secret:
-        return False
-    fields = {f"metadata[{k}]": v for k, v in metadata.items()}
+        raise WebhookError(503, "STRIPE_SECRET_KEY is not configured.")
     request = Request(
-        f"https://api.stripe.com/v1/customers/{customer_id}",
+        f"https://api.stripe.com/v1/{path.lstrip('/')}",
         data=urlencode(fields).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {secret}",
@@ -142,31 +181,205 @@ def _stripe_set_customer_metadata(customer_id: str, metadata: dict[str, str]) ->
     )
     try:
         with urlopen(request, timeout=15) as response:
-            response.read()
-    except (HTTPError, URLError):
+            body = response.read().decode("utf-8")
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")[:300]
+        raise WebhookError(502, f"Stripe {path} failed: HTTP {exc.code}: {detail}") from exc
+    except URLError as exc:
+        raise WebhookError(502, f"Stripe unreachable: {exc.reason}") from exc
+    return json.loads(body) if body else {}
+
+
+def _stripe_set_customer_metadata(customer_id: str, metadata: dict[str, str]) -> bool:
+    """Best-effort metadata write; returns False when no key configured."""
+    if not stripe_secret_key():
+        return False
+    fields = {f"metadata[{k}]": v for k, v in metadata.items()}
+    try:
+        _stripe_post(f"customers/{customer_id}", fields)
+    except WebhookError:
         return False
     return True
+
+
+def create_checkout_session(
+    plan: str = "pro",
+    *,
+    email: str = "",
+    user_id: str = "",
+    origin: str = "",
+) -> dict[str, Any]:
+    """Create a Stripe Checkout Session (or prefilled Payment Link fallback).
+
+    Binds ``client_reference_id`` (``user_id``) and ``customer_email`` so
+    paying from a different accounting/work email still unlocks the exact
+    signed-in MCP account.
+    """
+    plan_key = str(plan or "pro").strip().lower()
+    spec = PLANS.get(plan_key)
+    if not spec:
+        raise WebhookError(400, f"Unknown plan '{plan}'. Valid plans: {', '.join(PLANS)}.")
+
+    clean_email = str(email or "").strip().lower()
+    clean_user_id = str(user_id or "").strip()
+    base_origin = (
+        str(origin or "").strip().rstrip("/")
+        or os.environ.get("WA_PUBLIC_ORIGIN", "").strip().rstrip("/")
+        or "https://elbowsupknivesout.warreandvavasour.com"
+    )
+
+    secret = stripe_secret_key()
+    price_id = os.environ.get(spec["price_env"], "").strip() or spec["default_price_id"]
+    fallback_link = os.environ.get(spec["link_env"], "").strip() or spec["default_link"]
+
+    if secret:
+        fields: dict[str, str] = {
+            "mode": spec["mode"],
+            "allow_promotion_codes": "true",
+            "success_url": f"{base_origin}/billing/success?plan={plan_key}&session_id={{CHECKOUT_SESSION_ID}}",
+            "cancel_url": f"{base_origin}/pricing",
+            "line_items[0][quantity]": "1",
+            "metadata[wa_plan]": plan_key,
+            "metadata[wa_credits]": str(spec["credits"]),
+        }
+        if price_id:
+            fields["line_items[0][price]"] = price_id
+        else:
+            fields["line_items[0][price_data][currency]"] = "cad"
+            fields["line_items[0][price_data][unit_amount]"] = str(spec["unit_amount_cad_cents"])
+            fields["line_items[0][price_data][product_data][name]"] = spec["name"]
+            fields["line_items[0][price_data][product_data][description]"] = spec["description"]
+            if spec["mode"] == "subscription":
+                fields["line_items[0][price_data][recurring][interval]"] = "month"
+        if clean_user_id:
+            fields["client_reference_id"] = clean_user_id
+            fields["metadata[wa_user_id]"] = clean_user_id
+        if clean_email:
+            fields["customer_email"] = clean_email
+        if spec["mode"] == "payment":
+            fields["customer_creation"] = "if_required"
+        session = _stripe_post("checkout/sessions", fields)
+        url = str(session.get("url") or "").strip()
+        if not url:
+            raise WebhookError(502, "Stripe Checkout session returned no URL.")
+        return {"url": url, "session_id": session.get("id", ""), "plan": plan_key, "source": "stripe_session"}
+
+    if fallback_link:
+        url = prefilled_subscribe_url(email=clean_email, user_id=clean_user_id, base_url=fallback_link)
+        return {"url": url, "session_id": "", "plan": plan_key, "source": "payment_link"}
+
+    raise WebhookError(
+        503,
+        f"Checkout for '{plan_key}' is not configured yet (set STRIPE_SECRET_KEY or {spec['link_env']}).",
+    )
+
+
+def create_billing_portal_session(customer_id: str = "", *, return_url: str = "") -> dict[str, Any]:
+    """Create a self-serve Stripe Billing Portal session for managing or cancelling Pro."""
+    portal_fallback = os.environ.get("WA_STRIPE_PORTAL_URL", "").strip()
+    clean_customer = str(customer_id or "").strip()
+    ret = (
+        str(return_url or "").strip()
+        or (
+            os.environ.get("WA_PUBLIC_ORIGIN", "").strip().rstrip("/")
+            or "https://elbowsupknivesout.warreandvavasour.com"
+        )
+        + "/pricing"
+    )
+    if clean_customer and stripe_secret_key():
+        session = _stripe_post(
+            "billing_portal/sessions",
+            {"customer": clean_customer, "return_url": ret},
+        )
+        url = str(session.get("url") or "").strip()
+        if url:
+            return {"url": url, "source": "stripe_portal"}
+    if portal_fallback:
+        return {"url": portal_fallback, "source": "static_portal"}
+    raise WebhookError(
+        503,
+        "Self-serve billing portal requires an active Stripe customer record and STRIPE_SECRET_KEY (or WA_STRIPE_PORTAL_URL).",
+    )
 
 
 # ============== Event handlers ==============
 
 
+def _write_subscriber_row(method: str, path_query: str, payload: Any) -> Any:
+    """Write wa_subscribers, gracefully omitting user_id if migration 005 is not yet applied."""
+    try:
+        return _supabase_request(method, path_query, payload)
+    except WebhookError as exc:
+        if exc.status_code != 502 or "user_id" not in str(exc):
+            raise
+        if isinstance(payload, list):
+            stripped = [{k: v for k, v in row.items() if k != "user_id"} for row in payload]
+        elif isinstance(payload, dict):
+            stripped = {k: v for k, v in payload.items() if k != "user_id"}
+        else:
+            raise
+        return _supabase_request(method, path_query, stripped)
+
+
 def handle_checkout_completed(event_object: dict[str, Any]) -> dict[str, Any]:
-    """Provision a subscriber from a completed checkout session."""
+    """Provision a Pro subscription OR Bid Pack credits from a completed checkout."""
     customer_id = str(event_object.get("customer") or "").strip()
-    email = str((event_object.get("customer_details") or {}).get("email") or event_object.get("customer_email") or "").strip()
+    email = str(
+        (event_object.get("customer_details") or {}).get("email")
+        or event_object.get("customer_email")
+        or ""
+    ).strip()
+    metadata = event_object.get("metadata") if isinstance(event_object.get("metadata"), dict) else {}
+    client_ref = str(event_object.get("client_reference_id") or metadata.get("wa_user_id") or "").strip()
+    mode = str(event_object.get("mode") or "").strip().lower()
+    wa_plan = str(metadata.get("wa_plan") or "").strip().lower()
+    session_id = str(event_object.get("id") or "").strip()
+
+    # One-time Bid Pack checkout -> add non-expiring paid tender credits.
+    try:
+        credits_meta = int(metadata.get("wa_credits") or 0)
+    except (TypeError, ValueError):
+        credits_meta = 0
+    if mode == "payment" or wa_plan in {"pack_1", "pack_3"} or credits_meta > 0:
+        credits_to_add = credits_meta or int((PLANS.get(wa_plan) or {}).get("credits") or 1)
+        user_id = client_ref or storage.lookup_user_id_by_email(email)
+        if not user_id:
+            raise WebhookError(
+                400,
+                "Bid Pack checkout completed without a linked user_id or matching signed-in email.",
+            )
+        grant = storage.grant_user_paid_credits(
+            user_id,
+            credits_to_add,
+            session_id=session_id,
+            stripe_customer_id=customer_id,
+        )
+        return {
+            "provisioned": bool(grant.get("credited")),
+            "kind": "bid_pack",
+            "plan": wa_plan or f"pack_{credits_to_add}",
+            "credits_added": credits_to_add if grant.get("credited") else 0,
+            "paid_credits": grant.get("paid_credits", 0),
+            "user_id": user_id,
+            "customer": customer_id,
+            "email": email,
+        }
+
     if not customer_id:
         raise WebhookError(400, "checkout.session.completed without a customer id.")
 
-    # Idempotency: an existing active row for this customer keeps its key.
+    # Idempotency: an existing active row for this customer keeps its key
+    # (but still backfills user_id when newly provided).
     params = urlencode({"stripe_customer_id": f"eq.{customer_id}", "select": "key_hash,status", "limit": "1"})
     existing = _supabase_request("GET", f"wa_subscribers?{params}") or []
     if existing and existing[0].get("status") == "active":
+        if client_ref:
+            _write_subscriber_row("PATCH", f"wa_subscribers?{urlencode({'stripe_customer_id': f'eq.{customer_id}'})}", {"user_id": client_ref})
         return {"provisioned": False, "reason": "already active", "customer": customer_id}
 
     api_key = generate_api_key()
     key_hash = hash_api_key(api_key)
-    row = {
+    row: dict[str, Any] = {
         "key_hash": key_hash,
         "stripe_customer_id": customer_id,
         "email": email,
@@ -174,11 +387,13 @@ def handle_checkout_completed(event_object: dict[str, Any]) -> dict[str, Any]:
         "plan": "pro",
         "pending_key": api_key,
     }
+    if client_ref:
+        row["user_id"] = client_ref
     if existing:
         params = urlencode({"stripe_customer_id": f"eq.{customer_id}"})
-        _supabase_request("PATCH", f"wa_subscribers?{params}", row)
+        _write_subscriber_row("PATCH", f"wa_subscribers?{params}", row)
     else:
-        _supabase_request("POST", "wa_subscribers", [row])
+        _write_subscriber_row("POST", "wa_subscribers", [row])
 
     metadata_written = _stripe_set_customer_metadata(
         customer_id, {"wa_key_hash": key_hash, "wa_api_key": api_key}
@@ -188,6 +403,7 @@ def handle_checkout_completed(event_object: dict[str, Any]) -> dict[str, Any]:
         "provisioned": True,
         "customer": customer_id,
         "email": email,
+        "user_id": client_ref,
         "key_in_stripe_metadata": metadata_written,
     }
 
