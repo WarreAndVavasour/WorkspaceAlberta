@@ -317,6 +317,11 @@ async def bid_no_bid_scorecard(args: dict) -> str:
                 f"{detail}. Add a Canadian or Alberta location for a supplier read.",
             ))
 
+    # 6. Historical contract awards teaser (zero-network local cache check)
+    from procurement_core import awards as awards_mod
+
+    checks.append(("Historical awards", "info", awards_mod.quick_cached_award_teaser(opportunity)))
+
     # Verdict
     net = positives - negatives
     if any(status == "closed" for _, status, _ in checks):

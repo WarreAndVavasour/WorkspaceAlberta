@@ -579,6 +579,12 @@ async def pricing_page(request: Request) -> HTMLResponse:
     return HTMLResponse(web_pages.pricing_page())
 
 
+@app.get("/features", include_in_schema=False)
+async def features_page(request: Request) -> HTMLResponse:
+    telemetry.capture("features_page_viewed", caller=_rest_caller(request, "web"), properties={"source": "direct"})
+    return HTMLResponse(web_pages.features_page(_public_mcp_url(request)))
+
+
 @app.api_route("/terms", methods=["GET", "HEAD"], include_in_schema=False)
 async def terms_page() -> RedirectResponse:
     return RedirectResponse("/pricing#terms", status_code=302)
@@ -1050,6 +1056,12 @@ async def industrial_programs(request: Request, arguments: dict[str, Any] | None
     return await run_tool("match_industrial_support_programs", arguments, _auth(request), _rest_caller(request))
 
 
+@app.post("/awards/history", tags=["analysis"])
+async def awards_history(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
+    """Look up historical contract awards, past winners, award values, and incumbent signals."""
+    return await run_tool("get_buyer_award_history", arguments, _auth(request), _rest_caller(request))
+
+
 @app.post("/bid-room/process", tags=["bid-room"])
 async def bid_room_process(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> dict[str, Any]:
     """Process a bid room in E2B and analyze it with Cohere inside the sandbox.
@@ -1185,6 +1197,10 @@ _DOCS_EXAMPLES = {
     "/industrial-programs": (
         "match_industrial_support_programs",
         {"description": "Steel fabrication and welding", "location": "Edmonton, Alberta"},
+    ),
+    "/awards/history": (
+        "get_buyer_award_history",
+        {"buyer": "Alberta Transportation", "keywords": "bridge concrete", "limit": 10},
     ),
     "/profile": ("set_business_profile", {"company_name": "Example Concrete Ltd", **_EXAMPLE_PROFILE}),
 }

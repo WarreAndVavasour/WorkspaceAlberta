@@ -2425,6 +2425,7 @@ TOOL_NAMES = (
     "list_watchlist",
     "unwatch_opportunity",
     "bid_no_bid_scorecard",
+    "get_buyer_award_history",
     "submit_feedback",
 )
 
@@ -2756,6 +2757,16 @@ async def call_tool_text_and_structured(
         if "artifact" in envelope:
             return envelope["markdown"], envelope["artifact"]
         return envelope["markdown"], {key: value for key, value in envelope.items() if key != "markdown"}
+
+    if name == "get_buyer_award_history":
+        def _run_awards() -> tuple[str, dict[str, Any] | None]:
+            from procurement_core.awards import get_buyer_award_history_result
+            return asyncio.run(get_buyer_award_history_result(args))
+
+        try:
+            return await asyncio.to_thread(_run_awards)
+        except Exception as exc:
+            return f"Error: {exc}", None
 
     if name not in STRUCTURED_TOOLS:
         return await call_tool_text(name, args), None
@@ -4004,11 +4015,21 @@ async def analyze_contract_with_cohere(args: dict) -> str:
             business_context = "No saved business profile or extra business context was provided."
     question = str(args.get("question") or "").strip()
 
+    from procurement_core import awards as awards_mod, extensions as extensions_mod
     from procurement_core.tender_corpus import inventory_markdown
+
+    award_context = ""
+    try:
+        opp, _ = extensions_mod._find_opportunity(reference)
+        if opp:
+            award_context = awards_mod.build_bid_room_award_context(opp)
+    except Exception:  # noqa: BLE001
+        award_context = ""
 
     referenced = ", ".join(corpus["referenced"]) or "none found"
     user = (
         f"Business context:\n{business_context}\n\n"
+        + (f"Historical comparable contract awards (public market context):\n{award_context}\n\n" if award_context else "")
         + (f"The owner's question (answer it in its own section at the end):\n{question}\n\n" if question else "")
         + "Answer with these sections, in this order, adapting what goes in each to this tender:\n"
         + ANALYSIS_SECTIONS
@@ -4071,4 +4092,5 @@ from procurement_core.extensions import (  # noqa: E402
     unwatch_opportunity,
     watch_opportunity,
 )
+from procurement_core.awards import get_buyer_award_history  # noqa: E402
 from procurement_core.feedback import submit_feedback  # noqa: E402

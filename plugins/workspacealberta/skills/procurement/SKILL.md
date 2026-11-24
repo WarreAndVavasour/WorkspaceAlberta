@@ -63,8 +63,8 @@ of winning or a procurement eligibility decision.
 
 Public discovery works without sign-in. Saved profiles, watchlists (up to 5
 tenders free; unlimited on Pro), and `bid_no_bid_scorecard` require free OAuth
-sign-in. `process_bid_room`, `classify_tender`, and
-`analyze_contract_with_cohere` require sign-in and include 2 free tender review
+sign-in. `process_bid_room`, `classify_tender`, `analyze_contract_with_cohere`,
+and `get_buyer_award_history` require sign-in and include 2 free tender review
 credits per account, after which they require a Bid Pack credit or an active Pro
 subscription. Signing in does not purchase a subscription. Let the host's OAuth
 flow collect credentials; never ask for secrets in conversation, tool arguments,

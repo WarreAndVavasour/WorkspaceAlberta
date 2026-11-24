@@ -97,7 +97,7 @@ COPY_SCRIPT = """
 </script>
 """
 
-_NAV = (("/", "Home"), ("/try", "Try a search"), ("/pricing", "Pricing"), ("/support", "Help"))
+_NAV = (("/", "Home"), ("/try", "Try a search"), ("/features", "Features"), ("/pricing", "Pricing"), ("/support", "Help"))
 
 
 def page(title: str, body: str, *, current: str = "", script: str = "", description: str = "") -> str:
@@ -115,7 +115,7 @@ def page(title: str, body: str, *, current: str = "", script: str = "", descript
         f'<header class="top"><a class="brand" href="/">workspaceAlberta</a><nav aria-label="Main">{nav}</nav></header>'
         f"<main>{body}</main>"
         '<footer><nav aria-label="Footer">'
-        '<a href="/pricing">Pricing &amp; terms</a><a href="/privacy">Privacy</a><a href="/support">Help</a>'
+        '<a href="/features">Features</a><a href="/pricing">Pricing &amp; terms</a><a href="/privacy">Privacy</a><a href="/support">Help</a>'
         '<a href="/blog">News</a><a href="/developers">For developers</a>'
         f'<a href="{COMPANY_URL}">Warre &amp; Vavasour</a></nav>'
         "<p>workspaceAlberta is operated by Warre &amp; Vavasour Ltd, Alberta, Canada. "
@@ -140,8 +140,9 @@ Ask in plain words, for example: <em>“Find Alberta construction tenders closin
 <p>Searching is free. You do not need an account.</p>
 <div class="actions">
   <a class="btn primary" href="/try">Try a search now</a>
+  <a class="btn secondary" href="/features">See all tools &amp; uses</a>
   <a class="btn secondary" href="#connect">Add it to my AI app</a>
-  <a class="btn secondary" href="/pricing">See Pro pricing</a>
+  <a class="btn secondary" href="/pricing">See pricing</a>
 </div>
 
 <h2 id="connect">Add it to your AI app (2 minutes)</h2>
@@ -251,6 +252,7 @@ def pricing_page() -> str:
 <div class="card"><h3>Pro Unlimited</h3><p class="price">{PRO_PRICE}</p>
 <p class="muted">Billed monthly in CAD. Cancel any time in one click.</p>
 <ul><li>Everything in Free</li>
+<li><strong>Historical Contract Awards &amp; Incumbent Radar</strong> (<code>get_buyer_award_history</code>)</li>
 <li><strong>Unlimited watchlist</strong> tracking</li>
 <li><strong>Unlimited Requirements Boards</strong> from tender PDFs</li>
 <li><strong>Unlimited E2B Bid Rooms</strong> &amp; Cohere Command A+ reviews</li>
@@ -405,6 +407,96 @@ def billing_success_page(plan: str = "pro") -> str:
 <p class="muted">Need help or paid with a different accounting email? Email <a href="mailto:{SUPPORT_EMAIL}">{SUPPORT_EMAIL}</a> with your receipt and we will link your account right away.</p>
 """
     return page(f"{headline} — workspaceAlberta", body)
+
+
+def features_page(mcp_url: str) -> str:
+    body = f"""
+<h1>Tools &amp; practical uses for Canadian bidders</h1>
+<p class="lead">Everything workspaceAlberta adds to Claude, ChatGPT, Cursor, or Claude Code — from free daily tender discovery to historical contract awards, Requirements Boards, and isolated bid-room reviews.</p>
+<div class="actions">
+  <a class="btn primary" href="/#connect">Connect in 2 minutes</a>
+  <a class="btn secondary" href="/try">Try a free search</a>
+  <a class="btn secondary" href="/pricing">Free, Bid Packs &amp; Pro</a>
+</div>
+
+<h2>New: Historical Contract Awards &amp; Incumbent Radar</h2>
+<div class="card">
+  <h3><code>get_buyer_award_history</code> <span class="muted" style="font-weight:400;font-size:0.9rem;">· Included in 2 free reviews, Bid Packs &amp; Pro</span></h3>
+  <p>Before spending an estimator's week on an RFP, check who actually won this buyer's past similar contracts across <strong>CanadaBuys open data</strong> and <strong>Alberta Purchasing Connection</strong>.</p>
+  <ul>
+    <li><strong>Pass any live tender reference</strong> (e.g. <code>AB-2026-06788</code> or a federal notice) and it automatically resolves the buyer, UNSPSC/GSIN codes, and scope keywords.</li>
+    <li><strong>Pricing sanity check:</strong> see disclosed contract award values — minimum, median, and maximum in CAD.</li>
+    <li><strong>Incumbent detection:</strong> flags repeat winners who took multiple recent awards from the same buyer.</li>
+    <li><strong>Competition density (Alberta APC):</strong> see how many interested suppliers downloaded similar awarded postings.</li>
+  </ul>
+  <p class="muted" style="margin-bottom:0;"><strong>Try asking Claude:</strong> <em>“Check historical awards for AB-2026-06788 — who won similar work for this buyer, and what were the award values?”</em></p>
+</div>
+
+<h2>Turn tender PDFs into action (2 free runs when you sign in)</h2>
+<div class="plans">
+  <div class="card">
+    <h3>Requirements Board (<code>classify_tender</code>)</h3>
+    <p>Splits tender PDFs into clauses, classifies every bidder obligation, and generates an interactive HTML Requirements Board with <strong>weeks / days / minutes lead times</strong>, mandatory flags, and page-cited evidence quotes.</p>
+    <p class="muted"><strong>Ask:</strong> <em>“Classify tender PW-26-00412 and build my requirements board.”</em></p>
+  </div>
+  <div class="card">
+    <h3>Sandboxed Bid Room (<code>process_bid_room</code>)</h3>
+    <p>Opens tender PDFs, DOCX, XLSX, and ZIP attachments inside an isolated E2B sandbox, runs Cohere Parse v5.0 on tables and forms, and returns a structured fit score, risks, missing info, and questions to ask the buyer.</p>
+    <p class="muted"><strong>Ask:</strong> <em>“Run a bid room review on this tender against my saved business profile.”</em></p>
+  </div>
+  <div class="card">
+    <h3>Owner Explainer (<code>analyze_contract_with_cohere</code>)</h3>
+    <p>Reads the entire tender package (amendments first, enriched with comparable historical awards) with Cohere Command A+ and explains who can bid, how offers are scored, and every mandatory submission item.</p>
+    <p class="muted"><strong>Ask:</strong> <em>“Explain this federal tender in plain English — what are the deal-breakers?”</em></p>
+  </div>
+</div>
+
+<h2>Free habit tools (sign in free — C$0, no credit card)</h2>
+<div class="plans">
+  <div class="card">
+    <h3>Bid/No-Bid Scorecard (<code>bid_no_bid_scorecard</code>)</h3>
+    <p>Fast deterministic <strong>GO / CAUTION / LEAN NO-BID</strong> checklist covering profile fit, closing runway, region match, Buy Canadian flags, and a historical-awards teaser — no model wait.</p>
+  </div>
+  <div class="card">
+    <h3>Watchlist (<code>watch_opportunity</code>, <code>list_watchlist</code>)</h3>
+    <p>Save up to <strong>5 tenders free</strong> (unlimited on Pro) with your own estimator notes and closing-date countdowns in Alberta time.</p>
+  </div>
+  <div class="card">
+    <h3>Saved Profile (<code>set_business_profile</code>)</h3>
+    <p>Describe your shop once — trades, certifications, region, products — so every brief, match, and scorecard ranks against what you actually deliver.</p>
+  </div>
+</div>
+
+<h2>Public discovery (free, no account required)</h2>
+<div class="card">
+  <ul>
+    <li><strong>Unified Search &amp; Supply-Fit Ranking (<code>search_opportunities</code>, <code>find_matching_opportunities</code>):</strong> searches federal CanadaBuys and Alberta APC together using commodity codes, TypeSafe Jev supply-fit classification, and Buy Canadian flags.</li>
+    <li><strong>Morning Bid Brief (<code>daily_bid_brief</code>):</strong> open market counts, best fits for your shop, soonest deadlines, and one concrete next action.</li>
+    <li><strong>Closing Deadlines &amp; Full Dossiers (<code>list_deadlines</code>, <code>get_opportunity_details</code>):</strong> exact closing times in Alberta time with direct links back to official postings.</li>
+    <li><strong>Industrial &amp; Tariff Support Catalog (<code>match_industrial_support_programs</code>):</strong> read-only guide to federal &amp; prairie industrial programs (including PrairiesCan, BDC, ISED, NRCan), with Ontario-only streams clearly labeled.</li>
+  </ul>
+</div>
+
+<h2>Connect in 2 minutes</h2>
+<p>Paste this address into Claude (<strong>Customize → Connectors</strong>), ChatGPT, Cursor, or Claude Code:</p>
+{_url_box(mcp_url)}
+<div class="actions">
+  <a class="btn primary" href="/pricing">See Free, Bid Packs (C$19) &amp; Pro (C$85/mo)</a>
+  <a class="btn secondary" href="/developers">Developer &amp; REST API docs</a>
+</div>
+
+<section lang="fr" aria-labelledby="fr-features">
+  <h2 id="fr-features">Nouveautés en français</h2>
+  <p>workspaceAlberta ajoute l'historique des contrats attribués (<code>get_buyer_award_history</code>) sur AchatsCanada et Alberta Purchasing Connection pour voir les fournisseurs gagnants, les montants médians et les signaux de titulaires sortants avant de soumissionner. La connexion gratuite inclut désormais la liste de suivi (jusqu'à 5 avis), la grille « soumissionner ou non » et <strong>2 analyses gratuites</strong> (tableau des exigences, salle de soumission ou historique d'attribution).</p>
+</section>
+"""
+    return page(
+        "Features & new tools — workspaceAlberta",
+        body,
+        current="/features",
+        script=COPY_SCRIPT,
+        description="Explore workspaceAlberta's procurement tools: historical contract awards & incumbent radar, interactive Requirements Boards, E2B Bid Rooms, free watchlists, and bid/no-bid scorecards.",
+    )
 
 
 def billing_portal_page(*, error: str = "") -> str:

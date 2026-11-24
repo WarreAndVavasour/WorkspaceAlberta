@@ -376,6 +376,129 @@ class HttpGateIntegrationTest(unittest.TestCase):
         self.assertEqual(res.status_code, 303)
         self.assertEqual(res.headers["location"], "https://billing.stripe.com/session/live_1")
 
+    def test_features_page_serves_new_tools_and_nav_link(self):
+        home = self.client.get("/")
+        self.assertEqual(home.status_code, 200)
+        self.assertIn('href="/features"', home.text)
+        features = self.client.get("/features")
+        self.assertEqual(features.status_code, 200)
+        for expected in (
+            "get_buyer_award_history",
+            "classify_tender",
+            "process_bid_room",
+            "bid_no_bid_scorecard",
+            "2 free",
+            "/pricing",
+        ):
+            self.assertIn(expected, features.text)
+
+    def test_awards_history_route_is_pro_gated(self):
+        env = {"SUPABASE_URL": "https://x.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "k"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            res = self.client.post("/awards/history", json={"buyer": "PSPC"})
+        self.assertEqual(res.status_code, 401)
+        self.assertIn("resource_metadata=", res.headers.get("www-authenticate", ""))
+
+
+class AwardsIntelligenceTest(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        from procurement_core import service
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self._old_data_dir = service.DATA_DIR
+        service.DATA_DIR = Path(self._tmp.name)
+        self.fixture_csv = Path(self._tmp.name) / "awards.csv"
+        self.fixture_csv.write_text(
+            "title-titre-eng,referenceNumber-numeroReference,solicitationNumber-numeroSollicitation,"
+            "contractAwardDate-dateAttributionContrat,contractAmount-montantContrat,totalContractValue-valeurTotaleContrat,"
+            "contractCurrency-contratMonnaie,supplierLegalName-nomLegalFournisseur-eng,supplierAddressCity-fournisseurAdresseVille-eng,"
+            "supplierAddressProvince-fournisseurAdresseProvince-eng,contractingEntityName-nomEntitContractante-eng,"
+            "endUserEntitiesName-nomEntitesUtilisateurFinal-eng,unspsc,unspscDescription-eng,gsin-nibs,"
+            "gsinDescription-nibsDescription-eng,regionsOfDelivery-regionsLivraison-eng,procurementMethod-methodeApprovisionnement-eng,"
+            "awardDescription-descriptionAttribution-eng\n"
+            "Structural Steel Bridge Repair,PW-26-001,SOL-1,2026-06-15,420000.00,0,CAD,Prairie Ironworks Ltd.,Red Deer,Alberta,"
+            "Public Services and Procurement Canada,Transport Canada,72151900,Structural steel work,5139,Steel,Alberta,Open bidding,Bridge girders\n"
+            "Structural Steel Overpass Fabrication,PW-26-002,SOL-2,2026-08-20,280000.00,0,CAD,Prairie Ironworks Ltd.,Red Deer,Alberta,"
+            "Public Services and Procurement Canada,Transport Canada,72151900,Structural steel work,5139,Steel,Alberta,Open bidding,Steel fabrication\n"
+            "Structural Steel Guardrails,PW-26-003,SOL-3,2026-09-10,600000.00,0,CAD,Northern Fabricators Inc.,Edmonton,Alberta,"
+            "Public Services and Procurement Canada,Transport Canada,72151900,Structural steel work,5139,Steel,Alberta,Open bidding,Guardrails\n",
+            encoding="utf-8",
+        )
+
+    def tearDown(self):
+        from procurement_core import service
+
+        service.DATA_DIR = self._old_data_dir
+        self._tmp.cleanup()
+
+    def test_fiscal_years_roll_over_in_april(self):
+        from datetime import datetime, timezone
+        from procurement_core import awards
+
+        self.assertEqual(awards.current_fiscal_years(datetime(2026, 11, 24, tzinfo=timezone.utc)), ["2026-2027", "2025-2026"])
+        self.assertEqual(awards.current_fiscal_years(datetime(2026, 2, 15, tzinfo=timezone.utc)), ["2025-2026", "2024-2025"])
+
+    def test_canadabuys_sqlite_ingest_query_incumbent_and_structured_tool(self):
+        import asyncio
+        from procurement_core import awards, service
+
+        with mock.patch.dict(os.environ, {"PROCUREMENT_FIXTURE_DIR": str(self.fixture_csv.parent)}, clear=False):
+            text, structured = asyncio.run(
+                service.call_tool_text_and_structured(
+                    "get_buyer_award_history",
+                    {"buyer": "Public Services", "keywords": "steel", "source": "federal", "limit": 10},
+                )
+            )
+        self.assertEqual(structured["kind"], "award_history")
+        self.assertEqual(structured["count"], 3)
+        self.assertEqual(structured["summary"]["min_cad"], 280000.0)
+        self.assertEqual(structured["summary"]["median_cad"], 420000.0)
+        self.assertEqual(structured["summary"]["max_cad"], 600000.0)
+        self.assertEqual(structured["summary"]["incumbents"][0]["supplier"], "Prairie Ironworks Ltd.")
+        self.assertEqual(structured["summary"]["incumbents"][0]["wins"], 2)
+        self.assertIn("Prairie Ironworks Ltd.", text)
+        self.assertIn("Potential incumbent(s)", text)
+
+        # Quick teaser for free scorecard reads from the local awards.db with zero network calls.
+        teaser = awards.quick_cached_award_teaser(
+            {"buyer": "Public Services and Procurement Canada", "title": "Structural Steel Truss", "unspsc": "72151900"}
+        )
+        self.assertIn("3 comparable historical award(s)", teaser)
+        self.assertIn("repeat winner detected", teaser)
+
+    def test_apc_award_extraction_includes_winner_value_and_competition_count(self):
+        from procurement_core import awards
+
+        detail = {
+            "opportunity": {
+                "referenceNumber": "AB-2026-07074",
+                "shortTitle": "FIREWOOD STORAGE SHED REPLACEMENT",
+                "contractingOrganizationName": "Alberta Forestry and Parks",
+                "actualValue": 35643.58,
+                "awardedOnUtc": "2026-11-13T20:33:33Z",
+            },
+            "awards": [
+                {
+                    "alternativeSupplierDisplayName": "Powerband Projects Inc.",
+                    "awardDate": "2026-11-09T00:00:00",
+                    "amount": 35643.58,
+                    "address": {"city": "Red Deer", "stateProvince": "CA-AB"},
+                }
+            ],
+            "interestedSuppliers": [{"id": str(i)} for i in range(42)],
+            "bidders": [],
+        }
+        rows = awards._extract_apc_award_record(detail, {})
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["supplier"], "Powerband Projects Inc.")
+        self.assertEqual(rows[0]["supplier_location"], "Red Deer, CA-AB")
+        self.assertEqual(rows[0]["amount"], 35643.58)
+        self.assertEqual(rows[0]["interested_suppliers"], 42)
+        summary = awards.summarize_awards(rows)
+        self.assertEqual(summary["avg_interested_suppliers"], 42.0)
+
 
 class Phase1CreditsAndWatchlistTest(unittest.TestCase):
     def setUp(self):

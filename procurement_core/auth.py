@@ -55,6 +55,7 @@ PRO_TOOLS = frozenset(
         "process_bid_room",
         "classify_tender",
         "analyze_contract_with_cohere",
+        "get_buyer_award_history",
     }
 )
 

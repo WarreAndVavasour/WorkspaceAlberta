@@ -11,10 +11,10 @@ when a protected tool returns HTTP 401. The 401 body and tool errors list the st
 and the checkout link. This server never needs third-party API keys from the user.
 set_business_profile, get_my_profile, watch_opportunity (up to 5 tenders free; unlimited on Pro),
 list_watchlist, unwatch_opportunity, and bid_no_bid_scorecard require sign-in only (free).
-process_bid_room, classify_tender, and analyze_contract_with_cohere require sign-in and include
-2 free tender review credits per account, after which they require a Bid Pack credit or an active
-Pro subscription. Other tools are public; anonymous matching uses an inline profile.
-Signing in never starts a paid subscription.
+process_bid_room, classify_tender, analyze_contract_with_cohere, and get_buyer_award_history
+require sign-in and include 2 free tender review credits per account, after which they require a
+Bid Pack credit or an active Pro subscription. Other tools are public; anonymous matching uses an
+inline profile. Signing in never starts a paid subscription.
 Use an inline profile for anonymous hosted matching. Do not invent certifications,
 bonding, capacity or business facts. Saving a profile and changing a watchlist are
 persistent actions: do them only when requested. Respect the caller's tenant and

@@ -837,6 +837,61 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
             }
         ),
         Tool(
+            name="get_buyer_award_history",
+            title="Check historical contract awards",
+            description=(
+                "Look up historical contract awards across CanadaBuys open data and Alberta Purchasing Connection "
+                "to see who won a buyer's past similar tenders, disclosed award values (min/median/max CAD), "
+                "repeat-winner incumbent concentration, and APC interested-supplier counts. Pass a live tender "
+                "`reference` to auto-match its buyer and scope, or search by `buyer`, `keywords`, `unspsc`, "
+                "`supplier`, or `province`. No LLM call. Historical awards inform pricing and incumbent risk; "
+                "they do not predict future bids or guarantee eligibility."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "description": "Optional live CanadaBuys or Alberta APC reference number to auto-resolve buyer, UNSPSC, and keywords"
+                    },
+                    "buyer": {
+                        "type": "string",
+                        "description": "Buyer or contracting entity name (e.g. 'Public Services and Procurement Canada', 'Alberta Transportation')"
+                    },
+                    "keywords": {
+                        "type": "string",
+                        "description": "Scope keywords (e.g. 'structural steel', 'janitorial', 'software')"
+                    },
+                    "unspsc": {
+                        "type": "string",
+                        "description": "Optional UNSPSC code or 4-digit prefix"
+                    },
+                    "gsin": {
+                        "type": "string",
+                        "description": "Optional CanadaBuys GSIN code"
+                    },
+                    "supplier": {
+                        "type": "string",
+                        "description": "Optional winning supplier / competitor name to inspect"
+                    },
+                    "province": {
+                        "type": "string",
+                        "description": "Optional province filter (e.g. 'Alberta')"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "all, federal, or alberta",
+                        "default": "all"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum comparable awards to return (default 15, max 40)",
+                        "default": 15
+                    }
+                }
+            }
+        ),
+        Tool(
             name="submit_feedback",
             title="Report a gap or bug",
             description=(

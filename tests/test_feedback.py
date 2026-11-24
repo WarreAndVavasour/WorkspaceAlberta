@@ -259,7 +259,7 @@ class SubmitFeedbackTest(unittest.TestCase):
 
         listed = {tool.name: tool for tool in get_mcp_tools()}
         self.assertIn("submit_feedback", listed)
-        self.assertLessEqual(len(listed), 17)
+        self.assertLessEqual(len(listed), 18)
         self.assertIn("submit_feedback", TOOL_NAMES)
         self.assertNotIn("submit_feedback", PRO_TOOLS | SIGN_IN_TOOLS)
         tool = listed["submit_feedback"]

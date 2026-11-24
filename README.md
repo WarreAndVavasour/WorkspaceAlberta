@@ -266,7 +266,8 @@ The core tools are:
 - `process_bid_room` for live E2B attachment processing: Cohere Parse turns tender PDFs and images into markdown, then Command A+ reviews the evidence
 - `classify_tender` for a bidder-requirement checklist: tender PDFs are split into clauses, each clause and page is classified with TypeSafe Jev, and the results merge into one requirement per tag with connector, lead time, pages and evidence (see [`pipelines/requirement_classifier/`](pipelines/requirement_classifier/README.md))
 - `watch_opportunity` / `list_watchlist` for a persistent tracking list with closing-date countdowns
-- `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference
+- `bid_no_bid_scorecard` for a fast deterministic go/caution/no-go read on any reference (including a historical-awards teaser)
+- `get_buyer_award_history` for historical contract awards across CanadaBuys open data and Alberta APC: past winners, disclosed award values (min/median/max CAD), incumbent repeat-winner detection, and APC interested-supplier competition counts
 - `submit_feedback` when an agent hits a bug, a missing capability, or a confusing tool. A person reviews it. It does not open a pull request.
 - `match_industrial_support_programs` for a read-only industrial and tariff support catalog, with Ontario-only streams labeled for Alberta firms
 
