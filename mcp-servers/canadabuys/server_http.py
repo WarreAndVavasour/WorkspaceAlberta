@@ -48,7 +48,7 @@ from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from mcp.server import Server, ServerRequestContext
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
@@ -59,7 +59,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from procurement_core import identity, oauth, storage, telemetry, usage  # noqa: E402
+from procurement_core import blog, discovery, identity, oauth, storage, telemetry, trade_pages, usage  # noqa: E402
 from procurement_core import http_hardening  # noqa: E402
 from procurement_core.feedback import rate_key_for, rate_limit_scope  # noqa: E402
 from procurement_core.auth import (  # noqa: E402
@@ -823,71 +823,14 @@ def _base_url(request: Request) -> str:
     return str(request.base_url).rstrip("/")
 
 
-def _agent_card(base: str) -> dict[str, Any]:
-    """Build an A2A agent card from the live tool list.
+def _public_origin() -> str:
+    """Canonical public origin (never the internal Cloud Run *.run.app host)."""
+    return oauth.public_mcp_resource().removesuffix("/mcp").rstrip("/")
 
-    Skills mirror the MCP tools exactly, so the card can never drift from
-    what the server actually exposes. Pro tools are tagged, not hidden —
-    anonymous callers can still use every free tool.
-    """
-    skills = []
-    for tool in get_mcp_tools():
-        tags = ["procurement", "canada"]
-        if "alberta" in tool.name:
-            tags.append("alberta")
-        if tool.name in PRO_TOOLS:
-            tags.append("pro")
-        elif tool.name in SIGN_IN_TOOLS:
-            tags.append("sign-in")
-        description = (tool.description or "").strip().splitlines()[0] if tool.description else ""
-        skills.append(
-            {
-                "id": tool.name,
-                "name": tool.name.replace("_", " ").title(),
-                "description": description[:300],
-                "tags": tags,
-            }
-        )
-    return {
-        "name": "WorkspaceAlberta Procurement",
-        "description": (
-            "Canadian procurement intelligence over MCP: search CanadaBuys and "
-            "Alberta Purchasing Connection tenders, list closing deadlines, rank "
-            "opportunities against a business profile, and generate daily bid briefs."
-        ),
-        "url": f"{base}/mcp",
-        "provider": {"organization": "Warre and Vavasour", "url": "https://warreandvavasour.com"},
-        "version": app.version,
-        "documentationUrl": REPO_URL,
-        "capabilities": {
-            "streaming": False,
-            "pushNotifications": False,
-            "stateTransitionHistory": False,
-        },
-        # Legacy A2A drafts read `authentication`; current drafts read
-        # `securitySchemes`/`security`. Serve both so any crawler version
-        # understands the Pro-tool gate.
-        "authentication": {
-            "schemes": ["Bearer"],
-            "credentials": (
-                "Public tools work anonymously. Saved profiles require free OAuth sign-in. "
-                "Pro tools additionally require an active subscription. "
-                "OAuth access tokens and legacy wa_live_ keys use Authorization: Bearer."
-            ),
-        },
-        "securitySchemes": {
-            "bearer": {
-                "type": "http",
-                "scheme": "bearer",
-                "description": "OAuth access token or legacy subscriber key for protected tools.",
-            }
-        },
-        "security": [{}, {"bearer": []}],
-        "defaultInputModes": ["application/json"],
-        "defaultOutputModes": ["text/markdown"],
-        "skills": skills,
-        "x-workspacealberta": workflow_contract(),
-    }
+
+def _agent_card(base: str) -> dict[str, Any]:
+    """Build an enriched A2A agent card from the live tool list."""
+    return discovery.build_agent_card(base, version=app.version, tools=get_mcp_tools())
 
 
 @app.get("/.well-known/agent.json", include_in_schema=False)
@@ -896,7 +839,7 @@ def _agent_card(base: str) -> dict[str, Any]:
 @app.get("/mcp/.well-known/agent-card.json", include_in_schema=False)
 async def agent_card(request: Request) -> JSONResponse:
     """A2A agent card at every location crawlers have asked for."""
-    return JSONResponse(_agent_card(_base_url(request)))
+    return JSONResponse(_agent_card(_public_origin()), headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.get("/agent/authenticatedExtendedCard", include_in_schema=False)
@@ -917,7 +860,7 @@ async def authenticated_extended_card(request: Request) -> JSONResponse:
             status_code=exc.status_code,
             headers={"WWW-Authenticate": "Bearer"},
         )
-    card = _agent_card(_base_url(request))
+    card = _agent_card(_public_origin())
     card["authenticated"] = True
     card["proTools"] = sorted(PRO_TOOLS)
     return JSONResponse(card)
@@ -943,25 +886,106 @@ async def oauth_authorization_server() -> JSONResponse:
 
 @app.get("/.well-known/mcp.json", include_in_schema=False)
 async def mcp_well_known(request: Request) -> JSONResponse:
-    """MCP server-discovery document mirroring the registry server.json.
-
-    Values duplicate the repo-root server.json on purpose: the Docker image
-    only ships procurement_core and mcp-servers/canadabuys, so the registry
-    file is not readable at runtime. Keep both in sync when bumping.
-    """
-    base = _base_url(request)
+    """MCP server-discovery document mirroring the Official MCP Registry server.json."""
     return JSONResponse(
-        {
-            "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-            "name": "io.github.HarleyCoops/workspace-alberta",
-            "description": (
-                "workspaceAlberta reads every CanadaBuys and Alberta "
-                "Purchasing Connection notice and ranks them for any business."
-            ),
-            "version": app.version,
-            "repository": {"url": REPO_URL, "source": "github"},
-            "remotes": [{"type": "streamable-http", "url": f"{base}/mcp"}],
-        }
+        discovery.build_mcp_well_known(_public_origin(), version=app.version),
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/.well-known/mcp/server-card.json", include_in_schema=False)
+async def mcp_server_card(request: Request) -> JSONResponse:
+    """Static MCP Server Card for Smithery, MCPfinder, and static registry crawlers."""
+    return JSONResponse(
+        discovery.build_mcp_server_card(_public_origin(), version=app.version, tools=get_mcp_tools()),
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/llms.txt", include_in_schema=False)
+async def llms_txt() -> PlainTextResponse:
+    """Concise llmstxt.org Markdown map for AI search engines and autonomous agents."""
+    return PlainTextResponse(
+        discovery.build_llms_txt(_public_origin()),
+        media_type="text/markdown; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/llms-full.txt", include_in_schema=False)
+async def llms_full_txt() -> PlainTextResponse:
+    """Full machine-readable reference with every live MCP tool and REST quick-start."""
+    return PlainTextResponse(
+        discovery.build_llms_full_txt(_public_origin(), version=app.version, tools=get_mcp_tools()),
+        media_type="text/markdown; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt() -> PlainTextResponse:
+    """Search and AI-search crawler directives."""
+    return PlainTextResponse(
+        discovery.build_robots_txt(_public_origin()),
+        media_type="text/plain; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml() -> Response:
+    """Dynamic XML sitemap covering core pages, trade tender hubs, and blog posts."""
+    posts = blog.load_posts()
+    return Response(
+        discovery.build_sitemap_xml(_public_origin(), blog_posts=posts),
+        media_type="application/xml; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/tenders", include_in_schema=False)
+async def tenders_index_page() -> HTMLResponse:
+    """Public hub of live trade-specific Canadian government contract pages."""
+    return HTMLResponse(
+        trade_pages.render_trades_index_html(_public_origin()),
+        headers={"Cache-Control": "public, max-age=900"},
+    )
+
+
+@app.get("/tenders.md", include_in_schema=False)
+async def tenders_index_md() -> PlainTextResponse:
+    """Markdown index of live trade-specific Canadian government contract feeds."""
+    return PlainTextResponse(
+        trade_pages.render_trades_index_md(_public_origin()),
+        media_type="text/markdown; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=900"},
+    )
+
+
+@app.get("/tenders/{slug}.md", include_in_schema=False)
+async def tenders_trade_md(slug: str) -> PlainTextResponse:
+    """Markdown feed of live open tenders and warm historical awards for one trade."""
+    vertical = trade_pages.get_trade_vertical(slug)
+    if not vertical:
+        raise HTTPException(status_code=404, detail="Unknown trade category")
+    snapshot = await trade_pages.fetch_trade_snapshot(vertical, search_fn=call_tool_text_and_structured)
+    return PlainTextResponse(
+        trade_pages.render_trade_detail_md(vertical, snapshot, _public_origin()),
+        media_type="text/markdown; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=900"},
+    )
+
+
+@app.get("/tenders/{slug}", include_in_schema=False)
+async def tenders_trade_html(slug: str) -> HTMLResponse:
+    """Live, crawlable HTML page of open tenders and warm historical awards for one trade."""
+    vertical = trade_pages.get_trade_vertical(slug)
+    if not vertical:
+        raise HTTPException(status_code=404, detail="Unknown trade category")
+    snapshot = await trade_pages.fetch_trade_snapshot(vertical, search_fn=call_tool_text_and_structured)
+    return HTMLResponse(
+        trade_pages.render_trade_detail_html(vertical, snapshot, _public_origin()),
+        headers={"Cache-Control": "public, max-age=900"},
     )
 
 

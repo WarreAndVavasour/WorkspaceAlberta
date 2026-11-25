@@ -215,10 +215,10 @@ class ProcurementHttpAppTest(unittest.TestCase):
         self.assertIn("authorization_code", as_meta.json()["grant_types_supported"])
         self.assertEqual(as_meta.json()["code_challenge_methods_supported"], ["S256"])
 
-        # MCP discovery mirrors the registry entry.
+        # MCP discovery mirrors the official registry entry.
         mcp_meta = self.client.get("/.well-known/mcp.json")
         self.assertEqual(mcp_meta.status_code, 200)
-        self.assertEqual(mcp_meta.json()["name"], "io.github.HarleyCoops/workspace-alberta")
+        self.assertEqual(mcp_meta.json()["name"], "com.warreandvavasour/workspacealberta")
         self.assertTrue(mcp_meta.json()["remotes"][0]["url"].endswith("/mcp"))
 
 
@@ -340,3 +340,123 @@ class FirstRunQaPagesTest(unittest.TestCase):
 
         record = _opportunity_record({"reference": "cb-922-97825427", "source": "CanadaBuys"})
         self.assertEqual(record["url"], "https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/cb-922-97825427")
+
+
+class DiscoveryAndTradesBroadcastTest(unittest.TestCase):
+    """Agent-to-agent discovery, llms.txt, server card, sitemap, JSON-LD, and live trade pages."""
+
+    def setUp(self) -> None:
+        from fastapi.testclient import TestClient
+        import server_http
+        from procurement_core import trade_pages
+
+        trade_pages.clear_trade_cache()
+        self.server_http = server_http
+        self.client = TestClient(server_http.app)
+
+    def test_enriched_a2a_agent_card_has_trade_tags_examples_and_discovery_links(self) -> None:
+        card = self.client.get("/.well-known/agent.json").json()
+        self.assertIn("government contracts", card["description"].lower())
+        self.assertIn("x-discovery", card)
+        self.assertTrue(card["x-discovery"]["llms_txt"].endswith("/llms.txt"))
+        self.assertTrue(card["x-discovery"]["mcp_server_card"].endswith("/.well-known/mcp/server-card.json"))
+        by_id = {s["id"]: s for s in card["skills"]}
+        self.assertIn("get_buyer_award_history", by_id)
+        self.assertIn("government-contracts", by_id["search_opportunities"]["tags"])
+        self.assertIn("trades", by_id["search_opportunities"]["tags"])
+        self.assertTrue(by_id["search_opportunities"].get("examples"))
+        self.assertTrue(by_id["get_buyer_award_history"].get("examples"))
+
+    def test_mcp_server_card_lists_all_tools_and_oauth(self) -> None:
+        resp = self.client.get("/.well-known/mcp/server-card.json")
+        self.assertEqual(resp.status_code, 200)
+        card = resp.json()
+        self.assertEqual(card["serverInfo"]["name"], "com.warreandvavasour/workspacealberta")
+        self.assertEqual(card["transport"]["type"], "streamable-http")
+        self.assertTrue(card["transport"]["endpoint"].endswith("/mcp"))
+        self.assertFalse(card["authentication"]["required"])
+        self.assertTrue(card["authentication"]["partial"])
+        tool_names = {t["name"] for t in card["tools"]}
+        self.assertIn("search_opportunities", tool_names)
+        self.assertIn("get_buyer_award_history", tool_names)
+        self.assertIn("classify_tender", tool_names)
+
+    def test_llms_txt_and_llms_full_txt(self) -> None:
+        llms = self.client.get("/llms.txt")
+        self.assertEqual(llms.status_code, 200)
+        self.assertIn("text/markdown", llms.headers["content-type"])
+        self.assertIn("/mcp", llms.text)
+        self.assertIn("/tenders/welding-steel-alberta.md", llms.text)
+        self.assertIn("AI for trades", llms.text)
+
+        full = self.client.get("/llms-full.txt")
+        self.assertEqual(full.status_code, 200)
+        self.assertIn("### `get_buyer_award_history`", full.text)
+        self.assertIn("### `classify_tender`", full.text)
+
+    def test_robots_sitemap_and_jsonld(self) -> None:
+        robots = self.client.get("/robots.txt")
+        self.assertEqual(robots.status_code, 200)
+        self.assertIn("OAI-SearchBot", robots.text)
+        self.assertIn("Claude-SearchBot", robots.text)
+        self.assertIn("PerplexityBot", robots.text)
+        self.assertIn("Sitemap:", robots.text)
+
+        sm = self.client.get("/sitemap.xml")
+        self.assertEqual(sm.status_code, 200)
+        self.assertIn("application/xml", sm.headers["content-type"])
+        self.assertIn("/tenders/welding-steel-alberta", sm.text)
+        self.assertIn("/features", sm.text)
+        self.assertNotIn("run.app", sm.text)
+
+        home = self.client.get("/").text
+        self.assertIn('application/ld+json', home)
+        self.assertIn('"SoftwareApplication"', home)
+        self.assertIn('"WebAPI"', home)
+
+    def test_trade_index_and_detail_html_and_markdown(self) -> None:
+        idx_html = self.client.get("/tenders")
+        self.assertEqual(idx_html.status_code, 200)
+        self.assertIn("/tenders/welding-steel-alberta", idx_html.text)
+
+        idx_md = self.client.get("/tenders.md")
+        self.assertEqual(idx_md.status_code, 200)
+        self.assertIn("text/markdown", idx_md.headers["content-type"])
+        self.assertIn("welding-steel-alberta.md", idx_md.text)
+
+        fake_result = (
+            "ok",
+            {
+                "opportunities": [
+                    {
+                        "reference": "AB-2026-99999",
+                        "title": "Structural Steel Bridge Girder Welding",
+                        "buyer": "Alberta Transportation",
+                        "source": "Alberta APC",
+                        "closing_text": "2026-12-15 14:00 MST",
+                        "url": "https://purchasing.alberta.ca/posting/AB-2026-99999",
+                        "domestic_policies": ["buy_canadian_materials"],
+                    }
+                ],
+                "warnings": [],
+            },
+        )
+        from unittest import mock
+        with mock.patch.object(
+            self.server_http,
+            "call_tool_text_and_structured",
+            new=mock.AsyncMock(return_value=fake_result),
+        ):
+            detail_html = self.client.get("/tenders/welding-steel-alberta")
+            self.assertEqual(detail_html.status_code, 200)
+            self.assertIn("Structural Steel Bridge Girder Welding", detail_html.text)
+            self.assertIn("AB-2026-99999", detail_html.text)
+            self.assertIn('"CollectionPage"', detail_html.text)
+
+            detail_md = self.client.get("/tenders/welding-steel-alberta.md")
+            self.assertEqual(detail_md.status_code, 200)
+            self.assertIn("text/markdown", detail_md.headers["content-type"])
+            self.assertIn("Structural Steel Bridge Girder Welding", detail_md.text)
+
+        self.assertEqual(self.client.get("/tenders/not-a-real-trade").status_code, 404)
+        self.assertEqual(self.client.get("/tenders/not-a-real-trade.md").status_code, 404)

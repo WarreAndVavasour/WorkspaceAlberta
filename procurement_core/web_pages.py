@@ -100,22 +100,35 @@ COPY_SCRIPT = """
 _NAV = (("/", "Home"), ("/try", "Try a search"), ("/features", "Features"), ("/pricing", "Pricing"), ("/support", "Help"))
 
 
-def page(title: str, body: str, *, current: str = "", script: str = "", description: str = "") -> str:
+def page(
+    title: str,
+    body: str,
+    *,
+    current: str = "",
+    script: str = "",
+    description: str = "",
+    extra_jsonld: str = "",
+) -> str:
     """Wrap trusted body markup in the shared shell (header nav + footer)."""
+    from procurement_core.discovery import build_site_jsonld
+
     current_attr = ' aria-current="page"'
     nav = "".join(
         f'<a href="{href}"{current_attr if href == current else ""}>{label}</a>'
         for href, label in _NAV
     )
     meta = f'<meta name="description" content="{escape(description)}">' if description else ""
+    jsonld_tags = f'<script type="application/ld+json">{build_site_jsonld()}</script>'
+    if extra_jsonld:
+        jsonld_tags += f'<script type="application/ld+json">{extra_jsonld}</script>'
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        f"<title>{escape(title)}</title>{meta}{ICON_LINKS}<style>{STYLE}</style></head><body>"
+        f"<title>{escape(title)}</title>{meta}{ICON_LINKS}{jsonld_tags}<style>{STYLE}</style></head><body>"
         f'<header class="top"><a class="brand" href="/">workspaceAlberta</a><nav aria-label="Main">{nav}</nav></header>'
         f"<main>{body}</main>"
         '<footer><nav aria-label="Footer">'
-        '<a href="/features">Features</a><a href="/pricing">Pricing &amp; terms</a><a href="/privacy">Privacy</a><a href="/support">Help</a>'
+        '<a href="/tenders">By trade</a><a href="/features">Features</a><a href="/pricing">Pricing &amp; terms</a><a href="/privacy">Privacy</a><a href="/support">Help</a>'
         '<a href="/blog">News</a><a href="/developers">For developers</a>'
         f'<a href="{COMPANY_URL}">Warre &amp; Vavasour</a></nav>'
         "<p>workspaceAlberta is operated by Warre &amp; Vavasour Ltd, Alberta, Canada. "
