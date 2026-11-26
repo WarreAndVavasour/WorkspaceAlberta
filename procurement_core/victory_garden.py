@@ -710,14 +710,14 @@ def _pivot_state(shop_card: dict[str, Any], notice: dict[str, Any]) -> dict[str,
     }
 
 
-def _extract_pivot_verdict(response: dict[str, Any]) -> dict[str, str]:
-    results = response.get("results") if isinstance(response, dict) else {}
-    if not isinstance(results, dict):
-        results = {}
+def _extract_pivot_verdict(body: dict[str, Any]) -> dict[str, str]:
+    answers = body.get("answers") if isinstance(body, dict) else {}
+    if not isinstance(answers, dict):
+        answers = body.get("results") if isinstance(body, dict) and isinstance(body.get("results"), dict) else {}
 
     def _pick(field: str, allowed: set[str], default: str) -> str:
-        entry = results.get(field)
-        val = entry.get("answer") if isinstance(entry, dict) else entry
+        entry = answers.get(field)
+        val = (entry.get("choice") or entry.get("answer")) if isinstance(entry, dict) else entry
         val_s = str(val or "").strip().lower()
         return val_s if val_s in allowed else default
 
@@ -744,7 +744,7 @@ def classify_pivots_with_jev(
 
     model = os.environ.get("TYPESAFE_MODEL", "").strip() or business_fit.DEFAULT_MODEL
     verdicts: dict[str, dict[str, str]] = {}
-    to_call: list[tuple[str, str, dict[str, str]]] = []
+    to_call: list[tuple[str, str, dict[str, Any]]] = []
     warnings: list[str] = []
 
     for notice in candidates[:PIVOT_MAX_CANDIDATES]:
@@ -757,29 +757,32 @@ def classify_pivots_with_jev(
                 _PIVOT_CACHE.move_to_end(key)
                 verdicts[ref] = dict(cached)
                 continue
-        to_call.append((ref, key, state))
+        payload = {"model": model, "state": state, "questions": PIVOT_QUESTIONS}
+        to_call.append((ref, key, payload))
 
     if not to_call:
         return verdicts, []
 
-    def _one(state: dict[str, str]) -> dict[str, Any]:
+    deadline = time.monotonic() + PIVOT_DEADLINE_SECONDS
+    stop = threading.Event()
+
+    def _one(payload: dict[str, Any]) -> tuple[dict[str, Any] | None, str, int]:
         return jev.call_jev(
-            state,
-            PIVOT_QUESTIONS,
-            api_key=api_key,
-            model=model,
-            timeout=PIVOT_REQUEST_TIMEOUT,
-            max_retries=1,
+            payload,
+            api_key,
+            1,
+            PIVOT_REQUEST_TIMEOUT,
+            deadline=deadline,
+            stop=stop,
         )
 
-    deadline = time.monotonic() + PIVOT_DEADLINE_SECONDS
     pool = ThreadPoolExecutor(max_workers=PIVOT_CONCURRENCY, thread_name_prefix="jev-pivot")
-    futures = {pool.submit(_one, st): (ref, key) for ref, key, st in to_call}
+    futures = {pool.submit(usage.bind(_one), pl): (ref, key) for ref, key, pl in to_call}
     pending = set(futures.keys())
     auth_failed = False
 
     try:
-        while pending:
+        while pending and not stop.is_set():
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 warnings.append("TypeSafe Jev pivot pass hit time budget; remaining pivots ranked deterministically.")
@@ -791,24 +794,27 @@ def classify_pivots_with_jev(
             for fut in done:
                 ref, key = futures[fut]
                 try:
-                    raw = fut.result()
-                    verdict = _extract_pivot_verdict(raw)
-                    verdicts[ref] = verdict
-                    with _PIVOT_CACHE_LOCK:
-                        _PIVOT_CACHE[key] = verdict
-                        while len(_PIVOT_CACHE) > PIVOT_CACHE_MAX:
-                            _PIVOT_CACHE.popitem(last=False)
-                    usage.record_jev_usage(raw, feature="victory_garden_pivot")
+                    body, _error, attempts = fut.result()
                 except jev.AuthError:
                     auth_failed = True
+                    stop.set()
                     warnings.append("TypeSafe Jev rejected API key; using deterministic Mobilization Crosswalk.")
                     pending.clear()
                     break
                 except Exception:  # noqa: BLE001
                     continue
+                if attempts == 0 or not isinstance(body, dict):
+                    continue
+                verdict = _extract_pivot_verdict(body)
+                verdicts[ref] = verdict
+                with _PIVOT_CACHE_LOCK:
+                    _PIVOT_CACHE[key] = verdict
+                    while len(_PIVOT_CACHE) > PIVOT_CACHE_MAX:
+                        _PIVOT_CACHE.popitem(last=False)
             if auth_failed:
                 break
     finally:
+        stop.set()
         for fut in pending:
             fut.cancel()
         pool.shutdown(wait=False, cancel_futures=True)
@@ -977,7 +983,8 @@ async def victory_garden_brief_result(args: dict[str, Any]) -> tuple[str, dict[s
             },
         )
         if isinstance(core_struct, dict):
-            core_opps = [o for o in (core_struct.get("opportunities") or []) if isinstance(o, dict)][:limit]
+            raw_core = core_struct.get("matches") or core_struct.get("opportunities") or []
+            core_opps = [o for o in raw_core if isinstance(o, dict)][:limit]
             for w in (core_struct.get("warnings") or [])[:2]:
                 if str(w) not in warnings:
                     warnings.append(str(w))

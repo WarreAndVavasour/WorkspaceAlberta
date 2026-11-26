@@ -62,22 +62,31 @@ class VictoryGardenPipelineTest(unittest.TestCase):
             {"reference": "CB-2", "title": "Elementary School Library Books", "buyer": "School Board"},
         ]
 
-        def fake_jev(state, questions, **kwargs):
+        def fake_jev(payload, api_key, max_retries, timeout, **kwargs):
+            state = payload["state"]
             if "Hydraulic" in state["notice_title"]:
-                return {
-                    "results": {
-                        "pivot_feasibility": {"answer": "subcontract_tier2"},
-                        "bridge_type": {"answer": "cert_or_clearance"},
-                        "sovereign_lane": {"answer": "defence_security"},
+                return (
+                    {
+                        "answers": {
+                            "pivot_feasibility": {"choice": "subcontract_tier2"},
+                            "bridge_type": {"choice": "cert_or_clearance"},
+                            "sovereign_lane": {"choice": "defence_security"},
+                        }
+                    },
+                    "",
+                    1,
+                )
+            return (
+                {
+                    "answers": {
+                        "pivot_feasibility": {"choice": "unlikely"},
+                        "bridge_type": {"choice": "not_applicable"},
+                        "sovereign_lane": {"choice": "general_public"},
                     }
-                }
-            return {
-                "results": {
-                    "pivot_feasibility": {"answer": "unlikely"},
-                    "bridge_type": {"answer": "not_applicable"},
-                    "sovereign_lane": {"answer": "general_public"},
-                }
-            }
+                },
+                "",
+                1,
+            )
 
         victory_garden._PIVOT_CACHE.clear()
         with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": "test-key"}), mock.patch.object(
@@ -93,7 +102,8 @@ class VictoryGardenPipelineTest(unittest.TestCase):
         fake_core = (
             "core",
             {
-                "opportunities": [
+                "kind": "matches",
+                "matches": [
                     {
                         "reference": "AB-CORE-1",
                         "title": "Structural Steel Welding Repair",
