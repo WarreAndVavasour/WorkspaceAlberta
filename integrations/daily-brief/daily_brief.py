@@ -57,7 +57,7 @@ def fetch_brief(
     with urlopen(req, timeout=timeout) as resp:
         data = json.loads(resp.read().decode("utf-8", errors="replace"))
     if isinstance(data, dict):
-        return str(data.get("text") or data.get("markdown") or json.dumps(data, indent=2))
+        return str(data.get("content") or data.get("text") or data.get("markdown") or json.dumps(data, indent=2))
     return str(data)
 
 
