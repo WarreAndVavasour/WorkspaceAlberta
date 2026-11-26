@@ -139,7 +139,11 @@ def validate_hosted_configuration() -> None:
     if provider in {"google", "both"}:
         required.extend(["WA_GOOGLE_CLIENT_ID", "WA_GOOGLE_CLIENT_SECRET"])
     if provider in {"email", "both"}:
-        required.extend(["WA_SMTP_HOST", "WA_SMTP_FROM"])
+        has_sendgrid = bool(os.environ.get("SENDGRID_API_KEY", "").strip())
+        has_smtp = bool(os.environ.get("WA_SMTP_HOST", "").strip())
+        if not has_sendgrid and not has_smtp:
+            required.append("WA_SMTP_HOST")
+        required.append("WA_SMTP_FROM")
     missing = [name for name in required if not os.environ.get(name, "").strip()]
     if missing:
         raise RuntimeError("Hosted OAuth requires: " + ", ".join(missing))
@@ -149,7 +153,11 @@ def validate_hosted_configuration() -> None:
         raise RuntimeError("Hosted OAuth must not expose sign-in codes.")
     if os.environ.get("WA_OAUTH_STORE", "").strip().lower() == "memory" or not all(supabase_config()):
         raise RuntimeError("Hosted OAuth requires Supabase persistence.")
-    if provider in {"email", "both"} and os.environ.get("WA_SMTP_STARTTLS", "1").lower() not in {"1", "true", "yes"}:
+    if (
+        provider in {"email", "both"}
+        and os.environ.get("WA_SMTP_HOST", "").strip()
+        and os.environ.get("WA_SMTP_STARTTLS", "1").lower() not in {"1", "true", "yes"}
+    ):
         raise RuntimeError("Hosted OAuth requires verified SMTP STARTTLS.")
 
 
@@ -792,34 +800,77 @@ def dev_show_code() -> bool:
     return os.environ.get("WA_OAUTH_DEV_SHOW_CODE", "").lower() in {"1", "true", "yes"}
 
 
+def _send_login_code_sendgrid(api_key: str, sender: str, email: str, code: str) -> bool:
+    """Deliver a 6-digit OTP via SendGrid v3 Mail Send API over HTTPS (port 443)."""
+    from urllib.request import Request, urlopen
+
+    payload = json.dumps(
+        {
+            "personalizations": [{"to": [{"email": email}]}],
+            "from": {"email": sender, "name": "workspaceAlberta"},
+            "subject": "Your workspaceAlberta sign-in code",
+            "content": [
+                {
+                    "type": "text/plain",
+                    "value": (
+                        f"Your workspaceAlberta sign-in code is {code}.\n\n"
+                        "It expires in 10 minutes. If you did not request this, ignore this email.\n"
+                    ),
+                }
+            ],
+        }
+    ).encode("utf-8")
+    req = Request(
+        "https://api.sendgrid.com/v3/mail/send",
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "workspaceAlberta-OAuth/1.0",
+        },
+    )
+    with urlopen(req, timeout=10) as resp:
+        return 200 <= getattr(resp, "status", 202) < 300
+
+
 def send_login_code(email: str, code: str) -> bool:
-    """Send the one-time code. Returns True when a delivery path ran."""
+    """Send the one-time code via SMTP or SendGrid v3 API. Returns True when delivered."""
     if dev_show_code():
         return True
     host = os.environ.get("WA_SMTP_HOST", "").strip()
-    if not host:
-        return False
+    sender = os.environ.get("WA_SMTP_FROM", "").strip()
+    if host:
+        port = int(os.environ.get("WA_SMTP_PORT", "587") or "587")
+        user = os.environ.get("WA_SMTP_USER", "").strip()
+        password = os.environ.get("WA_SMTP_PASSWORD", "").strip()
+        from_addr = sender or user or "noreply@localhost"
+        starttls = os.environ.get("WA_SMTP_STARTTLS", "1").lower() in {"1", "true", "yes"}
+        message = EmailMessage()
+        message["Subject"] = "Your workspaceAlberta sign-in code"
+        message["From"] = from_addr
+        message["To"] = email
+        message.set_content(
+            f"Your workspaceAlberta sign-in code is {code}.\n\n"
+            "It expires in 10 minutes. If you did not request this, ignore the email.\n"
+        )
+        with smtplib.SMTP(host, port, timeout=10) as smtp:
+            if starttls:
+                smtp.starttls(context=ssl.create_default_context())
+            if user:
+                smtp.login(user, password)
+            smtp.send_message(message)
+        return True
 
-    port = int(os.environ.get("WA_SMTP_PORT", "587") or "587")
-    user = os.environ.get("WA_SMTP_USER", "").strip()
-    password = os.environ.get("WA_SMTP_PASSWORD", "").strip()
-    sender = os.environ.get("WA_SMTP_FROM", "").strip() or user or "noreply@localhost"
-    starttls = os.environ.get("WA_SMTP_STARTTLS", "1").lower() in {"1", "true", "yes"}
-    message = EmailMessage()
-    message["Subject"] = "Your workspaceAlberta sign-in code"
-    message["From"] = sender
-    message["To"] = email
-    message.set_content(
-        f"Your workspaceAlberta sign-in code is {code}.\n\n"
-        "It expires in 10 minutes. If you did not request this, ignore the email.\n"
-    )
-    with smtplib.SMTP(host, port, timeout=10) as smtp:
-        if starttls:
-            smtp.starttls(context=ssl.create_default_context())
-        if user:
-            smtp.login(user, password)
-        smtp.send_message(message)
-    return True
+    sendgrid_key = os.environ.get("SENDGRID_API_KEY", "").strip()
+    if sendgrid_key:
+        return _send_login_code_sendgrid(
+            sendgrid_key,
+            sender or "noreply@warreandvavasour.com",
+            email,
+            code,
+        )
+    return False
 
 
 # At most this many sign-in codes per email address per window, per instance.

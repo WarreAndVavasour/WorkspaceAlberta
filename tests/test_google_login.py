@@ -201,6 +201,21 @@ class GoogleFlowTest(unittest.TestCase):
             with patch.dict(os.environ, {**hosted_both, missing: ""}, clear=True), self.assertRaises(RuntimeError):
                 oauth.validate_hosted_configuration()
 
+        hosted_sendgrid = {
+            **CONFIG,
+            "WA_LOGIN_PROVIDER": "both",
+            "K_SERVICE": "test",
+            "SUPABASE_URL": "https://test.supabase.co",
+            "SUPABASE_SERVICE_ROLE_KEY": "test",
+            "SENDGRID_API_KEY": "SG.test-key",
+            "WA_SMTP_FROM": "noreply@warreandvavasour.com",
+        }
+        with patch.dict(os.environ, hosted_sendgrid, clear=True):
+            oauth.validate_hosted_configuration()
+            with patch.object(oauth, "_send_login_code_sendgrid", return_value=True) as mock_sg:
+                self.assertTrue(oauth.send_login_code("estimator@shop.ca", "123456"))
+                mock_sg.assert_called_once_with("SG.test-key", "noreply@warreandvavasour.com", "estimator@shop.ca", "123456")
+
 
 class GoogleTokenVerificationTest(unittest.TestCase):
     @classmethod

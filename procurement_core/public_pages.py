@@ -44,15 +44,15 @@ SUPPORT = """
 <li><strong>Other apps:</strong> the app must support remote MCP servers with OAuth sign-in.</li></ul></li>
 <li>Ask: “Find open Alberta construction opportunities closing in the next 30 days.” Searching does not need an account.</li></ol>
 <p>Want to try first? <a href="/try">Search in your browser</a>.</p>
-<h2>Sign-in and Pro</h2>
+<h2>Sign-in, Free reviews, Bid Packs &amp; Pro</h2>
 <ul><li>You sign in inside your AI app, not on this website. The app asks the first time you use a feature that needs it.</li>
-<li>Sign in with a <strong>Gmail</strong> or <strong>Google Workspace</strong> account. Other email addresses do not work yet. If you use another email, write to us before you subscribe.</li>
-<li>Pro features need a Pro subscription with the <strong>same email</strong> you sign in with. Signing in is free and does not charge you.</li>
-<li>Subscribe on the <a href="/pricing">pricing page</a> ({price}).</li></ul>
+<li>Sign in with <strong>Google</strong> or a <strong>work email address</strong> (6-digit one-time code when enabled on the server). Signing in is free and never starts a paid subscription.</li>
+<li>Every signed-in account starts with <strong>2 free tender reviews</strong> (Requirements Boards, Historical Contract Awards, or E2B Bid Rooms), plus a free 5-tender watchlist and bid/no-bid scorecards.</li>
+<li>Need more reviews? Pick a one-time <strong>Bid Pack</strong> (C$19 for 1 tender / C$49 for 3 tenders) or <strong>Pro Unlimited</strong> ({price}) on the <a href="/pricing">pricing page</a>.</li></ul>
 <h2>Which features need sign-in?</h2>
-<ul><li><strong>Free, no sign-in:</strong> search, tender details, deadlines, daily briefs, and matching against a business description you type in.</li>
-<li><strong>Free sign-in:</strong> save and read your business profile (<code>set_business_profile</code>, <code>get_my_profile</code>).</li>
-<li><strong>Pro:</strong> watchlist (<code>watch_opportunity</code>, <code>list_watchlist</code>, <code>unwatch_opportunity</code>), bid/no-bid scorecard (<code>bid_no_bid_scorecard</code>), document review (<code>process_bid_room</code>), requirements list (<code>classify_tender</code>) and Cohere analysis (<code>analyze_contract_with_cohere</code>).</li></ul>
+<ul><li><strong>Free, no sign-in:</strong> search, tender details, deadlines, daily briefs, industrial support catalog, and matching against a business description you type in.</li>
+<li><strong>Free sign-in (C$0):</strong> saved business profile (<code>set_business_profile</code>, <code>get_my_profile</code>), watchlist up to 5 tenders (<code>watch_opportunity</code>, <code>list_watchlist</code>, <code>unwatch_opportunity</code>), bid/no-bid scorecards (<code>bid_no_bid_scorecard</code>), and <strong>2 free tender reviews</strong>.</li>
+<li><strong>Bid Packs or Pro Unlimited:</strong> Requirements Boards (<code>classify_tender</code>), Historical Contract Awards &amp; Incumbent Radar (<code>get_buyer_award_history</code>), sandboxed E2B bid rooms (<code>process_bid_room</code>), Cohere Command A+ analysis (<code>analyze_contract_with_cohere</code>), and unlimited watchlist on Pro.</li></ul>
 <h2>Good to know</h2>
 <ul><li>Some searches send your search words or business description to Cohere, an AI provider, to choose Alberta categories. When you describe a business, supply-fit ranking can send that description and a short notice summary to TypeSafe AI. Document review sends documents to the providers listed in the <a href="/privacy">privacy notice</a>.</li>
 <li>Document review stops after 145 seconds. For a large tender, try again with fewer attachments. If it stops early, no analysis was made.</li>

@@ -1,5 +1,7 @@
 # workspaceAlberta
 
+[![workspaceAlberta MCP connector](https://glama.ai/mcp/connectors/com.warreandvavasour/workspacealberta/badges/score.svg)](https://glama.ai/mcp/connectors/com.warreandvavasour/workspacealberta)
+
 workspaceAlberta lets your AI assistant search every open CanadaBuys and Alberta Purchasing Connection tender, rank them against your business, and tell you what closes next.
 
 **Add to Claude:** [workspaceAlberta in Claude's connector directory](https://claude.ai/directory/connectors/workspacealberta)
