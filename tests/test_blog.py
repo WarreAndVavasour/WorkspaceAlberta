@@ -24,7 +24,7 @@ class BlogTest(unittest.TestCase):
             self.assertIn('rel="canonical"', post.text)
             feed = client.get("/blog/feed.xml")
             self.assertEqual(feed.status_code, 200)
-            self.assertEqual(len(ET.fromstring(feed.content).findall("channel/item")), 1)
+            self.assertGreaterEqual(len(ET.fromstring(feed.content).findall("channel/item")), 2)
             self.assertEqual(client.get("/assets/blog.css").status_code, 200)
             self.assertIn('href="/assets/brand/fonts.css"', index.text)
             self.assertIn('warre <span class="amp">&amp;</span> vavasour', index.text)

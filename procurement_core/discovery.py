@@ -23,6 +23,7 @@ REPO_URL = "https://github.com/WarreAndVavasour/WorkspaceAlberta"
 CLAUDE_DIRECTORY_URL = "https://claude.ai/directory/connectors/workspacealberta"
 MCP_REGISTRY_NAME = "com.warreandvavasour/workspacealberta"
 SUPPORT_EMAIL = "christian@warreandvavasour.com"
+INDEXNOW_KEY = "7f3c9a2e4b814d6fa91c3e5b2d7084a1"
 
 
 @dataclass(frozen=True)

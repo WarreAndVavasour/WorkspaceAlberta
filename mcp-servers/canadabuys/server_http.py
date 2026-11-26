@@ -984,6 +984,16 @@ async def robots_txt() -> PlainTextResponse:
     )
 
 
+@app.get(f"/{discovery.INDEXNOW_KEY}.txt", include_in_schema=False)
+async def indexnow_key_file() -> PlainTextResponse:
+    """IndexNow ownership verification key for instant Bing / ChatGPT Search indexing."""
+    return PlainTextResponse(
+        discovery.INDEXNOW_KEY,
+        media_type="text/plain; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_xml() -> Response:
     """Dynamic XML sitemap covering core pages, trade tender hubs, and blog posts."""
