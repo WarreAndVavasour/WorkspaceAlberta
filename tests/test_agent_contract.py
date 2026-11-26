@@ -38,7 +38,7 @@ class AgentContractTest(unittest.IsolatedAsyncioTestCase):
         from mcp_tools import HIDDEN_TOOLS
 
         listed = {t.name for t in get_mcp_tools()}
-        self.assertLessEqual(len(listed), 18)
+        self.assertLessEqual(len(listed), 19)
         self.assertFalse(listed & set(HIDDEN_TOOLS))
         for hidden, replacement in HIDDEN_TOOLS.items():
             self.assertIn(hidden, TOOL_NAMES)

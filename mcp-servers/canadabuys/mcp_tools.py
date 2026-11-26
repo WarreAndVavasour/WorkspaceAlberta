@@ -892,6 +892,51 @@ def get_mcp_tools(include_hidden: bool = False) -> list[Tool]:
             }
         ),
         Tool(
+            name="victory_garden_brief",
+            title="Victory Garden industrial pivot brief",
+            description=(
+                "Take a Canadian small business website URL (and/or shop description) and produce a "
+                "Victory Garden Mobilization Brief: (1) Shop Asset & Tooling Card extracted from the site, "
+                "(2) Lane 1 Core Fit tenders open on CanadaBuys and Alberta APC today, (3) Lane 2 adjacent "
+                "Victory Garden pivot lanes (defence, marine, Arctic logistics, critical infrastructure, "
+                "energy, emergency supply) judged by TypeSafe Jev for what the shop's existing equipment "
+                "and crew can pivot into, and (4) Lane 3 regulatory gates to verify plus Canadian industrial "
+                "retooling support programs (PrairiesCan, BDC, ISED). Free, no account required. Does not "
+                "invent certifications, submit bids, or guarantee awards."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "website_url": {
+                        "type": "string",
+                        "description": "Public website URL of the Canadian business (e.g. 'https://yourshop.ca')"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional plain-language description of equipment, idle capacity, or services (can be used alone or alongside website_url)"
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "description": "Optional company name override"
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Optional city/province (e.g. 'Red Deer, Alberta')"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "all, federal, or alberta",
+                        "default": "all"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max tenders per lane (default 8, max 15)",
+                        "default": 8
+                    }
+                }
+            }
+        ),
+        Tool(
             name="submit_feedback",
             title="Report a gap or bug",
             description=(

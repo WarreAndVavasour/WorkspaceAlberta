@@ -89,6 +89,17 @@ def register_public_pages(app: FastAPI) -> None:
                             media_type="image/webp",
                             headers={"Cache-Control": "public, max-age=86400"})
 
+    from procurement_core.victory_garden_page import VICTORY_GARDEN_ASSETS
+
+    @app.get("/assets/victory-garden/{filename}", include_in_schema=False)
+    async def victory_garden_artwork(filename: str):
+        media = VICTORY_GARDEN_ASSETS.get(filename)
+        if not media:
+            return Response(status_code=404)
+        return FileResponse(Path(__file__).with_name("assets") / "victory_garden" / filename,
+                            media_type=media,
+                            headers={"Cache-Control": "public, max-age=86400"})
+
     @app.get("/assets/google-signin.png", include_in_schema=False)
     async def google_signin_button():
         return FileResponse(Path(__file__).with_name("assets") / "google-signin.png",

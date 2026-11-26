@@ -600,6 +600,58 @@ async def try_page() -> HTMLResponse:
     return HTMLResponse(web_pages.try_page())
 
 
+@app.get("/victory-garden", include_in_schema=False)
+async def victory_garden_html(request: Request) -> HTMLResponse:
+    """Public Victory Garden editorial & live industrial-pivot audit page."""
+    from procurement_core.victory_garden_page import render_victory_garden_page
+
+    telemetry.capture(
+        "victory_garden_page_viewed",
+        caller=_rest_caller(request, "web"),
+        properties={"source": "direct"},
+    )
+    return HTMLResponse(render_victory_garden_page(_public_mcp_url(request), _public_origin()))
+
+
+@app.post("/victory-garden", tags=["procurement"])
+async def victory_garden_api(
+    request: Request,
+    arguments: dict[str, Any] | None = Body(default=None),
+) -> JSONResponse:
+    """Free Victory Garden audit: website URL/description -> Core Fit + Pivot Lanes + Grants."""
+    from procurement_core.victory_garden import victory_garden_brief_result
+
+    args = arguments if isinstance(arguments, dict) else {}
+    website_url = str(args.get("website_url") or args.get("url") or "").strip()
+    description = str(args.get("description") or "").strip()
+    if not website_url and not description:
+        return JSONResponse(
+            {"detail": "Provide a website_url (e.g. https://yourshop.ca) or a brief shop description."},
+            status_code=422,
+        )
+    started = time.monotonic()
+    try:
+        markdown, structured = await victory_garden_brief_result(args)
+    except ValueError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:  # noqa: BLE001
+        return JSONResponse(
+            {"detail": "Victory Garden audit could not complete right now. Please try again shortly."},
+            status_code=502,
+        )
+    telemetry.capture(
+        "victory_garden_audit",
+        caller=_rest_caller(request, "web"),
+        properties={
+            "has_url": bool(website_url),
+            "core_count": structured.get("core_count", 0),
+            "pivot_count": structured.get("pivot_count", 0),
+            "ms": int((time.monotonic() - started) * 1000),
+        },
+    )
+    return JSONResponse({**structured, "markdown": markdown})
+
+
 @app.post("/try/search", include_in_schema=False)
 async def try_search(request: Request, arguments: dict[str, Any] | None = Body(default=None)) -> JSONResponse:
     """Browser search for the /try page: structured records, plain-language errors."""
@@ -1225,6 +1277,15 @@ _DOCS_EXAMPLES = {
     "/awards/history": (
         "get_buyer_award_history",
         {"buyer": "Alberta Transportation", "keywords": "bridge concrete", "limit": 10},
+    ),
+    "/victory-garden": (
+        "victory_garden_brief",
+        {
+            "website_url": "https://example.ca",
+            "description": "5-axis CNC oilfield machine shop and CWB welding bays in Red Deer, Alberta",
+            "source": "all",
+            "limit": 6,
+        },
     ),
     "/profile": ("set_business_profile", {"company_name": "Example Concrete Ltd", **_EXAMPLE_PROFILE}),
 }

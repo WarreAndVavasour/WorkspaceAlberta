@@ -2426,6 +2426,7 @@ TOOL_NAMES = (
     "unwatch_opportunity",
     "bid_no_bid_scorecard",
     "get_buyer_award_history",
+    "victory_garden_brief",
     "submit_feedback",
 )
 
@@ -2765,6 +2766,16 @@ async def call_tool_text_and_structured(
 
         try:
             return await asyncio.to_thread(_run_awards)
+        except Exception as exc:
+            return f"Error: {exc}", None
+
+    if name == "victory_garden_brief":
+        def _run_vg() -> tuple[str, dict[str, Any] | None]:
+            from procurement_core.victory_garden import victory_garden_brief_result
+            return asyncio.run(victory_garden_brief_result(args))
+
+        try:
+            return await asyncio.to_thread(_run_vg)
         except Exception as exc:
             return f"Error: {exc}", None
 
@@ -4093,4 +4104,5 @@ from procurement_core.extensions import (  # noqa: E402
     watch_opportunity,
 )
 from procurement_core.awards import get_buyer_award_history  # noqa: E402
+from procurement_core.victory_garden import victory_garden_brief  # noqa: E402
 from procurement_core.feedback import submit_feedback  # noqa: E402

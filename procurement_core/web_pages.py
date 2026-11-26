@@ -128,7 +128,7 @@ def page(
         f'<header class="top"><a class="brand" href="/">workspaceAlberta</a><nav aria-label="Main">{nav}</nav></header>'
         f"<main>{body}</main>"
         '<footer><nav aria-label="Footer">'
-        '<a href="/tenders">By trade</a><a href="/features">Features</a><a href="/pricing">Pricing &amp; terms</a><a href="/privacy">Privacy</a><a href="/support">Help</a>'
+        '<a href="/victory-garden">Victory Garden</a><a href="/tenders">By trade</a><a href="/features">Features</a><a href="/pricing">Pricing &amp; terms</a><a href="/privacy">Privacy</a><a href="/support">Help</a>'
         '<a href="/blog">News</a><a href="/developers">For developers</a>'
         f'<a href="{COMPANY_URL}">Warre &amp; Vavasour</a></nav>'
         "<p>workspaceAlberta is operated by Warre &amp; Vavasour Ltd, Alberta, Canada. "
