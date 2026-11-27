@@ -109,6 +109,12 @@ def register_public_pages(app: FastAPI) -> None:
     async def privacy():
         return HTMLResponse(_web_page("workspaceAlberta privacy notice", PRIVACY))
 
+    # Registered before server_http's old /pricing#terms redirect, so this page wins.
+    @app.api_route("/terms", methods=["GET", "HEAD"], include_in_schema=False)
+    async def terms():
+        from procurement_core.terms_page import terms_page
+        return HTMLResponse(terms_page())
+
     @app.get("/support", include_in_schema=False)
     async def support():
         return HTMLResponse(_web_page("workspaceAlberta help and setup", SUPPORT, current="/support", script=COPY_SCRIPT))
