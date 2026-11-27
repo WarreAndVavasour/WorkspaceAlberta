@@ -8,3 +8,4 @@ duckdb>=1.5.5
 markdown-it-py>=4.0.0,<5
 tzdata>=2026.3
 pymupdf==1.28.2
+posthog==8.4.0

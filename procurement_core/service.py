@@ -2437,13 +2437,31 @@ async def get_server_guide(args: dict) -> str:
     return json.dumps(workflow_contract(), ensure_ascii=False, indent=2)
 
 
+_TOOL_ERROR_PREFIXES = (
+    "Error:",
+    "Unknown tool:",
+    "Please provide ",
+    "Please describe ",
+    "Contract not found:",
+    "Cohere analysis is not available:",
+    "Alberta opportunity not available:",
+    "Alberta deadline search failed:",
+    "Alberta APC summary failed:",
+)
+
+
+def is_tool_error_text(text: str) -> bool:
+    """True when a plain-text tool return represents a failed invocation."""
+    return bool(text) and text.startswith(_TOOL_ERROR_PREFIXES)
+
+
 async def call_tool_text(name: str, arguments: dict[str, Any] | None = None) -> str:
     """Run a procurement tool and return plain text without any MCP dependency."""
     args = arguments or {}
     handlers = {tool_name: globals()[tool_name] for tool_name in TOOL_NAMES}
     handler = handlers.get(name)
     if not handler:
-        return f"Unknown tool: {name}"
+        return f"Error: Unknown tool: {name}"
 
     # Handlers are async-signatured but internally synchronous: they block on
     # urlopen to CanadaBuys/Alberta APC/Cohere for up to 120s. Run each call
@@ -2746,7 +2764,7 @@ async def call_tool_text_and_structured(
     handlers = {tool_name: globals()[tool_name] for tool_name in TOOL_NAMES}
     handler = handlers.get(name)
     if not handler:
-        return f"Unknown tool: {name}", None
+        return f"Error: Unknown tool: {name}", None
 
     if name == "classify_tender":
         # Markdown for the conversation; the artifact itself (or the upload link) as structured

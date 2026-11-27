@@ -10,11 +10,24 @@ from procurement_core import telemetry
 
 class DisabledByDefaultTest(unittest.TestCase):
     def setUp(self) -> None:
-        os.environ.pop("POSTHOG_API_KEY", None)
+        for key in ("POSTHOG_API_KEY", "POSTHOG_PROJECT_TOKEN", "POSTHOG_PROJECT_KEY"):
+            os.environ.pop(key, None)
 
     def test_capture_is_a_noop_without_api_key(self) -> None:
         self.assertFalse(telemetry.enabled())
         self.assertFalse(telemetry.capture("tool_called"))
+
+    def test_personal_api_key_is_ignored_unless_project_token_is_present(self) -> None:
+        with mock.patch.dict(os.environ, {"POSTHOG_API_KEY": "phx_personal_secret"}, clear=False):
+            self.assertEqual(telemetry.api_key(), "")
+            self.assertFalse(telemetry.enabled())
+        with mock.patch.dict(
+            os.environ,
+            {"POSTHOG_API_KEY": "phx_personal_secret", "POSTHOG_PROJECT_TOKEN": "phc_project_token"},
+            clear=False,
+        ):
+            self.assertEqual(telemetry.api_key(), "phc_project_token")
+            self.assertTrue(telemetry.enabled())
 
     def test_helpers_are_noops_without_api_key(self) -> None:
         self.assertFalse(telemetry.capture_tool_call("search_opportunities", "mcp", None, {}, "ok", 5))
@@ -336,16 +349,228 @@ class HttpCallerTest(unittest.TestCase):
         }})
         self.assertEqual(init.status_code, 200)
         session_id = init.headers["mcp-session-id"]
-        call = self._rpc({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-                          "params": {"name": "get_server_guide", "arguments": {}}}, session_id)
+        call = self._rpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {
+                    "name": "get_server_guide",
+                    "arguments": {
+                        "context": "Checking procurement server capabilities for a welding shop",
+                        "llm_model": "claude-sonnet-4-6",
+                    },
+                },
+            },
+            session_id,
+        )
         self.assertEqual(call.status_code, 200)
-        (event,) = [p for p in self.payloads if p["event"] == "tool_called"]
+        self.assertFalse(call.json()["result"].get("isError"))
+        # Legacy custom event is gone on /mcp; PostHog MCP Analytics reads $mcp_tool_call.
+        self.assertEqual([p for p in self.payloads if p["event"] == "tool_called"], [])
+        (init_event,) = [p for p in self.payloads if p["event"] == "$mcp_initialize"]
+        (event,) = [p for p in self.payloads if p["event"] == "$mcp_tool_call"]
         props = event["properties"]
+        self.assertEqual(props["$mcp_source"], "posthog_mcp_analytics")
+        self.assertEqual(props["$mcp_tool_name"], "get_server_guide")
+        self.assertEqual((props["$mcp_client_name"], props["$mcp_client_version"]), ("claude-code", "2.1.0"))
         self.assertEqual((props["client_name"], props["client_version"]), ("claude-code", "2.1.0"))
         self.assertEqual(props["protocol_version"], "2025-06-18")
         self.assertEqual(props["mcp_session_id_hash"], telemetry.session_hash(session_id))
-        self.assertTrue(event["distinct_id"].startswith("anon:"))
+        self.assertEqual(props["$session_id"], init_event["properties"]["$session_id"])
+        self.assertTrue(props["$session_id"].startswith("ses_"))
+        self.assertEqual(event["distinct_id"], props["$session_id"])
+        self.assertEqual(props["$mcp_intent"], "Checking procurement server capabilities for a welding shop")
+        self.assertEqual(props["$mcp_intent_source"], "context_parameter")
+        self.assertEqual(props["$mcp_llm_model"], "claude-sonnet-4-6")
+        self.assertFalse(props["$process_person_profile"])
+        self.assertNotIn("$mcp_parameters", props)
+        self.assertNotIn("$mcp_response", props)
         self.assertNotIn(session_id, json.dumps(event))
+
+    def test_privacy_strips_inline_profile_while_keeping_input_keys_and_inferred_intent(self) -> None:
+        call = self._rpc({
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+                "name": "list_deadlines",
+                "arguments": {"days": 7, "source": "alberta"},
+            },
+        })
+        self.assertEqual(call.status_code, 200)
+        (event,) = [p for p in self.payloads if p["event"] == "$mcp_tool_call"]
+        props = event["properties"]
+        self.assertEqual(props["$mcp_tool_name"], "list_deadlines")
+        self.assertEqual(props["$mcp_intent_source"], "inferred")
+        self.assertIn("source=alberta", props["$mcp_intent"])
+        self.assertIn("days=7", props["$mcp_intent"])
+        self.assertEqual(sorted(props["$mcp_input_keys"]), ["days", "source"])
+        self.assertNotIn("$mcp_parameters", props)
+        self.assertNotIn("$mcp_response", props)
+
+    def test_virtual_feedback_and_missing_capability_tools_are_listed_and_emit_events(self) -> None:
+        import io
+        from contextlib import redirect_stdout
+
+        listing = self._rpc({"jsonrpc": "2.0", "id": 11, "method": "tools/list"})
+        self.assertEqual(listing.status_code, 200)
+        tools = {t["name"]: t for t in listing.json()["result"]["tools"]}
+        self.assertIn("send_feedback", tools)
+        self.assertIn("get_more_tools", tools)
+        for vname in ("send_feedback", "get_more_tools"):
+            self.assertIn({"type": "noauth"}, tools[vname]["securitySchemes"])
+            self.assertEqual(tools[vname]["securitySchemes"], tools[vname]["_meta"]["securitySchemes"])
+
+        missing = self._rpc({
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+                "name": "get_more_tools",
+                "arguments": {"context": "Need a tool to export tender deadlines to CSV"},
+            },
+        })
+        self.assertEqual(missing.status_code, 200)
+        self.assertFalse(missing.json()["result"].get("isError"))
+        (missing_ev,) = [p for p in self.payloads if p["event"] == "$mcp_missing_capability"]
+        self.assertEqual(missing_ev["properties"]["$mcp_intent"], "Need a tool to export tender deadlines to CSV")
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            fb = self._rpc({
+                "jsonrpc": "2.0",
+                "id": 13,
+                "method": "tools/call",
+                "params": {
+                    "name": "send_feedback",
+                    "arguments": {
+                        "feedback_type": "missing_capability",
+                        "summary": "No municipal tender feed for Calgary yet",
+                        "details": "Tried searching City of Calgary tenders directly",
+                        "sentiment": "neutral",
+                    },
+                },
+            })
+        self.assertEqual(fb.status_code, 200)
+        self.assertFalse(fb.json()["result"].get("isError"))
+        (fb_ev,) = [p for p in self.payloads if p["event"] == "$mcp_feedback"]
+        self.assertEqual(fb_ev["properties"]["$mcp_feedback_type"], "missing_capability")
+        self.assertIn("Calgary", fb_ev["properties"]["$mcp_feedback_summary"])
+        cloud_logs = [json.loads(line) for line in buf.getvalue().splitlines() if line.startswith("{")]
+        self.assertTrue(any(entry.get("event") == "mcp_feedback" for entry in cloud_logs))
+
+    def test_errors_and_unknown_tools_record_failures_and_exceptions(self) -> None:
+        unknown = self._rpc({
+            "jsonrpc": "2.0",
+            "id": 20,
+            "method": "tools/call",
+            "params": {"name": "nonexistent_probe_tool", "arguments": {}},
+        })
+        self.assertEqual(unknown.status_code, 200)
+        self.assertTrue(unknown.json()["result"]["isError"])
+        (call_ev,) = [p for p in self.payloads if p["event"] == "$mcp_tool_call"]
+        (exc_ev,) = [p for p in self.payloads if p["event"] == "$exception"]
+        self.assertTrue(call_ev["properties"]["$mcp_is_error"])
+        self.assertEqual(call_ev["properties"]["$mcp_error_type"], "unknown_tool")
+        self.assertIn("Unknown tool", call_ev["properties"]["$mcp_error_message"])
+        self.assertEqual(exc_ev["properties"]["$mcp_tool_name"], "nonexistent_probe_tool")
+
+        self.payloads.clear()
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": ""}), mock.patch(
+            "server_http.check_tool_access", return_value={"user_id": "acct_999", "plan": "pro", "pro_active": True}
+        ):
+            failed = self._rpc({
+                "jsonrpc": "2.0",
+                "id": 21,
+                "method": "tools/call",
+                "params": {"name": "classify_tender", "arguments": {"reference": "AB-2026-06584"}},
+            })
+        self.assertEqual(failed.status_code, 200)
+        self.assertTrue(failed.json()["result"]["isError"])
+        (fail_ev,) = [p for p in self.payloads if p["event"] == "$mcp_tool_call"]
+        (fail_exc,) = [p for p in self.payloads if p["event"] == "$exception"]
+        self.assertTrue(fail_ev["properties"]["$mcp_is_error"])
+        self.assertEqual(fail_ev["distinct_id"], "user_acct_999")
+        self.assertEqual(fail_ev["properties"]["reference"], "AB-2026-06584")
+        self.assertIn("not configured", fail_ev["properties"]["$mcp_error_message"])
+        self.assertEqual(fail_exc["properties"]["$mcp_tool_name"], "classify_tender")
+
+    def test_gate_denials_and_submit_feedback_mirror_into_posthog_mcp(self) -> None:
+        from procurement_core.auth import GateError
+
+        # 402 inside handle_call_tool records both pro_tool_denied and $mcp_tool_call permission error.
+        with mock.patch("server_http.check_tool_access", side_effect=GateError(402, "Subscription inactive")):
+            denied = self._rpc({
+                "jsonrpc": "2.0",
+                "id": 30,
+                "method": "tools/call",
+                "params": {"name": "process_bid_room", "arguments": {"reference": "AB-2026-00001"}},
+            })
+        self.assertEqual(denied.status_code, 200)
+        self.assertTrue(denied.json()["result"]["isError"])
+        (gate_ev,) = [p for p in self.payloads if p["event"] == "pro_tool_denied"]
+        (mcp_err,) = [p for p in self.payloads if p["event"] == "$mcp_tool_call"]
+        self.assertEqual(gate_ev["properties"]["status_code"], 402)
+        self.assertTrue(mcp_err["properties"]["$mcp_is_error"])
+        self.assertEqual(mcp_err["properties"]["$mcp_error_type"], "permission")
+        self.assertEqual(mcp_err["properties"]["$mcp_error_status"], 402)
+
+        # HTTP-layer 401 challenge on anonymous protected tool call also emits pro_tool_denied.
+        self.payloads.clear()
+        with mock.patch.dict(os.environ, {"WA_HOSTED": "1"}):
+            unauth = self._rpc({
+                "jsonrpc": "2.0",
+                "id": 31,
+                "method": "tools/call",
+                "params": {"name": "get_my_profile", "arguments": {}},
+            })
+        self.assertEqual(unauth.status_code, 401)
+        (challenge_ev,) = [p for p in self.payloads if p["event"] == "pro_tool_denied"]
+        self.assertEqual(challenge_ev["properties"]["tool"], "get_my_profile")
+        self.assertEqual(challenge_ev["properties"]["status_code"], 401)
+
+        # Calling WorkspaceAlberta's submit_feedback tool over MCP also emits $mcp_feedback.
+        self.payloads.clear()
+        init = self._rpc({
+            "jsonrpc": "2.0",
+            "id": 32,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "cursor", "version": "1.2.0"},
+            },
+        })
+        sid = init.headers["mcp-session-id"]
+        sub_fb = self._rpc(
+            {
+                "jsonrpc": "2.0",
+                "id": 33,
+                "method": "tools/call",
+                "params": {
+                    "name": "submit_feedback",
+                    "arguments": {
+                        "category": "missing_capability",
+                        "summary": "Need Saskatchewan SaskTenders coverage",
+                        "what_i_was_trying_to_do": "Search provincial steel tenders across both Alberta and Saskatchewan.",
+                        "what_went_wrong": "Only federal CanadaBuys and Alberta APC notices are indexed right now.",
+                    },
+                },
+            },
+            sid,
+        )
+        self.assertEqual(sub_fb.status_code, 200)
+        self.assertFalse(sub_fb.json()["result"].get("isError"))
+        (mirrored_fb,) = [p for p in self.payloads if p["event"] == "$mcp_feedback"]
+        self.assertEqual(mirrored_fb["properties"]["$mcp_feedback_type"], "missing_capability")
+        self.assertIn("SaskTenders", mirrored_fb["properties"]["$mcp_feedback_summary"])
+        self.assertTrue(mirrored_fb["properties"]["$session_id"].startswith("ses_"))
+
+    def test_posthog_project_token_alias_enables_telemetry(self) -> None:
+        with mock.patch.dict(os.environ, {"POSTHOG_API_KEY": "", "POSTHOG_PROJECT_TOKEN": "phc_alias"}, clear=False):
+            self.assertEqual(telemetry.api_key(), "phc_alias")
+            self.assertTrue(telemetry.enabled())
 
     def test_landing_for_browsers_endpoint_root_for_everything_else(self) -> None:
         self.client.get("/", headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0) Chrome/141"})

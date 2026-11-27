@@ -55,7 +55,7 @@ and completed actions from suggestions. Missing sources and partial results must
 visible. Never treat an Error:, denied access or incomplete extraction as a successful
 business outcome. Stop on auth failures; do not retry unchanged calls indefinitely.
 
-When a listed tool is missing, wrong, confusing, or blocks the task, call submit_feedback once with the category, what you were trying to do, the tool name, what went wrong, and a proposed fix. Do not use it to ask a procurement question, to decide a bid, or to send secrets, tokens, or customer documents. A person at workspaceAlberta reviews the report. submit_feedback does not open a pull request or change the server.
+When a listed tool is missing, wrong, confusing, or blocks the task, call send_feedback, get_more_tools, or submit_feedback once with what you were trying to do, the tool name, what went wrong, and a proposed fix. Do not use it to ask a procurement question, to decide a bid, or to send secrets, tokens, or customer documents. A person at workspaceAlberta reviews the report. submit_feedback does not open a pull request or change the server.
 
 MCP is the tool connection, not an A2A task execution endpoint. Agent discovery is
 descriptive metadata; there is no message/send, tasks/get or autonomous bid submission.

@@ -131,7 +131,7 @@ No environment variables are required for local use.
 
 Optional:
 
-- `POSTHOG_API_KEY`: enable server-side PostHog telemetry on the hosted endpoint (`tool_called`, `pro_tool_denied`, `landing_page_viewed` for browsers, `endpoint_root_hit` for anything else that opens `/`, `subscription_started`, `subscription_cancelled`); off when unset, and the stdio server never emits events. Request events carry `client_name`, `client_version`, `protocol_version`, `mcp_session_id_hash`, `user_agent`, `ua_family`, `is_internal`, `ip_source` and the caller's `$ip` (see `procurement_core/telemetry.py`)
+- `POSTHOG_API_KEY` (or `POSTHOG_PROJECT_TOKEN`): enable server-side PostHog MCP Analytics on the hosted endpoint (`$mcp_tool_call`, `$mcp_initialize`, `$mcp_tools_list`, `$mcp_feedback` via `send_feedback`, `$mcp_missing_capability` via `get_more_tools`, `$exception` on tool failures, plus `pro_tool_denied`, `landing_page_viewed`, `endpoint_root_hit`, `subscription_started`, `subscription_cancelled`); off when unset, and the stdio server never emits events. Request events carry `client_name`, `client_version`, `protocol_version`, `mcp_session_id_hash`, `user_agent`, `ua_family`, `is_internal`, `ip_source` and the caller's `$ip` while stripping raw tool arguments and responses (see `procurement_core/telemetry.py`)
 - `POSTHOG_HOST`: PostHog ingestion host, default `https://us.i.posthog.com`
 - `WA_ENVIRONMENT`: environment tag on telemetry events, default `prod`
 - `WA_TELEMETRY_SALT`: key for signing the `Mcp-Session-Id` and hashing it; defaults to a key derived from `WA_OAUTH_SIGNING_KEY`, so every instance agrees

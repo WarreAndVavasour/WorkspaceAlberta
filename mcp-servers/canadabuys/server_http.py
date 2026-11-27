@@ -95,6 +95,7 @@ from procurement_core.service import (  # noqa: E402
     ClassifierNotConfigured,
     call_tool_text,
     call_tool_text_and_structured,
+    is_tool_error_text,
     mcp_text_blocks,
     classify_tender_artifact_bounded,
     process_bid_room_artifact_bounded,
@@ -146,6 +147,14 @@ def _rest_caller(request: Request, transport: str = "rest") -> dict[str, Any]:
     )
 
 
+def _resolve_original_tool(tool_name: str) -> Tool | None:
+    """Return the unmutated tool declaration so stateless instances strip SDK-owned args."""
+    for tool in get_mcp_tools(include_hidden=True):
+        if tool.name == tool_name:
+            return tool
+    return None
+
+
 async def handle_list_tools(ctx: ServerRequestContext, params) -> ListToolsResult:
     """List available procurement MCP tools."""
     from procurement_core.openai_support import OpenAIListToolsResult
@@ -168,6 +177,13 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
         record = await asyncio.to_thread(check_tool_access, name, _mcp_authorization_header(ctx))
     except GateError as exc:
         telemetry.capture_gate_denied(name, "mcp", exc.status_code, caller=caller)
+        telemetry.set_mcp_call_context(
+            ctx,
+            arguments=arguments,
+            caller=caller,
+            error_type="permission",
+            error_status=exc.status_code,
+        )
         return CallToolResult(
             content=[
                 TextContent(
@@ -200,14 +216,25 @@ async def handle_call_tool(ctx: ServerRequestContext, params: CallToolRequestPar
     )
     if credit_note:
         text = text + credit_note
-    telemetry.capture_tool_call(
-        name, "mcp", record, arguments, text, int((time.monotonic() - started) * 1000),
-        upstream=meter.log_fields(), caller=caller,
+    ok = telemetry.log_mcp_tool_call(
+        name,
+        record,
+        arguments,
+        text,
+        int((time.monotonic() - started) * 1000),
+        upstream=meter.log_fields(),
+        caller=caller,
+        ctx=ctx,
+        known_tools=TOOL_NAMES,
     )
+    if ok and name == "submit_feedback":
+        await telemetry.capture_submit_feedback_to_posthog(
+            arguments, record=record, caller=caller, ctx=ctx
+        )
     return CallToolResult(
         content=[TextContent(type="text", text=block) for block in mcp_text_blocks(name, text, structured)],
         structured_content=structured,
-        is_error=text.startswith("Error:"),
+        is_error=is_tool_error_text(text),
     )
 
 
@@ -220,6 +247,7 @@ mcp_server = Server(
 )
 from procurement_core.openai_wire import preserve_auth_metadata
 mcp_server.middleware.append(preserve_auth_metadata)
+telemetry.instrument_mcp_server(mcp_server, resolve_original_tool=_resolve_original_tool)
 session_manager: StreamableHTTPSessionManager | None = None
 
 
@@ -237,9 +265,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         json_response=True,
         stateless=True,
     )
-    async with session_manager.run():
-        yield
-    session_manager = None
+    try:
+        async with session_manager.run():
+            yield
+    finally:
+        session_manager = None
+        await telemetry.shutdown_mcp_analytics()
 
 
 app = FastAPI(
@@ -449,32 +480,11 @@ def _header_value(scope: dict[str, Any], name: str) -> str | None:
     return None
 
 
-def _with_session_id(send: Any, payload: Any, scope: dict[str, Any]) -> Any:
-    """Answer ``initialize`` with an ``Mcp-Session-Id`` that records ``clientInfo``.
-
-    The transport is stateless, so the id is the session record itself
-    (:func:`telemetry.mint_session_id`); clients echo it on every later
-    request and telemetry reads the client name back from it. A client that
-    already holds one keeps it.
-    """
-    if not isinstance(payload, dict) or payload.get("method") != "initialize":
-        return send
-    if _header_value(scope, "mcp-session-id"):
-        return send
-    params = payload.get("params") if isinstance(payload.get("params"), dict) else {}
-    client_info = params.get("clientInfo") if isinstance(params.get("clientInfo"), dict) else {}
-    session_id = telemetry.mint_session_id(
-        client_info.get("name"), client_info.get("version"), params.get("protocolVersion")
-    )
-
-    async def send_with_session(message: dict[str, Any]) -> None:
-        if message.get("type") == "http.response.start" and message.get("status") == 200:
-            headers = [(k, v) for k, v in message.get("headers") or [] if k.lower() != b"mcp-session-id"]
-            headers.append((b"mcp-session-id", session_id.encode("ascii")))
-            message = {**message, "headers": headers}
-        await send(message)
-
-    return send_with_session
+def _scope_headers_dict(scope: dict[str, Any]) -> dict[str, str]:
+    return {
+        key.decode("latin-1").lower(): value.decode("latin-1")
+        for key, value in (scope.get("headers") or [])
+    }
 
 
 class MCPStreamableHTTPApp:
@@ -513,7 +523,6 @@ class MCPStreamableHTTPApp:
                 payload = json.loads(body) if body else None
             except (json.JSONDecodeError, UnicodeDecodeError):
                 payload = None
-            send = _with_session_id(send, payload, scope)
             # Partial auth: all protected tools must 401 at the
             # HTTP layer *before* the SDK wraps the refusal in a 200 tool
             # result. initialize, tools/list, and free tools stay open.
@@ -522,6 +531,9 @@ class MCPStreamableHTTPApp:
                     authorization = _header_value(scope, "authorization")
                     if not await asyncio.to_thread(identity.has_presentable_identity, authorization):
                         tool_name = _protected_tool_name(payload)
+                        peer = scope["client"][0] if isinstance(scope.get("client"), (tuple, list)) and scope["client"] else None
+                        caller = telemetry.caller_context(_scope_headers_dict(scope), transport="mcp", peer=peer)
+                        telemetry.capture_gate_denied(tool_name, "mcp", 401, caller=caller)
                         response = JSONResponse(
                             {
                                 "error": "invalid_token",
@@ -540,7 +552,9 @@ class MCPStreamableHTTPApp:
             headers.append((b"accept", b"application/json, text/event-stream"))
             scope = {**scope, "headers": headers}
             receive = _replay_receive(body)
-        await session_manager.handle_request(scope, receive, send)
+        await telemetry.wrap_mcp_http_handler(session_manager.handle_request)(scope, receive, send)
+        # Let PostHog MCP's fire-and-forget capture task sanitize and enqueue before Cloud Run throttles CPU.
+        await asyncio.sleep(0)
 
 
 app.add_route("/mcp", MCPStreamableHTTPApp(), methods=["GET", "POST", "DELETE"])

@@ -444,3 +444,67 @@ def submit_feedback_sync(args: dict[str, Any] | None) -> str:
 async def submit_feedback(args: dict) -> str:
     """Tool handler. The caller runs it in a worker thread."""
     return submit_feedback_sync(args)
+
+
+def record_posthog_feedback(report: Any) -> None:
+    """Mirror a PostHog MCP SDK ``send_feedback`` report into Cloud Logging and optional sinks.
+
+    ``posthog.mcp`` already emits ``$mcp_feedback`` to PostHog; this hook keeps
+    the same sanitized human-review audit line (and optional GitHub/Slack delivery)
+    as ``submit_feedback``. Never raises, and returns ``None`` so the SDK serves
+    its standard acknowledgement.
+    """
+    if _limited():
+        return
+    feedback_type = str(getattr(report, "feedback_type", "") or "other").strip()
+    category_map = {
+        "missing_capability": "missing_capability",
+        "issue": "bug",
+        "praise": "other",
+        "other": "other",
+    }
+    category = category_map.get(feedback_type, "other")
+    summary = _clean(str(getattr(report, "summary", "") or ""))[:SUMMARY_LIMIT]
+    if not summary:
+        return
+    details = _clean(str(getattr(report, "details", "") or ""))[:ATTEMPT_LIMIT]
+    friction = _clean(str(getattr(report, "friction_points", "") or ""))[:PROBLEM_LIMIT]
+    suggested = _clean(str(getattr(report, "suggested_improvement", "") or ""))[:FIX_LIMIT]
+    raw_tool = _clean(str(getattr(report, "tool_name", "") or ""))[:TOOL_LIMIT]
+    tool_name = raw_tool if (raw_tool and "[redacted]" not in raw_tool and _TOOL_NAME.fullmatch(raw_tool)) else ""
+
+    record: dict[str, Any] = {
+        "category": category,
+        "feedback_type": feedback_type,
+        "report_severity": "medium",
+        "summary": summary,
+        "what_i_was_trying_to_do": details or summary,
+        "tool_name": tool_name,
+        "what_went_wrong": friction or details or summary,
+        "proposed_fix": suggested,
+        "client_name": "",
+        "source": "posthog_mcp_sdk",
+        "feedback_id": "fb_" + secrets.token_hex(8),
+        "received_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    sentiment = getattr(report, "sentiment", None)
+    if isinstance(sentiment, str) and sentiment:
+        record["sentiment"] = _clean(sentiment)[:32]
+    task_completed = getattr(report, "task_completed", None)
+    if isinstance(task_completed, bool):
+        record["task_completed"] = task_completed
+
+    issue_url = _try_github(record)
+    slack_ok = _try_slack(record)
+    destinations = ["cloud_logging"]
+    if allow_anonymous_file_persist():
+        destinations.append("local_file")
+    if issue_url:
+        destinations.append("github_issue")
+        record["issue_url"] = issue_url
+    if slack_ok:
+        destinations.append("slack")
+    record["destinations"] = destinations
+    _log(record)
+    if "local_file" in destinations:
+        _write_local(record)
