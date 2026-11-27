@@ -8,8 +8,12 @@
     "url": "https://warreandvavasour.com"
   },
   "homepage": "https://warreandvavasour.com/workspacealberta",
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://elbowsupknivesout.warreandvavasour.com",
+  "supportUrl": "https://elbowsupknivesout.warreandvavasour.com/support",
   "repository": "https://github.com/WarreAndVavasour/WorkspaceAlberta",
   "license": "Apache-2.0",
   "privacyPolicyUrl": "https://elbowsupknivesout.warreandvavasour.com/privacy",
+  "termsOfServiceUrl": "https://elbowsupknivesout.warreandvavasour.com/terms",
   "keywords": ["procurement", "canadabuys", "alberta", "tenders", "small-business"]
 }
