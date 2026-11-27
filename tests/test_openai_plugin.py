@@ -33,6 +33,13 @@ class PackageTest(unittest.TestCase):
         claude=json.loads((root/'.claude-plugin/plugin.json').read_text())
         self.assertEqual((claude['name'],claude['version']),('workspacealberta',json.loads((root/'plugin.json').read_text())['version']))
         self.assertEqual(claude['license'],'Apache-2.0')
+        # Directory listing reads the logo and links from the Claude manifest, not the OpenAI one.
+        self.assertEqual(claude['icon'],'./assets/icon.png')
+        self.assertTrue((root/claude['icon']).is_file())
+        interface=json.loads((root/'plugin.json').read_text())['extensions']['com.openai']['interface']
+        self.assertEqual(claude['supportUrl'],interface['supportURL'])
+        self.assertEqual(claude['termsOfServiceUrl'],interface['termsOfServiceURL'])
+        self.assertEqual(claude['privacyPolicyUrl'],interface['privacyPolicyURL'])
         self.assertGreaterEqual(len((root/'README.md').read_text().split()),40)
         with tempfile.TemporaryDirectory() as directory:
             package.build(Path(directory)/'p.zip')
