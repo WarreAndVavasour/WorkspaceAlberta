@@ -15,6 +15,8 @@ class OpenAIWireTest(unittest.TestCase):
         for tool in tools:
             self.assertTrue(tool['securitySchemes'], tool['name'])
             self.assertEqual(tool['securitySchemes'], tool['_meta']['securitySchemes'])
+            self.assertTrue(tool.get('title', '').strip(), tool['name'])
+            self.assertEqual(tool.get('annotations', {}).get('title'), tool['title'], tool['name'])
         protected = {tool['name']: tool for tool in tools}
         self.assertEqual(protected['get_my_profile']['securitySchemes'],
                          [{'type': 'oauth2', 'scopes': ['pro']}])
