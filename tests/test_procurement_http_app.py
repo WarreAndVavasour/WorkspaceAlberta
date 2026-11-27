@@ -283,7 +283,11 @@ class FirstRunQaPagesTest(unittest.TestCase):
         self.assertIn("C$85", html)
         self.assertIn("buy.stripe.com", html)
         self.assertIn('id="terms"', html)
-        self.assertEqual(self.client.get("/terms", follow_redirects=False).status_code, 302)
+        terms = self.client.get("/terms", follow_redirects=False)
+        self.assertEqual(terms.status_code, 200)
+        self.assertIn("Terms of service", terms.text)
+        self.assertIn("Warre &amp; Vavasour Ltd", terms.text)
+        self.assertIn('href="/privacy"', terms.text)
 
     def test_me_in_browser_is_a_page_not_json(self) -> None:
         response = self.client.get("/me", headers={"accept": "text/html"})
@@ -333,7 +337,7 @@ class FirstRunQaPagesTest(unittest.TestCase):
         self.assertIn("This sign-in link did not work", response.text)
 
     def test_terms_supports_head(self) -> None:
-        self.assertEqual(self.client.head("/terms", follow_redirects=False).status_code, 302)
+        self.assertEqual(self.client.head("/terms", follow_redirects=False).status_code, 200)
 
     def test_canadabuys_record_without_notice_url_gets_notice_page(self) -> None:
         from procurement_core.service import _opportunity_record
